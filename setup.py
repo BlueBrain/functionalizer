@@ -4,7 +4,7 @@
     Setup file for spykfunc.
 """
 import sys
-from setuptools import setup
+from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
 
 
@@ -29,7 +29,7 @@ def setup_package():
         # name and other metadata are in setup.cfg
         version="0.1.dev0",
         # use_scm_version=True,
-        packages=['spykfunc'],
+        packages=find_packages(),
         install_requires=[
             'future',
             'enum34;python_version<"3.4"'
