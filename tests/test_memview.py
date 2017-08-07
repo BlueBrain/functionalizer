@@ -20,6 +20,5 @@ def test_memview():
     assert arr[1][0] == 222
 
 
-
 if __name__ == '__main__':
     test_memview()

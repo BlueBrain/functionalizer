@@ -27,7 +27,7 @@ def test_bin_touch():
     assert numpy.array_equal(record[0], [24, 161, 58])
     assert numpy.array_equal(record[1], [14, 77, 27])
     assert record[2] == 18
-    assert numpy.allclose(record[3], [ 720.94, 3.22, 2.19], 1.e-2)
+    assert numpy.allclose(record[3], [720.94, 3.22, 2.19], 1.e-2)
 
 
 if __name__ == "__main__":

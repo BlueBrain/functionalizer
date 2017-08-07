@@ -4,6 +4,7 @@ from morphotool import MorphologyDB
 import os.path
 import json
 from pyspark.sql import SparkSession
+import pytest
 
 
 def has_problematic_radius(morpho_entry):
@@ -74,16 +75,14 @@ def run_test(morpho_dir, names, spark, outstream):
 
     probs_count = reduce(lambda a, b: (a[0] + (1 if b[1] else 0), a[1] + b[1], a[2] + (1 if b[3] else 0), a[3] + b[3]), all_probs,
                          (0, 0, 0, 0))
-    print "Problem count for " + morpho_dir + """: 
-    10x+ radius on subsequent segments: %d morphologies affected (%d points)
-    empty points: %d morphologies affected (%d points)""" % probs_count
+    print("Problem count for " + morpho_dir + """:
+        10x+ radius on subsequent segments: %d morphologies affected (%d points)
+        empty points: %d morphologies affected (%d points)""" % probs_count)
 
 
 # ###############
 # Specific tests
 # ###############
-
-import pytest
 disable_when_not_viz = pytest.mark.skipif(True, reason="Runs only in a cluster")
 
 

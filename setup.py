@@ -27,8 +27,7 @@ extensions = [
     Extension('*', ['spykfunc/dataio/*.pyx'],
               include_dirs=["../deps/hadoken/include", "../deps/mvd-tool/include", "../deps/mvd-tool/deps/highfive/include"],
               libraries=['hdf5'],
-              language="c++"
-    ),
+              language="c++"),
     Extension('tst_neuron_memview', ['tests/tst_neuron_memview.pyx'],
               language="c++")
 ]
@@ -44,16 +43,19 @@ def setup_package():
         packages=find_packages(),
         ext_modules=cythonize(extensions,
                               cplus=True,
-                              inplace=True,
                               include_path=['spykfunc/dataio/mvdtool'],
                               ),
 
         install_requires=[
             'future',
-            'enum34;python_version<"3.4"'
+            'enum34;python_version<"3.4"',
+            'numpy',
+            'lazy-property',
+            'py4j',
+            'morphotool'
         ],
         # Setup and testing
-        setup_requires=['setuptools_scm'] + sphinx,
+        setup_requires=['setuptools_scm', "cython"] + sphinx,
         tests_require=['pytest', 'pytest-cov'],
         cmdclass={'test': PyTest},
     )
