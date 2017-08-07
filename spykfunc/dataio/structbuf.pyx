@@ -105,7 +105,9 @@ cdef class StructType(_TYPE):
 
 
 cdef class StructBuffer:
-    def __init__(self, StructType struct_type = None):
+    # NOTE: member declaration in .pxd
+
+    def __init__(self, StructType struct_type=None):
         if struct_type:
             self.struct_t = struct_type
             #print "Initting StructBuffer with stuct t: %s, size: %d" % ( struct_type.pystruct_t, struct_type.size_bytes)
@@ -114,7 +116,7 @@ cdef class StructBuffer:
             self.struct_t = None
 
     cdef void init(self, string block_format, int block_size):
-        #print "Backend initting"
+        # print "Backend initting"
         self.block_format = block_format
         self._sformat = self.block_format.c_str()
         self.block_size = block_size
@@ -147,3 +149,6 @@ cdef class StructBuffer:
 
     def __getitem__(self, i):
         return self.asarray()[i]
+
+    def __len__(self):
+        return self.block_count

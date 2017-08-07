@@ -4,7 +4,8 @@
     Setup file for spykfunc.
 """
 import sys
-from setuptools import setup, find_packages
+from Cython.Build import cythonize
+from setuptools import setup, find_packages, Extension
 from setuptools.command.test import test as TestCommand
 
 
@@ -22,6 +23,17 @@ class PyTest(TestCommand):
         sys.exit(errno)
 
 
+extensions = [
+    Extension('*', ['spykfunc/dataio/*.pyx'],
+              include_dirs=["../deps/hadoken/include", "../deps/mvd-tool/include", "../deps/mvd-tool/deps/highfive/include"],
+              libraries=['hdf5'],
+              language="c++"
+    ),
+    Extension('tst_neuron_memview', ['tests/tst_neuron_memview.pyx'],
+              language="c++")
+]
+
+
 def setup_package():
     needs_sphinx = {'build_sphinx', 'upload_docs'}.intersection(sys.argv)
     sphinx = ['sphinx'] if needs_sphinx else []
@@ -30,13 +42,20 @@ def setup_package():
         version="0.1.dev0",
         # use_scm_version=True,
         packages=find_packages(),
+        ext_modules=cythonize(extensions,
+                              cplus=True,
+                              inplace=True,
+                              include_path=['spykfunc/dataio/mvdtool'],
+                              ),
+
         install_requires=[
             'future',
             'enum34;python_version<"3.4"'
         ],
-        tests_require=['pytest', 'pytest-cov'],
+        # Setup and testing
         setup_requires=['setuptools_scm'] + sphinx,
-        cmdclass={'test': PyTest}
+        tests_require=['pytest', 'pytest-cov'],
+        cmdclass={'test': PyTest},
     )
 
 

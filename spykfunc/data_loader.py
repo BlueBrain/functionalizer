@@ -201,28 +201,3 @@ def touches_loader_gen(data_class, loader_class, loader_params):
         return ()
 
     return load_touches_par
-
-
-# --------------------------------------------------------------------------------------------
-# Testing...
-# --------------------------------------------------------------------------------------------
-
-if __name__ == "__main__":
-    from .dataio.cppneuron import MVD_Morpho_Loader
-
-    # viz = "/gpfs/bbp.cscs.ch/project/proj16/leite/"
-    # mvd_file = viz + "TestData/circuitBuilding_1000neurons/circuits/circuit.mvd3"
-    # morpho_dir = viz + "TestData/circuitBuilding_1000neurons/morphologies/h5"
-
-    # Large data set
-    mvd_file = "/gpfs/bbp.cscs.ch/scratch/gss/bgq/devresse/circuits/8x8/circuit.mvd3"
-    morpho_dir = "/gpfs/bbp.cscs.ch/release/l2/2012.07.23/morphologies/h5"
-
-    def init():
-        sf = NeuronDataSpark(MVD_Morpho_Loader(mvd_file, morpho_dir))
-        sf.load_mvd_neurons_morphologies()
-        return sf, sf.neuronDF
-
-    sf = NeuronDataSpark(MVD_Morpho_Loader(mvd_file, morpho_dir))
-    sf.load_mvd_neurons_morphologies()
-    sf.neuronDF.show(500)
