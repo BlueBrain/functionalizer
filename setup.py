@@ -3,14 +3,25 @@
 """
     Setup file for spykfunc.
 """
-import sys
-from Cython.Build import cythonize
 from setuptools import setup, find_packages, Extension
 from setuptools.command.test import test as TestCommand
+import sys
+import glob
+try:
+    # Attempt import Cython
+    from Cython.Build import cythonize
+    build_mode = 'devel'
+except ImportError:
+    build_mode = 'release'
+    assert glob.glob('spykfunc/dataio/*.cpp'), \
+        'Cpp extension sources not found. Please install Cython.'
 
 
+# *******************************
+# Handle test
+# *******************************
 class PyTest(TestCommand):
-    user_options = [('addopts=', None, "Arguments to pass to pytest")]
+    user_options = [('addopts=', None, 'Arguments to pass to pytest')]
 
     def initialize_options(self):
         TestCommand.initialize_options(self)
@@ -23,29 +34,52 @@ class PyTest(TestCommand):
         sys.exit(errno)
 
 
+# *******************************
+# Extensions setup
+# *******************************
+_ext_dir = 'spykfunc/dataio/'
+_ext_mod = 'spykfunc.dataio.'
+_filename_ext = '.pyx' if build_mode == 'devel' else '.cpp'
+ext_mods = {
+    'common': {},
+    'structbuf': {},
+    'cppneuron': dict(
+        include_dirs=['../deps/hadoken/include',
+                      '../deps/mvd-tool/include',
+                      '../deps/mvd-tool/deps/highfive/include'],
+        libraries=['hdf5']
+    ),
+}
+
 extensions = [
-    Extension('*', ['spykfunc/dataio/*.pyx'],
-              include_dirs=["../deps/hadoken/include", "../deps/mvd-tool/include", "../deps/mvd-tool/deps/highfive/include"],
-              libraries=['hdf5'],
-              language="c++"),
-    Extension('tst_neuron_memview', ['tests/tst_neuron_memview.pyx'],
-              language="c++")
+    Extension(_ext_mod + name, [_ext_dir + name + _filename_ext],
+              language='c++',
+              **opts)
+    for name, opts in ext_mods.items()
 ]
+extensions.append(
+    Extension('tst_neuron_memview', ['tests/tst_neuron_memview' + _filename_ext],
+              language="c++"))
+
+if build_mode == 'devel':
+    extensions = cythonize(extensions,
+                           cplus=True,
+                           include_path=['spykfunc/dataio/mvdtool'])
 
 
+# *******************************
+# Main setup
+# *******************************
 def setup_package():
     needs_sphinx = {'build_sphinx', 'upload_docs'}.intersection(sys.argv)
     sphinx = ['sphinx'] if needs_sphinx else []
+
     setup(
         # name and other metadata are in setup.cfg
         version="0.1.dev0",
         # use_scm_version=True,
         packages=find_packages(),
-        ext_modules=cythonize(extensions,
-                              cplus=True,
-                              include_path=['spykfunc/dataio/mvdtool'],
-                              ),
-
+        ext_modules=extensions,
         install_requires=[
             'future',
             'enum34;python_version<"3.4"',
@@ -55,11 +89,14 @@ def setup_package():
             'morphotool'
         ],
         # Setup and testing
-        setup_requires=['setuptools_scm', "cython"] + sphinx,
+        setup_requires=['setuptools_scm'] + sphinx,
         tests_require=['pytest', 'pytest-cov'],
+        extras_require={
+            'dev': ['cython', 'flake8']
+        },
         cmdclass={'test': PyTest},
     )
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     setup_package()
