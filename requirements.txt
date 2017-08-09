@@ -6,5 +6,5 @@ lazy-property
 numpy
 py4j
 --find-links=file:///home/leite/dev/PyArchive
-morphotool
+#morphotool
 

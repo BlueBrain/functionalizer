@@ -1,7 +1,7 @@
 from spykfunc import functionalizer as fz, commands
 from os import path
 
-BASE_DIR = "/home/leite/dev/TestData/circuitBuilding_1000neurons"
+BASE_DIR = path.expanduser("~/dev/TestData/circuitBuilding_1000neurons")
 args = (
     path.join(BASE_DIR, "recipe/builderRecipeAllPathways.xml"),  # recipe_file
     path.join(BASE_DIR, "circuits/circuit.mvd3"),                # mvd_file

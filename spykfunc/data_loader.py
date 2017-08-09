@@ -7,8 +7,12 @@ from . import schema
 from .dataio import touches
 from .dataio.common import Part
 from .utils.spark_udef import DictAccum
-from morphotool import MorphoReader
 from .utils import get_logger
+try:
+    from morphotool import MorphoReader
+except ImportError:
+    print("Morphotool wont be available")
+    morphotool = None
 import logging
 logger = get_logger(__name__)
 
@@ -30,7 +34,10 @@ class NeuronDataSpark(NeuronData):
     # ---
     def load_mvd_neurons_morphologies(self, neuron_filter=None, **kwargs):
         self._load_mvd_neurons(neuron_filter, **kwargs)
-        self._load_h5_morphologies(self.nameMap.keys(), neuron_filter, **kwargs)
+        if morphotool:
+            self._load_h5_morphologies(self.nameMap.keys(), neuron_filter, **kwargs)
+        else:
+            self.morphologyRDD = None
 
     # ---
     def _load_mvd_neurons(self, neuron_filter=None, total_parts=128):

@@ -16,7 +16,12 @@ from collections import defaultdict
 from .structbuf import StructType, TYPES
 
 # MorphoLib
-from morphotool import MorphoReader
+try:
+    import morphotool
+    from morphotool import MorphoReader
+except ImportError:
+    print("WARNING: morphotool not available")
+    morphotool = None
 
 cdef int DEBUG=0
 
@@ -202,6 +207,7 @@ cdef class MVD_Morpho_Loader(NeuronLoaderI):
             self.load_morphology(neuron_data, morpho)
 
     def load_morphology(self, NeuronData neuron_data, string morpho_name):
+        assert morphotool, "Morphotool isnt available."
         morph = neuron_data.morphologies[morpho_name] = MorphoReader(os.path.join(self._morphology_dir, morpho_name + ".h5")).create_morpho_tree()
         return morph
 

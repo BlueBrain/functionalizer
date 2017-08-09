@@ -1,10 +1,11 @@
+import pytest
+morphotool = pytest.importorskip("morphotool")
+from morphotool import MorphologyDB
 from collections import defaultdict
 from spykfunc import data_loader
-from morphotool import MorphologyDB
 import os.path
 import json
 from pyspark.sql import SparkSession
-import pytest
 
 
 def has_problematic_radius(morpho_entry):

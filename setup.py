@@ -86,13 +86,13 @@ def setup_package():
             'numpy',
             'lazy-property',
             'py4j',
-            'morphotool'
+            #'morphotool'  # Do we really need it?
         ],
         # Setup and testing
         setup_requires=['setuptools_scm'] + sphinx,
         tests_require=['pytest', 'pytest-cov'],
         extras_require={
-            'dev': ['cython', 'flake8']
+            'dev': ['cython<0.26', 'flake8']
         },
         cmdclass={'test': PyTest},
     )
