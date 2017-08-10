@@ -7,8 +7,9 @@ from future.utils import with_metaclass
 import itertools
 import os.path
 from ._caching import CachedDataset, _DataSet
-import logging
-from ..utils import show_wait_message
+from ..utils import show_wait_message, get_logger
+
+logger = get_logger(__name__)
 
 class NEURON_STATS_F:
     neuronID = 0
@@ -47,8 +48,9 @@ class TouchInfo(TouchInfo_Interface):
     @LazyProperty
     def header(self):
         glob_header = self._touch_infos[0].header.copy()
-        glob_header.numberOfNeurons = sum(ti.header.numberOfNeurons
-                                          for ti in self._touch_infos)
+        # Header is the same for every node
+        # glob_header.numberOfNeurons = sum(ti.header.numberOfNeurons
+        #                                  for ti in self._touch_infos)
         return glob_header
 
     @property
@@ -94,7 +96,7 @@ class _TouchInfo(TouchInfo_Interface):
         try:
             header = np.rec.fromfile(f_handler, dtype=_TouchInfo._header_dtype, aligned=True, shape=1)[0]
         except:
-            logging.fatal("Could not read header record from touches")
+            logger.fatal("Could not read header record from touches")
             return
 
         self._byte_swap = not np.equal(header.architectureIdentifier, np.double(1.001))

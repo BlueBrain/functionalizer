@@ -14,6 +14,7 @@ from .definitions import CellClass, MType
 from . import filters
 from . import utils
 from fnmatch import filter as matchfilter
+from glob import glob
 
 from pyspark.sql import SparkSession
 from .data_loader import NeuronDataSpark
@@ -60,17 +61,20 @@ class Functionalizer(object):
         self.recipe = Recipe(recipe_file)
 
         # Load info about touches
-        touch_info = touches.TouchInfo(touch_files)
-        neuron_stats = NeuronStats.create_from_touch_info(touch_info)
+        all_touch_files = glob(touch_files)
+        if not all_touch_files:
+            logger.critical("Invalid touch file path")
+
+        # self.touch_info = touches.TouchInfo(all_touch_files)
+        self.neuron_stats = NeuronStats()
 
         # Load Neurons data
         fdata = NeuronDataSpark(MVD_Morpho_Loader(mvd_file, morpho_dir), self.spark)
-        fdata.load_mvd_neurons_morphologies(total_parts=neuron_stats.total_neurons / 1000)
+
+        fdata.load_mvd_neurons_morphologies()
 
         # Shortcuts
         self._spark_data = fdata
-        self.touch_info = touch_info
-        self.neuron_stats = neuron_stats
         self.neuronDF = fdata.neuronDF
         self.morphologies = fdata.morphologyRDD
         self.mTypes = [MType(mtype) for mtype in fdata.mtypeVec]
@@ -79,14 +83,16 @@ class Functionalizer(object):
                                    for syn_class_name in fdata.synaClassVec]
 
         # 'Load' touches, from parquet if possible
-        touches_parquet_file = touch_info.touches_file + ".parquet"
-        if _path.isfile(touches_parquet_file):
-            self._touchDF = fdata.load_touch_parquet(touches_parquet_file) \
+        _file0 = all_touch_files[0]
+        touches_parquet_files_expr = _file0[:_file0.rfind(".")] + "Data.*.parquet"
+        touch_files_parquet = glob(touches_parquet_files_expr)
+        if touch_files_parquet:
+            self._touchDF = fdata.load_touch_parquet(touches_parquet_files_expr) \
                 .withColumnRenamed("pre_neuron_id", "src") \
                 .withColumnRenamed("post_neuron_id", "dst")
         else:
-            # Otherwise from the binary gitouches files
-            self._touchDF = fdata.load_touch_bin(touch_info)
+            # Otherwise from the binary touches files
+            self._touchDF = fdata.load_touch_bin(touch_files)
 
         # Create graphFrame and set it as stats source without recalculating
         self.neuronG = GraphFrame(self.neuronDF, self._touchDF)  # Rebuild graph

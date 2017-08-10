@@ -22,7 +22,8 @@ class NeuronStats(object):
         """
         obj = NeuronStats()
         obj.total_neurons = touch_info.header.numberOfNeurons
-        obj._total_touches = touch_info.touch_count
+        # Total touches can be already expensive to compute for large sets
+        obj._total_touches = touch_info.touch_count if obj.total_neurons < 10000 else None
         obj._prev_gf = True
         # We wont probably have all this info in the front node
         # obj.neuron_pre_touch_counts = {n_id: count for n_id, count, _ in touch_info.neuron_stats}
@@ -38,7 +39,7 @@ class NeuronStats(object):
 
     @property
     def total_touches(self):
-        if self._prev_gf in (True, self._touch_graph_frame):
+        if self._total_touches and self._prev_gf in (True, self._touch_graph_frame):
             return self._total_touches
         self._total_touches = self._touch_graph_frame.edges.count()
         self._prev_gf = self._touch_graph_frame

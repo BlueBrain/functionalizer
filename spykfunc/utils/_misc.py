@@ -82,8 +82,8 @@ class ColoredFormatter(_logging.Formatter):
         'WARNING': ConsoleColors.YELLOW,
         'INFO': ConsoleColors.WHITE,
         'DEBUG': ConsoleColors.BLUE,
-        'CRITICAL': ConsoleColors.YELLOW,
-        'ERROR': ConsoleColors.RED
+        'ERROR': ConsoleColors.RED,
+        'CRITICAL': ConsoleColors.RED
     }
 
     def format(self, record):

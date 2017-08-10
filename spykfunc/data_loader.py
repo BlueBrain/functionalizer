@@ -9,6 +9,7 @@ from .dataio.common import Part
 from .utils.spark_udef import DictAccum
 from .utils import get_logger
 try:
+    import morphotool
     from morphotool import MorphoReader
 except ImportError:
     print("Morphotool wont be available")
@@ -40,11 +41,14 @@ class NeuronDataSpark(NeuronData):
             self.morphologyRDD = None
 
     # ---
-    def _load_mvd_neurons(self, neuron_filter=None, total_parts=128):
+    def _load_mvd_neurons(self, neuron_filter=None, total_parts=None):
         # Neuron data which stays in client
         logger.info("Loading global Neuron data...")
         self.load_globals()
         n_neurons = int(self.nNeurons)
+
+        if total_parts is None:
+            total_parts = n_neurons / 100
 
         logger.info("Total neurons: %d", n_neurons)
         logger.debug("Partitions: %d", total_parts)
