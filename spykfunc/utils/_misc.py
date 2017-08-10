@@ -1,5 +1,7 @@
+from  __future__ import print_function
 import logging as _logging
 from future.builtins import input
+from contextlib import contextmanager
 from .. import Config
 import sys
 
@@ -105,3 +107,11 @@ def get_logger(name):
     logger.addHandler(DefaultHandler)
     logger.addHandler(ContinueAbortErrorLogHandler)
     return logger
+
+
+@contextmanager
+def show_wait_message(mesg):
+    print(mesg + " Please wait...", end="\r")
+    sys.stdout.flush()
+    yield
+    print(" "*(len(mesg) + 15), end="\r")  # Clear

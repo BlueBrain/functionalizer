@@ -8,7 +8,7 @@ import itertools
 import os.path
 from ._caching import CachedDataset, _DataSet
 import logging
-
+from ..utils import show_wait_message
 
 class NEURON_STATS_F:
     neuronID = 0
@@ -107,12 +107,10 @@ class _TouchInfo(TouchInfo_Interface):
 
     @property
     def _neuron_stats(self):
-        print("Loading '{}'. Please wait...".format(os.path.basename(self._neuron_file)), end="\r")
-        sys.stdout.flush()
         with open(self._neuron_file) as neuron_f:
             _ = self._read_header(neuron_f)
-            info = np.fromfile(neuron_f, dtype=self._neuron_touches_dtype)
-        print("                                                                     ", end="\r")  # Clear
+            with show_wait_message("Loading " + os.path.basename(self._neuron_file)):
+                info = np.fromfile(neuron_f, dtype=self._neuron_touches_dtype)
         return info
 
     @property
