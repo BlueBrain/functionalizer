@@ -7,7 +7,6 @@ CURDIR=$BASEDIR/envsetup
 PYENV=$CURDIR/sparkenv
 
 module purge
-module load spark/2.0.1
 module load gcc/4.8.2
 
 if [ ! -d $PYENV ]; then
@@ -24,6 +23,9 @@ if [ ! -d $PYENV ]; then
 else
     . $PYENV/bin/activate
 fi
+
+export PATH=$HOME/usr/spark-2.1.1/bin:$HOME/usr/jdk1.8.0_144/jre/bin:$PATH
+export JAVA_HOME=$HOME/usr/jdk1.8.0_144/jre
 
 export PYSPARK_DRIVER_PYTHON=ipython
 export SPARK_CONF_DIR=$CURDIR/spark_conf_viz

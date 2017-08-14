@@ -19,6 +19,7 @@ from glob import glob
 from pyspark.sql import SparkSession
 from .data_loader import NeuronDataSpark
 from .dataio.cppneuron import MVD_Morpho_Loader
+import time
 
 logger = utils.get_logger(__name__)
 
@@ -57,6 +58,8 @@ class Functionalizer(object):
 
     # ---
     def init_data(self, recipe_file, mvd_file, morpho_dir, touch_files):
+        logger.debug("%s: Data loading...", time.ctime())
+
         # Load recipe
         self.recipe = Recipe(recipe_file)
 
@@ -105,11 +108,11 @@ class Functionalizer(object):
 
     @touchDF.setter
     def touchDF(self, new_touches):
-        logger.info("Creating graph from given neuron and touch dataframes...")
         self._touchDF = new_touches
         self.neuronG = GraphFrame(self.neuronDF, self._touchDF)    # Rebuild graph
         self.neuron_stats.update_touch_graph_source(self.neuronG)  # Reset stats source
-        logger.debug(" > Number of touches after filter: %d", new_touches.count())
+        # _n = new_touches.count()
+        # logger.debug("[%s]: Number of touches after filter: %d", time.ctime(), _n)
 
     # ---
     def dataQ(self):
@@ -129,11 +132,14 @@ class Functionalizer(object):
     def process_filters(self):
         """Runs all functionalizer filters
         """
+        logger.debug("%s: Starting Filtering...", time.ctime())
         try:
             self.filter_by_soma_axon_distance()
             if self._run_s2f:
                 self.filter_by_touch_rules()
                 self.run_reduce_and_cut()
+            logger.debug("%s: Number of touches after filter: %d", time.ctime(), self.touchDF.count())
+            
         except Exception as e:
             print(e)
             return 1
