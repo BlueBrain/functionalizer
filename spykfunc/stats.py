@@ -32,7 +32,7 @@ class NeuronStats(object):
     def update_touch_graph_source(self, touch_GF, skip_update=False):
         self._touch_graph_frame = touch_GF
         # Define the DF of neurons-neurons counts, with morphology names
-        self.neurons_touch_counts = self._build_neurons_touch_counts(touch_GF)
+        self.neurons_touch_counts = self._build_neurons_touch_counts(touch_GF).cache()
         if not skip_update:
             self._prev_gf = self._touch_graph_frame
             self.total_neurons = self._touch_graph_frame.vertices.count()
@@ -64,20 +64,22 @@ class NeuronStats(object):
             F.sum(col("count")).alias("total_touches"),
             F.count(col("*")).alias("total_connections"))
 
-        return morpho_touches_conns.withColumn("average_touches_conn",
-                                               morpho_touches_conns.total_touches / morpho_touches_conns.total_connections)
+        morpho_touches_conns = morpho_touches_conns.withColumn(
+            "average_touches_conn",
+            morpho_touches_conns.total_touches / morpho_touches_conns.total_connections)
+            
+        return morpho_touches_conns.cache()
 
     @staticmethod
     def _build_neurons_touch_counts(neuronG):
         """ Counts the total touches between morphologies and neurons.
-            It is an important calculation, not so large, so we cache
         """
         return neuronG.find("(n1)-[t]->(n2)").groupBy(
             col("n1.morphology").alias("n1_morpho"),
             col("n2.morphology").alias("n2_morpho"),
             col("n1.id").alias("n1_id"),
-            col("n2.id").alias("n2_id")
-        ).count().cache()
+            col("n2.id").alias("n2_id"),
+        ).count()
 
 
 class MTYPE_STATS_FIELDS:

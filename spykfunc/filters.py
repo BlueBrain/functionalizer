@@ -12,7 +12,7 @@ if False: from .recipe import ConnectivityPathRule   # NOQA
 logger = get_logger(__name__)
 
 # Control variable that outputs intermediate calculations, and makes processing slower
-_DEBUG = False
+_DEBUG = True
 
 
 # --------------------------------------------------------------------------------------------------------------------
@@ -28,9 +28,11 @@ class BoutonDistanceFilter(DataSetOperation):
         self.synapse_classes_indexes = {syn: index for index, syn in enumerate(synapse_classes_by_index)}
 
     def apply(self, neuronG, *args, **kw):
+        # neuronDF = F.broadcast(neuronG.vertices)
         neuronDF = neuronG.vertices
         touchDF = neuronG.edges
-
+        
+        # Use broadcast of Neuron version
         newTouches = touchDF.alias("t").join(neuronDF.alias("n"), neuronDF.id == touchDF.dst) \
             .where("(t.distance_soma >= %f AND n.syn_class_index = %d) OR "
                    "(t.distance_soma >= %f AND n.syn_class_index = %d)" % (
@@ -126,9 +128,9 @@ class ReduceAndCut(DataSetOperation):
     # ---
     def apply(self, neuronG, *args, **kw):
 
-        params_df = self.compute_reduce_cut_params() \
-            .select(self._make_assoc_expr("n1_morpho", "n2_morpho"), "*")
-
+        params_df = F.broadcast(self.compute_reduce_cut_params() \
+            .select(self._make_assoc_expr("n1_morpho", "n2_morpho"), "*"))
+            
         # Flatten GraphFrame and include morpho>morpho row
         full_touches = neuronG.find("(n1)-[t]->(n2)") \
             .select(self._make_assoc_expr("n1.morphology", "n2.morphology"), "*")
@@ -154,6 +156,7 @@ class ReduceAndCut(DataSetOperation):
     # ---
     def compute_reduce_cut_params(self):
         # First obtain the morpho-morpho stats dataframe
+        
         mtype_stats = self.stats.mtype_touch_stats
 
         # param create udf
@@ -184,11 +187,7 @@ class ReduceAndCut(DataSetOperation):
     def apply_cut(reduced_touches, params_df):
         """ Apply cut filter
         """
-
-        # Used few times, with large mem should profit from caching
-        # reduced_touches = reduced_touches.cache()
-
-        params_df = params_df.withColumn("sigma", params_df.pMu_A / 4)
+        params_df = F.broadcast(params_df.withColumn("sigma", params_df.pMu_A / 4))
 
         post_neuron_touch_counts = (
             reduced_touches
@@ -208,8 +207,9 @@ class ReduceAndCut(DataSetOperation):
             .where(F.col("rand") < F.col("survivalRate"))
             .select(F.col("morpho_assoc").alias("m"), F.col("post_neuron_id"))
         )
+        
         # A small DF which is required entirely by all workers
-        F.broadcast(shall_not_cut)
+        shall_not_cut = F.broadcast(shall_not_cut.cache())
 
         cut_touches = (
             reduced_touches

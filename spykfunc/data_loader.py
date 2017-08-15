@@ -1,6 +1,7 @@
 from __future__ import print_function, absolute_import
 import os
 
+from pyspark.sql import functions as F
 from .definitions import MType
 from .dataio.cppneuron import NeuronData
 from . import schema
@@ -55,22 +56,31 @@ class NeuronDataSpark(NeuronData):
         logger.info("Total neurons: %d", n_neurons)
         logger.debug("Partitions: %d", total_parts)
 
-        # Initial RDD has only the range objects
-        neuronRDD = self._sc.parallelize(range(total_parts), total_parts)
 
-        # LOAD neurons in parallel
-        name_accu = self._sc.accumulator({}, DictAccum())
-        neuronRDD = neuronRDD.flatMap(
-            neuron_loader_gen(NeuronData, self._loader.__class__, self._loader.get_params(), n_neurons, total_parts, name_accu,
-                              self.mtypeVec))
+        if self._spark.sql("show tables like 'neuronDF'").collect():
+            self.neuronDF = F.broadcast(self._spark.table("neuronDF").cache())
 
-        # Create DF
-        logger.info("Creating data frame...")
-        self.neuronDF = self._spark.createDataFrame(neuronRDD, schema.NEURON_SCHEMA).cache()
+        else:
+            # Initial RDD has only the range objects
+            neuronRDD = self._sc.parallelize(range(total_parts), total_parts)
 
-        # Evaluate to get NameMap
-        logger.info("Total: %d", self.neuronDF.count())
-        self.set_name_map(name_accu.value)
+            # LOAD neurons in parallel
+            name_accu = self._sc.accumulator({}, DictAccum())
+            neuronRDD = neuronRDD.flatMap(
+                neuron_loader_gen(NeuronData, self._loader.__class__, self._loader.get_params(), n_neurons, total_parts, name_accu,
+                                  self.mtypeVec))
+
+            # Create DF
+            logger.info("Creating data frame...")
+            # Mark as "broadcastable" and cache
+            self.neuronDF = F.broadcast(self._spark.createDataFrame(neuronRDD, schema.NEURON_SCHEMA)).cache()            
+
+            # Evaluate to get NameMap
+            logger.info("Total: %d", self.neuronDF.count())
+            self.set_name_map(name_accu.value)
+
+            neuronDF.write.saveAsTable("neuronDF")
+        
 
     # ---
     def _load_h5_morphologies(self, names, filter=None, total_parts=128):
@@ -98,8 +108,6 @@ class NeuronDataSpark(NeuronData):
             for f in files[1:]:
                 self.touchDF.union(self.load_touch_parquet(f))
 
-        # Caching everything might be evil
-        # self.touchDF = self.touchDF.cache()
         return self.touchDF
 
     # ---

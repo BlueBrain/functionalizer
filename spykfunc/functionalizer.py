@@ -8,6 +8,7 @@ from .recipe import Recipe
 if False: from .recipe import ConnectivityPathRule  # NOQA
 from . import _filtering
 # from morphotool import MorphologyDB
+from pyspark.sql import functions as F
 from .dataio import touches
 from .stats import NeuronStats
 from .definitions import CellClass, MType
@@ -111,8 +112,6 @@ class Functionalizer(object):
         self._touchDF = new_touches
         self.neuronG = GraphFrame(self.neuronDF, self._touchDF)    # Rebuild graph
         self.neuron_stats.update_touch_graph_source(self.neuronG)  # Reset stats source
-        # _n = new_touches.count()
-        # logger.debug("[%s]: Number of touches after filter: %d", time.ctime(), _n)
 
     # ---
     def dataQ(self):
@@ -134,11 +133,16 @@ class Functionalizer(object):
         """
         logger.debug("%s: Starting Filtering...", time.ctime())
         try:
-            self.filter_by_soma_axon_distance()
+            #self.filter_by_soma_axon_distance()        
             if self._run_s2f:
-                self.filter_by_touch_rules()
+                pass
+                #self.filter_by_touch_rules()
+                #n = self.touchDF.count()
+                #logger.debug("%s: Number of touches after filter: %d", time.ctime(), n)
                 self.run_reduce_and_cut()
-            logger.debug("%s: Number of touches after filter: %d", time.ctime(), self.touchDF.count())
+            # DEBUG
+            #n = self.touchDF.count()
+            #logger.debug("%s: Number of touches after filter: %d", time.ctime(), n)
             
         except Exception as e:
             print(e)
