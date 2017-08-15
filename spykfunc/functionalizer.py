@@ -133,16 +133,16 @@ class Functionalizer(object):
         """
         logger.debug("%s: Starting Filtering...", time.ctime())
         try:
-            #self.filter_by_soma_axon_distance()        
+            self.filter_by_soma_axon_distance()        
             if self._run_s2f:
                 pass
-                #self.filter_by_touch_rules()
-                #n = self.touchDF.count()
-                #logger.debug("%s: Number of touches after filter: %d", time.ctime(), n)
+                self.filter_by_touch_rules()
+                n = self.touchDF.count()
+                logger.debug("%s: Number of touches after First filters: %d", time.ctime(), n)
                 self.run_reduce_and_cut()
             # DEBUG
-            #n = self.touchDF.count()
-            #logger.debug("%s: Number of touches after filter: %d", time.ctime(), n)
+            n = self.touchDF.count()
+            logger.debug("%s: Number of touches after filter: %d", time.ctime(), n)
             
         except Exception as e:
             print(e)
