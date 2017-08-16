@@ -21,7 +21,7 @@ class BoutonDistanceFilter(DataSetOperation):
     """
     Class implementing filtering by Bouton Distance (min. distance to soma)
     """
-    # --------------------------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------------------------
     synapse_classes_by_index_default = [CellClass.CLASS_INH, CellClass.CLASS_EXC]
 
     def __init__(self, bouton_distance_obj, synapse_classes_by_index=synapse_classes_by_index_default):
@@ -32,7 +32,7 @@ class BoutonDistanceFilter(DataSetOperation):
         # neuronDF = F.broadcast(neuronG.vertices)
         neuronDF = neuronG.vertices
         touchDF = neuronG.edges
-        
+
         # Use broadcast of Neuron version
         newTouches = touchDF.alias("t").join(neuronDF.alias("n"), neuronDF.id == touchDF.dst) \
             .where("(t.distance_soma >= %f AND n.syn_class_index = %d) OR "
@@ -129,12 +129,13 @@ class ReduceAndCut(DataSetOperation):
     # ---
     def apply(self, neuronG, *args, **kw):
 
-        params_df = F.broadcast(self.compute_reduce_cut_params() \
-            .select(self._make_assoc_expr("n1_morpho", "n2_morpho"), "*"))
-            
+        params_df = F.broadcast(self.compute_reduce_cut_params()
+                                .select(self._make_assoc_expr("n1_morpho", "n2_morpho"), "*"))
+
         # Flatten GraphFrame and include morpho>morpho row
         full_touches = neuronG.find("(n1)-[t]->(n2)") \
             .select(self._make_assoc_expr("n1.morphology", "n2.morphology"), "*")
+
         if _DEBUG:
             params_df.show()
             logger.info("Original touch count: %d", full_touches.count())
@@ -151,8 +152,7 @@ class ReduceAndCut(DataSetOperation):
 
     @staticmethod
     def _make_assoc_expr(col1, col2):
-        return F.concat(F.col(col1), F.lit(">"), F.col(col2)
-                        ).alias("morpho_assoc")
+        return F.concat(F.col(col1), F.lit(">"), F.col(col2)).alias("morpho_assoc")
 
     # ---
     def compute_reduce_cut_params(self):
@@ -209,10 +209,12 @@ class ReduceAndCut(DataSetOperation):
             .withColumn("rand", F.rand())
             .where(F.col("rand") < F.col("survivalRate"))
             .select(F.col("morpho_assoc").alias("m"), F.col("post_neuron_id"))
-        )
-        
+        ).cache()
+
         # A small DF which is required entirely by all workers
-        shall_not_cut = F.broadcast(shall_not_cut.cache())
+        logger.info("Calculating cut touches...")
+        logger.info("Cutting %d touches", shall_not_cut.count())  # Materialize it
+        shall_not_cut = F.broadcast(shall_not_cut)
 
         cut_touches = (
             reduced_touches
