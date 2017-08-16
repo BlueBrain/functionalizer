@@ -4,23 +4,25 @@ from __future__ import print_function, absolute_import
 # *************************************************************************
 
 import os.path as _path
-from .recipe import Recipe
-if False: from .recipe import ConnectivityPathRule  # NOQA
-from . import _filtering
-# from morphotool import MorphologyDB
-from pyspark.sql import functions as F
-from .dataio import touches
-from .stats import NeuronStats
-from .definitions import CellClass, MType
-from . import filters
-from . import utils
 from fnmatch import filter as matchfilter
 from glob import glob
-
-from pyspark.sql import SparkSession
-from .data_loader import NeuronDataSpark
-from .dataio.cppneuron import MVD_Morpho_Loader
 import time
+
+from pyspark.sql import functions as F
+from pyspark.sql import SparkSession
+from pyspark import StorageLevel
+
+# from morphotool import MorphologyDB
+from .definitions import CellClass, MType
+from .recipe import Recipe
+from .data_loader import NeuronDataSpark
+from .dataio import touches
+from .dataio.cppneuron import MVD_Morpho_Loader
+from .stats import NeuronStats
+from . import _filtering
+from . import filters
+from . import utils
+if False: from .recipe import ConnectivityPathRule  # NOQA
 
 logger = utils.get_logger(__name__)
 
@@ -135,10 +137,10 @@ class Functionalizer(object):
         try:
             self.filter_by_soma_axon_distance()        
             if self._run_s2f:
-                pass
                 self.filter_by_touch_rules()
-                n = self.touchDF.count()
-                logger.debug("%s: Number of touches after First filters: %d", time.ctime(), n)
+                
+              
+                
                 self.run_reduce_and_cut()
             # DEBUG
             n = self.touchDF.count()
@@ -163,7 +165,20 @@ class Functionalizer(object):
         """
         logger.info("Filtering by touchRules...")
         touch_rules_filter = filters.TouchRulesFilter(self.recipe.touch_rules)
-        self.touchDF = touch_rules_filter.apply(self.neuronG)
+        newtouchDF = touch_rules_filter.apply(self.neuronG)
+
+        # So far there was quite some processing which would be lost since data 
+        # is read everytime from disk, so we persist it for next RC step
+        logger.debug("... and dumping intermediate touches...")
+        self.touchDF = newtouchDF.persist(StorageLevel.DISK_ONLY)
+        
+        # NOTE: Using count() or other functions which materialize the DF might incur
+        # an extra read step for the subsequent action (to be analyzed)
+        # In the case of DISK_ONLY caches() that would have a signifficant impact, so we avoid it.
+        # 
+        # n = self.touchDF.count()
+        # logger.info("%s: Number of touches after Touch Rules filters: %d", time.ctime(), n)
+        
 
     def run_reduce_and_cut(self):
         """Apply Reduce and Cut

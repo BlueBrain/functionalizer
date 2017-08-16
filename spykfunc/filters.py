@@ -2,6 +2,7 @@ from __future__ import division
 
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
+from pyspark import StorageLevel
 from math import exp
 from .definitions import CellClass
 from ._filtering import DataSetOperation
@@ -128,23 +129,31 @@ class ReduceAndCut(DataSetOperation):
 
     # ---
     def apply(self, neuronG, *args, **kw):
+        # Get a reference to the original DF, so later we can release the disk cache
+        touchDF = neuronG.edges    
 
         params_df = F.broadcast(self.compute_reduce_cut_params()
                                 .select(self._make_assoc_expr("n1_morpho", "n2_morpho"), "*"))
-
+                                
         # Flatten GraphFrame and include morpho>morpho row
         full_touches = neuronG.find("(n1)-[t]->(n2)") \
-            .select(self._make_assoc_expr("n1.morphology", "n2.morphology"), "*")
-
-        if _DEBUG:
-            params_df.show()
-            logger.info("Original touch count: %d", full_touches.count())
+            .select(self._make_assoc_expr("n1.morphology", "n2.morphology"), "t")  # We only need the assoc and the touch
 
         # Reduce
+        logger.info("Applying Reduce step...")
         reduced_touches = self.apply_reduce(full_touches, params_df)
-        if _DEBUG: logger.info("Reduce touch count:   %d", reduced_touches.count())  # NOQA
+        
+        
+        # # === NOTE: THIS SECTION REQUIRES CAREFUL ANALYSIS ===
+        # Cache (to disk - wont fit in mem!)
+        reduced_touches = reduced_touches.persist(StorageLevel.DISK_ONLY)        
+        # if _DEBUG: logger.info("Reduce touch count:   %d", reduced_touches.count())  # NOQA
+        # Release previous cache (Ensure it wont be used anymore!)
+        # touchDF.unpersist()
+        # ---------------------------------------
 
         # Cut
+        logger.info("Applying Cut step...")
         cut_touches = self.apply_cut(reduced_touches, params_df)
         if _DEBUG: logger.info("Cut touch count:      %d", cut_touches.count())  # NOQA
 
@@ -157,9 +166,11 @@ class ReduceAndCut(DataSetOperation):
     # ---
     def compute_reduce_cut_params(self):
         # First obtain the morpho-morpho stats dataframe
-        # We use mtype_touch_stats which is cached. It requires a huge shuffle
-        #  anyway so we can cache (considering we run on systems with much larger mem, e.g. 2M neurons produce a 40GB DF)
+        # We use mtype_touch_stats which is cached. It requires a huge shuffle anyway
+        #   so we can cache (considering we run on systems with much larger mem, e.g. 2M neurons produce a 40GB DF)
         mtype_stats = self.stats.mtype_touch_stats
+        # No problem in evaluating now, it was cached
+        logger.debug("Number of Mtype Assoc: %d", mtype_stats.count())
 
         # param create udf
         rc_param_maker = reduce_cut_parameter_udef(self.conn_rules)
@@ -194,7 +205,7 @@ class ReduceAndCut(DataSetOperation):
         # This will incur a large shuffle which triggers the calculation of reduced_touches
         post_neuron_touch_counts = (
             reduced_touches
-            .groupBy("morpho_assoc", F.col("n2.id").alias("post_neuron_id"))
+            .groupBy("morpho_assoc", F.col("t.dst").alias("post_neuron_id"))
             .count().withColumnRenamed("count", "post_touches_count")
             # Add pMu_A, sigma to post_neuron info
             .join(params_df.select("morpho_assoc", "pMu_A", "sigma"), "morpho_assoc")
