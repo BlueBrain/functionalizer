@@ -1,5 +1,6 @@
 from __future__ import print_function, absolute_import
 import os
+import shutil
 
 from pyspark.sql import functions as F
 from .definitions import MType
@@ -79,7 +80,8 @@ class NeuronDataSpark(NeuronData):
             logger.info("Total: %d", self.neuronDF.count())
             self.set_name_map(name_accu.value)
 
-            neuronDF.write.saveAsTable("neuronDF")
+            shutil.rmtree("spark-warehouse/neurondf")
+            self.neuronDF.write.saveAsTable("neuronDF")
         
 
     # ---

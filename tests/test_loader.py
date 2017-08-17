@@ -6,6 +6,10 @@ A Pyton executable showing/testing the use of NeuronData
 from spykfunc.dataio import cppneuron, common
 import logging
 import os
+try:
+    import morphotool
+except ImportError:
+    morphotool = None
 
 CURDIR = os.path.dirname(__file__)
 viz = "/gpfs/bbp.cscs.ch/project/proj16/leite/TestData"
@@ -31,11 +35,14 @@ def test_loader():
     print(nrn)
     assert nrn[0] == 250
 
-    if os.path.isdir(morpho_dir):
-        print("Loading morphos")
-        da.load_morphologies()
+    if morphotool:
+        if os.path.isdir(morpho_dir):
+            print("Loading morphos")
+            da.load_morphologies()
+        else:
+            logging.warning("Cant find path for loading morphologies. Please create a link to the TestData directory")
     else:
-        logging.warning("Cant find path for loading morphologies. Please create a link to the TestData directory")
+        print("Morphotool not available. Skipping morpho load test")
 
 
 if __name__ == '__main__':
