@@ -224,7 +224,7 @@ class ReduceAndCut(DataSetOperation):
 
         # A small DF which is required entirely by all workers
         logger.info("Calculating cut touches...")
-        logger.info("Cutting %d touches", shall_not_cut.count())  # Materialize it
+        shall_not_cut.count()  # Materialize it
         shall_not_cut = F.broadcast(shall_not_cut)
 
         cut_touches = (
