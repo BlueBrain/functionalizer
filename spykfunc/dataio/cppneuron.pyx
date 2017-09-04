@@ -128,16 +128,16 @@ cdef class MVD_Morpho_Loader(NeuronLoaderI):
     A loader of Neurons and morphologies using bindings for MVD tool
     """
     # Paths
-    cdef string _mvd_filename
-    cdef string _morphology_dir
+    cdef readonly string mvd_filename
+    cdef readonly string morphology_dir
 
     def __init__(self, string mvd_filename, string morphology_dir):
-        self._mvd_filename = mvd_filename
-        self._morphology_dir = morphology_dir
+        self.mvd_filename = mvd_filename
+        self.morphology_dir = morphology_dir
 
     def load_globals(self, NeuronData neuron_data_dst):
         #Load and then set ptr
-        cdef MVD3.MVD3File *f = new MVD3.MVD3File(self._mvd_filename)
+        cdef MVD3.MVD3File *f = new MVD3.MVD3File(self.mvd_filename)
 
         # --- Global info ---
         #Nr
@@ -155,7 +155,7 @@ cdef class MVD_Morpho_Loader(NeuronLoaderI):
 
 
     def load_neurons(self, NeuronData neuron_data, _Part_t part=None):
-        cdef MVD3.MVD3File *f = new MVD3.MVD3File(self._mvd_filename)
+        cdef MVD3.MVD3File *f = new MVD3.MVD3File(self.mvd_filename)
         cdef size_t total_neurons = neuron_data.nNeurons
 
         # Range
@@ -208,11 +208,11 @@ cdef class MVD_Morpho_Loader(NeuronLoaderI):
 
     def load_morphology(self, NeuronData neuron_data, string morpho_name):
         assert morphotool, "Morphotool isnt available."
-        morph = neuron_data.morphologies[morpho_name] = MorphoReader(os.path.join(self._morphology_dir, morpho_name + ".h5")).create_morpho_tree()
+        morph = neuron_data.morphologies[morpho_name] = MorphoReader(os.path.join(self.morphology_dir, morpho_name + ".h5")).create_morpho_tree()
         return morph
 
     def get_params(self):
         return {
-            "mvd_filename" : self._mvd_filename,
-            "morphology_dir": self._morphology_dir
+            "mvd_filename" : self.mvd_filename,
+            "morphology_dir": self.morphology_dir
         }

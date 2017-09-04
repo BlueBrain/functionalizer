@@ -31,10 +31,10 @@ class NeuronStats(object):
 
     def update_touch_graph_source(self, touch_GF, skip_update=False):
         self._touch_graph_frame = touch_GF
-        
+
         # Define the DF of neurons-neurons counts, with morphology names
         self.neurons_touch_counts = self._build_neurons_touch_counts(touch_GF).cache()
-        
+
         if not skip_update:
             self._prev_gf = self._touch_graph_frame
             self.total_neurons = self._touch_graph_frame.vertices.count()
@@ -69,7 +69,7 @@ class NeuronStats(object):
         morpho_touches_conns = morpho_touches_conns.withColumn(
             "average_touches_conn",
             morpho_touches_conns.total_touches / morpho_touches_conns.total_connections)
-            
+
         return morpho_touches_conns.cache()
 
     @staticmethod

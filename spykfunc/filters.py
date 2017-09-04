@@ -130,11 +130,11 @@ class ReduceAndCut(DataSetOperation):
     # ---
     def apply(self, neuronG, *args, **kw):
         # Get a reference to the original DF, so later we can release the disk cache
-        touchDF = neuronG.edges    
+        touchDF = neuronG.edges
 
         params_df = F.broadcast(self.compute_reduce_cut_params()
                                 .select(self._make_assoc_expr("n1_morpho", "n2_morpho"), "*"))
-                                
+
         # Flatten GraphFrame and include morpho>morpho row
         full_touches = neuronG.find("(n1)-[t]->(n2)") \
             .select(self._make_assoc_expr("n1.morphology", "n2.morphology"), "t")  # We only need the assoc and the touch
@@ -142,11 +142,11 @@ class ReduceAndCut(DataSetOperation):
         # Reduce
         logger.info("Applying Reduce step...")
         reduced_touches = self.apply_reduce(full_touches, params_df)
-        
-        
+
+
         # # === NOTE: THIS SECTION REQUIRES CAREFUL ANALYSIS ===
         # Cache (to disk - wont fit in mem!)
-        reduced_touches = reduced_touches.persist(StorageLevel.DISK_ONLY)        
+        reduced_touches = reduced_touches.persist(StorageLevel.DISK_ONLY)
         # if _DEBUG: logger.info("Reduce touch count:   %d", reduced_touches.count())  # NOQA
         # Release previous cache (Ensure it wont be used anymore!)
         # touchDF.unpersist()

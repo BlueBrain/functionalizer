@@ -1,6 +1,5 @@
 from __future__ import print_function, absolute_import
 import os
-import shutil
 
 from pyspark.sql import functions as F
 from .definitions import MType
@@ -57,9 +56,10 @@ class NeuronDataSpark(NeuronData):
         logger.info("Total neurons: %d", n_neurons)
         logger.debug("Partitions: %d", total_parts)
 
+        mvd_table_name = "neuronDF{}k".format(n_neurons//1000)  # ""neurons_{}".format(self._loader._mvd_filename)
 
-        if self._spark.sql("show tables like 'neuronDF'").collect():
-            self.neuronDF = F.broadcast(self._spark.table("neuronDF").cache())
+        if self._spark.sql("show tables like '{}'".format(mvd_table_name)).collect():
+            self.neuronDF = F.broadcast(self._spark.table(mvd_table_name).cache())
 
         else:
             # Initial RDD has only the range objects
@@ -68,20 +68,23 @@ class NeuronDataSpark(NeuronData):
             # LOAD neurons in parallel
             name_accu = self._sc.accumulator({}, DictAccum())
             neuronRDD = neuronRDD.flatMap(
-                neuron_loader_gen(NeuronData, self._loader.__class__, self._loader.get_params(), n_neurons, total_parts, name_accu,
-                                  self.mtypeVec))
+                neuron_loader_gen(NeuronData, self._loader.__class__,
+                                  self._loader.get_params(),
+                                  n_neurons, total_parts, name_accu, self.mtypeVec))
 
             # Create DF
             logger.info("Creating data frame...")
             # Mark as "broadcastable" and cache
-            self.neuronDF = F.broadcast(self._spark.createDataFrame(neuronRDD, schema.NEURON_SCHEMA)).cache()            
+            self.neuronDF = F.broadcast(
+                self._spark.createDataFrame(neuronRDD, schema.NEURON_SCHEMA)
+            ).cache()
 
             # Evaluate to get NameMap
             logger.info("Total: %d", self.neuronDF.count())
             self.set_name_map(name_accu.value)
 
-            self.neuronDF.write.mode('overwrite').saveAsTable("neuronDF")
-        
+            self.neuronDF.write.mode('overwrite').saveAsTable(mvd_table_name)
+
 
     # ---
     def _load_h5_morphologies(self, names, filter=None, total_parts=128):

@@ -29,9 +29,9 @@ logger = utils.get_logger(__name__)
 try:
     from graphframes import GraphFrame
 except ImportError:
-    raise ImportError("""graphframes
+    logger.warning("""graphframes could not be imported
     Please start a spark instance with GraphFrames support
-    e.g. pyspark --packages graphframes:graphframes:0.2.0-spark2.0-s_2.11""")
+    e.g. pyspark --packages graphframes:graphframes:0.5.0-spark2.1-s_2.11""")
 
 
 class Functionalizer(object):
@@ -136,17 +136,14 @@ class Functionalizer(object):
         """
         logger.debug("%s: Starting Filtering...", time.ctime())
         try:
-            self.filter_by_soma_axon_distance()        
+            self.filter_by_soma_axon_distance()
             if self._run_s2f:
                 self.filter_by_touch_rules()
-                
-              
-                
                 self.run_reduce_and_cut()
             # DEBUG
             n = self.touchDF.count()
             logger.debug("%s: Number of touches after filter: %d", time.ctime(), n)
-            
+
         except Exception as e:
             print(e)
             return 1
@@ -168,18 +165,18 @@ class Functionalizer(object):
         touch_rules_filter = filters.TouchRulesFilter(self.recipe.touch_rules)
         newtouchDF = touch_rules_filter.apply(self.neuronG)
 
-        # So far there was quite some processing which would be lost since data 
+        # So far there was quite some processing which would be lost since data
         # is read everytime from disk, so we persist it for next RC step
         logger.debug("... and dumping intermediate touches...")
         self.touchDF = newtouchDF.persist(StorageLevel.DISK_ONLY)
-        
+
         # NOTE: Using count() or other functions which materialize the DF might incur
         # an extra read step for the subsequent action (to be analyzed)
         # In the case of DISK_ONLY caches() that would have a signifficant impact, so we avoid it.
-        # 
+        #
         # n = self.touchDF.count()
         # logger.info("%s: Number of touches after Touch Rules filters: %d", time.ctime(), n)
-        
+
 
     def run_reduce_and_cut(self):
         """Apply Reduce and Cut

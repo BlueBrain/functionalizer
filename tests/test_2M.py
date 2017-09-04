@@ -9,7 +9,7 @@ print("Path for touches: " + path.join(DATA, "circuit/touches.*"))
 args = (
     path.join(BASE_DIR, "recipe/builderRecipeAllPathways.xml"),  # recipe_file
     path.join(DATA, "circuit.mvd3"),                         # mvd_file
-    path.join(BASE_DIR, "morphologies/h5"),                      # morpho_dir
+    path.join(BASE_DIR, "morphologies/h5"),                  # morpho_dir
     path.join(DATA, "circuit/touches.*")                     # touch_files
 )
 
