@@ -50,7 +50,7 @@ class NeuronDataSpark(NeuronData):
         n_neurons = int(self.nNeurons)
 
         if total_parts is None:
-            total_parts = n_neurons / 200
+            total_parts = n_neurons // 200
         if total_parts > 256:
             total_parts = 256
 
@@ -80,8 +80,7 @@ class NeuronDataSpark(NeuronData):
             logger.info("Total: %d", self.neuronDF.count())
             self.set_name_map(name_accu.value)
 
-            shutil.rmtree("spark-warehouse/neurondf")
-            self.neuronDF.write.saveAsTable("neuronDF")
+            self.neuronDF.write.mode('overwrite').saveAsTable("neuronDF")
         
 
     # ---

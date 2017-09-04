@@ -29,7 +29,8 @@ logger = utils.get_logger(__name__)
 try:
     from graphframes import GraphFrame
 except ImportError:
-    print("""Please start a spark instance with GraphFrames support
+    raise ImportError("""graphframes
+    Please start a spark instance with GraphFrames support
     e.g. pyspark --packages graphframes:graphframes:0.2.0-spark2.0-s_2.11""")
 
 
