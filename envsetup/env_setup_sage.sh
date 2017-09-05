@@ -25,6 +25,10 @@ export PYTHONPATH=$PYTHONPATH:$SPARK_HOME/python
 
 export PYSPARK_DRIVER_PYTHON=ipython
 export SPARK_CONF_DIR=$CURDIR/spark_conf_sage
+
+export MODULEPATH=/home/kumbhar/SPACK_INSTALL/modules/linux-rhel7-x86_64/
+module load hdf5
+
 # Avoid add things to PYTHONPATH. Use setup.py develop (pip install -e .)
 # PYTHONPATH = $CURDIR
 

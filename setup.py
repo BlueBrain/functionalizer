@@ -40,6 +40,7 @@ class PyTest(TestCommand):
 _ext_dir = 'spykfunc/dataio/'
 _ext_mod = 'spykfunc.dataio.'
 _filename_ext = '.pyx' if build_mode == 'devel' else '.cpp'
+
 ext_mods = {
     'common': {},
     'structbuf': {},
@@ -58,7 +59,8 @@ extensions = [
     for name, opts in ext_mods.items()
 ]
 extensions.append(
-    Extension('tst_neuron_memview', ['tests/tst_neuron_memview' + _filename_ext],
+    Extension('tst_neuron_memview', 
+              ['tests/tst_neuron_memview' + _filename_ext],
               language="c++"))
 
 if build_mode == 'devel':
