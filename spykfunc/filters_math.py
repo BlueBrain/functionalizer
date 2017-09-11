@@ -1,5 +1,6 @@
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
+from math import exp
 import logging
 
 # **************************************************
@@ -14,8 +15,12 @@ _RC_params_schema = T.StructType([
 
 
 def reduce_cut_parameter_udef(conn_rules_map):
-    # structuralMean = globalConnectionMeans[comboIndex]
-    # structuralProbability = 1.0
+    # Defaults
+    activeFraction_default = 0.5
+    boutonReductionFactor_default = 0.04
+
+    # TODO: Active Fraction is no longer calculated this way here.
+    #  --> Please see activePathway.getActiveFraction() in ConversionObject
 
     # this f will be serialized and transmitted to workers
     def f(mtype_src, mtype_dst, structuralMean):
@@ -56,8 +61,7 @@ def reduce_cut_parameter_udef(conn_rules_map):
                 mu_A = 0.5 + rule.mean_syns_connection - sdt
                 syn_pprime = 1 / (sdt + 0.5)
                 p_A = p / (1 - p) * (1 - syn_pprime) / syn_pprime
-                logging.warning("Active fraction not set when calculating R&C parameters from rule " + str(rule))
-                pActiveFraction = None
+                pActiveFraction = activeFraction_default
 
             elif rule.probability:
                 # unassigned in s2f 2.0
@@ -93,6 +97,9 @@ def reduce_cut_parameter_udef(conn_rules_map):
             return nil
 
         pMu_A = mu_A - 0.5
+        if pActiveFraction > 1.0:
+            pActiveFraction = 0
+
         return p_A, pMu_A, pActiveFraction
 
     # DEBUG

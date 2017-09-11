@@ -143,39 +143,41 @@ class ReduceAndCut(DataSetOperation):
         logger.info("Applying Reduce step...")
         reduced_touches = self.apply_reduce(full_touches, params_df)
 
-
-        # # === NOTE: THIS SECTION REQUIRES CAREFUL ANALYSIS ===
-        # Cache (to disk - wont fit in mem!)
+        # Cache results so far (to disk - wont fit in mem!) - required otherwise they'r recomputed several times
         reduced_touches = reduced_touches.persist(StorageLevel.DISK_ONLY)
-        # if _DEBUG: logger.info("Reduce touch count:   %d", reduced_touches.count())  # NOQA
-        # Release previous cache (Ensure it wont be used anymore!)
-        # touchDF.unpersist()
-        # ---------------------------------------
 
         # Cut
         logger.info("Applying Cut step...")
         cut_touches = self.apply_cut(reduced_touches, params_df)
         if _DEBUG: logger.info("Cut touch count:      %d", cut_touches.count())  # NOQA
 
+        # TODO: The ActiveFraction is wrong because at some point in functionalizer they
+        #       switched to compute it via a specific getActiveFraction() f.
+        # TODO: We also need to implement filtering out by ActiveFraction
+
         return cut_touches
 
     @staticmethod
     def _make_assoc_expr(col1, col2):
+        # TODO: Instead of string, eventually compute an integer -> should compare faster
         return F.concat(F.col(col1), F.lit(">"), F.col(col2)).alias("morpho_assoc")
 
     # ---
     def compute_reduce_cut_params(self):
         # First obtain the morpho-morpho stats dataframe
-        # We use mtype_touch_stats which is cached. It requires a huge shuffle anyway
+        #   We use mtype_touch_stats which is cached. It requires a huge shuffle anyway
         #   so we can cache (considering we run on systems with much larger mem, e.g. 2M neurons produce a 40GB DF)
         mtype_stats = self.stats.mtype_touch_stats
-        # No problem in evaluating now, it was cached
-        logger.debug("Number of Mtype Assoc: %d", mtype_stats.count())
+        logger.debug("Number of Mtype Assoc: %d", mtype_stats.count())  # No problem in evaluating now, it was cached
 
         # param create udf
         rc_param_maker = reduce_cut_parameter_udef(self.conn_rules)
 
+        # NOTE: Case of Pathway [MType-MType] not in the recipe
+        # TODO: Apparently it doesn't cut. We should issue a warning!
+
         # Extract p_A, mu_A, activeFraction
+        # TODO: activeFraction is calculated the legacy way. We should change
         return (
             mtype_stats
             .select("*",  # We can see here the fields of mtype_stats, which are used for rc_param_maker
@@ -202,11 +204,14 @@ class ReduceAndCut(DataSetOperation):
         """
         params_df = params_df.withColumn("sigma", params_df.pMu_A / 4)
 
-        # This will incur a large shuffle which triggers the calculation of reduced_touches
-        post_neuron_touch_counts = (
+        # Compute the touch_counts per morpho_assoc (aka pathway) in post-synaptic view  and related survivalRate
+        # This triggers the calculation of reduced_touches
+        # The groupBy will incur a large shuffle of the reduced_touches
+        post_pathway_touch_counts = (
             reduced_touches
             .groupBy("morpho_assoc", F.col("t.dst").alias("post_neuron_id"))
             .count().withColumnRenamed("count", "post_touches_count")
+
             # Add pMu_A, sigma to post_neuron info
             .join(params_df.select("morpho_assoc", "pMu_A", "sigma"), "morpho_assoc")
             # Calc survivalRate
@@ -216,15 +221,16 @@ class ReduceAndCut(DataSetOperation):
         )
 
         shall_not_cut = (
-            post_neuron_touch_counts
+            post_pathway_touch_counts
             .withColumn("rand", F.rand())
             .where(F.col("rand") < F.col("survivalRate"))
             .select(F.col("morpho_assoc").alias("m"), F.col("post_neuron_id"))
         ).cache()
 
-        # A small DF which is required entirely by all workers
         logger.info("Calculating cut touches...")
-        shall_not_cut.count()  # Materialize it
+        # shall_not_cut is a small DF which is required entirely by all workers
+        # Materialize the cache before broadcasting it (solves an issue related to broadcast delays)
+        shall_not_cut.count()
         shall_not_cut = F.broadcast(shall_not_cut)
 
         cut_touches = (
@@ -234,7 +240,6 @@ class ReduceAndCut(DataSetOperation):
             .select("t.*")
         )
         return cut_touches
-
 
 
 # --------------------------------------------------------------------------------------------------------------------
