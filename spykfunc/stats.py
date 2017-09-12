@@ -29,13 +29,13 @@ class NeuronStats(object):
         # obj.neuron_pre_touch_counts = {n_id: count for n_id, count, _ in touch_info.neuron_stats}
         return obj
 
-    def update_touch_graph_source(self, touch_GF, skip_update=False):
+    def update_touch_graph_source(self, touch_GF, overwrite_previous_gf=True):
         self._touch_graph_frame = touch_GF
 
         # Define the DF of neurons-neurons counts, with morphology names
-        self.neurons_touch_counts = self._build_neurons_touch_counts(touch_GF).cache()
+        self.neurons_touch_counts = self._build_neurons_touch_counts(touch_GF)
 
-        if not skip_update:
+        if overwrite_previous_gf:
             self._prev_gf = self._touch_graph_frame
             self.total_neurons = self._touch_graph_frame.vertices.count()
 

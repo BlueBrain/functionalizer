@@ -7,8 +7,6 @@ from math import exp
 from .definitions import CellClass
 from ._filtering import DataSetOperation
 from .utils import get_logger
-import logging  # For workers
-if False: from .recipe import ConnectivityPathRule   # NOQA
 from filters_math import reduce_cut_parameter_udef
 
 logger = get_logger(__name__)
@@ -124,16 +122,14 @@ class ReduceAndCut(DataSetOperation):
 # --------------------------------------------------------------------------------------------------------------------
 
     def __init__(self, conn_rules, stats):
-        self.conn_rules = conn_rules
+        self.conn_rules = self.spark.sparkContext.broadcast(conn_rules)
         self.stats = stats
 
     # ---
     def apply(self, neuronG, *args, **kw):
-        # Get a reference to the original DF, so later we can release the disk cache
-        touchDF = neuronG.edges
-
         params_df = F.broadcast(self.compute_reduce_cut_params()
-                                .select(self._make_assoc_expr("n1_morpho", "n2_morpho"), "*"))
+                                .select(self._make_assoc_expr("n1_morpho", "n2_morpho"), "*")
+                                .cache())
 
         # Flatten GraphFrame and include morpho>morpho row
         full_touches = neuronG.find("(n1)-[t]->(n2)") \
@@ -168,7 +164,10 @@ class ReduceAndCut(DataSetOperation):
         #   We use mtype_touch_stats which is cached. It requires a huge shuffle anyway
         #   so we can cache (considering we run on systems with much larger mem, e.g. 2M neurons produce a 40GB DF)
         mtype_stats = self.stats.mtype_touch_stats
-        logger.debug("Number of Mtype Assoc: %d", mtype_stats.count())  # No problem in evaluating now, it was cached
+
+        # Materializing MType Assoc counts now, it was cached
+        logger.info("Computing Pathway stats...")
+        logger.debug("Number of Mtype Associations: %d", mtype_stats.count())
 
         # param create udf
         rc_param_maker = reduce_cut_parameter_udef(self.conn_rules)
@@ -183,7 +182,8 @@ class ReduceAndCut(DataSetOperation):
             .select("*",  # We can see here the fields of mtype_stats, which are used for rc_param_maker
                     rc_param_maker(mtype_stats.n1_morpho, mtype_stats.n2_morpho, mtype_stats.average_touches_conn)
                     .alias("rc_params"))
-            .select("n1_morpho", "n2_morpho", "total_touches", "rc_params.pP_A", "rc_params.pMu_A", "rc_params.pActiveFraction"))
+            # Return the params (activeFraction is no longer calculated in this step)
+            .select("n1_morpho", "n2_morpho", "total_touches", "rc_params.*"))
 
     # ---
     @staticmethod
@@ -192,53 +192,99 @@ class ReduceAndCut(DataSetOperation):
         """
         # Reducing touches on a single neuron is equivalent as reducing on
         # the global set of touches within a morpho-morpho association
-        fractions = {record.n1_morpho + ">" + record.n2_morpho: record.pP_A
-                     for record in params_df.select("n1_morpho", "n2_morpho", "pP_A").collect()}
+        fractions = {record.morpho_assoc: record.pP_A
+                     for record in params_df.select("morpho_assoc", "pP_A").collect()}
 
         return all_touches.sampleBy("morpho_assoc", fractions)
 
     # ---
     @staticmethod
     def apply_cut(reduced_touches, params_df):
-        """ Apply cut filter
         """
-        params_df = params_df.withColumn("sigma", params_df.pMu_A / 4)
+        Apply cut filter
+        Cut computes a survivalRate and activeFraction for each post neuron
+        And filters out those not passing the random test
+        """
+        params_df_sigma = params_df.withColumn("sigma", params_df.pMu_A / 4)
 
         # Compute the touch_counts per morpho_assoc (aka pathway) in post-synaptic view  and related survivalRate
         # This triggers the calculation of reduced_touches
         # The groupBy will incur a large shuffle of the reduced_touches
-        post_pathway_touch_counts = (
+        post_neuron_touch_counts = (
             reduced_touches
             .groupBy("morpho_assoc", F.col("t.dst").alias("post_neuron_id"))
             .count().withColumnRenamed("count", "post_touches_count")
+        )
 
+        post_counts_survival_rate = (
+            post_neuron_touch_counts
             # Add pMu_A, sigma to post_neuron info
-            .join(params_df.select("morpho_assoc", "pMu_A", "sigma"), "morpho_assoc")
+            .join(params_df_sigma.select("morpho_assoc", "pMu_A", "sigma"), "morpho_assoc")
             # Calc survivalRate
-            .withColumn("survivalRate", 1.0 /
+            .withColumn("survival_rate", 1.0 /
                         (1.0 + F.exp((-4 / F.col("sigma")) * (F.col("post_touches_count") - F.col("pMu_A")))))
             .drop("sigma")
         )
 
+        # Connections to keep according to survival_rate
+        logger.info("Connections to keep according to survival_rate")
         shall_not_cut = (
-            post_pathway_touch_counts
-            .withColumn("rand", F.rand())
-            .where(F.col("rand") < F.col("survivalRate"))
-            .select(F.col("morpho_assoc").alias("m"), F.col("post_neuron_id"))
+            post_counts_survival_rate
+            .where(F.col("survival_rate") > F.rand())
+            .select("morpho_assoc", "post_neuron_id", "post_touches_count")
+            .cache()  # This DF is used in two different calculations and occupies little space
+        )
+
+        # Calc currentTouchCount per pathway and ActiveFraction
+        logger.info("Calc currentTouchCount per pathway and ActiveFraction")
+        updated_post_touch_count = (
+            shall_not_cut
+            .groupBy("morpho_assoc")
+            .agg(F.sum(F.col("post_touches_count"))
+                 .alias("updated_touches_count")
+            )
+        )
+
+        logger.info("Buildig active_fractions")
+        active_fractions = F.broadcast(updated_post_touch_count
+            .join(params_df, "morpho_assoc")
+            .withColumn("actual_reduction_factor",
+                F.col("updated_touches_count") / F.col("total_touches")
+            )
+            .withColumn("active_fraction",
+                F.when(F.col("bouton_reduction_factor").isNull(),
+                    F.col("active_fraction_legacy")
+                ).otherwise(
+                    F.when(F.col("bouton_reduction_factor") > F.col("actual_reduction_factor"),
+                        F.lit(1.0)
+                    ).otherwise(
+                        F.col("bouton_reduction_factor") / F.col("actual_reduction_factor")
+                    )
+                )
+            )
+            .select("morpho_assoc", "active_fraction")
         ).cache()
 
-        logger.info("Calculating cut touches...")
-        # shall_not_cut is a small DF which is required entirely by all workers
-        # Materialize the cache before broadcasting it (solves an issue related to broadcast delays)
-        shall_not_cut.count()
-        shall_not_cut = F.broadcast(shall_not_cut)
+        # Materialize
+        active_fractions.count()
 
+        # Connections to keep according to active_fraction
+        logger.info("Building shall_not_cut2")
+        shall_not_cut2 = F.broadcast(
+            shall_not_cut
+            .join(active_fractions, "morpho_assoc")
+            .where(F.col("active_fraction") > F.rand())
+            .select(F.col("morpho_assoc").alias("m"), F.col("post_neuron_id"))
+        )
+
+        logger.info("Cutting touches...")
         cut_touches = (
             reduced_touches
-            .join(shall_not_cut,
-                  (F.col("t.dst") == F.col("post_neuron_id")) & (reduced_touches.morpho_assoc == shall_not_cut.m))
+            .join(shall_not_cut2,
+                  (F.col("t.dst") == F.col("post_neuron_id")) & (reduced_touches.morpho_assoc == shall_not_cut2.m))
             .select("t.*")
         )
+
         return cut_touches
 
 

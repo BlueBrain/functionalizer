@@ -16,12 +16,7 @@ from collections import defaultdict
 from .structbuf import StructType, TYPES
 
 # MorphoLib
-try:
-    import morphotool
-    from morphotool import MorphoReader
-except ImportError:
-    print("WARNING: morphotool not available")
-    morphotool = None
+from . import morphotool, MorphoReader
 
 cdef int DEBUG=0
 

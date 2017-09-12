@@ -103,7 +103,7 @@ class Functionalizer(object):
 
         # Create graphFrame and set it as stats source without recalculating
         self.neuronG = GraphFrame(self.neuronDF, self._touchDF)  # Rebuild graph
-        self.neuron_stats.update_touch_graph_source(self.neuronG, skip_update=True)
+        self.neuron_stats.update_touch_graph_source(self.neuronG, overwrite_previous_gf=False)
 
     # ---
     @property
@@ -144,8 +144,9 @@ class Functionalizer(object):
             n = self.touchDF.count()
             logger.debug("%s: Number of touches after filter: %d", time.ctime(), n)
 
-        except Exception as e:
-            print(e)
+        except Exception:
+            import traceback
+            print(traceback.format_exc(1))
             return 1
 
     # ---
@@ -171,11 +172,8 @@ class Functionalizer(object):
         self.touchDF = newtouchDF.persist(StorageLevel.DISK_ONLY)
 
         # NOTE: Using count() or other functions which materialize the DF might incur
-        # an extra read step for the subsequent action (to be analyzed)
-        # In the case of DISK_ONLY caches() that would have a signifficant impact, so we avoid it.
-        #
-        # n = self.touchDF.count()
-        # logger.info("%s: Number of touches after Touch Rules filters: %d", time.ctime(), n)
+        #       an extra read step for the subsequent action (to be analyzed)
+        #       In the case of DISK_ONLY caches() that would have a signifficant impact, so we avoid it.
 
 
     def run_reduce_and_cut(self):
@@ -183,13 +181,12 @@ class Functionalizer(object):
         """
         # Index and distribute mtype rules across the cluster
         mtype_conn_rules = self.build_concrete_mtype_conn_rules(self.recipe.conn_rules, self._spark_data.mtypeVec)
-        distributed_conn_rules = self.spark.sparkContext.broadcast(mtype_conn_rules)
 
         # cumulative_distance_f = filters.CumulativeDistanceFilter(distributed_conn_rules, self.neuron_stats)
         # self.touchDF = cumulative_distance_f.apply(self.neuronG)
 
         logger.info("Applying Reduce and Cut...")
-        rc = filters.ReduceAndCut(distributed_conn_rules, self.neuron_stats)
+        rc = filters.ReduceAndCut(mtype_conn_rules, self.neuron_stats)
         self.touchDF = rc.apply(self.neuronG)
 
     # ---

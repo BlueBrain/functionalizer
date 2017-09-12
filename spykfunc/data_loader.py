@@ -9,12 +9,8 @@ from .dataio import touches
 from .dataio.common import Part
 from .utils.spark_udef import DictAccum
 from .utils import get_logger
-try:
-    import morphotool
-    from morphotool import MorphoReader
-except ImportError:
-    print("Morphotool wont be available")
-    morphotool = None
+from .dataio import morphotool, MorphoReader
+
 import logging
 logger = get_logger(__name__)
 
@@ -56,12 +52,15 @@ class NeuronDataSpark(NeuronData):
         logger.info("Total neurons: %d", n_neurons)
         logger.debug("Partitions: %d", total_parts)
 
-        mvd_table_name = "neuronDF{}k".format(n_neurons//1000)  # ""neurons_{}".format(self._loader._mvd_filename)
+        mvd_parquet = ".cache/neuronDF{}k.parquet".format(n_neurons//1000)
 
-        if self._spark.sql("show tables like '{}'".format(mvd_table_name)).collect():
-            self.neuronDF = F.broadcast(self._spark.table(mvd_table_name).cache())
+        if os.path.exists(mvd_parquet):
+            logger.info("Loading from MVD parquet")
+            mvd = self._spark.read.parquet(mvd_parquet)
+            self.neuronDF = F.broadcast(mvd).cache()
 
         else:
+            logger.info("Building MVD from raw mvd files")
             # Initial RDD has only the range objects
             neuronRDD = self._sc.parallelize(range(total_parts), total_parts)
 
@@ -79,12 +78,11 @@ class NeuronDataSpark(NeuronData):
                 self._spark.createDataFrame(neuronRDD, schema.NEURON_SCHEMA)
             ).cache()
 
-            # Evaluate to get NameMap
-            logger.info("Total: %d", self.neuronDF.count())
+            # Evaluate to build partial NameMaps
+            self.neuronDF.write.mode('overwrite').parquet(mvd_parquet)
+
+            # Then we set the global name map
             self.set_name_map(name_accu.value)
-
-            self.neuronDF.write.mode('overwrite').saveAsTable(mvd_table_name)
-
 
     # ---
     def _load_h5_morphologies(self, names, filter=None, total_parts=128):

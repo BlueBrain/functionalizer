@@ -10,7 +10,8 @@ import logging
 _RC_params_schema = T.StructType([
     T.StructField("pP_A", T.FloatType()),
     T.StructField("pMu_A", T.FloatType()),
-    T.StructField("pActiveFraction", T.FloatType())
+    T.StructField("bouton_reduction_factor", T.FloatType()),
+    T.StructField("active_fraction_legacy", T.FloatType()),
 ])
 
 
@@ -18,6 +19,7 @@ def reduce_cut_parameter_udef(conn_rules_map):
     # Defaults
     activeFraction_default = 0.5
     boutonReductionFactor_default = 0.04
+    structuralProbability = 1.0
 
     # TODO: Active Fraction is no longer calculated this way here.
     #  --> Please see activePathway.getActiveFraction() in ConversionObject
@@ -26,12 +28,11 @@ def reduce_cut_parameter_udef(conn_rules_map):
     def f(mtype_src, mtype_dst, structuralMean):
         """Calculates the parameters for R&C mtype-mtype
         :param structuralMean: The average of touches/connection for the given mtype-mtype rule
-        :return: a tuple of (pP_A, pMu_A, pActiveFraction)
+        :return: a tuple of (pP_A, pMu_A, bouton_reduction_factor, activeFraction_legacy)
         """
         # If there are no connections for a pathway (mean=0), cannot compute valid numbers
         nil = (None, None, None)
 
-        structuralProbability = 1.0
         if structuralMean == 0:
             return nil
 
@@ -41,9 +42,11 @@ def reduce_cut_parameter_udef(conn_rules_map):
         if not rule:
             return nil
 
-        if rule.bouton_reduction_factor and rule.cv_syns_connection:
+        # Directly from recipe
+        boutonReductionFactor = rule.bouton_reduction_factor
+
+        if boutonReductionFactor and rule.cv_syns_connection:
             cv_syns_connection = rule.cv_syns_connection
-            boutonReductionFactor = rule.bouton_reduction_factor
 
             if rule.active_fraction:
                 # 4.3 of s2f 2.0
@@ -82,7 +85,7 @@ def reduce_cut_parameter_udef(conn_rules_map):
                 logging.warning("Rule not supported")
                 return nil
 
-        elif rule.mean_syns_connection and rule.stdev_syns_connection and rule.active_fraction:
+        elif rule.mean_syns_connection and rule.stdev_syns_connection:
             # 4.1 of s2f 2.0
             logging.warning("Warning: method 4.1?")
             mu_A = 0.5 + rule.mean_syns_connection - rule.stdev_syns_connection
@@ -100,14 +103,8 @@ def reduce_cut_parameter_udef(conn_rules_map):
         if pActiveFraction > 1.0:
             pActiveFraction = 0
 
-        return p_A, pMu_A, pActiveFraction
-
-    # DEBUG
-    def g(mtype_src, mtype_dst, structuralMean):
-        # logging.debug(str(conn_rules_map.value))
-        rule = conn_rules_map.value.get(mtype_src + ">" + mtype_dst)  # type: ConnectivityPathRule
-
-        return rule.active_fraction
+        # ActiveFraction calculated here is legacy and only used if boutonReductionFactor is null
+        return p_A, pMu_A, boutonReductionFactor, pActiveFraction
 
     return F.udf(f, _RC_params_schema)
 
