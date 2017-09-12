@@ -121,8 +121,9 @@ class ReduceAndCut(DataSetOperation):
     """
 # --------------------------------------------------------------------------------------------------------------------
 
-    def __init__(self, conn_rules, stats):
-        self.conn_rules = self.spark.sparkContext.broadcast(conn_rules)
+    def __init__(self, conn_rules, stats, spark_context):
+        self.sc = spark_context
+        self.conn_rules = spark_context.broadcast(conn_rules)
         self.stats = stats
 
     # ---
@@ -138,7 +139,6 @@ class ReduceAndCut(DataSetOperation):
         # Reduce
         logger.info("Applying Reduce step...")
         reduced_touches = self.apply_reduce(full_touches, params_df)
-
         # Cache results so far (to disk - wont fit in mem!) - required otherwise they'r recomputed several times
         reduced_touches = reduced_touches.persist(StorageLevel.DISK_ONLY)
 
@@ -146,10 +146,6 @@ class ReduceAndCut(DataSetOperation):
         logger.info("Applying Cut step...")
         cut_touches = self.apply_cut(reduced_touches, params_df)
         if _DEBUG: logger.info("Cut touch count:      %d", cut_touches.count())  # NOQA
-
-        # TODO: The ActiveFraction is wrong because at some point in functionalizer they
-        #       switched to compute it via a specific getActiveFraction() f.
-        # TODO: We also need to implement filtering out by ActiveFraction
 
         return cut_touches
 
@@ -245,7 +241,7 @@ class ReduceAndCut(DataSetOperation):
             )
         )
 
-        logger.info("Buildig active_fractions")
+        logger.debug("Buildig active_fractions")
         active_fractions = F.broadcast(updated_post_touch_count
             .join(params_df, "morpho_assoc")
             .withColumn("actual_reduction_factor",
@@ -267,6 +263,10 @@ class ReduceAndCut(DataSetOperation):
 
         # Materialize
         active_fractions.count()
+
+        # NOTE: Until now shall_not_cut is distributed, processed in parallel.
+        #       The result of the join with active_fractions should however
+        #       be Broadcasted to all workers
 
         # Connections to keep according to active_fraction
         logger.info("Building shall_not_cut2")

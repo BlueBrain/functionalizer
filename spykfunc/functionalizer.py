@@ -168,7 +168,6 @@ class Functionalizer(object):
 
         # So far there was quite some processing which would be lost since data
         # is read everytime from disk, so we persist it for next RC step
-        logger.debug("... and dumping intermediate touches...")
         self.touchDF = newtouchDF.persist(StorageLevel.DISK_ONLY)
 
         # NOTE: Using count() or other functions which materialize the DF might incur
@@ -186,7 +185,7 @@ class Functionalizer(object):
         # self.touchDF = cumulative_distance_f.apply(self.neuronG)
 
         logger.info("Applying Reduce and Cut...")
-        rc = filters.ReduceAndCut(mtype_conn_rules, self.neuron_stats)
+        rc = filters.ReduceAndCut(mtype_conn_rules, self.neuron_stats, self.spark.sparkContext)
         self.touchDF = rc.apply(self.neuronG)
 
     # ---
@@ -203,8 +202,13 @@ class Functionalizer(object):
                 for dst in dsts:
                     key = src + ">" + dst
                     if key in conn_rules:
-                        logger.warning("Several rules applying to the same mtype connection: %s->%s", src, dst)
-                    conn_rules[key] = rule
+                        logger.warning("Several rules applying to the same mtype connection: %s->%s [Rule: %s->%s]",
+                                       src, dst, rule.source, rule.destination)
+                        if '*' not in rule.source and '*' not in rule.destination:
+                            # Overwrite if it is specific
+                            conn_rules[key] = rule
+                    else:
+                        conn_rules[key] = rule
 
         return conn_rules
 
