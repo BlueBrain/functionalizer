@@ -152,6 +152,13 @@ class _GenericPropHolder(object):
                 continue
             if value == "*":
                 continue
+            try:
+                value = int(value)
+            except ValueError:
+                try:
+                    value = float(value)
+                except ValueError:
+                    pass
             setattr(self, name, value)
 
     def __repr__(self):

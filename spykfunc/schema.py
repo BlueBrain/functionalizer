@@ -43,6 +43,8 @@ MTYPE_SCHEMA = types.StructType([
 ])
 
 SYNAPSE_PROPERTY_SCHEMA = types.StructType([
+    types.StructField("fromSClass", types.StringType(), False),
+    types.StructField("toSClass", types.StringType(), False),
     types.StructField("fromSClass_i", types.ShortType(), False),
     types.StructField("toSClass_i", types.ShortType(), False),
     types.StructField("type", types.StringType(), False),
@@ -51,7 +53,7 @@ SYNAPSE_PROPERTY_SCHEMA = types.StructType([
 ])
 
 SYNAPSE_CLASS_SCHEMA = types.StructType([
-    types.StructField("id", types.ShortType(), False),
+    types.StructField("id", types.StringType(), False),
     types.StructField("gsyn", types.FloatType(), False),
     types.StructField("gsynVar", types.FloatType(), False),
     types.StructField("nsyn", types.FloatType(), False),

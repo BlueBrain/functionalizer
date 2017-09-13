@@ -12,7 +12,6 @@ from .dataio import touches
 from .dataio.common import Part
 from .utils.spark_udef import DictAccum
 from .utils import get_logger, make_slices
-from .dataio import morphotool, MorphoReader
 
 import logging
 logger = get_logger(__name__)
@@ -44,10 +43,10 @@ class NeuronDataSpark(NeuronData):
     # ---
     def load_mvd_neurons_morphologies(self, neuron_filter=None, **kwargs):
         self._load_mvd_neurons(neuron_filter, **kwargs)
-        if morphotool:
-            self._load_h5_morphologies(self.nameMap.keys(), neuron_filter, **kwargs)
-        else:
-            self.morphologyRDD = None
+        # Dont load morphologies in the begginging
+        # if morphotool:
+        #     self._load_h5_morphologies(self.nameMap.keys(), neuron_filter, **kwargs)
+        self.morphologyRDD = None
 
     # ---
     def _load_mvd_neurons(self, neuron_filter=None, total_parts=None):
@@ -150,7 +149,7 @@ class NeuronDataSpark(NeuronData):
         prop_df = _load_from_recipe(recipe.synapse_properties, schema.SYNAPSE_PROPERTY_SCHEMA, self._sc)
         class_df = _load_from_recipe(recipe.synapse_classification, schema.SYNAPSE_CLASS_SCHEMA, self._sc)
 
-        return prop_df.join(class_df, prop_df.type == class_df.id)
+        return F.broadcast(prop_df.join(F.broadcast(class_df), prop_df.type == class_df.id).cache())
 
 
 #######################
@@ -230,6 +229,9 @@ def morphology_loader_gen(data_class, loader_class, loader_params):
     Generates a loading function for morphologies, returning the MorphoTree objects
     :return: A loader of morphologies
     """
+    # Dont break whole module if morphotool is not available
+    from morphotool import MorphoReader
+
     def load_morphology_par(morpho_names):
         logging.debug("Gonna read %d morphologies, starting at %s",
                       len(morpho_names), morpho_names[0] if morpho_names else '<empty>')

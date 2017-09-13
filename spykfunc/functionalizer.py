@@ -1,22 +1,18 @@
-from __future__ import print_function, absolute_import
 # *************************************************************************
 #  An implementation of Functionalizer in spark
 # *************************************************************************
-
-import os.path as _path
+from __future__ import print_function, absolute_import
 from fnmatch import filter as matchfilter
 from glob import glob
 import time
 
-from pyspark.sql import functions as F
 from pyspark.sql import SparkSession
 from pyspark import StorageLevel
 
-# from morphotool import MorphologyDB
 from .definitions import CellClass, MType
 from .recipe import Recipe
 from .data_loader import NeuronDataSpark
-from .dataio import touches
+from .data_export import Hdf5Exporter
 from .dataio.cppneuron import MVD_Morpho_Loader
 from .stats import NeuronStats
 from . import _filtering
@@ -62,23 +58,24 @@ class Functionalizer(object):
 
     # ---
     def init_data(self, recipe_file, mvd_file, morpho_dir, touch_files):
-        logger.debug("%s: Data loading...", time.ctime())
+        self.morpho_dir = morpho_dir
 
+        logger.debug("%s: Data loading...", time.ctime())
         # Load recipe
         self.recipe = Recipe(recipe_file)
 
-        # Load info about touches
+        # Check touches files
         all_touch_files = glob(touch_files)
         if not all_touch_files:
             logger.critical("Invalid touch file path")
-
-        # self.touch_info = touches.TouchInfo(all_touch_files)
         self.neuron_stats = NeuronStats()
 
         # Load Neurons data
         fdata = NeuronDataSpark(MVD_Morpho_Loader(mvd_file, morpho_dir), self.spark)
-
         fdata.load_mvd_neurons_morphologies()
+
+        # Load synapse properties
+        self.synapse_properties_class = fdata.load_synapse_properties_and_classification(self.recipe)
 
         # Shortcuts
         self._spark_data = fdata
@@ -134,20 +131,35 @@ class Functionalizer(object):
     def process_filters(self):
         """Runs all functionalizer filters
         """
-        logger.debug("%s: Starting Filtering...", time.ctime())
+        logger.info("%s: Starting Filtering...", time.ctime())
         try:
             self.filter_by_soma_axon_distance()
             if self._run_s2f:
                 self.filter_by_touch_rules()
                 self.run_reduce_and_cut()
-            # DEBUG
-            n = self.touchDF.count()
-            logger.debug("%s: Number of touches after filter: %d", time.ctime(), n)
 
         except Exception:
             import traceback
-            print(traceback.format_exc(1))
+            logger.error(traceback.format_exc(1))
             return 1
+
+        # Force compute, saving to parquet - fast and space efficient
+        self.touchDF.write.mode("overwrite").parquet("./filtered_touches.tmp.parquet")
+        return 0
+
+    # ---
+    def export_results(self, output_path):
+        try:
+            exporter = Hdf5Exporter(self.neuronG, self.morpho_dir, self.recipe, self.synapse_properties_class, output_path)
+            exporter.do_export()
+        except RuntimeError:
+            logger.error("Could not save to Hdf5. 'Functionalized' touches saved as parquet in ./filtered_touches.tmp.parquet")
+            return 1
+        except:
+            import traceback
+            logger.error(traceback.format_exc(1))
+            return 1
+        return 0
 
     # ---
     # Instantiation of filters for the sessions data
