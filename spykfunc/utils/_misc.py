@@ -7,13 +7,25 @@ import sys
 
 
 # -----------------------------------------------
-# dictionary utils
+# dictionary/tuple utils
 # -----------------------------------------------
 def get_or_create(d, key, factory, factory_args):
     i = d.get(key)
     if not i:
         i = d[key] = factory(**factory_args)
     return i
+
+
+def make_slices(length, total):
+    min_n = length / total
+    remainder = length % total
+    offset = 0
+    for cur_it in range(total):
+        n = min_n
+        if cur_it < remainder:
+            n += 1
+        yield slice(offset, offset + n)
+        offset += n
 
 
 # -----------------------------------------------

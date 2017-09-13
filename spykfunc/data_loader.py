@@ -1,6 +1,8 @@
 from __future__ import print_function, absolute_import
 import os
 
+from pyspark import SparkContext
+from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from .definitions import MType
 from .dataio.cppneuron import NeuronData
@@ -8,7 +10,7 @@ from . import schema
 from .dataio import touches
 from .dataio.common import Part
 from .utils.spark_udef import DictAccum
-from .utils import get_logger
+from .utils import get_logger, make_slices
 from .dataio import morphotool, MorphoReader
 
 import logging
@@ -126,16 +128,34 @@ class NeuronDataSpark(NeuronData):
         return touch_info
 
 
-def make_slices(length, total):
-    min_n = length / total
-    remainder = length % total
-    offset = 0
-    for cur_it in range(total):
-        n = min_n
-        if cur_it < remainder:
-            n += 1
-        yield slice(offset, offset + n)
-        offset += n
+#######################
+# Ad-hoc loaders
+#######################
+
+def _load_from_recipe(recipe_group, group_schema, session=None):
+    if session is None:
+        session = SparkSession.builder.getOrCreate()
+    sc = session.sparkContext   # type: SparkContext
+
+    f_names = list(group_schema.names)
+    rdd = sc.parallelize([tuple(getattr(entry, name)
+                                for name in f_names)
+                          for entry in recipe_group])
+
+    return session.createDataFrame(rdd, group_schema)
+
+
+# ----
+def load_synapse_properties(recipe, session=None):
+    """Loader for SynapsesProperties"""
+    return _load_from_recipe(recipe.synapse_properties, schema.SYNAPSE_PROPERTY_SCHEMA, session)
+
+
+# ----
+def load_synapse_classification(recipe, session=None):
+    """Loader for SynapsesClassification"""
+    return _load_from_recipe(recipe.synapse_classification, schema.SYNAPSE_CLASS_SCHEMA, session)
+
 
 
 ####################################################################
