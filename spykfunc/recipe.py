@@ -15,33 +15,6 @@ logger = get_logger(__name__)
 
 
 # -------------------------------------------------------------------------------------------------------------
-class TouchRule(object):
-    """Class representing a Touch rule"""
-# -------------------------------------------------------------------------------------------------------------
-    __supported_attrs = {'fromLayer', 'toLayer', 'fromMType', 'toMType', 'type'}
-    fromLayer = None
-    toLayer = None
-    fromMType = None
-    toMType = None
-    type = ""
-
-    def __init__(self, **rules):
-        for name, value in rules.items():
-            if name not in self.__supported_attrs:
-                logger.warning("Attribute %s is not supported", name)
-                continue
-            if value == "*":
-                continue
-            setattr(self, name, value)
-
-    def __repr__(self):
-        return '<touchRule fromLayer="%s" fromMType="%s" toLayer="%s" toMType="%s" type="%s">' % (
-            self.fromLayer or "*", self.toLayer or "*",
-            self.fromMType or "*", self.toMType or "*",
-            self.type)
-
-
-# -------------------------------------------------------------------------------------------------------------
 class ConnectType:
     """Enum class for Connect Types"""
 # -------------------------------------------------------------------------------------------------------------
@@ -139,16 +112,8 @@ class ConnectivityPathRule(object):
         return n_set_params == 3
 
     # ---
-    @property
-    def F(self):
-        def f(row):
-            return True
-
-        return f
-
-    # ---
     def __repr__(self):
-        return '<%s from="%s" to="%s">' % (ConnectType.to_str(self.connect_type), self._source_raw, self._destination_raw)
+        return '<%s from="%s" to="%s">' % (ConnectType.to_str(self.connect_type), self.source, self.destination)
 
 
 # -------------------------------------------------------------------------------------------------------------
@@ -172,6 +137,76 @@ class SynapseBoutonDistances(object):
 
 
 # -------------------------------------------------------------------------------------------------------------
+class _GenericPropHolder(object):
+    """
+    A Generic Property holder whose subclasses shall define a
+    _supported_attrs class attribute with the list of supported attributes
+    """
+# -------------------------------------------------------------------------------------------------------------
+    _supported_attrs = ()
+
+    def __init__(self, **rules):
+        for name, value in rules.items():
+            if name not in self._supported_attrs:
+                logger.warning("Attribute %s is not supported", name)
+                continue
+            if value == "*":
+                continue
+            setattr(self, name, value)
+
+    def __repr__(self):
+        attrs = " ".join('{0}="{1}"'.format(attr_name, getattr(self, attr_name))
+                        for attr_name in self._supported_attrs)
+        return '<{cls_name} {attrs}>'.format(cls_name=type(self).__name__, attrs=attrs)
+
+
+# -------------------------------------------------------------------------------------------------------------
+class TouchRule(_GenericPropHolder):
+    """Class representing a Touch rule"""
+# -------------------------------------------------------------------------------------------------------------
+    _supported_attrs = {'fromLayer', 'toLayer', 'fromMType', 'toMType', 'type'}
+    fromLayer = None
+    toLayer = None
+    fromMType = None
+    toMType = None
+    type = ""
+
+# -------------------------------------------------------------------------------------------------------------
+class SynapsesProperty(_GenericPropHolder):
+    """Class representing a Synapse property"""
+# -------------------------------------------------------------------------------------------------------------
+    fromSClass = None  # *wildcard
+    toSClass = None    # *wildcard
+    type = ""
+    neuralTransmitterReleaseDelay = 0.1
+    axonalConductionVelocity = 0.00333
+    _supported_attrs = [k for k in locals().keys()
+                        if not k.startswith("_")]
+
+
+# -------------------------------------------------------------------------------------------------------------
+class SynapsesClassification(_GenericPropHolder):
+    """Class representing a Synapse Classification"""
+# -------------------------------------------------------------------------------------------------------------
+    id = ""
+    gsyn = .0
+    gsynVar = .0
+    nsyn =.0
+    nsynVar = .0
+    dtc = .0
+    dtcVar = .0
+    u = .0
+    uVar = .0
+    d = .0
+    dVar = .0
+    f = .0
+    fVar = .0
+    ase = .0
+    _supported_attrs = [k for k in locals().keys()
+                        if not k.startswith("_")]
+
+
+# -------------------------------------------------------------------------------------------------------------
 class Recipe(object):
     """Class holding Recipe information"""
 # -------------------------------------------------------------------------------------------------------------
@@ -183,7 +218,9 @@ class Recipe(object):
         self.touch_rules = []
         self.conn_rules = []
         self.synapses_distance = None
-        self.recipe_seends = [None] * 3
+        self.synapse_properties = []
+        self.synapse_classification = []
+        self.recipe_seeds = [None] * 3
 
         if recipe_file:
             self.load_from_xml(recipe_file)
@@ -203,18 +240,26 @@ class Recipe(object):
         else:
             recipe_xml = tree.getroot()
 
-        self.load_touch_rules(recipe_xml.find("TouchRules"))
         self.load_probabilities(recipe_xml.find("ConnectionRules"))
         self.load_bouton_distance(recipe_xml.find("InitialBoutonDistance"))
+        self.load_recipe_group_into_list_convert(recipe_xml.find("TouchRules"),
+                                                 self.touch_rules, TouchRule)
+        self.load_recipe_group_into_list_convert(recipe_xml.find("SynapsesProperties"),
+                                                 self.synapse_properties, SynapsesProperty)
+        self.load_recipe_group_into_list_convert(recipe_xml.find("SynapsesClassification"),
+                                                 self.synapse_classification, SynapsesClassification)
 
-    # -------
-    def load_touch_rules(self, touch_rules):
-        for touch_info in touch_rules:
-            if not isinstance(touch_info, TouchRule):
-                if hasattr(touch_info, "attrib"):
-                    touch_info = touch_info.attrib
-                touch_info = TouchRule(**touch_info)
-            self.touch_rules.append(touch_info)
+    # ------
+    @staticmethod
+    def _check_convert(item, cls):
+        """Checks if the given item is already of type cls
+           Otherwise attempts to convert by passing the dict as keyword arguments
+        """
+        if not isinstance(item, cls):
+            if hasattr(item, "attrib"):
+                item = item.attrib
+            item = cls(**item)
+        return item
 
     # -------
     def load_probabilities(self, connections):  # type: (list)->None
@@ -233,6 +278,12 @@ class Recipe(object):
             self.synapses_distance = SynapseBoutonDistances(**infos)
         else:
             self.synapses_distance = SynapseBoutonDistances()
+
+    # -------
+    @classmethod
+    def load_recipe_group_into_list_convert(cls, items, dest_lst, item_cls):
+        for item in items:
+            dest_lst.append(cls._check_convert(item, item_cls))
 
     def __str__(self):
         return "<\n\"Touch rules\":\n" + pprint.pformat(self.touch_rules) + \
