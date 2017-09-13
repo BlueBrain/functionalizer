@@ -285,6 +285,7 @@ class Recipe(object):
         for item in items:
             dest_lst.append(cls._check_convert(item, item_cls))
 
+    # -------
     def __str__(self):
         return "<\n\"Touch rules\":\n" + pprint.pformat(self.touch_rules) + \
                "\n\"Conn rules\":\n" + pprint.pformat(self.conn_rules) + ">\n"

@@ -1,5 +1,6 @@
 from __future__ import print_function, absolute_import
 import os
+import copy
 
 from pyspark import SparkContext
 from pyspark.sql import SparkSession
@@ -22,7 +23,16 @@ logger = get_logger(__name__)
 ###################################################################
 class NeuronDataSpark(NeuronData):
     """
-    Neuron data loader. It inherits and fills NeuronData
+    Neuron data loader.
+    It inherits from NeuronData (extension type), which has the following C++ fields (accessible from Python):
+     - vector[string] mtypeVec
+     - vector[string] etypeVec
+     - vector[string] synaClassVec
+
+    Neuron info - Depending on the range
+     - NeuronBuffer neurons
+     - vector[string] neuronNames
+     - object nameMap
     """
 
     def __init__(self, loader, spark_session):
@@ -127,35 +137,34 @@ class NeuronDataSpark(NeuronData):
         logger.error("Binary touches converted to dataframe not implemented yet")
         return touch_info
 
+    # ----
+    def load_synapse_properties_and_classification(self, recipe):
+        """Loader for SynapsesProperties
+        """
+        # Prop requires mapping from str to int ids
+        vec_reverse = {name: i for i, name in enumerate(self.synaClassVec)}
+        for syn_prop in recipe.synapse_properties:
+            syn_prop.fromSClass_i = vec_reverse[syn_prop.fromSClass]
+            syn_prop.toSClass_i = vec_reverse[syn_prop.toSClass]
+
+        prop_df = _load_from_recipe(recipe.synapse_properties, schema.SYNAPSE_PROPERTY_SCHEMA, self._sc)
+        class_df = _load_from_recipe(recipe.synapse_classification, schema.SYNAPSE_CLASS_SCHEMA, self._sc)
+
+        return prop_df.join(class_df, prop_df.type == class_df.id)
+
 
 #######################
-# Ad-hoc loaders
+# Generic loader
 #######################
 
-def _load_from_recipe(recipe_group, group_schema, session=None):
-    if session is None:
-        session = SparkSession.builder.getOrCreate()
-    sc = session.sparkContext   # type: SparkContext
+def _load_from_recipe(recipe_group, group_schema, spark_context=None):
+    sc = spark_context or SparkContext.getOrCreate()   # type: SparkContext
 
     f_names = list(group_schema.names)
     rdd = sc.parallelize([tuple(getattr(entry, name)
                                 for name in f_names)
                           for entry in recipe_group])
-
-    return session.createDataFrame(rdd, group_schema)
-
-
-# ----
-def load_synapse_properties(recipe, session=None):
-    """Loader for SynapsesProperties"""
-    return _load_from_recipe(recipe.synapse_properties, schema.SYNAPSE_PROPERTY_SCHEMA, session)
-
-
-# ----
-def load_synapse_classification(recipe, session=None):
-    """Loader for SynapsesClassification"""
-    return _load_from_recipe(recipe.synapse_classification, schema.SYNAPSE_CLASS_SCHEMA, session)
-
+    return rdd.toDF(group_schema)
 
 
 ####################################################################

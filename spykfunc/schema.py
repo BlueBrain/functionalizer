@@ -43,14 +43,15 @@ MTYPE_SCHEMA = types.StructType([
 ])
 
 SYNAPSE_PROPERTY_SCHEMA = types.StructType([
-    types.StructField("from_class_i", types.ShortType(), False),
-    types.StructField("to_class_i", types.ShortType(), False),
+    types.StructField("fromSClass_i", types.ShortType(), False),
+    types.StructField("toSClass_i", types.ShortType(), False),
+    types.StructField("type", types.StringType(), False),
     types.StructField("neuralTransmitterReleaseDelay", types.FloatType(), False),
     types.StructField("axonalConductionVelocity", types.FloatType(), False),
 ])
 
 SYNAPSE_CLASS_SCHEMA = types.StructType([
-    types.StructField("class_i", types.ShortType(), False),
+    types.StructField("id", types.ShortType(), False),
     types.StructField("gsyn", types.FloatType(), False),
     types.StructField("gsynVar", types.FloatType(), False),
     types.StructField("nsyn", types.FloatType(), False),
