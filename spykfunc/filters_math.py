@@ -21,9 +21,6 @@ def reduce_cut_parameter_udef(conn_rules_map):
     boutonReductionFactor_default = 0.04
     structuralProbability = 1.0
 
-    # TODO: Active Fraction is no longer calculated this way here.
-    #  --> Please see activePathway.getActiveFraction() in ConversionObject
-
     # this f will be serialized and transmitted to workers
     def f(mtype_src, mtype_dst, structuralMean):
         """Calculates the parameters for R&C mtype-mtype

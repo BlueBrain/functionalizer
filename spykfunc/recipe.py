@@ -147,11 +147,12 @@ class _GenericPropHolder(object):
 
     def __init__(self, **rules):
         for name, value in rules.items():
-            if name not in self._supported_attrs:
+            if name not in self._supported_attrs and name != "_i":
                 logger.warning("Attribute %s is not supported", name)
                 continue
             if value == "*":
                 continue
+
             try:
                 value = int(value)
             except ValueError:
@@ -258,7 +259,7 @@ class Recipe(object):
 
     # ------
     @staticmethod
-    def _check_convert(item, cls):
+    def _check_convert(item, cls, i=None):
         """Checks if the given item is already of type cls
            Otherwise attempts to convert by passing the dict as keyword arguments
         """
@@ -266,6 +267,8 @@ class Recipe(object):
             if hasattr(item, "attrib"):
                 item = item.attrib
             item = cls(**item)
+        if i is not None:
+            item._i = i
         return item
 
     # -------
@@ -289,8 +292,8 @@ class Recipe(object):
     # -------
     @classmethod
     def load_recipe_group_into_list_convert(cls, items, dest_lst, item_cls):
-        for item in items:
-            dest_lst.append(cls._check_convert(item, item_cls))
+        for i, item in enumerate(items):
+            dest_lst.append(cls._check_convert(item, item_cls, i))
 
     # -------
     def __str__(self):

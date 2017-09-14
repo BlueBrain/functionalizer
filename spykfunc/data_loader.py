@@ -146,8 +146,10 @@ class NeuronDataSpark(NeuronData):
             syn_prop.fromSClass_i = vec_reverse[syn_prop.fromSClass]
             syn_prop.toSClass_i = vec_reverse[syn_prop.toSClass]
 
-        prop_df = _load_from_recipe(recipe.synapse_properties, schema.SYNAPSE_PROPERTY_SCHEMA, self._sc)
-        class_df = _load_from_recipe(recipe.synapse_classification, schema.SYNAPSE_CLASS_SCHEMA, self._sc)
+        prop_df = _load_from_recipe(recipe.synapse_properties, schema.SYNAPSE_PROPERTY_SCHEMA, self._sc)\
+            .withColumnRenamed("_i", "_prop_i")
+        class_df = _load_from_recipe(recipe.synapse_classification, schema.SYNAPSE_CLASS_SCHEMA, self._sc)\
+            .withColumnRenamed("_i", "_class_i")
 
         return F.broadcast(prop_df.join(F.broadcast(class_df), prop_df.type == class_df.id).cache())
 

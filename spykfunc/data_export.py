@@ -10,6 +10,8 @@ from .dataio import morphotool
 
 logger = utils.get_logger(__name__)
 
+_DEBUG = True
+
 
 def save_parquet(neuronG, output_path=None):
     touches = neuronG.vertices
@@ -38,30 +40,52 @@ class Hdf5Exporter(object):
 
     def do_export(self, filename="nrn.h5"):
         nrn_filepath = path.join(self.output_path, filename)
-        touch_G = self.neuronG
+        touch_G = self.neuronG.find("(n1)-[t]->(n2)")
 
         # In order to sequentially write and not overflood the master, we query and write touches GID per GID
-        gids_df = touch_G.vertices.select("id").orderBy("id")
+        gids_df = self.neuronG.vertices.select("id").orderBy("id")
         gids = gids_df.rdd.keys().collect()  # In large cases we can use toLocalIterator()
         _many_files = len(gids) > 10000
 
-        # prepare DF add required fields
-        touch_G.join(self.syn_properties_df)
+        # prepare DF - add required fields
+        p_df = self.syn_properties_df.select(F.struct("*").alias("prop"))
+        touches = touch_G.join(p_df, ((touch_G.n1.syn_class_index == p_df.prop.fromSClass_i) &
+                                      (touch_G.n2.syn_class_index == p_df.prop.toSClass_i)))
 
+        # Compute delaySomaDistance
+        touches = touches.withColumn("axional_delay",
+                                     touches.prop.neuralTransmitterReleaseDelay +
+                                     touches.t.distance_soma / touches.prop.axonalConductionVelocity)
+
+        # Compute #13: synapseType:  Inhibitory < 100 or  Excitatory >= 100
+        touches = touches.withColumn("synapseType",
+                                     (F.when(touches.prop.type.substr(0,1) == F.lit('E'), 100)
+                                     .otherwise(0)
+                                     ) + touches.prop._class_i)
+        touches.show()
+
+        return
+
+
+        if _DEBUG:
+            gids = [1]
 
         for i, gid in enumerate(gids):
             if i % 10000 == 0:
                 cur_name = nrn_filepath
                 if _many_files:
                     cur_name += ".{}".format(i//10000)
-                f = h5py.File(cur_name, 'w')
+                #f = h5py.File(cur_name, 'w')
 
             # The df of the neuron to export
-            df = touch_G.find("(n1)-[t]->(n2)").where(F.col("n2.id") == gid).orderBy("n1.id")
+            df = touches.where(F.col("n2.id") == gid).orderBy("n1.id")
+            df.show()
 
 
-            # convert_h5 = make_conversion_udf(self.morphologies, self.morpho_dir)
-            # prepared_df = df.select(convert_h5(df.t, df.n1.id, df.n2.syn_class_index))
+
+
+            convert_h5 = make_conversion_udf(self.morphologies, self.morpho_dir)
+            prepared_df = df.select(convert_h5(df.n1.id, df.axional_delay, df.t, df.prop, df.n2.syn_class_index))
             # some magic now to extract the array from the DF, one per one or preferably the whole matrix...
             #h5ds = f.create_dataset("a{}".format(gid), (df.count(), 19), numpy.float32)
 
@@ -74,7 +98,7 @@ _export_params_schema = T.StructType([
 
 # An UDF to convert every single touch to a line in the H5 file
 def make_conversion_udf(_morpho_dict, morpho_dir):
-    def to_tuple(touch, gid, post_syn_class_index):
+    def to_tuple(gid, axional_delay, touch, post_syn_class_index):
         # 0: Connecting gid: presynaptic for nrn.h5, postsynaptic for nrn_efferent.h5
         # 1: Axonal delay: computed using the distance of the presynaptic axon to the post synaptic terminal (milliseconds) (float)
         # 2: postSection ID (int)
@@ -94,27 +118,22 @@ def make_conversion_udf(_morpho_dict, morpho_dir):
         # 17: ASE Absolute Synaptic Efficacy (Millivolts) (int)
         # 18: Branch Type from the post neuron(0 for soma,
 
-        # NOTE: Assuming this order
-        synapse_classes_by_index = [CellClass.CLASS_INH, CellClass.CLASS_EXC]
-        is_excitatory = synapse_classes_by_index[post_syn_class_index] == CellClass.CLASS_EXC
-
-
-        morpho_dict = _morpho_dict.value
-        if morpho_name in morpho_dict:
-            morpho = morpho_dict[morpho_name]
-        else:
-            morpho = morpho_dict[morpho_name] = Morphology(morpho_dir, morpho_name)
+        # morpho_dict = _morpho_dict.value
+        # if morpho_name in morpho_dict:
+        #     morpho = morpho_dict[morpho_name]
+        # else:
+        #     morpho = morpho_dict[morpho_name] = Morphology(morpho_dir, morpho_name)
 
 
         return (
             gid + 1,
-            --axional_delay,       # Neuron.findDelay()
+            axional_delay,
             touch.post_section,
             touch.post_segment,
             touch.post_offset,
             touch.pre_section,
             touch.pre_segment,
-            row.pre_offset,
+            touch.pre_offset,
             --conductance,         # g  synapseProperties->classes
             --u_parameter,         # udf params
             --d_syn(depression),

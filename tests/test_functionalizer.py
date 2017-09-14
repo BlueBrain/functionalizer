@@ -12,4 +12,4 @@ args = (
 if __name__ == "__main__":
     opts = commands.arg_parser.parse_args(args)
     fuzer = fz.session(opts)
-    fuzer.process_filters()
+    # fuzer.process_filters()
