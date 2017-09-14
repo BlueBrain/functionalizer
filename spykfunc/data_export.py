@@ -3,6 +3,7 @@ import pyspark
 from os import path
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
+from pyspark.sql import SparkSession
 from .definitions import CellClass
 from . import data_loader
 from . import utils
@@ -33,7 +34,8 @@ class Hdf5Exporter(object):
 
         # Broadcast an empty dict to hold morphologies
         # Each worker will fill it as required, no communication incurred
-        self.sc = pyspark.SparkContext.getOrCreate()  # type: pyspark.SparkContext
+        self.spark = SparkSession.builder.getOrCreate()
+        self.sc = self.spark.sparkContext  # type: pyspark.SparkContext
         self.morphologies = {}
         self.sc.broadcast(self.morphologies)
 
@@ -52,18 +54,11 @@ class Hdf5Exporter(object):
         touches = touch_G.join(p_df, ((touch_G.n1.syn_class_index == p_df.prop.fromSClass_i) &
                                       (touch_G.n2.syn_class_index == p_df.prop.toSClass_i)))
 
-        # Compute delaySomaDistance
-        touches = touches.withColumn("axional_delay",
-                                     touches.prop.neuralTransmitterReleaseDelay +
-                                     touches.t.distance_soma / touches.prop.axonalConductionVelocity)
+        touches = self.compute_additional_h5_fields(touches)
 
-        # Compute #13: synapseType:  Inhibitory < 100 or  Excitatory >= 100
-        touches = touches.withColumn("synapseType",
-                                     (F.when(touches.prop.type.substr(0,1) == F.lit('E'), 100)
-                                     .otherwise(0)
-                                     ) + touches.prop._class_i)
+
+        # DBG
         touches.show()
-
         return
 
 
@@ -90,15 +85,8 @@ class Hdf5Exporter(object):
             #h5ds = f.create_dataset("a{}".format(gid), (df.count(), 19), numpy.float32)
 
 
+    def compute_additional_h5_fields(self, touches):
 
-# Export format
-_export_params_schema = T.StructType([
-    T.StructField("h5_entry", T.FloatType(), 19),
-])
-
-# An UDF to convert every single touch to a line in the H5 file
-def make_conversion_udf(_morpho_dict, morpho_dir):
-    def to_tuple(gid, axional_delay, touch, post_syn_class_index):
         # 0: Connecting gid: presynaptic for nrn.h5, postsynaptic for nrn_efferent.h5
         # 1: Axonal delay: computed using the distance of the presynaptic axon to the post synaptic terminal (milliseconds) (float)
         # 2: postSection ID (int)
@@ -118,33 +106,52 @@ def make_conversion_udf(_morpho_dict, morpho_dir):
         # 17: ASE Absolute Synaptic Efficacy (Millivolts) (int)
         # 18: Branch Type from the post neuron(0 for soma,
 
+        # Compute #0: gid
+        touches = touches.withColumn("gid", touches.n1.id + 1)
+
+        # Compute #1: delaySomaDistance
+        touches = touches.withColumn("axional_delay",
+                                     touches.prop.neuralTransmitterReleaseDelay +
+                                     touches.t.distance_soma / touches.prop.axonalConductionVelocity)
+
+        # Compute #8-12
+        # We ruse a Java UDFs (gauss_rand) which requires using spark.sql
+        touches.registerTempTable("cur_touches")
+        touches = self.spark.sql(
+            "select *,"
+            " gauss_rand(0) * prop.gsynVar + prop.gsyn as gsyn, "  # g
+            " gauss_rand(0) * prop.uVar + prop.u as u,"     # u
+            " gauss_rand(0) * prop.dVar + prop.d as d,"     # d
+            " gauss_rand(0) * prop.fVar + prop.f as f,"     # f
+            " gauss_rand(0) * prop.dtcVar + prop.dtc as dtc"  # dtc
+            " from cur_touches")
+
+        # Compute #13: synapseType:  Inhibitory < 100 or  Excitatory >= 100
+        touches = touches.withColumn("synapseType",
+                                     (F.when(touches.prop.type.substr(0, 1) == F.lit('E'), 100)
+                                      .otherwise(0)
+                                      ) + touches.prop._class_i)
+
+        return touches.select(
+            "gid",
+            "axional_delay",
+            "t.post_section",
+            "t.post_segment",
+            "t.post_offset",
+            "t.pre_section",
+            "t.pre_segment",
+            "t.pre_offset",
+            "gsyn", "u", "d", "f", "dtc",
+            "synapseType",
+            "n1.morphology_i",
+            #"t.branch_order",  # Branch order of dend section (morpho?)
+            "t.branch_order",  # Branch of axon
+            "prop.ase",
+            #F.lit(0),          # the type of the branch, 0 soma, 1 axon, 2 basel dendrite, 3 apical dendrite (morpho?)
+        )
+
         # morpho_dict = _morpho_dict.value
         # if morpho_name in morpho_dict:
         #     morpho = morpho_dict[morpho_name]
         # else:
         #     morpho = morpho_dict[morpho_name] = Morphology(morpho_dir, morpho_name)
-
-
-        return (
-            gid + 1,
-            axional_delay,
-            touch.post_section,
-            touch.post_segment,
-            touch.post_offset,
-            touch.pre_section,
-            touch.pre_segment,
-            touch.pre_offset,
-            --conductance,         # g  synapseProperties->classes
-            --u_parameter,         # udf params
-            --d_syn(depression),
-            --f_syn(facilitation),
-            --dtc(Decay_Time_Constant),  # also udf[0] dtc_engine
-            is_excitatory*100 + post_syn_class_index,
-            row.n1.morphology,
-            # findBranchOrder(neuron.branch[syn->synapses[0]]), dendrite
-            touch.branch_order,
-            # ASE
-            --branch_type(0-soma)  #  neuron.branchType[syn->synapses[0]]
-        )
-
-    return F.udf(to_tuple, _export_params_schema)

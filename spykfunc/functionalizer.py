@@ -6,7 +6,7 @@ from fnmatch import filter as matchfilter
 from glob import glob
 import time
 
-from pyspark.sql import SparkSession
+from pyspark.sql import SparkSession, SQLContext
 from pyspark import StorageLevel
 
 from .definitions import CellClass, MType
@@ -52,9 +52,15 @@ class Functionalizer(object):
 
     def __init__(self, only_s2s=False):
         self._run_s2f = not only_s2s
+
         # Init spark as static class property
         if Functionalizer.spark is None:
             Functionalizer.spark = SparkSession.builder.getOrCreate()
+
+        # register random udef
+        sqlContext = SQLContext.getOrCreate(Functionalizer.spark.sparkContext)
+        # Apparently functions are instantiated on every executed query
+        sqlContext.registerJavaFunction("gauss_rand", "spykfunc.udfs.GaussRand")
 
     # ---
     def init_data(self, recipe_file, mvd_file, morpho_dir, touch_files):

@@ -192,6 +192,7 @@ def neuron_loader_gen(data_class, loader_class, loader_params, n_neurons,
     """
     def _convert_entry(nrn, name, mtype_name, layer):
         return (int(nrn[0]),                    # id  (0==schema.NeuronFields["id"], but lets avoid all those lookups
+                int(nrn[1]),                    # morphology_index
                 mtype_name,                     # morphology
                 int(nrn[2]),                    # electrophysiology
                 int(nrn[3]),                    # syn_class_index
