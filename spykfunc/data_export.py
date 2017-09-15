@@ -57,11 +57,6 @@ class Hdf5Exporter(object):
         touches = self.compute_additional_h5_fields(touches)
 
 
-        # DBG
-        touches.show()
-        return
-
-
         if _DEBUG:
             gids = [1]
 
@@ -77,10 +72,6 @@ class Hdf5Exporter(object):
             df.show()
 
 
-
-
-            convert_h5 = make_conversion_udf(self.morphologies, self.morpho_dir)
-            prepared_df = df.select(convert_h5(df.n1.id, df.axional_delay, df.t, df.prop, df.n2.syn_class_index))
             # some magic now to extract the array from the DF, one per one or preferably the whole matrix...
             #h5ds = f.create_dataset("a{}".format(gid), (df.count(), 19), numpy.float32)
 
@@ -110,9 +101,11 @@ class Hdf5Exporter(object):
         touches = touches.withColumn("gid", touches.n1.id + 1)
 
         # Compute #1: delaySomaDistance
-        touches = touches.withColumn("axional_delay",
-                                     touches.prop.neuralTransmitterReleaseDelay +
-                                     touches.t.distance_soma / touches.prop.axonalConductionVelocity)
+        touches = touches.withColumn("axional_delay", (
+                touches.prop.neuralTransmitterReleaseDelay +
+                touches.t.distance_soma / touches.prop.axonalConductionVelocity
+            ).cast(T.FloatType())
+        )
 
         # Compute #8-12
         # We ruse a Java UDFs (gauss_rand) which requires using spark.sql
@@ -127,31 +120,26 @@ class Hdf5Exporter(object):
             " from cur_touches")
 
         # Compute #13: synapseType:  Inhibitory < 100 or  Excitatory >= 100
-        touches = touches.withColumn("synapseType",
-                                     (F.when(touches.prop.type.substr(0, 1) == F.lit('E'), 100)
-                                      .otherwise(0)
-                                      ) + touches.prop._class_i)
+        t = touches.withColumn("synapseType",
+                               (F.when(touches.prop.type.substr(0, 1) == F.lit('E'), 100)
+                                .otherwise(0)
+                                ) + touches.prop._class_i)
 
-        return touches.select(
-            "gid",
-            "axional_delay",
-            "t.post_section",
-            "t.post_segment",
-            "t.post_offset",
-            "t.pre_section",
-            "t.pre_segment",
-            "t.pre_offset",
+        # Select fields and cast to Float
+        return t.select(
+            t.gid.cast(T.FloatType()).alias("gid"),
+            t.axional_delay,
+            t.t.post_section.cast(T.FloatType()).alias("post_section"),
+            t.t.post_segment.cast(T.FloatType()).alias("post_segment"),
+            t.t.post_offset.alias("post_offset"),
+            t.t.pre_section.cast(T.FloatType()).alias("pre_section"),
+            t.t.pre_segment.cast(T.FloatType()).alias("pre_segment"),
+            t.t.pre_offset.alias("pre_offset"),
             "gsyn", "u", "d", "f", "dtc",
-            "synapseType",
-            "n1.morphology_i",
-            #"t.branch_order",  # Branch order of dend section (morpho?)
-            "t.branch_order",  # Branch of axon
-            "prop.ase",
-            #F.lit(0),          # the type of the branch, 0 soma, 1 axon, 2 basel dendrite, 3 apical dendrite (morpho?)
+            t.synapseType.cast(T.FloatType()).alias("synapseType"),
+            t.n1.morphology_i.cast(T.FloatType()).alias("morphology"),
+            F.lit(0.0).alias("branch_order_dend"),  # TBD
+            t.t.branch_order.cast(T.FloatType()).alias("branch_order_axon"),
+            t.prop.ase.cast(T.FloatType()).alias("ase"),
+            F.lit(0.0).alias("branch_type"),  # TBD (0 soma, 1 axon, 2 basel dendrite, 3 apical dendrite)
         )
-
-        # morpho_dict = _morpho_dict.value
-        # if morpho_name in morpho_dict:
-        #     morpho = morpho_dict[morpho_name]
-        # else:
-        #     morpho = morpho_dict[morpho_name] = Morphology(morpho_dir, morpho_name)
