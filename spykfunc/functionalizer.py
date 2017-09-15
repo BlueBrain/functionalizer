@@ -154,10 +154,10 @@ class Functionalizer(object):
         return 0
 
     # ---
-    def export_results(self, output_path):
+    def export_results(self, output_path="."):
         try:
             exporter = Hdf5Exporter(self.neuronG, self.morpho_dir, self.recipe, self.synapse_properties_class, output_path)
-            exporter.do_export()
+            self.data = exporter.do_export()
         except RuntimeError:
             logger.error("Could not save to Hdf5. 'Functionalized' touches saved as parquet in ./filtered_touches.tmp.parquet")
             return 1

@@ -4,14 +4,10 @@ from os import path
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
 from pyspark.sql import SparkSession
-from .definitions import CellClass
-from . import data_loader
 from . import utils
 from .dataio import morphotool
 
 logger = utils.get_logger(__name__)
-
-_DEBUG = True
 
 
 def save_parquet(neuronG, output_path=None):
@@ -55,26 +51,26 @@ class Hdf5Exporter(object):
                                       (touch_G.n2.syn_class_index == p_df.prop.toSClass_i)))
 
         touches = self.compute_additional_h5_fields(touches)
-
-
-        if _DEBUG:
-            gids = [1]
+        h5store = None
 
         for i, gid in enumerate(gids):
             if i % 10000 == 0:
                 cur_name = nrn_filepath
                 if _many_files:
                     cur_name += ".{}".format(i//10000)
-                #f = h5py.File(cur_name, 'w')
+                if h5store:
+                    h5store.close()
+                h5store = h5py.File(cur_name, "w")
 
             # The df of the neuron to export
             df = touches.where(F.col("n2.id") == gid).orderBy("n1.id")
-            df.show()
 
+            logger.debug("Writing neuron {}".format(gid))
+            data_np = df.toPandas().as_matrix()
+            h5store.create_dataset("a{}".format(gid), data=data_np.astype("f4"))
 
-            # some magic now to extract the array from the DF, one per one or preferably the whole matrix...
-            #h5ds = f.create_dataset("a{}".format(gid), (df.count(), 19), numpy.float32)
-
+        if h5store:
+            h5store.close()
 
     def compute_additional_h5_fields(self, touches):
 
