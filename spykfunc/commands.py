@@ -1,3 +1,5 @@
+#!/usr/bin/env pyspark
+
 from spykfunc.functionalizer import session
 import sys
 import argparse
@@ -26,7 +28,14 @@ arg_parser = _create_parser()
 def run_functionalizer():
     # Will exit with code 2 if problems in args
     options = arg_parser.parse_args()
-    return session(options).process_filters()
+    fuzer = session(options)
+
+    status = fuzer.process_filters()
+    if status > 0:
+        return status
+
+    status = fuzer.export_results("sparkfunc_output")
+    return status
 
 
 # Defaults to execute run_functionalizer command

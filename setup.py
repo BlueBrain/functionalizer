@@ -7,14 +7,14 @@ from setuptools import setup, find_packages, Extension
 from setuptools.command.test import test as TestCommand
 import sys
 import glob
-try:
+#try:
     # Attempt import Cython
-    from Cython.Build import cythonize
-    build_mode = 'devel'
-except ImportError:
-    build_mode = 'release'
-    assert glob.glob('spykfunc/dataio/*.cpp'), \
-        'Cpp extension sources not found. Please install Cython.'
+from Cython.Build import cythonize
+build_mode = 'devel'
+# except ImportError:
+#     build_mode = 'release'
+#     assert glob.glob('spykfunc/dataio/*.cpp'), \
+#         'Cpp extension sources not found. Please install Cython.'
 
 
 # *******************************
@@ -59,7 +59,7 @@ extensions = [
     for name, opts in ext_mods.items()
 ]
 extensions.append(
-    Extension('tst_neuron_memview', 
+    Extension('tst_neuron_memview',
               ['tests/tst_neuron_memview' + _filename_ext],
               language="c++"))
 
@@ -97,6 +97,12 @@ def setup_package():
             'dev': ['cython<0.26', 'flake8']
         },
         cmdclass={'test': PyTest},
+
+        scripts=['bin/spykfunc',
+                 'spykfunc/commands.py'],
+
+        data_files=[('share/spykfunc', ['java/random.jar'])],
+        include_package_data=True,
     )
 
 

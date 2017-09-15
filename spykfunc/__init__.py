@@ -29,5 +29,9 @@ except:
         __version__ = 'unknown'
 
 
+# General logging
+_log.basicConfig(level=_log.WARN)
+
+
 class Config:
     log_level = _log.DEBUG

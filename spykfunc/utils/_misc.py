@@ -100,7 +100,7 @@ class ColoredFormatter(_logging.Formatter):
 
     def format(self, record):
         levelname = record.levelname
-        msg = _logging.Formatter.format(self, record)
+        msg = super(ColoredFormatter, self).format(record)
         if levelname in self.COLORS:
             return ConsoleColors.format_text(msg, self.COLORS[levelname])
         return msg
@@ -115,9 +115,10 @@ DefaultHandler.setFormatter(ColoredFormatter('[%(levelname)s] %(name)s: %(messag
 
 def get_logger(name):
     logger = _logging.getLogger(name)
+    logger.propagate = False
     logger.setLevel(Config.log_level)
     logger.addHandler(DefaultHandler)
-    logger.addHandler(ContinueAbortErrorLogHandler)
+    # logger.addHandler(ContinueAbortErrorLogHandler)
     return logger
 
 

@@ -57,6 +57,9 @@ class Functionalizer(object):
         if Functionalizer.spark is None:
             Functionalizer.spark = SparkSession.builder.getOrCreate()
 
+        # Logging
+        self.spark.sparkContext.setLogLevel("WARN")
+
         # register random udef
         sqlContext = SQLContext.getOrCreate(Functionalizer.spark.sparkContext)
         # Apparently functions are instantiated on every executed query

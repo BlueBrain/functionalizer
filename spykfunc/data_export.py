@@ -1,5 +1,6 @@
 import h5py
 import pyspark
+import os
 from os import path
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
@@ -27,6 +28,7 @@ class Hdf5Exporter(object):
         self.morpho_dir = morpho_dir
         self.recipe = recipe
         self.syn_properties_df = syn_properties
+        os.makedirs(output_path)
 
         # Broadcast an empty dict to hold morphologies
         # Each worker will fill it as required, no communication incurred

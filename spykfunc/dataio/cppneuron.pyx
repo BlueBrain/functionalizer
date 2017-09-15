@@ -16,7 +16,7 @@ from collections import defaultdict
 from .structbuf import StructType, TYPES
 
 # MorphoLib
-from . import morphotool, MorphoReader
+from . import morphotool
 
 cdef int DEBUG=0
 
@@ -203,7 +203,7 @@ cdef class MVD_Morpho_Loader(NeuronLoaderI):
 
     def load_morphology(self, NeuronData neuron_data, string morpho_name):
         assert morphotool, "Morphotool isnt available."
-        morph = neuron_data.morphologies[morpho_name] = MorphoReader(os.path.join(self.morphology_dir, morpho_name + ".h5")).create_morpho_tree()
+        morph = neuron_data.morphologies[morpho_name] = morphotool.MorphoReader(os.path.join(self.morphology_dir, morpho_name + ".h5")).create_morpho_tree()
         return morph
 
     def get_params(self):
