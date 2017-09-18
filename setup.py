@@ -6,15 +6,16 @@
 from setuptools import setup, find_packages, Extension
 from setuptools.command.test import test as TestCommand
 import sys
+import os
 import glob
-#try:
-    # Attempt import Cython
-from Cython.Build import cythonize
-build_mode = 'devel'
-# except ImportError:
-#     build_mode = 'release'
-#     assert glob.glob('spykfunc/dataio/*.cpp'), \
-#         'Cpp extension sources not found. Please install Cython.'
+
+
+force_rebuild_cython = os.getenv('FORCE_CYTHONIZE', False)
+if not force_rebuild_cython and glob.glob('spykfunc/dataio/*.cpp'):
+    build_mode = 'release'
+else:
+    build_mode = 'devel'
+    from Cython.Build import cythonize
 
 
 # *******************************
@@ -52,6 +53,13 @@ ext_mods = {
     ),
 }
 
+# Handle simple include cases
+_libs_env = ['HDF5_ROOT', 'BOOST_ROOT']
+for lib in _libs_env:
+    lib_ROOT = os.getenv(lib)
+    if lib_ROOT is not None and lib_ROOT != '/usr':
+        ext_mods['cppneuron']['include_dirs'].append(os.path.join(lib_ROOT, "include"))
+
 extensions = [
     Extension(_ext_mod + name, [_ext_dir + name + _filename_ext],
               language='c++',
@@ -66,6 +74,7 @@ extensions.append(
 if build_mode == 'devel':
     extensions = cythonize(extensions,
                            cplus=True,
+                           build_dir = "build",
                            include_path=['spykfunc/dataio/mvdtool'])
 
 
