@@ -3,16 +3,19 @@
 # Prepare/Load a Python env to run spark
 ##########################################
 
-BASEDIR=$HOME/Functionalizer/pyspark
+BASEDIR=$HOME/dev/Functionalizer/pyspark
 CURDIR=$BASEDIR/envsetup
 PYENV=$CURDIR/sparkenv
 
 module purge
-module load gcc/4.8.2
+module load nix/gcc
+module load nix/hdf5
+module load spark
+
 
 if [ ! -d $PYENV ]; then
     echo "Creating virtualenv in $PYENV"
-    module load python
+    module load nix/python/2.7-light
     virtualenv $PYENV -p `which python`
     module unload python
     . $PYENV/bin/activate
@@ -20,13 +23,14 @@ if [ ! -d $PYENV ]; then
     pip install "ipython<6"
     pip install -r $BASEDIR/requirements.txt
     pip install -r $BASEDIR/test-requirements.txt
-    pip install -e $BASEDIR[dev]
+    pip install -r $BASEDIR/dev-requirements.txt
+    #pip install -e $BASEDIR[dev]
 else
     . $PYENV/bin/activate
 fi
 
-export PATH=$HOME/usr/spark-2.1.1/bin:$HOME/usr/jdk1.8.0_144/jre/bin:$PATH
-export JAVA_HOME=$HOME/usr/jdk1.8.0_144/jre
+#export PATH=$HOME/usr/spark-2.1.1/bin:$HOME/usr/jdk1.8.0_144/jre/bin:$PATH
+#export JAVA_HOME=$HOME/usr/jdk1.8.0_144/jre
 
 export PYSPARK_DRIVER_PYTHON=ipython
 export SPARK_CONF_DIR=$CURDIR/spark_conf_viz
