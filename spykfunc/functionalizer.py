@@ -12,7 +12,7 @@ from pyspark import StorageLevel
 from .definitions import CellClass, MType
 from .recipe import Recipe
 from .data_loader import NeuronDataSpark
-from .data_export import Hdf5Exporter
+from .data_export import NeuronExporter
 from .dataio.cppneuron import MVD_Morpho_Loader
 from .stats import NeuronStats
 from . import _filtering
@@ -157,17 +157,20 @@ class Functionalizer(object):
         return 0
 
     # ---
-    def export_results(self, output_path="."):
+    def export_results(self, output_path="sparkfunc_output"):
+        logger.info("Exporting touches...")
         try:
-            exporter = Hdf5Exporter(self.neuronG, self.morpho_dir, self.recipe, self.synapse_properties_class, output_path)
-            self.data = exporter.do_export()
+            exporter = NeuronExporter(self.neuronG, self.morpho_dir, self.recipe, self.synapse_properties_class, output_path)
+            self.data = exporter.export_parquet()
         except RuntimeError:
-            logger.error("Could not save to Hdf5. 'Functionalized' touches saved as parquet in ./filtered_touches.tmp.parquet")
+            logger.error("Could not save results. 'Functionalized' touches saved as parquet in ./filtered_touches.tmp.parquet")
             return 1
         except:
             import traceback
             logger.error(traceback.format_exc(1))
             return 1
+
+        logger.info("Done exporting.")
         return 0
 
     # ---

@@ -34,7 +34,7 @@ def run_functionalizer():
     if status > 0:
         return status
 
-    status = fuzer.export_results("sparkfunc_output")
+    status = fuzer.export_results()
     return status
 
 
