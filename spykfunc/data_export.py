@@ -40,7 +40,7 @@ class NeuronExporter(object):
         nrn_filepath = path.join(self.output_path, filename)
         # min_part = int(self.spark.conf.get("spark.sql.shuffle.partitions"))
         # logger.debug("Coalescing to " + str(min_part))
-        return self.touches.write.mode("overwrite").partitionBy("gid").parquet(nrn_filepath, compression="gzip")
+        return self.touches.write.mode("overwrite").partitionBy("post_gid").parquet(nrn_filepath, compression="gzip")
 
     # ---
     def export_hdf5(self, filename="nrn.h5"):
@@ -63,7 +63,7 @@ class NeuronExporter(object):
                 h5store = h5py.File(cur_name, "w")
 
             # The df of the neuron to export
-            df = self.touches.where(F.col("gid") == gid).orderBy("pre_gid")
+            df = self.touches.where(F.col("post_gid") == gid).orderBy("pre_gid")
             df = self.prepare_df_to_nrn_format(df)
 
             logger.debug("Writing neuron {}".format(gid))
@@ -101,9 +101,6 @@ class NeuronExporter(object):
         # 17: ASE Absolute Synaptic Efficacy (Millivolts) (int)
         # 18: Branch Type from the post neuron(0 for soma,
 
-        # Compute #0: gid
-        touches = touches.withColumn("gid", touches.n1.id + 1)
-
         # Compute #1: delaySomaDistance
         touches = touches.withColumn("axional_delay", (
                 touches.prop.neuralTransmitterReleaseDelay +
@@ -132,7 +129,7 @@ class NeuronExporter(object):
         # Select fields
         return t.select(
             t.t.src.alias("pre_gid"),
-            t.gid.alias("gid"),
+            t.t.dst.alias("post_gid"),
             t.axional_delay,
             t.t.post_section.alias("post_section"),
             t.t.post_segment.alias("post_segment"),
@@ -154,7 +151,7 @@ class NeuronExporter(object):
     def prepare_df_to_nrn_format(df):
         # Select fields and cast to Float
         return df.select(
-            df.gid.cast(T.FloatType()).alias("gid"),
+            df.pre_gid.cast(T.FloatType()).alias("gid"),
             df.axional_delay,
             df.post_section.cast(T.FloatType()).alias("post_section"),
             df.post_segment.cast(T.FloatType()).alias("post_segment"),
