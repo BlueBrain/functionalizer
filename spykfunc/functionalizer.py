@@ -153,15 +153,16 @@ class Functionalizer(object):
             return 1
 
         # Force compute, saving to parquet - fast and space efficient
-        self.touchDF.write.mode("overwrite").parquet("./filtered_touches.tmp.parquet")
+        self.exporter = NeuronExporter(self.neuronG, self.morpho_dir, self.recipe, self.synapse_properties_class)
+        self.exporter.save_temp()
         return 0
 
     # ---
     def export_results(self, output_path="sparkfunc_output"):
         logger.info("Exporting touches...")
         try:
-            exporter = NeuronExporter(self.neuronG, self.morpho_dir, self.recipe, self.synapse_properties_class, output_path)
-            self.data = exporter.export_parquet()
+            self.exporter.output_path = output_path
+            self.exporter.export_parquet()
         except RuntimeError:
             logger.error("Could not save results. 'Functionalized' touches saved as parquet in ./filtered_touches.tmp.parquet")
             return 1

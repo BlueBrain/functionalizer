@@ -12,13 +12,13 @@ logger = utils.get_logger(__name__)
 
 
 class NeuronExporter(object):
-    def __init__(self, neuronG, morpho_dir, recipe, syn_properties, output_path=None):
+    def __init__(self, neuronG, morpho_dir, recipe, syn_properties, output_path="output"):
         # if not morphotool:
         #     raise RuntimeError("Can't export to .h5. Morphotool not available")
 
         self.neuronG = neuronG
         self.n_ids = self.neuronG.vertices.count()
-        self.output_path = "." if output_path is None else output_path
+        self.output_path = output_path
         self.morpho_dir = morpho_dir
         self.recipe = recipe
         self.syn_properties_df = syn_properties
@@ -34,6 +34,11 @@ class NeuronExporter(object):
 
         # Create required / select fields that belong to nrn.h5 spec
         self.touches = self.compute_additional_h5_fields()
+
+    # ---
+    def save_temp(self, name="filtered_touches.tmp.parquet"):
+        self.touches = self.touches.write.parquet(name, mode="overwrite")
+        return self.touches
 
     # ---
     def export_parquet(self, filename="nrn.parquet"):
