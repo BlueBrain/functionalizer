@@ -16,14 +16,21 @@
 # all copies or substantial portions of the Software.
 ###############################################################################
 
-if [ "$#" -lt 4 ]; then
-    echo "ERROR: Wrong number of arguments"
-    echo "Syntax: $(basename $0) <recipe_file> <mvd_file> <morpho_dir> <touch_files> [args_passed_to_spark_submit, ...]"
+_NAME=$0
+BASEDIR=$(dirname $(readlink -f "$0"))
+
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Syntax: $(basename $0) <recipe_file> <mvd_file> <morpho_dir> <touch_files> [spykfunc_options..., ] -- [args_passed_to_spark_submit, ...]"
+    python $BASEDIR/commands.py --help
     exit 2
 fi
 
-_NAME=$0
-BASEDIR=$(dirname $(readlink -f "$0"))
+if [ "$#" -lt 4 ]; then
+    echo "ERROR: Wrong number of arguments"
+    echo "Syntax: $(basename $0) <recipe_file> <mvd_file> <morpho_dir> <touch_files> [args_passed_to_spark_submit, ...]"
+    echo "        $(basename $0) --help"
+    exit 2
+fi
 
 recipe_file=$1
 mvd_file=$2
@@ -36,10 +43,18 @@ if ! [[ -f $recipe_file && -f $mvd_file && -d $morpho_dir ]]; then
     exit 2
 fi
 
-# Pass on the params
+# shift positional params (doesn't change $0)
 shift 4
 
-spark-submit \
+# Parameters for spark-submit shall come after "--"
+args_to_spykfunc=()
+while [[ -n "$1" && $1 != "--" ]]; do
+    args_to_spykfunc+=($1)
+    shift
+done
+[ $1 == "--" ] && shift
+
+(set -x; spark-submit \
   "$@" \
   --packages graphframes:graphframes:0.5.0-spark2.1-s_2.11 \
   --jars $BASEDIR/../share/spykfunc/random.jar \
@@ -48,4 +63,6 @@ spark-submit \
       $recipe_file \
       $mvd_file \
       $morpho_dir \
-      $touch_files
+      $touch_files \
+      ${args_to_spykfunc[@]}
+)

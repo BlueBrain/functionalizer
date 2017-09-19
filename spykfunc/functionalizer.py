@@ -158,18 +158,22 @@ class Functionalizer(object):
         return 0
 
     # ---
-    def export_results(self, output_path="sparkfunc_output"):
+    def export_results(self, output_path="sparkfunc_output", format_hdf5=False):
         logger.info("Exporting touches...")
-        try:
+        if True:#try:
             self.exporter.output_path = output_path
-            self.exporter.export_parquet()
-        except RuntimeError:
-            logger.error("Could not save results. 'Functionalized' touches saved as parquet in ./filtered_touches.tmp.parquet")
-            return 1
-        except:
-            import traceback
-            logger.error(traceback.format_exc(1))
-            return 1
+            if format_hdf5:
+                self.exporter.export_hdf5()
+            else:
+                self.exporter.export_parquet()
+
+        # except RuntimeError:
+        #     logger.error("Could not save results. 'Functionalized' touches saved as parquet in ./filtered_touches.tmp.parquet")
+        #     return 1
+        # except:
+        #     import traceback
+        #     logger.error(traceback.format_exc(1))
+        #     return 1
 
         logger.info("Done exporting.")
         return 0

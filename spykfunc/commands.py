@@ -17,6 +17,9 @@ def _create_parser():
     parser.add_argument("--s2s",
                         help="s2s pruning only. If omitted s2f will be run",
                         action="store_true", dest="s2s", default=False)
+    parser.add_argument("--hdf5",
+                        help="Convert result to HDF5, for testing only",
+                        action="store_true", dest="hdf5", default=False)
 
     return parser
 
@@ -34,7 +37,7 @@ def run_functionalizer():
     if status > 0:
         return status
 
-    status = fuzer.export_results()
+    status = fuzer.export_results(format_hdf5=options.hdf5)
     return status
 
 
