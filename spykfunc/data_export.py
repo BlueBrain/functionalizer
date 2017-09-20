@@ -13,12 +13,12 @@ logger = utils.get_logger(__name__)
 
 
 class NeuronExporter(object):
-    def __init__(self, neuronG, morpho_dir, recipe, syn_properties, output_path="output"):
+    def __init__(self, morpho_dir, recipe, syn_properties, output_path="output"):
         # if not morphotool:
         #     raise RuntimeError("Can't export to .h5. Morphotool not available")
+        self._neuronG = False
+        self.touches = None
 
-        self.neuronG = neuronG
-        self.n_ids = self.neuronG.vertices.count()
         self.output_path = output_path
         self.morpho_dir = morpho_dir
         self.recipe = recipe
@@ -33,60 +33,118 @@ class NeuronExporter(object):
         self.morphologies = {}
         self.sc.broadcast(self.morphologies)
 
-        # Create required / select fields that belong to nrn.h5 spec
-        self.touches = self.compute_additional_h5_fields()
 
         _conc = self.sc._jvm.spykfunc.udfs.BinaryConcat().apply
         self.concat_bin = utils.make_agg_f(self.spark.sparkContext, _conc)
 
-    # ---
-    def save_temp(self, name="filtered_touches.tmp.parquet"):
-        self.touches.write.parquet(name, mode="overwrite")
+    @property
+    def neuronG(self):
+        return self._neuronG
+
+    @neuronG.setter
+    def neuronG(self, newval):
+        self._neuronG = newval
+        self.n_ids = self._neuronG.vertices.count()
+        # Create required / select fields that belong to nrn.h5 spec
+        self.touches = self.compute_additional_h5_fields()
 
     # ---
-    def export_parquet(self, filename="nrn.parquet"):
+    def save_temp(self, neuronG=None, name="filtered_touches.tmp.parquet"):
+        if neuronG is not None and self._neuronG is not neuronG:
+            self.neuronG = neuronG
+        self.touches.write.parquet(name, mode="overwrite")
+        self.touches = self.spark.read.parquet(name)
+
+    # ---
+    def export_parquet(self, neuronG=None, filename="nrn.parquet"):
+        if neuronG is not None and self._neuronG is not neuronG:
+            self.neuronG = neuronG
         nrn_filepath = path.join(self.output_path, filename)
-        # min_part = int(self.spark.conf.get("spark.sql.shuffle.partitions"))
-        # logger.debug("Coalescing to " + str(min_part))
         return self.touches.write.mode("overwrite").partitionBy("post_gid").parquet(nrn_filepath, compression="gzip")
 
     # ---
-    def export_hdf5(self, filename="nrn.h5"):
+    # def export_hdf5(self, filename="nrn.h5"):
+    #     nrn_filepath = path.join(self.output_path, filename)
+    #
+    #     # In order to sequentially write and not overflood the master, we query and write touches GID per GID
+    #     gids_df = self.neuronG.vertices.select("id").orderBy("id")
+    #     gids = gids_df.rdd.keys().collect()  # In large cases we can use toLocalIterator()
+    #     _many_files = len(gids) > 10000
+    #
+    #     h5store = None
+    #
+    #     for i, gid in enumerate(gids[::1000]):
+    #         if i % 10000 == 0:
+    #             cur_name = nrn_filepath
+    #             if _many_files:
+    #                 cur_name += ".{}".format(i//10000)
+    #             if h5store:
+    #                 h5store.close()
+    #             h5store = h5py.File(cur_name, "w")
+    #
+    #         # The df of the neuron to export
+    #         df = self.touches.where(F.col("post_gid") == gid).orderBy("pre_gid")
+    #         df = self.prepare_df_to_nrn_format(df)
+    #
+    #         # logger.debug("Writing neuron {}".format(gid))
+    #         # data_np = df.toPandas().as_matrix().astype("f4")
+    #
+    #         df.select(F.array("*").alias("floatvec")).registerTempTable("nrn_vals")
+    #         array_df = df.sql_ctx.sql("select float2binary(floatvec) as binary from df")
+    #         merged = array_df.agg(self.concat_bin(array_df.binary))
+    #
+    #         buffer = merged.rdd.keys().collect()[0]
+    #         numpy.frombuffer(buffer, dtype=">f4").reshape((-1, 19))
+    #
+    #         h5store.create_dataset("a{}".format(gid), data=numpy)
+    #
+    #     if h5store:
+    #         h5store.close()
+
+
+    def export_hdf5(self, neuronG=None, filename="nrn.h5"):
+        if neuronG is not None and self._neuronG is not neuronG:
+            self.neuronG = neuronG
+
         nrn_filepath = path.join(self.output_path, filename)
 
-        # In order to sequentially write and not overflood the master, we query and write touches GID per GID
-        gids_df = self.neuronG.vertices.select("id").orderBy("id")
-        gids = gids_df.rdd.keys().collect()  # In large cases we can use toLocalIterator()
-        _many_files = len(gids) > 10000
+        n_gids = self.neuronG.vertices.count()
 
-        h5store = None
 
-        for i, gid in enumerate(gids):
-            if i % 10000 == 0:
-                cur_name = nrn_filepath
-                if _many_files:
-                    cur_name += ".{}".format(i//10000)
-                if h5store:
-                    h5store.close()
-                h5store = h5py.File(cur_name, "w")
+        df = self.touches
+        df.select(df.post_gid, F.array(*self.nrn_fields_as_float(df)).alias("floatvec")).registerTempTable("nrn_vals")
 
-            # The df of the neuron to export
-            df = self.touches.where(F.col("post_gid") == gid).orderBy("pre_gid")
-            df = self.prepare_df_to_nrn_format(df).astype("f4")
+        # Massive conversion to binary
+        arrays_df = df.sql_ctx.sql("select post_gid, float2binary(floatvec) as bin_arr from nrn_vals").groupBy("post_gid").agg(self.concat_bin("bin_arr").alias("bin_maxtrix"))
+        # Number of partitions to number of files
+        previous_def = int(self.spark.conf.get("spark.sql.shuffle.partitions"))
+        self.spark.conf.set("spark.sql.shuffle.partitions", (n_gids//1000) or 1)
+        arrays_df = arrays_df.orderBy("post_gid")
+        print(arrays_df.explain())
+        self.spark.conf.set("spark.sql.shuffle.partitions", previous_def)
 
-            # logger.debug("Writing neuron {}".format(gid))
-            # data_np = df.toPandas().as_matrix()
+        def write_hdf5(part_it):
+            h5store = None
+            output_filename = None
+            for row in part_it:
+                post_id = row[0]
+                buff = row[1]
 
-            df.select(F.array("*").alias("floatvec")).registerTempTable("nrn_vals")
-            array_df = df.sql_ctx.sql("select float2binary(floatvec) as binary from df")
-            merged = array_df.agg(self.concat_bin(array_df.binary))
-            buffer = merged.rdd.keys().collect()[0]
-            numpy.frombuffer(buffer, dtype=">f4").reshape((-1, 19))
+                if h5store is None:
+                    output_filename = nrn_filepath + ".{}".format(post_id//1000)
+                    h5store = h5py.File(output_filename, "w")
 
-            h5store.create_dataset("a{}".format(gid), data=numpy)
+                np_array = numpy.frombuffer(buff, dtype=">f4").reshape((-1, 19))
+                h5store.create_dataset("a{}".format(post_id), data=np_array)
 
-        if h5store:
             h5store.close()
+            return [output_filename]
+
+        # Export via partition mapping
+        print([[n[0] for n in r] for r in arrays_df.select("post_gid").rdd.glom().collect()])
+        print(arrays_df.rdd.mapPartitions(write_hdf5).collect())
+
+
 
     # -----
     def compute_additional_h5_fields(self):
@@ -163,9 +221,9 @@ class NeuronExporter(object):
 
 
     @staticmethod
-    def prepare_df_to_nrn_format(df):
+    def nrn_fields_as_float(df):
         # Select fields and cast to Float
-        return df.select(
+        return (
             df.pre_gid.cast(T.FloatType()).alias("gid"),
             df.axional_delay,
             df.post_section.cast(T.FloatType()).alias("post_section"),
@@ -180,5 +238,5 @@ class NeuronExporter(object):
             df.branch_order_dend.cast(T.FloatType()).alias("branch_order_dend"),
             df.branch_order_axon.cast(T.FloatType()).alias("branch_order_axon"),
             df.ase.cast(T.FloatType()).alias("ase"),
-            df.branch_type.cast(T.FloatType()).alias("branch_type"),  # TBD (0 soma, 1 axon, 2 basel dendrite, 3 apical dendrite)
+            df.branch_type.cast(T.FloatType()).alias("branch_type")  # TBD (0 soma, 1 axon, 2 basel dendrite, 3 apical dendrite)
         )

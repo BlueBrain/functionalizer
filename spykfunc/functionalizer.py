@@ -115,6 +115,9 @@ class Functionalizer(object):
         self.neuronG = GraphFrame(self.neuronDF, self._touchDF)  # Rebuild graph
         self.neuron_stats.update_touch_graph_source(self.neuronG, overwrite_previous_gf=False)
 
+        # Data exporter
+        self.exporter = NeuronExporter(self.morpho_dir, self.recipe, self.synapse_properties_class)
+
     # ---
     @property
     def touchDF(self):
@@ -157,17 +160,16 @@ class Functionalizer(object):
             return 1
 
         # Force compute, saving to parquet - fast and space efficient
-        self.exporter = NeuronExporter(self.neuronG, self.morpho_dir, self.recipe, self.synapse_properties_class)
-        self.exporter.save_temp()
+        self.exporter.save_temp(self.neuronG)
         return 0
 
     # ---
-    def export_results(self, output_path="sparkfunc_output", format_hdf5=False):
+    def export_results(self, output_path="spykfunc_output", format_hdf5=True):
         logger.info("Exporting touches...")
         if True:#try:
             self.exporter.output_path = output_path
             if format_hdf5:
-                self.exporter.export_hdf5()
+                self.exporter.export_hdf5(self.neuronG)
             else:
                 self.exporter.export_parquet()
 

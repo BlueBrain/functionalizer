@@ -18,5 +18,4 @@ class DictAccum(AccumulatorParam):
 
 
 def make_agg_f(sc, java_f):
-    def concat_bin(col):
-        return F.Column(java_f(F._to_seq(sc, [col], F._to_java_column)))
+    return lambda col: F.Column(java_f(F._to_seq(sc, [col], F._to_java_column)))
