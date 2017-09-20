@@ -40,6 +40,9 @@ class NeuronDataSpark(NeuronData):
         self.neuronDF = None
         self.set_loader(loader)
 
+        if not os.path.isdir(".cache"):
+            os.makedirs(".cache")
+
     # ---
     def load_mvd_neurons_morphologies(self, neuron_filter=None, **kwargs):
         self._load_mvd_neurons(neuron_filter, **kwargs)

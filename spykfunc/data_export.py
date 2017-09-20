@@ -24,8 +24,6 @@ class NeuronExporter(object):
         self.morpho_dir = morpho_dir
         self.recipe = recipe
         self.syn_properties_df = syn_properties
-        if not os.path.exists(output_path):
-            os.makedirs(output_path)
 
         # Broadcast an empty dict to hold morphologies
         # Each worker will fill it as required, no communication incurred
@@ -55,6 +53,7 @@ class NeuronExporter(object):
             self.neuronG = neuronG
         self.touches.write.parquet(name, mode="overwrite")
         self.touches = self.spark.read.parquet(name)
+        logger.info("Filtered touches temporarily saved to %s", name)
 
     # ---
     def export_parquet(self, neuronG=None, filename="nrn.parquet"):
@@ -64,57 +63,19 @@ class NeuronExporter(object):
         return self.touches.write.mode("overwrite").partitionBy("post_gid").parquet(nrn_filepath, compression="gzip")
 
     # ---
-    # def export_hdf5(self, filename="nrn.h5"):
-    #     nrn_filepath = path.join(self.output_path, filename)
-    #
-    #     # In order to sequentially write and not overflood the master, we query and write touches GID per GID
-    #     gids_df = self.neuronG.vertices.select("id").orderBy("id")
-    #     gids = gids_df.rdd.keys().collect()  # In large cases we can use toLocalIterator()
-    #     _many_files = len(gids) > 10000
-    #
-    #     h5store = None
-    #
-    #     for i, gid in enumerate(gids[::1000]):
-    #         if i % 10000 == 0:
-    #             cur_name = nrn_filepath
-    #             if _many_files:
-    #                 cur_name += ".{}".format(i//10000)
-    #             if h5store:
-    #                 h5store.close()
-    #             h5store = h5py.File(cur_name, "w")
-    #
-    #         # The df of the neuron to export
-    #         df = self.touches.where(F.col("post_gid") == gid).orderBy("pre_gid")
-    #         df = self.prepare_df_to_nrn_format(df)
-    #
-    #         # logger.debug("Writing neuron {}".format(gid))
-    #         # data_np = df.toPandas().as_matrix().astype("f4")
-    #
-    #         df.select(F.array("*").alias("floatvec")).registerTempTable("nrn_vals")
-    #         array_df = df.sql_ctx.sql("select float2binary(floatvec) as binary from df")
-    #         merged = array_df.agg(self.concat_bin(array_df.binary))
-    #
-    #         buffer = merged.rdd.keys().collect()[0]
-    #         numpy.frombuffer(buffer, dtype=">f4").reshape((-1, 19))
-    #
-    #         h5store.create_dataset("a{}".format(gid), data=numpy)
-    #
-    #     if h5store:
-    #         h5store.close()
-
-
     def export_hdf5(self, neuronG=None, filename="nrn.h5"):
         if neuronG is not None and self._neuronG is not neuronG:
             self.neuronG = neuronG
 
+        if not os.path.exists(self.output_path):
+            os.makedirs(self.output_path)
         nrn_filepath = path.join(self.output_path, filename)
 
         n_gids = self.neuronG.vertices.count()
-
-
         df = self.touches
-        df.select(df.post_gid, F.array(*self.nrn_fields_as_float(df)).alias("floatvec")).registerTempTable("nrn_vals")
 
+        # Convert fields to array
+        df.select(df.post_gid, F.array(*self.nrn_fields_as_float(df)).alias("floatvec")).registerTempTable("nrn_vals")
         # Massive conversion to binary
         arrays_df = df.sql_ctx.sql("select post_gid, float2binary(floatvec) as bin_arr from nrn_vals").groupBy("post_gid").agg(self.concat_bin("bin_arr").alias("bin_maxtrix"))
 
@@ -125,29 +86,24 @@ class NeuronExporter(object):
         arrays_df = arrays_df.orderBy("post_gid")
         self.spark.conf.set("spark.sql.shuffle.partitions", previous_def)
 
+        # The output routine is applied to each partition for performance
         def write_hdf5(part_it):
             h5store = None
             output_filename = None
             for row in part_it:
                 post_id = row[0]
                 buff = row[1]
-
                 if h5store is None:
                     output_filename = nrn_filepath + ".{}".format(post_id//N_NEURONS_FILE)
                     h5store = h5py.File(output_filename, "w")
-
                 np_array = numpy.frombuffer(buff, dtype=">f4").reshape((-1, 19))
                 h5store.create_dataset("a{}".format(post_id), data=np_array)
-
             h5store.close()
             return [output_filename]
 
-        # # Deep debug
-        # print([[n[0] for n in r] for r in arrays_df.select("post_gid").rdd.glom().collect()])
-
         # Export via partition mapping
         result_files = arrays_df.rdd.mapPartitions(write_hdf5).collect()
-        logger.info("Files written: {}", ", ".join(result_files))
+        logger.info("Files written: %s", ", ".join(result_files))
 
 
     # -----

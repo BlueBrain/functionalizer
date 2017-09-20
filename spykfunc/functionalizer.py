@@ -119,7 +119,7 @@ class Functionalizer(object):
         self.neuron_stats.update_touch_graph_source(self.neuronG, overwrite_previous_gf=False)
 
         # Data exporter
-        self.exporter = NeuronExporter(self.morpho_dir, self.recipe, self.synapse_properties_class)
+        self.exporter = NeuronExporter(self.morpho_dir, self.recipe, self.synapse_properties_class, output_path="spykfunc_output")
 
     # ---
     @property
