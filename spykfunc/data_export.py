@@ -10,6 +10,7 @@ from .dataio import morphotool
 import numpy
 
 logger = utils.get_logger(__name__)
+N_NEURONS_FILE = 1000
 
 
 class NeuronExporter(object):
@@ -116,11 +117,12 @@ class NeuronExporter(object):
 
         # Massive conversion to binary
         arrays_df = df.sql_ctx.sql("select post_gid, float2binary(floatvec) as bin_arr from nrn_vals").groupBy("post_gid").agg(self.concat_bin("bin_arr").alias("bin_maxtrix"))
+
         # Number of partitions to number of files
+        # NOTE: This is a workaround to control the number of partitions after the sort
         previous_def = int(self.spark.conf.get("spark.sql.shuffle.partitions"))
-        self.spark.conf.set("spark.sql.shuffle.partitions", (n_gids//1000) or 1)
+        self.spark.conf.set("spark.sql.shuffle.partitions", ((n_gids-1)//N_NEURONS_FILE) + 1)
         arrays_df = arrays_df.orderBy("post_gid")
-        print(arrays_df.explain())
         self.spark.conf.set("spark.sql.shuffle.partitions", previous_def)
 
         def write_hdf5(part_it):
@@ -131,7 +133,7 @@ class NeuronExporter(object):
                 buff = row[1]
 
                 if h5store is None:
-                    output_filename = nrn_filepath + ".{}".format(post_id//1000)
+                    output_filename = nrn_filepath + ".{}".format(post_id//N_NEURONS_FILE)
                     h5store = h5py.File(output_filename, "w")
 
                 np_array = numpy.frombuffer(buff, dtype=">f4").reshape((-1, 19))
@@ -140,10 +142,12 @@ class NeuronExporter(object):
             h5store.close()
             return [output_filename]
 
-        # Export via partition mapping
-        print([[n[0] for n in r] for r in arrays_df.select("post_gid").rdd.glom().collect()])
-        print(arrays_df.rdd.mapPartitions(write_hdf5).collect())
+        # # Deep debug
+        # print([[n[0] for n in r] for r in arrays_df.select("post_gid").rdd.glom().collect()])
 
+        # Export via partition mapping
+        result_files = arrays_df.rdd.mapPartitions(write_hdf5).collect()
+        logger.info("Files written: {}", ", ".join(result_files))
 
 
     # -----

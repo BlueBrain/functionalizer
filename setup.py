@@ -87,7 +87,7 @@ def setup_package():
 
     setup(
         # name and other metadata are in setup.cfg
-        version="0.1.dev0",
+        version="0.1.dev1",
         # use_scm_version=True,
         packages=find_packages(),
         ext_modules=extensions,
@@ -110,7 +110,7 @@ def setup_package():
         scripts=['bin/spykfunc',
                  'spykfunc/commands.py'],
 
-        data_files=[('share/spykfunc', ['java/random.jar'])],
+        data_files=[('share/spykfunc', ['java/spykfunc_udfs.jar'])],
         include_package_data=True,
     )
 
