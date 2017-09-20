@@ -11,15 +11,15 @@ def concat_bin(col):
 
 df0 = sc.parallelize([(1.1,2.2,3.3),(4.4,5.5,6.6)]).toDF(["a", "b", "c"])
 df1 = df0.select(df0.a.cast("float"), df0.b.cast("float"),df0.c.cast("float"))
-df2 = df1.select(F.array("*").alias("myvec"))
+df2 = df1.select(F.array("*").alias("floatvec"))
 df2.registerTempTable("df")
 
-indiv = sqlCtx.sql("select float2binary(*) as binary from df")
+indiv = sqlCtx.sql("select float2binary(floatvec) as binary from df")
 indiv.show()
 
 merged = indiv.agg(concat_bin("binary"))
 merged.show()
 
 myarr = merged.rdd.keys().collect()[0]
-nparr = numpy.frombuffer(myarr, dtype=">f4").reshape((-1, 3))
+nparr = np.frombuffer(myarr, dtype=">f4").reshape((-1, 3))
 print(nparr)

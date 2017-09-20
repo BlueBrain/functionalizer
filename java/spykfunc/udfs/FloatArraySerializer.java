@@ -1,6 +1,6 @@
 package spykfunc.udfs;
 
-import org.apache.spark.sql.api.java.UDF1;  //UDF0 will make it soon to release
+import org.apache.spark.sql.api.java.UDF1;
 import java.nio.ByteBuffer;
 import scala.collection.mutable.WrappedArray;
 import scala.collection.Iterator;

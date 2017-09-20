@@ -110,7 +110,7 @@ class _TouchInfo(TouchInfo_Interface):
     @property
     def _neuron_stats(self):
         with open(self._neuron_file) as neuron_f:
-            _ = self._read_header(neuron_f)
+            self._read_header(neuron_f)
             with show_wait_message("Loading " + os.path.basename(self._neuron_file)):
                 info = np.fromfile(neuron_f, dtype=self._neuron_touches_dtype)
         return info

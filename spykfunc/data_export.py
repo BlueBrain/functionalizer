@@ -7,6 +7,7 @@ from pyspark.sql import types as T
 from pyspark.sql import SparkSession
 from . import utils
 from .dataio import morphotool
+import numpy
 
 logger = utils.get_logger(__name__)
 
@@ -34,6 +35,9 @@ class NeuronExporter(object):
 
         # Create required / select fields that belong to nrn.h5 spec
         self.touches = self.compute_additional_h5_fields()
+
+        _conc = self.sc._jvm.spykfunc.udfs.BinaryConcat().apply
+        self.concat_bin = utils.make_agg_f(self.spark.sparkContext, _conc)
 
     # ---
     def save_temp(self, name="filtered_touches.tmp.parquet"):
@@ -68,11 +72,18 @@ class NeuronExporter(object):
 
             # The df of the neuron to export
             df = self.touches.where(F.col("post_gid") == gid).orderBy("pre_gid")
-            df = self.prepare_df_to_nrn_format(df)
+            df = self.prepare_df_to_nrn_format(df).astype("f4")
 
-            logger.debug("Writing neuron {}".format(gid))
-            data_np = df.toPandas().as_matrix()
-            h5store.create_dataset("a{}".format(gid), data=data_np.astype("f4"))
+            # logger.debug("Writing neuron {}".format(gid))
+            # data_np = df.toPandas().as_matrix()
+
+            df.select(F.array("*").alias("floatvec")).registerTempTable("nrn_vals")
+            array_df = df.sql_ctx.sql("select float2binary(floatvec) as binary from df")
+            merged = array_df.agg(self.concat_bin(array_df.binary))
+            buffer = merged.rdd.keys().collect()[0]
+            numpy.frombuffer(buffer, dtype=">f4").reshape((-1, 19))
+
+            h5store.create_dataset("a{}".format(gid), data=numpy)
 
         if h5store:
             h5store.close()

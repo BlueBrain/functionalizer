@@ -64,6 +64,10 @@ class Functionalizer(object):
         sqlContext = SQLContext.getOrCreate(Functionalizer.spark.sparkContext)
         # Apparently functions are instantiated on every executed query
         sqlContext.registerJavaFunction("gauss_rand", "spykfunc.udfs.GaussRand")
+        sqlContext.registerJavaFunction("float2binary", "spykfunc.udfs.FloatArraySerializer")
+
+        # _conc = self.spark.sparkContext._jvm.spykfunc.udfs.BinaryConcat().apply
+        # self.binary_agg_func = utils.make_agg_f(self.spark.sparkContext, _conc)
 
     # ---
     def init_data(self, recipe_file, mvd_file, morpho_dir, touch_files):
