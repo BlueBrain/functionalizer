@@ -1,8 +1,7 @@
 package spykfunc.udfs;
 
 import org.apache.spark.sql.api.java.UDF1;  //UDF0 will make it soon to release
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
+import java.nio.ByteBuffer;
 import scala.collection.mutable.WrappedArray;
 import scala.collection.Iterator;
 
@@ -10,13 +9,11 @@ public class FloatArraySerializer implements UDF1<WrappedArray<Float>, byte[]> {
     
     @Override
     public byte[] call(WrappedArray<Float> nrs) throws Exception {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        DataOutputStream dos = new DataOutputStream(bos);
+        ByteBuffer b = ByteBuffer.allocate(nrs.length()*4);
         Iterator<Float> it = nrs.toIterator();
         while(it.hasNext()) {
-            dos.writeFloat(it.next());
+            b.putFloat(it.next());
         }
-        dos.flush();
-        return bos.toByteArray();
+        return b.array();
     }
 }
