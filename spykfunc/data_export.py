@@ -75,7 +75,7 @@ class NeuronExporter(object):
         df = self.touches
 
         # Convert fields to array
-        df.select(df.post_gid, F.array(*self.nrn_fields_as_float(df)).alias("floatvec")).registerTempTable("nrn_vals")
+        df.select(df.post_gid, F.array(*self.nrn_fields_as_float(df)).alias("floatvec")).createOrReplaceTempView("nrn_vals")
         # Massive conversion to binary
         arrays_df = df.sql_ctx.sql("select post_gid, float2binary(floatvec) as bin_arr from nrn_vals").groupBy("post_gid").agg(self.concat_bin("bin_arr").alias("bin_maxtrix"))
 
@@ -143,7 +143,7 @@ class NeuronExporter(object):
 
         # Compute #8-12
         # We ruse a Java UDFs (gauss_rand) which requires using spark.sql
-        touches.registerTempTable("cur_touches")
+        touches.createOrReplaceTempView("cur_touches")
         touches = self.spark.sql(
             "select *,"
             " gauss_rand(0) * prop.gsynVar + prop.gsyn as gsyn, "  # g
