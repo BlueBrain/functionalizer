@@ -81,10 +81,10 @@ class NeuronExporter(object):
 
         # Number of partitions to number of files
         # NOTE: This is a workaround to control the number of partitions after the sort
-        previous_def = int(self.spark.conf.get("spark.sql.shuffle.partitions"))
-        self.spark.conf.set("spark.sql.shuffle.partitions", ((n_gids-1)//N_NEURONS_FILE) + 1)
-        arrays_df = arrays_df.orderBy("post_gid")
-        self.spark.conf.set("spark.sql.shuffle.partitions", previous_def)
+        n_partitions = ((n_gids-1)//N_NEURONS_FILE) + 1
+        logger.debug("Ordering into {} partitions".format(n_partitions))
+        arrays_df = arrays_df.orderBy("post_gid").coalesce(n_partitions)
+        
 
         # The output routine is applied to each partition for performance
         def write_hdf5(part_it):
@@ -94,7 +94,7 @@ class NeuronExporter(object):
                 post_id = row[0]
                 buff = row[1]
                 if h5store is None:
-                    output_filename = nrn_filepath + ".{}".format(post_id//N_NEURONS_FILE)
+                    output_filename = nrn_filepath + ".{}".format(post_id)
                     h5store = h5py.File(output_filename, "w")
                 np_array = numpy.frombuffer(buff, dtype=">f4").reshape((-1, 19))
                 h5store.create_dataset("a{}".format(post_id), data=np_array)

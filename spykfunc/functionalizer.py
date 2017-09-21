@@ -167,14 +167,14 @@ class Functionalizer(object):
         return 0
 
     # ---
-    def export_results(self, output_path="spykfunc_output", format_hdf5=True):
+    def export_results(self, output_path="spykfunc_output", format_parquet=False):
         logger.info("Exporting touches...")
         if True:#try:
             self.exporter.output_path = output_path
-            if format_hdf5:
-                self.exporter.export_hdf5(self.neuronG)
+            if format_parquet:
+                self.exporter.export_parquet(self.neuronG)
             else:
-                self.exporter.export_parquet()
+                self.exporter.export_hdf5(self.neuronG)
 
         # except RuntimeError:
         #     logger.error("Could not save results. 'Functionalized' touches saved as parquet in ./filtered_touches.tmp.parquet")

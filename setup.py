@@ -97,6 +97,7 @@ def setup_package():
             'numpy',
             'lazy-property',
             'py4j',
+            'h5py'
             #'morphotool'  # Do we really need it?
         ],
         # Setup and testing

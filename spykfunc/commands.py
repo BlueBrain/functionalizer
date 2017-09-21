@@ -1,6 +1,5 @@
 #!/usr/bin/env pyspark
 
-from spykfunc.functionalizer import session
 import sys
 import argparse
 
@@ -17,9 +16,9 @@ def _create_parser():
     parser.add_argument("--s2s",
                         help="s2s pruning only. If omitted s2f will be run",
                         action="store_true", dest="s2s", default=False)
-    parser.add_argument("--hdf5",
-                        help="Convert result to HDF5, for testing only",
-                        action="store_true", dest="hdf5", default=False)
+    parser.add_argument("--no-hdf5",
+                        help="Dont create result to HDF5, write out in parquet",
+                        action="store_true", dest="resultparquet", default=False)
 
     return parser
 
@@ -31,13 +30,18 @@ arg_parser = _create_parser()
 def run_functionalizer():
     # Will exit with code 2 if problems in args
     options = arg_parser.parse_args()
+    
+    # If everything seems ok, import session
+    # NOTE: Scripts must be executed from pyspark or spark-submit. 
+    #       Otherwise pyspark is not found
+    from spykfunc.functionalizer import session
     fuzer = session(options)
 
     status = fuzer.process_filters()
     if status > 0:
         return status
 
-    status = fuzer.export_results(format_hdf5=options.hdf5)
+    status = fuzer.export_results(format_parquet=options.resultparquet)
     return status
 
 
