@@ -148,18 +148,22 @@ class _GenericPropHolder(object):
     def __init__(self, **rules):
         for name, value in rules.items():
             if name not in self._supported_attrs and name != "_i":
-                logger.warning("Attribute %s is not supported", name)
-                continue
-            if value == "*":
+                logger.warning("Attribute %s not expected for recipe class %s",
+                               name, type(self).__name__)
                 continue
 
-            try:
-                value = int(value)
+            if value == "*":
+                # * the match-all, is represented as True
+                # (convertible to any type)
+                setattr(self, name, True)
+                continue
+
+            # Attempt conversion to real types
+            try: value = int(value)
             except ValueError:
-                try:
-                    value = float(value)
-                except ValueError:
-                    pass
+                try: value = float(value)
+                except ValueError: pass
+
             setattr(self, name, value)
 
     def __repr__(self):
