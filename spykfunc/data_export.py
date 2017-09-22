@@ -14,7 +14,7 @@ N_NEURONS_FILE = 1000
 
 
 class NeuronExporter(object):
-    def __init__(self, morpho_dir, recipe, syn_properties, output_path="output"):
+    def __init__(self, morpho_dir, recipe, syn_properties, output_path):
         # if not morphotool:
         #     raise RuntimeError("Can't export to .h5. Morphotool not available")
         self._neuronG = False
@@ -27,12 +27,13 @@ class NeuronExporter(object):
 
         # Broadcast an empty dict to hold morphologies
         # Each worker will fill it as required, no communication incurred
+        # self.morphologies = {}
+        # self.sc.broadcast(self.morphologies)
+
         self.spark = SparkSession.builder.getOrCreate()
         self.sc = self.spark.sparkContext  # type: pyspark.SparkContext
-        self.morphologies = {}
-        self.sc.broadcast(self.morphologies)
 
-
+        # Get the concat_bin agg function form the java world
         _conc = self.sc._jvm.spykfunc.udfs.BinaryConcat().apply
         self.concat_bin = utils.make_agg_f(self.spark.sparkContext, _conc)
 
@@ -48,17 +49,23 @@ class NeuronExporter(object):
         self.touches = self.compute_additional_h5_fields()
 
     # ---
-    def save_temp(self, neuronG=None, name="filtered_touches.tmp.parquet"):
+    def save_temp(self, neuronG=None, filename="filtered_touches.tmp.parquet"):
         if neuronG is not None and self._neuronG is not neuronG:
             self.neuronG = neuronG
-        self.touches.write.parquet(name, mode="overwrite")
-        self.touches = self.spark.read.parquet(name)
-        logger.info("Filtered touches temporarily saved to %s", name)
+        if not os.path.exists(self.output_path):
+            os.makedirs(self.output_path)
+        touches_parquet = path.join(self.output_path, filename)
+
+        self.touches.write.parquet(touches_parquet, mode="overwrite")
+        self.touches = self.spark.read.parquet(touches_parquet)  # break execution plan
+        logger.info("Filtered touches temporarily saved to %s", touches_parquet)
 
     # ---
     def export_parquet(self, neuronG=None, filename="nrn.parquet"):
         if neuronG is not None and self._neuronG is not neuronG:
             self.neuronG = neuronG
+        if not os.path.exists(self.output_path):
+            os.makedirs(self.output_path)
         nrn_filepath = path.join(self.output_path, filename)
         return self.touches.write.mode("overwrite").partitionBy("post_gid").parquet(nrn_filepath, compression="gzip")
 
@@ -66,7 +73,6 @@ class NeuronExporter(object):
     def export_hdf5(self, neuronG=None, filename="nrn.h5"):
         if neuronG is not None and self._neuronG is not neuronG:
             self.neuronG = neuronG
-
         if not os.path.exists(self.output_path):
             os.makedirs(self.output_path)
         nrn_filepath = path.join(self.output_path, filename)
@@ -75,18 +81,21 @@ class NeuronExporter(object):
         df = self.touches
 
         # Convert fields to array
-        df.select(df.post_gid, F.array(*self.nrn_fields_as_float(df)).alias("floatvec")).createOrReplaceTempView("nrn_vals")
-        # Massive conversion to binary
-        arrays_df = df.sql_ctx.sql("select post_gid, float2binary(floatvec) as bin_arr from nrn_vals").groupBy("post_gid").agg(self.concat_bin("bin_arr").alias("bin_maxtrix"))
+        df.select(df.post_gid,
+                  F.array(*self.nrn_fields_as_float(df)).alias("floatvec")
+                  ).createOrReplaceTempView("nrn_vals")
+        # Massive conversion to binary using 'float2binary' java UDF and 'concat_bin' UDAF
+        arrays_df = (df.sql_ctx
+                     .sql("select post_gid, float2binary(floatvec) as bin_arr from nrn_vals")
+                     .groupBy("post_gid")
+                     .agg(self.concat_bin("bin_arr").alias("bin_matrix")))
 
         # Number of partitions to number of files
-        # NOTE: This is a workaround to control the number of partitions after the sort
         n_partitions = ((n_gids-1)//N_NEURONS_FILE) + 1
         logger.debug("Ordering into {} partitions".format(n_partitions))
         arrays_df = arrays_df.orderBy("post_gid").coalesce(n_partitions)
 
-
-        # The output routine is applied to each partition for performance
+        # The export routine - applied to each partition
         def write_hdf5(part_it):
             h5store = None
             output_filename = None
@@ -96,6 +105,7 @@ class NeuronExporter(object):
                 if h5store is None:
                     output_filename = nrn_filepath + ".{}".format(post_id)
                     h5store = h5py.File(output_filename, "w")
+                # We reconstruct the array in Numpy from the binary
                 np_array = numpy.frombuffer(buff, dtype=">f4").reshape((-1, 19))
                 h5store.create_dataset("a{}".format(post_id), data=np_array)
             h5store.close()

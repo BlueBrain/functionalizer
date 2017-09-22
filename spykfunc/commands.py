@@ -19,6 +19,8 @@ def _create_parser():
     parser.add_argument("--no-hdf5",
                         help="Dont create result to HDF5, write out in parquet",
                         action="store_true", dest="resultparquet", default=False)
+    parser.add_argument("--output-dir",
+                        help="Specify output directory. Defaults to ./spykfunc_output")
 
     return parser
 
@@ -31,11 +33,13 @@ def run_functionalizer():
     # Will exit with code 2 if problems in args
     options = arg_parser.parse_args()
 
-    # If everything seems ok, import session
-    # NOTE: Scripts must be executed from pyspark or spark-submit.
-    #       Otherwise pyspark is not found
+    # If everything seems ok, import functionalizer.
+    # Like this we can use the parser without starting with pyspark or spark-submit
+    # NOTE: Scripts must be executed from pyspark or spark-submit to import pyspark
     from spykfunc.functionalizer import session
     fuzer = session(options)
+    if fuzer is None:
+        return 1
 
     status = fuzer.process_filters()
     if status > 0:

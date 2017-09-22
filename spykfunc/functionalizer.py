@@ -5,6 +5,7 @@ from __future__ import print_function, absolute_import
 from fnmatch import filter as matchfilter
 from glob import glob
 import time
+import os
 
 from pyspark.sql import SparkSession, SQLContext
 from pyspark import StorageLevel
@@ -52,6 +53,7 @@ class Functionalizer(object):
 
     def __init__(self, only_s2s=False):
         self._run_s2f = not only_s2s
+        self.output_dir = "spykfunc_output"
 
         # Init spark as static class property
         if Functionalizer.spark is None:
@@ -74,6 +76,11 @@ class Functionalizer(object):
 
     # ---
     def init_data(self, recipe_file, mvd_file, morpho_dir, touch_files):
+        # In "program" mode this dir wont change later, so we can check here
+        # for its existence/permission to create
+        if not os.path.isdir(self.output_dir):
+            os.makedirs(self.output_dir)
+
         self.morpho_dir = morpho_dir
 
         logger.debug("%s: Data loading...", time.ctime())
@@ -119,7 +126,7 @@ class Functionalizer(object):
         self.neuron_stats.update_touch_graph_source(self.neuronG, overwrite_previous_gf=False)
 
         # Data exporter
-        self.exporter = NeuronExporter(self.morpho_dir, self.recipe, self.synapse_properties_class, output_path="spykfunc_output")
+        self.exporter = NeuronExporter(self.morpho_dir, self.recipe, self.synapse_properties_class, output_path=self.output_dir)
 
     # ---
     @property
@@ -167,29 +174,28 @@ class Functionalizer(object):
         return 0
 
     # ---
-    def export_results(self, output_path="spykfunc_output", format_parquet=False):
+    def export_results(self, format_parquet=False, output_path=None):
         logger.info("Exporting touches...")
-        if True:#try:
-            self.exporter.output_path = output_path
+        exporter = self.exporter
+        if output_path is not None:
+            exporter.output_path = output_path
+
+        try:
             if format_parquet:
-                self.exporter.export_parquet(self.neuronG)
+                exporter.export_parquet(self.neuronG)
             else:
-                self.exporter.export_hdf5(self.neuronG)
+                exporter.export_hdf5(self.neuronG)
+        except:
+            import traceback
+            logger.error(traceback.format_exc(1))
+            return 1
+        else:
+            logger.info("Done exporting.")
+            return 0
 
-        # except RuntimeError:
-        #     logger.error("Could not save results. 'Functionalized' touches saved as parquet in ./filtered_touches.tmp.parquet")
-        #     return 1
-        # except:
-        #     import traceback
-        #     logger.error(traceback.format_exc(1))
-        #     return 1
-
-        logger.info("Done exporting.")
-        return 0
-
-    # ---
-    # Instantiation of filters for the sessions data
-
+    # ---------------------------------------------------------
+    # Functions to create/apply filters for the current session
+    # ---------------------------------------------------------
     def filter_by_soma_axon_distance(self):
         """BLBLD-42: filter by soma-axon distance
         """
@@ -197,6 +203,7 @@ class Functionalizer(object):
         distance_filter = filters.BoutonDistanceFilter(self.recipe.synapses_distance)
         self.touchDF = distance_filter.apply(self.neuronG)
 
+    # ---
     def filter_by_touch_rules(self):
         """Filter according to recipe TouchRules
         """
@@ -212,7 +219,7 @@ class Functionalizer(object):
         #       an extra read step for the subsequent action (to be analyzed)
         #       In the case of DISK_ONLY caches() that would have a signifficant impact, so we avoid it.
 
-
+    # ---
     def run_reduce_and_cut(self):
         """Apply Reduce and Cut
         """
@@ -261,5 +268,13 @@ def session(options):
     assert "NeuronDataSpark" in globals(), "Use spark-submit to run your job"
 
     fzer = Functionalizer(options.s2s)
-    fzer.init_data(options.recipe_file, options.mvd_file, options.morpho_dir, options.touch_files)
+    if options.output_dir:
+        fzer.output_dir = options.output_dir
+
+    try:
+        fzer.init_data(options.recipe_file, options.mvd_file, options.morpho_dir, options.touch_files)
+    except:
+        import traceback
+        logger.error(traceback.format_exc(1))
+        return None
     return fzer
