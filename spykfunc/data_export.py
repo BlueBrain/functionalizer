@@ -84,7 +84,7 @@ class NeuronExporter(object):
         n_partitions = ((n_gids-1)//N_NEURONS_FILE) + 1
         logger.debug("Ordering into {} partitions".format(n_partitions))
         arrays_df = arrays_df.orderBy("post_gid").coalesce(n_partitions)
-        
+
 
         # The output routine is applied to each partition for performance
         def write_hdf5(part_it):
@@ -112,6 +112,7 @@ class NeuronExporter(object):
 
         # prepare DF - add required fields
         p_df = self.syn_properties_df.select(F.struct("*").alias("prop"))
+        # TODO: Synapse properties can also be matchning by MType and/or EType
         touches = touch_G.join(p_df, ((touch_G.n1.syn_class_index == p_df.prop.fromSClass_i) &
                                       (touch_G.n2.syn_class_index == p_df.prop.toSClass_i)))
 

@@ -20,7 +20,7 @@ _NAME=$0
 BASEDIR=$(dirname $(readlink -f "$0"))
 
 if [[ "$1" == "-h" || "$1" == "--help" ]]; then
-    echo "Syntax: $(basename $0) <recipe_file> <mvd_file> <morpho_dir> <touch_files> [spykfunc_options..., ] -- [args_passed_to_spark_submit, ...]"
+    echo "Syntax: $(basename $0) <recipe_file> <mvd_file> <morpho_dir> <touch_file.0> [spykfunc_options..., ] -- [args_passed_to_spark_submit, ...]"
     python $BASEDIR/commands.py --help
     exit 2
 fi

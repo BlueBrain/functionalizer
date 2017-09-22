@@ -36,9 +36,9 @@ class BoutonDistanceFilter(DataSetOperation):
         newTouches = touchDF.alias("t").join(neuronDF.alias("n"), neuronDF.id == touchDF.dst) \
             .where("(t.distance_soma >= %f AND n.syn_class_index = %d) OR "
                    "(t.distance_soma >= %f AND n.syn_class_index = %d)" % (
-                       self._bouton_distance_obj.inhibitory_synapses_distance,
+                       self._bouton_distance_obj.inhibitorySynapsesDistance,
                        self.synapse_classes_indexes[CellClass.CLASS_INH],
-                       self._bouton_distance_obj.excitatory_synapses_distance,
+                       self._bouton_distance_obj.excitatorySynapsesDistance,
                        self.synapse_classes_indexes[CellClass.CLASS_EXC])
                    ) \
             .select("t.*")
@@ -59,9 +59,9 @@ class BoutonDistanceReverseFilter(BoutonDistanceFilter):
         new_touches = touchDF.alias("t").join(neuronDF.alias("n"), neuronDF.id == touchDF.dst) \
             .where("(t.distance_soma < %f AND n.syn_class_index = %d) OR "
                    "(t.distance_soma < %f AND n.syn_class_index = %d)" % (
-                       self._bouton_distance_obj.inhibitory_synapses_distance,
+                       self._bouton_distance_obj.inhibitorySynapsesDistance,
                        self.synapse_classes_indexes[CellClass.CLASS_INH],
-                       self._bouton_distance_obj.excitatory_synapses_distance,
+                       self._bouton_distance_obj.excitatorySynapsesDistance,
                        self.synapse_classes_indexes[CellClass.CLASS_EXC])
                    ) \
             .select("t.*")
@@ -99,7 +99,7 @@ class TouchRulesFilter(DataSetOperation):
                 rule_sqls.append("n2.morphology LIKE '{}'".format(rule.toMType.replace("*", "%")))
             if rule.type:
                 rule_sqls.append("t.post_section {sign} 0".format(sign="=" if (rule.type == "soma") else ">"))
-            # Any rule?
+
             if rule_sqls:
                 sql_queries.append("(" + " AND ".join(rule_sqls) + ")")
 

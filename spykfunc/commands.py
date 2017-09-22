@@ -12,7 +12,7 @@ def _create_parser():
     parser.add_argument("recipe_file", help="the XML recipe file")
     parser.add_argument("mvd_file",    help="the input mvd file")
     parser.add_argument("morpho_dir",  help="the H5 morphology database directory")
-    parser.add_argument("touch_files", help="the input detector binary file")
+    parser.add_argument("touch_files", help="The first binary touch file (touches.0)")
     parser.add_argument("--s2s",
                         help="s2s pruning only. If omitted s2f will be run",
                         action="store_true", dest="s2s", default=False)
@@ -30,9 +30,9 @@ arg_parser = _create_parser()
 def run_functionalizer():
     # Will exit with code 2 if problems in args
     options = arg_parser.parse_args()
-    
+
     # If everything seems ok, import session
-    # NOTE: Scripts must be executed from pyspark or spark-submit. 
+    # NOTE: Scripts must be executed from pyspark or spark-submit.
     #       Otherwise pyspark is not found
     from spykfunc.functionalizer import session
     fuzer = session(options)

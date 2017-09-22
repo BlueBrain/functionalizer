@@ -117,45 +117,26 @@ class ConnectivityPathRule(object):
 
 
 # -------------------------------------------------------------------------------------------------------------
-class SynapseBoutonDistances(object):
-    """Info/filter for Synapses Bouton Distance"""
-# -------------------------------------------------------------------------------------------------------------
-    inhibitorySynapsesDistance_default = 5.0
-    excitatorySynapsesDistance_default = 25.0
-
-    def __init__(self,
-                 inhibitory_synapses_distance=inhibitorySynapsesDistance_default,
-                 excitatory_synapses_distance=excitatorySynapsesDistance_default):
-        self.inhibitory_synapses_distance = inhibitory_synapses_distance
-        self.excitatory_synapses_distance = excitatory_synapses_distance
-
-    def isDistanceSomaAxonValid(self, cell_class, soma_axon_distance):
-        if cell_class == CellClass.CLASS_INH:
-            return soma_axon_distance >= self.inhibitory_synapses_distance
-        if cell_class == CellClass.CLASS_EXC:
-            return soma_axon_distance >= self.excitatory_synapses_distance
-
-
-# -------------------------------------------------------------------------------------------------------------
 class _GenericPropHolder(object):
     """
     A Generic Property holder whose subclasses shall define a
     _supported_attrs class attribute with the list of supported attributes
     """
 # -------------------------------------------------------------------------------------------------------------
-    _supported_attrs = ()
+    # We keep the index in which entries are declared
+    _supported_attrs = ("_i",)
 
     def __init__(self, **rules):
         for name, value in rules.items():
+            # Note: "_i" must be checked for since subclasses override _supported_attrs
             if name not in self._supported_attrs and name != "_i":
                 logger.warning("Attribute %s not expected for recipe class %s",
                                name, type(self).__name__)
                 continue
 
             if value == "*":
-                # * the match-all, is represented as True
-                # (convertible to any type)
-                setattr(self, name, True)
+                # * the match-all, is represented as None
+                setattr(self, name, None)
                 continue
 
             # Attempt conversion to real types
@@ -173,6 +154,21 @@ class _GenericPropHolder(object):
 
 
 # -------------------------------------------------------------------------------------------------------------
+class SynapseBoutonDistances(_GenericPropHolder):
+    """Info/filter for Synapses Bouton Distance"""
+    # -------------------------------------------------------------------------------------------------------------
+    _supported_attrs = {'inhibitorySynapsesDistance', 'excitatorySynapsesDistance'}
+    inhibitorySynapsesDistance = 5.0
+    excitatorySynapsesDistance = 25.0
+
+    def is_distance_valid(self, cell_class, soma_axon_distance):
+        if cell_class == CellClass.CLASS_INH:
+            return soma_axon_distance >= self.inhibitorySynapsesDistance
+        if cell_class == CellClass.CLASS_EXC:
+            return soma_axon_distance >= self.excitatorySynapsesDistance
+
+
+# -------------------------------------------------------------------------------------------------------------
 class TouchRule(_GenericPropHolder):
     """Class representing a Touch rule"""
 # -------------------------------------------------------------------------------------------------------------
@@ -183,15 +179,20 @@ class TouchRule(_GenericPropHolder):
     toMType = None
     type = ""
 
+
 # -------------------------------------------------------------------------------------------------------------
 class SynapsesProperty(_GenericPropHolder):
     """Class representing a Synapse property"""
 # -------------------------------------------------------------------------------------------------------------
-    fromSClass = None  # *wildcard
-    toSClass = None    # *wildcard
+    fromSClass = None  # None -> no filter (equiv to *wildcard)
+    toSClass = None
+    fromMType = None
+    toMType = None
+    fromEType = None
+    toEType = None
     type = ""
     neuralTransmitterReleaseDelay = 0.1
-    axonalConductionVelocity = 0.00333
+    axonalConductionVelocity = 0.00333  # TODO: or 300?
     _supported_attrs = [k for k in locals().keys()
                         if not k.startswith("_")]
 
@@ -243,11 +244,11 @@ class Recipe(object):
             # Parse the given XML file:
             tree = ET.parse(recipe_file)
         except ExpatError as e:
-            print("[XML] Error (line %d): %d" % (e.lineno, e.code))
-            print("[XML] Offset: %d" % (e.offset,))
+            logger.warning("[XML] Error (line %d): %d", e.lineno, e.code)
+            logger.warning("[XML] Offset: %d", e.offset)
             raise e
         except IOError as e:
-            print("[XML] I/O Error %d: %s" % (e.errno, e.strerror))
+            logger.warning("[XML] I/O Error %d: %s", e.errno, e.strerror)
             raise e
         else:
             recipe_xml = tree.getroot()
@@ -260,20 +261,6 @@ class Recipe(object):
                                                  self.synapse_properties, SynapsesProperty)
         self.load_recipe_group_into_list_convert(recipe_xml.find("SynapsesClassification"),
                                                  self.synapse_classification, SynapsesClassification)
-
-    # ------
-    @staticmethod
-    def _check_convert(item, cls, i=None):
-        """Checks if the given item is already of type cls
-           Otherwise attempts to convert by passing the dict as keyword arguments
-        """
-        if not isinstance(item, cls):
-            if hasattr(item, "attrib"):
-                item = item.attrib
-            item = cls(**item)
-        if i is not None:
-            item._i = i
-        return item
 
     # -------
     def load_probabilities(self, connections):  # type: (list)->None
@@ -296,8 +283,24 @@ class Recipe(object):
     # -------
     @classmethod
     def load_recipe_group_into_list_convert(cls, items, dest_lst, item_cls):
+        # Some fields are referred to by their index. We pick it here
         for i, item in enumerate(items):
             dest_lst.append(cls._check_convert(item, item_cls, i))
+
+    # ------
+    @staticmethod
+    def _check_convert(item, cls, i=None):
+        """Checks if the given item is already of type cls
+           Otherwise attempts to convert by passing the dict as keyword arguments
+        """
+        if not isinstance(item, cls):
+            if hasattr(item, "attrib"):
+                item = item.attrib
+            item = cls(**item)
+        # Store index as _i
+        if i is not None:
+            item._i = i
+        return item
 
     # -------
     def __str__(self):
