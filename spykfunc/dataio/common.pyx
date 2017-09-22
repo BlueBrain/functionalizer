@@ -6,20 +6,21 @@ from libcpp.string cimport string
 cdef class _Part_t:
     def get_offset_count(self, int total=0): pass
 
-cdef class Part(_Part_t):
-    # cdef readonly int _part_nr
-    # cdef readonly int _total_parts
 
-    def __init__(self, part_nr=0, total_parts=0):
+cdef class Part(_Part_t):
+    # NOTE: vars Declared in .pxd
+
+    def __init__(self, int part_nr=0, int total_parts=0):
         self._part_nr = part_nr
         self._total_parts = total_parts
 
     def get_offset_count(self, int total):
-        offset = total * self._part_nr / self._total_parts
-        count = total / self._total_parts
-        if self._part_nr >= self._total_parts - 1:
-            count = total - (self._total_parts - 1) * count
+        cdef int n_per_part = total // self._total_parts
+        cdef int rest = total % self._total_parts
+        offset = n_per_part * self._part_nr + min(self._part_nr, rest)
+        count = n_per_part + (1 if self._part_nr < rest else 0)
         return (offset, count)
+
 
 cdef class Range(_Part_t):
     # cdef readonly int offset

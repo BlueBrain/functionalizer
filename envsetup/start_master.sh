@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 BASEDIR=$HOME/dev/Functionalizer/pyspark
 CURDIR=$BASEDIR/envsetup
 

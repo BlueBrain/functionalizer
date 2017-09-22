@@ -61,7 +61,7 @@ class Functionalizer(object):
         self.spark.sparkContext.setLogLevel("WARN")
 
         # Default partition count
-        self.spark.conf.set("spark.sql.shuffle.partitions", min(self.spark.sparkContext.defaultParallelism * 2, 256))
+        self.spark.conf.set("spark.sql.shuffle.partitions", min(self.spark.sparkContext.defaultParallelism * 4, 256))
 
         # register random udef
         sqlContext = SQLContext.getOrCreate(Functionalizer.spark.sparkContext)

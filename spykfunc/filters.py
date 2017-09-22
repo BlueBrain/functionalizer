@@ -232,7 +232,7 @@ class ReduceAndCut(DataSetOperation):
         )
 
         # Calc currentTouchCount per pathway and ActiveFraction
-        logger.info("Calc currentTouchCount per pathway and ActiveFraction")
+        logger.info("Computing currentTouchCount per pathway and ActiveFraction...")
         updated_post_touch_count = (
             shall_not_cut
             .groupBy("morpho_assoc")
@@ -241,7 +241,7 @@ class ReduceAndCut(DataSetOperation):
             )
         )
 
-        logger.debug("Buildig active_fractions")
+        logger.debug("Building active_fractions...")
         active_fractions = F.broadcast(updated_post_touch_count
             .join(params_df, "morpho_assoc")
             .withColumn("actual_reduction_factor",
