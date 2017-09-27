@@ -88,7 +88,8 @@ class NeuronExporter(object):
         arrays_df = (df.sql_ctx
                      .sql("select post_gid, float2binary(floatvec) as bin_arr from nrn_vals")
                      .groupBy("post_gid")
-                     .agg(self.concat_bin("bin_arr").alias("bin_matrix")))
+                     .agg(self.concat_bin("bin_arr").alias("bin_matrix"))
+                     )
 
         # Number of partitions to number of files
         n_partitions = ((n_gids-1)//N_NEURONS_FILE) + 1

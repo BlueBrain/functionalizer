@@ -1,6 +1,6 @@
 from __future__ import print_function, absolute_import
 import os
-import copy
+import sys
 
 from pyspark import SparkContext
 from pyspark.sql import SparkSession
@@ -145,18 +145,44 @@ class NeuronDataSpark(NeuronData):
     def load_synapse_properties_and_classification(self, recipe):
         """Loader for SynapsesProperties
         """
-        # Prop requires mapping from str to int ids
-        vec_reverse = {name: i for i, name in enumerate(self.synaClassVec)}
-        for syn_prop in recipe.synapse_properties:
-            syn_prop.fromSClass_i = vec_reverse[syn_prop.fromSClass]
-            syn_prop.toSClass_i = vec_reverse[syn_prop.toSClass]
-
         prop_df = _load_from_recipe(recipe.synapse_properties, schema.SYNAPSE_PROPERTY_SCHEMA, self._sc)\
             .withColumnRenamed("_i", "_prop_i")
         class_df = _load_from_recipe(recipe.synapse_classification, schema.SYNAPSE_CLASS_SCHEMA, self._sc)\
             .withColumnRenamed("_i", "_class_i")
 
-        return F.broadcast(prop_df.join(F.broadcast(class_df), prop_df.type == class_df.id).cache())
+        # Mapping entities from str to int ids
+        # Case 1: SClass
+        if self.synaClassVec:
+            sclass_df = F.broadcast(
+                self._sc.parallelize(enumerate(self.synaClassVec))
+                .toDF(["sclass_i", "sclass_name"], schema.INT_STR_SCHEMA))
+            prop_df = prop_df\
+                .join(sclass_df.toDF("fromSClass_i", "fromSClass"), "fromSClass")\
+                .join(sclass_df.toDF("toSClass_i", "toSClass"), "toSClass")
+
+        # Case 2: Mtype
+        mtype_df = F.broadcast(
+            self._sc.parallelize(enumerate(self.mtypeVec))
+            .toDF(["mtype_i", "mtype_name"], schema.INT_STR_SCHEMA))
+        prop_df = prop_df\
+            .join(mtype_df.toDF("fromMType_i", "fromMType"), "fromMType")\
+            .join(mtype_df.toDF("toMType_i", "toMType"), "toMType")
+
+        # Case 3: Etype
+        etype_df = F.broadcast(
+            self._sc.parallelize(enumerate(self.etypeVec))
+            .toDF(["etype_i", "etype_name"], schema.INT_STR_SCHEMA))
+        prop_df = prop_df\
+            .join(etype_df.toDF("fromEType_i", "fromEType"), "fromEType")\
+            .join(etype_df.toDF("toEType_i", "toEType"), "toEType")
+
+        class_df = F.broadcast(class_df)
+        merged_props = F.broadcast(
+            prop_df.join(class_df, prop_df.type == class_df.id).cache())
+
+        merged_props.show()
+        sys.exit(1)
+        return merged_props
 
 
 #######################
@@ -167,8 +193,7 @@ def _load_from_recipe(recipe_group, group_schema, spark_context=None):
     sc = spark_context or SparkContext.getOrCreate()   # type: SparkContext
 
     f_names = list(group_schema.names)
-    rdd = sc.parallelize([tuple(getattr(entry, name)
-                                for name in f_names)
+    rdd = sc.parallelize([tuple(getattr(entry, name) for name in f_names)
                           for entry in recipe_group])
     return rdd.toDF(group_schema)
 

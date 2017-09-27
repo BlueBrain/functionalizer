@@ -46,10 +46,12 @@ MTYPE_SCHEMA = types.StructType([
 
 SYNAPSE_PROPERTY_SCHEMA = types.StructType([
     types.StructField("_i", types.ShortType(), False),
-    types.StructField("fromSClass", types.StringType(), False),
-    types.StructField("toSClass", types.StringType(), False),
-    types.StructField("fromSClass_i", types.ShortType(), False),
-    types.StructField("toSClass_i", types.ShortType(), False),
+    types.StructField("fromSClass", types.StringType(), True),
+    types.StructField("toSClass", types.StringType(), True),
+    types.StructField("fromMType", types.StringType(), True),
+    types.StructField("toMType", types.StringType(), True),
+    types.StructField("fromEType", types.StringType(), True),
+    types.StructField("toEType", types.StringType(), True),
     types.StructField("type", types.StringType(), False),
     types.StructField("neuralTransmitterReleaseDelay", types.FloatType(), False),
     types.StructField("axonalConductionVelocity", types.FloatType(), False),
@@ -72,6 +74,11 @@ SYNAPSE_CLASS_SCHEMA = types.StructType([
     types.StructField("fVar", types.IntegerType(), False),
     types.StructField("ase", types.IntegerType(), False),
 ])
+
+INT_STR_SCHEMA = types.StructType([
+    types.StructField("_i", types.IntegerType(), False),
+    types.StructField("id", types.StringType(), False)])
+
 
 # Fields as Enumerations
 _neuronFields = tuple(field.name for field in NEURON_SCHEMA)
