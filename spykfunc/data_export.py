@@ -124,8 +124,12 @@ class NeuronExporter(object):
         # prepare DF - add required fields
         p_df = self.syn_properties_df.select(F.struct("*").alias("prop"))
         # TODO: Synapse properties can also be matchning by MType and/or EType
-        touches = touch_G.join(p_df, ((touch_G.n1.syn_class_index == p_df.prop.fromSClass_i) &
-                                      (touch_G.n2.syn_class_index == p_df.prop.toSClass_i)))
+        touches = touch_G.join(p_df, ((p_df.prop.fromSClass_i.isNull() | (touch_G.n1.syn_class_index == p_df.prop.fromSClass_i)) &
+                                      (p_df.prop.toSClass_i.isNull() | (touch_G.n2.syn_class_index == p_df.prop.toSClass_i)) &
+                                      (p_df.prop.fromMType_i.isNull() | (touch_G.n1.morphology_i == p_df.prop.fromMType_i)) &
+                                      (p_df.prop.toMType_i.isNull() | (touch_G.n2.morphology_i == p_df.prop.toMType_i)) &
+                                      (p_df.prop.fromEType_i.isNull() | (touch_G.n1.electrophysiology == p_df.prop.fromEType_i)) &
+                                      (p_df.prop.toEType_i.isNull() | (touch_G.n2.electrophysiology == p_df.prop.toEType_i))))
 
         # 0: Connecting gid: presynaptic for nrn.h5, postsynaptic for nrn_efferent.h5
         # 1: Axonal delay: computed using the distance of the presynaptic axon to the post synaptic terminal (milliseconds) (float)

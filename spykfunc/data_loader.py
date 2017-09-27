@@ -152,36 +152,35 @@ class NeuronDataSpark(NeuronData):
 
         # Mapping entities from str to int ids
         # Case 1: SClass
-        if self.synaClassVec:
-            sclass_df = F.broadcast(
-                self._sc.parallelize(enumerate(self.synaClassVec))
-                .toDF(["sclass_i", "sclass_name"], schema.INT_STR_SCHEMA))
-            prop_df = prop_df\
-                .join(sclass_df.toDF("fromSClass_i", "fromSClass"), "fromSClass")\
-                .join(sclass_df.toDF("toSClass_i", "toSClass"), "toSClass")
+        sclass_df = F.broadcast(
+            self._sc.parallelize(enumerate(self.synaClassVec))
+            .toDF(["sclass_i", "sclass_name"], schema.INT_STR_SCHEMA))
+        prop_df = prop_df\
+            .join(sclass_df.toDF("fromSClass_i", "fromSClass"), "fromSClass", "left_outer")\
+            .join(sclass_df.toDF("toSClass_i", "toSClass"), "toSClass", "left_outer")
 
         # Case 2: Mtype
         mtype_df = F.broadcast(
             self._sc.parallelize(enumerate(self.mtypeVec))
             .toDF(["mtype_i", "mtype_name"], schema.INT_STR_SCHEMA))
         prop_df = prop_df\
-            .join(mtype_df.toDF("fromMType_i", "fromMType"), "fromMType")\
-            .join(mtype_df.toDF("toMType_i", "toMType"), "toMType")
+            .join(mtype_df.toDF("fromMType_i", "fromMType"), "fromMType", "left_outer")\
+            .join(mtype_df.toDF("toMType_i", "toMType"), "toMType", "left_outer")
 
         # Case 3: Etype
         etype_df = F.broadcast(
             self._sc.parallelize(enumerate(self.etypeVec))
             .toDF(["etype_i", "etype_name"], schema.INT_STR_SCHEMA))
         prop_df = prop_df\
-            .join(etype_df.toDF("fromEType_i", "fromEType"), "fromEType")\
-            .join(etype_df.toDF("toEType_i", "toEType"), "toEType")
+            .join(etype_df.toDF("fromEType_i", "fromEType"), "fromEType", "left_outer")\
+            .join(etype_df.toDF("toEType_i", "toEType"), "toEType", "left_outer")
 
         class_df = F.broadcast(class_df)
         merged_props = F.broadcast(
             prop_df.join(class_df, prop_df.type == class_df.id).cache())
 
-        merged_props.show()
-        sys.exit(1)
+        # merged_props.show()
+        # sys.exit(1)
         return merged_props
 
 
@@ -190,8 +189,7 @@ class NeuronDataSpark(NeuronData):
 #######################
 
 def _load_from_recipe(recipe_group, group_schema, spark_context=None):
-    sc = spark_context or SparkContext.getOrCreate()   # type: SparkContext
-
+    sc = spark_context or SparkContext.getOrCreate()
     f_names = list(group_schema.names)
     rdd = sc.parallelize([tuple(getattr(entry, name) for name in f_names)
                           for entry in recipe_group])
