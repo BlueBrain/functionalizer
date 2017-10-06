@@ -2,7 +2,7 @@ from pyspark.accumulators import AccumulatorParam
 from future.utils import iteritems
 from pyspark.sql import functions as F
 
-__all__ = ["DictAccum", "make_agg_f"]
+__all__ = ["DictAccum", "wrap_java_udf"]
 
 class DictAccum(AccumulatorParam):
     def zero(self, initialValue):
@@ -17,5 +17,5 @@ class DictAccum(AccumulatorParam):
         return a
 
 
-def make_agg_f(sc, java_f):
+def wrap_java_udf(sc, java_f):
     return lambda col: F.Column(java_f(F._to_seq(sc, [col], F._to_java_column)))

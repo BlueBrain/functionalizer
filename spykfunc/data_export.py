@@ -19,7 +19,6 @@ class NeuronExporter(object):
         #     raise RuntimeError("Can't export to .h5. Morphotool not available")
         self._neuronG = False
         self.touches = None
-
         self.output_path = output_path
         self.morpho_dir = morpho_dir
         self.recipe = recipe
@@ -34,8 +33,8 @@ class NeuronExporter(object):
         self.sc = self.spark.sparkContext  # type: pyspark.SparkContext
 
         # Get the concat_bin agg function form the java world
-        _conc = self.sc._jvm.spykfunc.udfs.BinaryConcat().apply
-        self.concat_bin = utils.make_agg_f(self.spark.sparkContext, _conc)
+        _j_conc_udaf = self.sc._jvm.spykfunc.udfs.BinaryConcat().apply
+        self.concat_bin = utils.wrap_java_udf(self.spark.sparkContext, _j_conc_udaf)
 
     @property
     def neuronG(self):
@@ -80,13 +79,10 @@ class NeuronExporter(object):
         n_gids = self.neuronG.vertices.count()
         df = self.touches
 
-        # Convert fields to array
-        df.select(df.post_gid,
-                  F.array(*self.nrn_fields_as_float(df)).alias("floatvec")
-                  ).createOrReplaceTempView("nrn_vals")
         # Massive conversion to binary using 'float2binary' java UDF and 'concat_bin' UDAF
-        arrays_df = (df.sql_ctx
-                     .sql("select post_gid, float2binary(floatvec) as bin_arr from nrn_vals")
+        nrn_vals = df.select(df.post_gid, F.array(*self.nrn_fields_as_float(df)).alias("floatvec") )
+        arrays_df = (nrn_vals
+                     .selectExpr("post_gid", "float2binary(floatvec) as bin_arr")
                      .groupBy("post_gid")
                      .agg(self.concat_bin("bin_arr").alias("bin_matrix"))
                      )
@@ -104,7 +100,7 @@ class NeuronExporter(object):
                 post_id = row[0]
                 buff = row[1]
                 if h5store is None:
-                    output_filename = nrn_filepath + ".{}".format(post_id)
+                    output_filename = "{}.{}".format(nrn_filepath, post_id)
                     h5store = h5py.File(output_filename, "w")
                 # We reconstruct the array in Numpy from the binary
                 np_array = numpy.frombuffer(buff, dtype=">f4").reshape((-1, 19))
@@ -116,20 +112,22 @@ class NeuronExporter(object):
         result_files = arrays_df.rdd.mapPartitions(write_hdf5).collect()
         logger.info("Files written: %s", ", ".join(result_files))
 
-
     # -----
     def compute_additional_h5_fields(self):
         touch_G = self.neuronG.find("(n1)-[t]->(n2)")
 
         # prepare DF - add required fields
         p_df = self.syn_properties_df.select(F.struct("*").alias("prop"))
-        # TODO: Synapse properties can also be matchning by MType and/or EType
-        touches = touch_G.join(p_df, ((p_df.prop.fromSClass_i.isNull() | (touch_G.n1.syn_class_index == p_df.prop.fromSClass_i)) &
-                                      (p_df.prop.toSClass_i.isNull() | (touch_G.n2.syn_class_index == p_df.prop.toSClass_i)) &
-                                      (p_df.prop.fromMType_i.isNull() | (touch_G.n1.morphology_i == p_df.prop.fromMType_i)) &
-                                      (p_df.prop.toMType_i.isNull() | (touch_G.n2.morphology_i == p_df.prop.toMType_i)) &
-                                      (p_df.prop.fromEType_i.isNull() | (touch_G.n1.electrophysiology == p_df.prop.fromEType_i)) &
-                                      (p_df.prop.toEType_i.isNull() | (touch_G.n2.electrophysiology == p_df.prop.toEType_i))))
+        # # TODO: Synapse properties can also be matchning by MType and/or EType
+        touches = touch_G.join(p_df, ((touch_G.n1.syn_class_index == p_df.prop.fromSClass_i) &
+                                      (touch_G.n2.syn_class_index == p_df.prop.toSClass_i)))
+
+        # touches = touch_G.join(p_df, ((p_df.prop.fromSClass_i.isNull() | (touch_G.n1.syn_class_index == p_df.prop.fromSClass_i)) &
+        #                               (p_df.prop.toSClass_i.isNull() | (touch_G.n2.syn_class_index == p_df.prop.toSClass_i)) &
+        #                               (p_df.prop.fromMType_i.isNull() | (touch_G.n1.morphology_i == p_df.prop.fromMType_i)) &
+        #                               (p_df.prop.toMType_i.isNull() | (touch_G.n2.morphology_i == p_df.prop.toMType_i)) &
+        #                               (p_df.prop.fromEType_i.isNull() | (touch_G.n1.electrophysiology == p_df.prop.fromEType_i)) &
+        #                               (p_df.prop.toEType_i.isNull() | (touch_G.n2.electrophysiology == p_df.prop.toEType_i))))
 
         # 0: Connecting gid: presynaptic for nrn.h5, postsynaptic for nrn_efferent.h5
         # 1: Axonal delay: computed using the distance of the presynaptic axon to the post synaptic terminal (milliseconds) (float)

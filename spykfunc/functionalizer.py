@@ -180,18 +180,18 @@ class Functionalizer(object):
         if output_path is not None:
             exporter.output_path = output_path
 
-        try:
+        if True: #try:
             if format_parquet:
                 exporter.export_parquet(self.neuronG)
             else:
                 exporter.export_hdf5(self.neuronG)
-        except:
-            import traceback
-            logger.error(traceback.format_exc(1))
-            return 1
-        else:
-            logger.info("Done exporting.")
-            return 0
+        # except:
+        #     import traceback
+        #     logger.error(traceback.format_exc(1))
+        #     return 1
+        # else:
+        #     logger.info("Done exporting.")
+        #     return 0
 
     # ---------------------------------------------------------
     # Functions to create/apply filters for the current session
@@ -271,10 +271,10 @@ def session(options):
     if options.output_dir:
         fzer.output_dir = options.output_dir
 
-    try:
+    if True: #try:
         fzer.init_data(options.recipe_file, options.mvd_file, options.morpho_dir, options.touch_files)
-    except:
-        import traceback
-        logger.error(traceback.format_exc(1))
-        return None
+    # except:
+    #     import traceback
+    #     logger.error(traceback.format_exc(1))
+    #     return None
     return fzer
