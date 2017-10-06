@@ -1,9 +1,7 @@
 from __future__ import print_function, absolute_import
 import os
-import sys
-
+import numpy as np
 from pyspark import SparkContext
-from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from .definitions import MType
 from .dataio.cppneuron import NeuronData
@@ -12,6 +10,8 @@ from .dataio import touches
 from .dataio.common import Part
 from .utils.spark_udef import DictAccum
 from .utils import get_logger, make_slices
+from collections import OrderedDict, defaultdict
+import fnmatch
 
 import logging
 logger = get_logger(__name__)
@@ -145,9 +145,9 @@ class NeuronDataSpark(NeuronData):
     def load_synapse_properties_and_classification(self, recipe):
         """Loader for SynapsesProperties
         """
-        prop_df = _load_from_recipe(recipe.synapse_properties, schema.SYNAPSE_PROPERTY_SCHEMA, self._sc)\
+        prop_df = _load_from_recipe_ds(recipe.synapse_properties, schema.SYNAPSE_PROPERTY_SCHEMA, self._sc)\
             .withColumnRenamed("_i", "_prop_i")
-        class_df = _load_from_recipe(recipe.synapse_classification, schema.SYNAPSE_CLASS_SCHEMA, self._sc)\
+        class_df = _load_from_recipe_ds(recipe.synapse_classification, schema.SYNAPSE_CLASS_SCHEMA, self._sc)\
             .withColumnRenamed("_i", "_class_i")
 
         # Mapping entities from str to int ids
@@ -183,17 +183,84 @@ class NeuronDataSpark(NeuronData):
         # sys.exit(1)
         return merged_props
 
+    # ---
+    def load_synapse_prop_matrix(self, recipe):
+        """Loader for SynapsesProperties
+        """
+        syn_props_rules = recipe.synapse_properties
+        syn_prop_rules_rev = {r.type: r._i for r in syn_props_rules}
+        syn_sclass_rev = {name: i for i, name in enumerate(self.synaClassVec)}
+        syn_mtype_rev = {name: i for i, name in enumerate(self.mtypeVec)}
+        syn_etype_rev = {name: i for i, name in enumerate(self.etypeVec)}
+
+        prop_rule_matrix = np.empty(
+            # Our 6-dim matrix
+            shape=(len(syn_mtype_rev), len(syn_etype_rev), len(syn_sclass_rev),
+                   len(syn_mtype_rev), len(syn_etype_rev), len(syn_sclass_rev)),
+            dtype="uint16"
+        )
+
+
+        expanded_names = defaultdict(dict)
+
+        field_to_values = {"MType": self.mtypeVec,
+                           "EType": self.etypeVec,
+                           "SClass": self.synaClassVec}
+        field_to_reverses = {"MType": syn_mtype_rev,
+                             "EType": syn_etype_rev,
+                             "SClass": syn_sclass_rev}
+
+        # Iterate for all rules, expanding * as necessary
+        # We keep rule definition order as required
+        for rule in syn_props_rules:
+            selectors = [None] * 6
+            for i, direction in enumerate(("from", "to")):
+                for j, (field_t, vals) in enumerate(field_to_values.items()):
+                    field_name = direction + field_t
+                    field_val = rule[field_name]
+                    if field_val in (None, "*"):
+                        # Slice(None) is numpy way for "all" in that dimension (same as colon)
+                        selectors[i*3+j] = [slice(None)]
+                    elif "*" in field_val:
+                        # Check if expansion was cached
+                        val_matches = expanded_names[field_t].get(field_val)
+                        if not val_matches:
+                            # Expand it
+                            val_matches = expanded_names[field_t][field_val] = fnmatch.filter(field_to_values[field_t], field_val)
+                        # Convert to int
+                        selectors[i*3+j] = [field_to_reverses[field_t][v] for v in val_matches]
+                    else:
+                        # Convert to int. If the val is not found (e.g. morpho not in mvd) we must skip (use empty list)
+                        selector_val = field_to_reverses[field_t].get(field_val)
+                        selectors[i*3+j] = [selector_val] if selector_val is not None else []
+
+            # The rule might have been expanded, so now we apply all of them
+            # Assign to the matrix.
+            for m1 in selectors[0]:
+                for e1 in selectors[1]:
+                    for s1 in selectors[2]:
+                        for m2 in selectors[3]:
+                            for e2 in selectors[4]:
+                                for s2 in selectors[5]:
+                                    prop_rule_matrix[m1, e1, s1, m2, e2, s2] = syn_prop_rules_rev[rule.type]
+
+        return prop_rule_matrix
+
 
 #######################
 # Generic loader
 #######################
 
-def _load_from_recipe(recipe_group, group_schema, spark_context=None):
+def _load_from_recipe_ds(recipe_group, group_schema, spark_context=None):
     sc = spark_context or SparkContext.getOrCreate()
-    f_names = list(group_schema.names)
-    rdd = sc.parallelize([tuple(getattr(entry, name) for name in f_names)
-                          for entry in recipe_group])
+    rdd = sc.parallelize(_load_from_recipe(recipe_group, group_schema))
     return rdd.toDF(group_schema)
+
+
+def _load_from_recipe(recipe_group, group_schema):
+    f_names = list(group_schema.names)
+    return [tuple(getattr(entry, name) for name in f_names)
+            for entry in recipe_group]
 
 
 ####################################################################

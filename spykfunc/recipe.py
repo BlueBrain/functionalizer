@@ -147,6 +147,9 @@ class _GenericPropHolder(object):
 
             setattr(self, name, value)
 
+    def __getitem__(self, item):
+        return getattr(self, item)
+
     def __repr__(self):
         attrs = " ".join('{0}="{1}"'.format(attr_name, getattr(self, attr_name))
                         for attr_name in self._supported_attrs)
