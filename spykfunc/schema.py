@@ -72,7 +72,7 @@ SYNAPSE_CLASS_SCHEMA = types.StructType([
     types.StructField("dVar", types.IntegerType(), False),
     types.StructField("f", types.IntegerType(), False),
     types.StructField("fVar", types.IntegerType(), False),
-    types.StructField("ase", types.IntegerType(), False),
+    types.StructField("ase", types.FloatType(), False),
 ])
 
 INT_STR_SCHEMA = types.StructType([

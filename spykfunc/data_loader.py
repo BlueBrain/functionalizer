@@ -177,7 +177,7 @@ class NeuronDataSpark(NeuronData):
 
         class_df = F.broadcast(class_df)
         merged_props = F.broadcast(
-            prop_df.join(class_df, prop_df.type == class_df.id).cache())
+            prop_df.join(class_df, prop_df.type == class_df.id, "left").cache())
 
         # merged_props.show()
         # sys.exit(1)
