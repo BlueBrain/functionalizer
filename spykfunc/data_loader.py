@@ -59,11 +59,11 @@ class NeuronDataSpark(NeuronData):
         n_neurons = int(self.nNeurons)
 
         if total_parts is None:
-            total_parts = n_neurons // 1000
+            total_parts = n_neurons // 256
         if total_parts < 4:
             total_parts = 4
-        elif total_parts > 256:
-            total_parts = 256
+        elif total_parts > 5120:
+            total_parts = 5120
 
         logger.info("Total neurons: %d", n_neurons)
         logger.debug("Partitions: %d", total_parts)

@@ -1,6 +1,6 @@
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
-from math import exp
+from math import exp, sqrt
 import logging
 
 # **************************************************
@@ -54,12 +54,10 @@ def reduce_cut_parameter_udef(conn_rules_map):
 
             elif rule.mean_syns_connection:
                 # 4.2 of s2f 2.0
-                p = 1 / structuralMean
-                sdt = rule.mean_syns_connection * cv_syns_connection
-                if sdt > structuralMean - 0.5:
-                    sdt = structuralMean - 0.5
+                p = 1.0 / structuralMean
+                sdt = min(rule.mean_syns_connection * cv_syns_connection, structuralMean - 0.5)
                 mu_A = 0.5 + rule.mean_syns_connection - sdt
-                syn_pprime = 1 / (sdt + 0.5)
+                syn_pprime = 1.0 / (sqrt(sdt*sdt + 0.25) + 0.5)
                 p_A = p / (1 - p) * (1 - syn_pprime) / syn_pprime
                 pActiveFraction = activeFraction_default
 
