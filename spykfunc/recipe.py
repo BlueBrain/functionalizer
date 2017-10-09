@@ -5,8 +5,7 @@
 from __future__ import print_function, absolute_import
 
 from os import path
-from xml.etree import ElementTree as ET
-from xml.parsers.expat import ExpatError
+from lxml import etree
 import pprint
 from .definitions import CellClass
 from .utils import get_logger
@@ -245,10 +244,10 @@ class Recipe(object):
     def load_from_xml(self, recipe_file):
         try:
             # Parse the given XML file:
-            tree = ET.parse(recipe_file)
-        except ExpatError as e:
-            logger.warning("[XML] Error (line %d): %d", e.lineno, e.code)
-            logger.warning("[XML] Offset: %d", e.offset)
+            parser = etree.XMLParser(recover=True, remove_comments=True)
+            tree = etree.parse(recipe_file, parser)
+        except (etree.XMLSyntaxError, etree.ParserError) as e:
+            logger.warning("[XML] Could not parse recipe %s", recipe_file)
             raise e
         except IOError as e:
             logger.warning("[XML] I/O Error %d: %s", e.errno, e.strerror)
@@ -271,7 +270,7 @@ class Recipe(object):
             # Create ConnectivityPath from NodeInfo-like object, compatible with xml.Element
             if not isinstance(conn_rule, ConnectivityPathRule):
                 children = [child.attrib for child in conn_rule]
-                conn_rule = ConnectivityPathRule(conn_rule.tag, conn_rule.attrib.copy(), children)
+                conn_rule = ConnectivityPathRule(conn_rule.tag, dict(conn_rule.attrib), children)
             self.conn_rules.append(conn_rule)
 
     # -------
