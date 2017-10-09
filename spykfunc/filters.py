@@ -178,8 +178,10 @@ class ReduceAndCut(DataSetOperation):
             .select("*",  # We can see here the fields of mtype_stats, which are used for rc_param_maker
                     rc_param_maker(mtype_stats.n1_morpho, mtype_stats.n2_morpho, mtype_stats.average_touches_conn)
                     .alias("rc_params"))
+            .where(F.col("rc_params.pP_A").isNotNull())
             # Return the params (activeFraction is no longer calculated in this step)
-            .select("n1_morpho", "n2_morpho", "total_touches", "rc_params.*"))
+            .select("n1_morpho", "n2_morpho", "total_touches", "rc_params.*")
+        )
 
     # ---
     @staticmethod

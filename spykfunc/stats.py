@@ -1,3 +1,4 @@
+from lazy_property import LazyProperty
 from pyspark.sql import functions as F
 from pyspark.sql.functions import col
 
@@ -31,13 +32,15 @@ class NeuronStats(object):
 
     def update_touch_graph_source(self, touch_GF, overwrite_previous_gf=True):
         self._touch_graph_frame = touch_GF
-
-        # Define the DF of neurons-neurons counts, with morphology names
-        self.neurons_touch_counts = self._build_neurons_touch_counts(touch_GF)
-
         if overwrite_previous_gf:
             self._prev_gf = self._touch_graph_frame
             self.total_neurons = self._touch_graph_frame.vertices.count()
+
+    @LazyProperty
+    def neurons_touch_counts(self):
+        """Lazily calculate/cache neurons_touch_counts
+        """
+        return self.get_neurons_touch_counts(self._touch_graph_frame)
 
     @property
     def total_touches(self):
@@ -73,7 +76,7 @@ class NeuronStats(object):
         return morpho_touches_conns.cache()
 
     @staticmethod
-    def _build_neurons_touch_counts(neuronG):
+    def get_neurons_touch_counts(neuronG):
         """ Counts the total touches between morphologies and neurons.
         """
         return neuronG.find("(n1)-[t]->(n2)").groupBy(

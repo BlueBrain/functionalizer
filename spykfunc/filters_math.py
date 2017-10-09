@@ -28,10 +28,12 @@ def reduce_cut_parameter_udef(conn_rules_map):
         :return: a tuple of (pP_A, pMu_A, bouton_reduction_factor, activeFraction_legacy)
         """
         # If there are no connections for a pathway (mean=0), cannot compute valid numbers
-        nil = (None, None, None)
+        nil = (None, None, None, None)
 
         if structuralMean == 0:
             return nil
+        elif structuralMean == 1:
+            structuralMean = 1.01  # Avoid the division by zero
 
         # conn_rules_map is optimized as a Broadcast variable
         # unfortunately in pyspark it is not transparent, we must use ".value"
