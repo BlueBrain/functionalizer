@@ -32,8 +32,6 @@ def reduce_cut_parameter_udef(conn_rules_map):
 
         if structuralMean == 0:
             return nil
-        elif structuralMean == 1:
-            structuralMean = 1.01  # Avoid the division by zero
 
         # conn_rules_map is optimized as a Broadcast variable
         # unfortunately in pyspark it is not transparent, we must use ".value"
@@ -60,7 +58,7 @@ def reduce_cut_parameter_udef(conn_rules_map):
                 sdt = min(rule.mean_syns_connection * cv_syns_connection, structuralMean - 0.5)
                 mu_A = 0.5 + rule.mean_syns_connection - sdt
                 syn_pprime = 1.0 / (sqrt(sdt*sdt + 0.25) + 0.5)
-                p_A = p / (1 - p) * (1 - syn_pprime) / syn_pprime
+                p_A = (p / (1 - p) * (1 - syn_pprime) / syn_pprime) if (p > 1.0) else 1.0
                 pActiveFraction = activeFraction_default
 
             elif rule.probability:
@@ -88,8 +86,7 @@ def reduce_cut_parameter_udef(conn_rules_map):
             mu_A = 0.5 + rule.mean_syns_connection - rule.stdev_syns_connection
             pprime = 1 / (rule.stdev_syns_connection + 0.5)
             p = 1 / structuralMean
-            f1 = p / (1 - p) * (1 - pprime) / pprime
-            p_A = f1
+            p_A = (p / (1 - p) * (1 - pprime) / pprime) if (p > 1.0) else 1.0
             pActiveFraction = rule.active_fraction
 
         else:
