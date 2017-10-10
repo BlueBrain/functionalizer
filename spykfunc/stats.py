@@ -1,4 +1,3 @@
-from lazy_property import LazyProperty
 from pyspark.sql import functions as F
 from pyspark.sql.functions import col
 
@@ -14,7 +13,7 @@ class NeuronStats(object):
         self._total_touches = 0
         self._touch_graph_frame = None
         self._prev_gf = None
-        self.neurons_touch_counts = None
+        self._neurons_touch_counts = None
 
     @staticmethod
     def create_from_touch_info(touch_info):
@@ -32,15 +31,18 @@ class NeuronStats(object):
 
     def update_touch_graph_source(self, touch_GF, overwrite_previous_gf=True):
         self._touch_graph_frame = touch_GF
+        self._neurons_touch_counts = None
         if overwrite_previous_gf:
             self._prev_gf = self._touch_graph_frame
             self.total_neurons = self._touch_graph_frame.vertices.count()
 
-    @LazyProperty
+    @property
     def neurons_touch_counts(self):
         """Lazily calculate/cache neurons_touch_counts
         """
-        return self.get_neurons_touch_counts(self._touch_graph_frame)
+        if not self._neurons_touch_counts:
+            self._neurons_touch_counts = self.get_neurons_touch_counts(self._touch_graph_frame)
+        return self._neurons_touch_counts
 
     @property
     def total_touches(self):
