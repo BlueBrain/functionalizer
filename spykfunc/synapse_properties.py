@@ -1,0 +1,100 @@
+"""
+Additional "Synapse property fields
+Shall replace compute_additional_h5_fields in data_export
+"""
+from __future__ import absolute_import
+from pyspark.sql import functions as F
+from . import filter_udfs
+
+
+# -----
+def compute_additional_h5_fields(neuronG, syn_class_matrix, syn_class_df):
+
+    touches = neuronG.find("(n1)-[t]->(n2)")
+    syn_class_dims = syn_class_matrix.shape  # tuple of len 6
+
+    index_length = syn_class_dims[:]
+    for i in reversed(range(len(index_length) - 1)):
+        index_length[i] *= index_length[i + 1]
+
+    # Compute the index for the matrix as in a flat array
+    touches = touches.withColumn("syn_class_index",
+                                 touches.fromMType_i * index_length[1] +
+                                 touches.fromEType_i * index_length[2] +
+                                 touches.fromSClass_i * index_length[3] +
+                                 touches.toMType_i * index_length[4] +
+                                 touches.toEType_i * index_length[5] +
+                                 touches.toSClass_i * index_length[6])
+
+    to_syn_class = filter_udfs.get_synapse_classification_udf(syn_class_matrix)
+    touches = touches.withColumn("syn_class", to_syn_class(touches.syn_class_index))
+    # touches = touches.drop("syn_class_index")
+
+    # Join with SynClass
+    syn_class_df = syn_class_df.select(F.struct("*").alias("prop"))
+    touches = touches.join(syn_class_df, touches.syn_class == syn_class_df.prop._i)
+
+    # 0: Connecting gid: presynaptic for nrn.h5, postsynaptic for nrn_efferent.h5
+    # 1: Axonal delay: computed using the distance of the presynaptic axon to the post synaptic terminal (milliseconds) (float)
+    # 2: postSection ID (int)
+    # 3: postSegment ID (int)
+    # 4: The post distance (in microns) of the synapse from the begining of the post segment 3D point, or \-1 for soma connections  (float)
+    # 5: preSection ID (int)
+    # 6: preSegment ID (int)
+    # 7: The pre distance (in microns) of the synapse from the begining of the pre segment  3D point (float)
+    # 8: g_synX is the conductance of the synapse (nanosiemens) (float)
+    # 9: u_syn is the u parameter in the TM model (0-1) (float)
+    # 10: d_syn is the time constant of depression (milliseconds) (int)
+    # 11: f_syn is the time constant of facilitation (milliseconds) (int)
+    # 12: DTC - Decay Time Constant (milliseconds) (float)
+    # 13: synapseType, the synapse type Inhibitory < 100 or Excitatory >= 100 (specific value corresponds to generating recipe)
+    # 14: The morphology type of the pre neuron.  Index corresponds with circuit.mvd2
+    # 15-16: BranchOrder of the dendrite, BranchOrder of the axon (int,int)
+    # 17: ASE Absolute Synaptic Efficacy (Millivolts) (int)
+    # 18: Branch Type from the post neuron(0 for soma,
+
+    # Compute #1: delaySomaDistance
+    touches = touches.withColumn("axional_delay", (
+            touches.prop.neuralTransmitterReleaseDelay +
+            touches.t.distance_soma / touches.prop.axonalConductionVelocity
+        ).cast(T.FloatType())
+    )
+
+    # Compute #8-12
+    # We ruse a Java UDFs (gauss_rand) which requires using spark.sql
+    touches.createOrReplaceTempView("cur_touches")
+    touches = self.spark.sql(
+        "select *,"
+        " gauss_rand(0) * prop.gsynVar + prop.gsyn as gsyn, "  # g
+        " gauss_rand(0) * prop.uVar + prop.u as u,"     # u
+        " gauss_rand(0) * prop.dVar + prop.d as d,"     # d
+        " gauss_rand(0) * prop.fVar + prop.f as f,"     # f
+        " gauss_rand(0) * prop.dtcVar + prop.dtc as dtc"  # dtc
+        " from cur_touches")
+
+    # Compute #13: synapseType:  Inhibitory < 100 or  Excitatory >= 100
+    t = touches.withColumn("synapseType",
+                           (F.when(touches.prop.type.substr(0, 1) == F.lit('E'), 100)
+                            .otherwise(0)
+                            ) + touches.prop._class_i)
+
+    # Select fields
+    return t.select(
+        t.t.src.alias("pre_gid"),
+        t.t.dst.alias("post_gid"),
+        t.axional_delay,
+        t.t.post_section.alias("post_section"),
+        t.t.post_segment.alias("post_segment"),
+        t.t.post_offset.alias("post_offset"),
+        t.t.pre_section.alias("pre_section"),
+        t.t.pre_segment.alias("pre_segment"),
+        t.t.pre_offset.alias("pre_offset"),
+        "gsyn", "u", "d", "f", "dtc",
+        t.synapseType.alias("synapseType"),
+        t.n1.morphology_i.alias("morphology"),
+        F.lit(0).alias("branch_order_dend"),  # TBD
+        t.t.branch_order.alias("branch_order_axon"),
+        t.prop.ase.alias("ase"),
+        F.lit(0).alias("branch_type"),  # TBD (0 soma, 1 axon, 2 basel dendrite, 3 apical dendrite)
+    )
+

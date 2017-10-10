@@ -7,7 +7,7 @@ from math import exp
 from .definitions import CellClass
 from ._filtering import DataSetOperation
 from .utils import get_logger
-from filters_math import reduce_cut_parameter_udef
+from filter_udfs import reduce_cut_parameter_udef
 
 logger = get_logger(__name__)
 

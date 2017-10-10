@@ -98,7 +98,8 @@ class Functionalizer(object):
         fdata.load_mvd_neurons_morphologies()
 
         # Load synapse properties
-        self.synapse_properties_class = fdata.load_synapse_properties_and_classification(self.recipe)
+        # self.synapse_properties_class = fdata.load_synapse_properties_and_classification(self.recipe)
+        self.synapse_properties_matrix = fdata.load_synapse_prop_matrix(self.recipe)
 
         # Shortcuts
         self._spark_data = fdata

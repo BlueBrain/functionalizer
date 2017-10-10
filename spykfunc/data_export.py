@@ -66,7 +66,7 @@ class NeuronExporter(object):
         if not os.path.exists(self.output_path):
             os.makedirs(self.output_path)
         nrn_filepath = path.join(self.output_path, filename)
-        return self.touches.write.mode("overwrite").partitionBy("post_gid").parquet(nrn_filepath, compression="gzip")
+        return self.touches.write.mode("overwrite").partitionBy("post_gid").parquet(nrn_filepath)
 
     # ---
     def export_hdf5(self, neuronG=None, filename="nrn.h5"):

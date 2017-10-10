@@ -1,5 +1,6 @@
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
+from pyspark import SparkContext
 from math import exp, sqrt
 import logging
 
@@ -103,7 +104,6 @@ def reduce_cut_parameter_udef(conn_rules_map):
     return F.udf(f, _RC_params_schema)
 
 
-#
 def pprime_approximation(r, cv, p):
     """ Find good approximations for parameters of the s2f algorithm
     :param r:  bouton reduction
@@ -164,3 +164,15 @@ def pprime_approximation(r, cv, p):
     return pprime, f1, mu2, r_actual
 
 
+# *********************************************************
+# Synapse classification
+# *********************************************************
+
+def get_synapse_classification_udf(syn_class_matrix, sc=SparkContext.getOrCreate()):
+    # We need the matrix in all nodes, flattened
+    syn_class_matrix_flat = sc.broadcast(syn_class_matrix.flatten())
+
+    def syn_class_udf(syn_prop_index):
+        return syn_class_matrix_flat.value[syn_prop_index]
+
+    return F.udf(syn_class_udf, T.ShortType())
