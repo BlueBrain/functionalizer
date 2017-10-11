@@ -3,6 +3,7 @@ import os
 import numpy as np
 from pyspark import SparkContext
 from pyspark.sql import functions as F
+from pyspark.sql import types as T
 from .definitions import MType
 from .dataio.cppneuron import NeuronData
 from . import schema
@@ -257,10 +258,25 @@ def _load_from_recipe_ds(recipe_group, group_schema, spark_context=None):
     return rdd.toDF(group_schema)
 
 
+_spark_t_to_py = {
+    T.ShortType: int,
+    T.IntegerType: int,
+    T.LongType: int,
+    T.FloatType: float,
+    T.DoubleType: float,
+    T.StringType: str,
+    T.BooleanType: bool
+}
+def cast_in_eq_py_t(val, spark_t):
+    return _spark_t_to_py[spark_t.__class__](val)
+
 def _load_from_recipe(recipe_group, group_schema):
-    f_names = list(group_schema.names)
-    return [tuple(getattr(entry, name) for name in f_names)
-            for entry in recipe_group]
+    return [tuple(cast_in_eq_py_t(getattr(entry, field.name), 
+                                  field.dataType)
+                  for field in group_schema
+                 )
+            for entry in recipe_group
+           ]
 
 
 ####################################################################
