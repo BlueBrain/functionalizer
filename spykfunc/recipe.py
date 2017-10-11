@@ -212,10 +212,10 @@ class SynapsesClassification(_GenericPropHolder):
     dtcVar = .0
     u = .0
     uVar = .0
-    d = 0
-    dVar = 0
-    f = 0
-    fVar = 0
+    d = .0
+    dVar = .0
+    f = .0
+    fVar = .0
     ase = .0
     _supported_attrs = [k for k in locals().keys()
                         if not k.startswith("_")]

@@ -68,10 +68,10 @@ SYNAPSE_CLASS_SCHEMA = types.StructType([
     types.StructField("dtcVar", types.FloatType(), False),
     types.StructField("u", types.FloatType(), False),
     types.StructField("uVar", types.FloatType(), False),
-    types.StructField("d", types.IntegerType(), False),
-    types.StructField("dVar", types.IntegerType(), False),
-    types.StructField("f", types.IntegerType(), False),
-    types.StructField("fVar", types.IntegerType(), False),
+    types.StructField("d", types.FloatType(), False),
+    types.StructField("dVar", types.FloatType(), False),
+    types.StructField("f", types.FloatType(), False),
+    types.StructField("fVar", types.FloatType(), False),
     types.StructField("ase", types.FloatType(), False),
 ])
 
