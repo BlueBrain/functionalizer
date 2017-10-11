@@ -84,7 +84,6 @@ class TouchRulesFilter(DataSetOperation):
         # For each neuron we require: preLayer, preMType, postLayer, postMType, postBranchIsSoma
         # The first four fields are properties of the neurons, part of neuronDF,
         #  while postBranchIsSoma is a property if the touch, checked by the index of the target neuron section (0->soma)
-
         sql_queries = []
 
         for rule in self._rules:
@@ -103,8 +102,6 @@ class TouchRulesFilter(DataSetOperation):
             if rule_sqls:
                 sql_queries.append("(" + " AND ".join(rule_sqls) + ")")
 
-        # from pprint import pprint
-        # pprint(sql_queries)
         master_filter_sql = " OR ".join(sql_queries)
 
         new_touches = neuronG.find("(n1)-[t]->(n2)") \

@@ -1,4 +1,4 @@
-from __future__ import print_function, absolute_import
+from __future__ import absolute_import
 import os
 import numpy as np
 from pyspark import SparkContext
@@ -143,7 +143,7 @@ class NeuronDataSpark(NeuronData):
         return touch_info
 
     # ----
-    def load_synapse_properties_and_classification(self, recipe):
+    def load_synapse_properties_and_classification(self, recipe, map_ids=False):
         """Loader for SynapsesProperties
         """
         prop_df = _load_from_recipe_ds(recipe.synapse_properties, schema.SYNAPSE_PROPERTY_SCHEMA, self._sc)\
@@ -151,45 +151,43 @@ class NeuronDataSpark(NeuronData):
         class_df = _load_from_recipe_ds(recipe.synapse_classification, schema.SYNAPSE_CLASS_SCHEMA, self._sc)\
             .withColumnRenamed("_i", "_class_i")
 
-        # Mapping entities from str to int ids
-        # Case 1: SClass
-        sclass_df = F.broadcast(
-            self._sc.parallelize(enumerate(self.synaClassVec))
-            .toDF(["sclass_i", "sclass_name"], schema.INT_STR_SCHEMA))
-        prop_df = prop_df\
-            .join(sclass_df.toDF("fromSClass_i", "fromSClass"), "fromSClass", "left_outer")\
-            .join(sclass_df.toDF("toSClass_i", "toSClass"), "toSClass", "left_outer")
+        if map_ids:
+            # Mapping entities from str to int ids
+            # Case 1: SClass
+            sclass_df = F.broadcast(
+                self._sc.parallelize(enumerate(self.synaClassVec))
+                .toDF(["sclass_i", "sclass_name"], schema.INT_STR_SCHEMA))
+            prop_df = prop_df\
+                .join(sclass_df.toDF("fromSClass_i", "fromSClass"), "fromSClass", "left_outer")\
+                .join(sclass_df.toDF("toSClass_i", "toSClass"), "toSClass", "left_outer")
 
-        # Case 2: Mtype
-        mtype_df = F.broadcast(
-            self._sc.parallelize(enumerate(self.mtypeVec))
-            .toDF(["mtype_i", "mtype_name"], schema.INT_STR_SCHEMA))
-        prop_df = prop_df\
-            .join(mtype_df.toDF("fromMType_i", "fromMType"), "fromMType", "left_outer")\
-            .join(mtype_df.toDF("toMType_i", "toMType"), "toMType", "left_outer")
+            # Case 2: Mtype
+            mtype_df = F.broadcast(
+                self._sc.parallelize(enumerate(self.mtypeVec))
+                .toDF(["mtype_i", "mtype_name"], schema.INT_STR_SCHEMA))
+            prop_df = prop_df\
+                .join(mtype_df.toDF("fromMType_i", "fromMType"), "fromMType", "left_outer")\
+                .join(mtype_df.toDF("toMType_i", "toMType"), "toMType", "left_outer")
 
-        # Case 3: Etype
-        etype_df = F.broadcast(
-            self._sc.parallelize(enumerate(self.etypeVec))
-            .toDF(["etype_i", "etype_name"], schema.INT_STR_SCHEMA))
-        prop_df = prop_df\
-            .join(etype_df.toDF("fromEType_i", "fromEType"), "fromEType", "left_outer")\
-            .join(etype_df.toDF("toEType_i", "toEType"), "toEType", "left_outer")
+            # Case 3: Etype
+            etype_df = F.broadcast(
+                self._sc.parallelize(enumerate(self.etypeVec))
+                .toDF(["etype_i", "etype_name"], schema.INT_STR_SCHEMA))
+            prop_df = prop_df\
+                .join(etype_df.toDF("fromEType_i", "fromEType"), "fromEType", "left_outer")\
+                .join(etype_df.toDF("toEType_i", "toEType"), "toEType", "left_outer")
 
         class_df = F.broadcast(class_df)
         merged_props = F.broadcast(
             prop_df.join(class_df, prop_df.type == class_df.id, "left").cache())
 
-        # merged_props.show()
-        # sys.exit(1)
         return merged_props
 
     # ---
     def load_synapse_prop_matrix(self, recipe):
         """Loader for SynapsesProperties
         """
-        syn_props_rules = recipe.synapse_properties
-        syn_prop_rules_rev = {r.type: r._i for r in syn_props_rules}
+        syn_class_rules = recipe.synapse_properties
         syn_sclass_rev = {name: i for i, name in enumerate(self.synaClassVec)}
         syn_mtype_rev = {name: i for i, name in enumerate(self.mtypeVec)}
         syn_etype_rev = {name: i for i, name in enumerate(self.etypeVec)}
@@ -213,7 +211,7 @@ class NeuronDataSpark(NeuronData):
 
         # Iterate for all rules, expanding * as necessary
         # We keep rule definition order as required
-        for rule in syn_props_rules:
+        for rule in syn_class_rules:
             selectors = [None] * 6
             for i, direction in enumerate(("from", "to")):
                 for j, (field_t, vals) in enumerate(field_to_values.items()):
@@ -243,7 +241,7 @@ class NeuronDataSpark(NeuronData):
                         for m2 in selectors[3]:
                             for e2 in selectors[4]:
                                 for s2 in selectors[5]:
-                                    prop_rule_matrix[m1, e1, s1, m2, e2, s2] = syn_prop_rules_rev[rule.type]
+                                    prop_rule_matrix[m1, e1, s1, m2, e2, s2] = rule._i
 
         return prop_rule_matrix
 
@@ -267,11 +265,14 @@ _spark_t_to_py = {
     T.StringType: str,
     T.BooleanType: bool
 }
+
+
 def cast_in_eq_py_t(val, spark_t):
     return _spark_t_to_py[spark_t.__class__](val)
 
+
 def _load_from_recipe(recipe_group, group_schema):
-    return [tuple(cast_in_eq_py_t(getattr(entry, field.name), 
+    return [tuple(cast_in_eq_py_t(getattr(entry, field.name),
                                   field.dataType)
                   for field in group_schema
                  )
@@ -364,8 +365,9 @@ def touches_loader_gen(data_class, loader_class, loader_params):
     :return: Touch loader function for RDDs
     """
     # I guess this generator is gonna be called every time the RDD is to be constructed (unless cached)
+    # TODO: Are we ever supporting this?
     def load_touches_par(neuron_id):
         logging.debug("Gonna read touches belonging to neuron %d", neuron_id)
-        return ()
+        raise NotImplementedError()
 
     return load_touches_par

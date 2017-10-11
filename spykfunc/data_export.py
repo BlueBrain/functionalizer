@@ -6,7 +6,7 @@ from pyspark.sql import functions as F
 from pyspark.sql import types as T
 from pyspark.sql import SparkSession
 from . import utils
-from .dataio import morphotool
+from . import synapse_properties
 import numpy
 
 logger = utils.get_logger(__name__)
@@ -14,7 +14,7 @@ N_NEURONS_FILE = 1000
 
 
 class NeuronExporter(object):
-    def __init__(self, morpho_dir, recipe, syn_properties, output_path):
+    def __init__(self, morpho_dir, recipe, syn_class_matrix, syn_class_prop_df, output_path):
         # if not morphotool:
         #     raise RuntimeError("Can't export to .h5. Morphotool not available")
         self._neuronG = False
@@ -22,7 +22,9 @@ class NeuronExporter(object):
         self.output_path = output_path
         self.morpho_dir = morpho_dir
         self.recipe = recipe
-        self.syn_properties_df = syn_properties
+        # self.syn_properties_df = syn_properties
+        self.syn_class_matrix = syn_class_matrix
+        self.syn_class_prop_df = syn_class_prop_df
 
         # Broadcast an empty dict to hold morphologies
         # Each worker will fill it as required, no communication incurred
@@ -45,7 +47,8 @@ class NeuronExporter(object):
         self._neuronG = newval
         self.n_ids = self._neuronG.vertices.count()
         # Create required / select fields that belong to nrn.h5 spec
-        self.touches = self.compute_additional_h5_fields()
+        # Eventually this should be called from top-level funz
+        self.touches = synapse_properties.compute_additional_h5_fields(newval, self.syn_class_matrix, self.syn_class_prop_df)
 
     # ---
     def save_temp(self, neuronG=None, filename="filtered_touches.tmp.parquet"):

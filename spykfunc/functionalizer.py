@@ -1,7 +1,7 @@
 # *************************************************************************
 #  An implementation of Functionalizer in spark
 # *************************************************************************
-from __future__ import print_function, absolute_import
+from __future__ import absolute_import
 from fnmatch import filter as matchfilter
 from glob import glob
 import time
@@ -23,10 +23,19 @@ if False: from .recipe import ConnectivityPathRule  # NOQA
 
 logger = utils.get_logger(__name__)
 
+# =====================================
+# Global Initting
+# =====================================
+spark = SparkSession.builder.getOrCreate()
+sc = spark.sparkContext
+sc.setLogLevel("WARN")
+spark.conf.set("spark.sql.shuffle.partitions", min(sc.defaultParallelism * 4, 256))
+
 try:
     from graphframes import GraphFrame
 except ImportError:
-    logger.warning("""graphframes could not be imported
+    GraphFrame = None
+    logger.error("""graphframes could not be imported
     Please start a spark instance with GraphFrames support
     e.g. pyspark --packages graphframes:graphframes:0.5.0-spark2.1-s_2.11""")
 
@@ -34,9 +43,6 @@ except ImportError:
 class Functionalizer(object):
     """ Functionalizer Session class
     """
-    # Class vars
-    spark = None
-
     # Defaults for instance vars
     recipe = None
     touch_info = None
@@ -55,24 +61,14 @@ class Functionalizer(object):
         self._run_s2f = not only_s2s
         self.output_dir = "spykfunc_output"
 
-        # Init spark as static class property
-        if Functionalizer.spark is None:
-            Functionalizer.spark = SparkSession.builder.getOrCreate()
-
-        # Logging
-        self.spark.sparkContext.setLogLevel("WARN")
-
-        # Default partition count
-        self.spark.conf.set("spark.sql.shuffle.partitions", min(self.spark.sparkContext.defaultParallelism * 4, 256))
-
         # register random udef
-        sqlContext = SQLContext.getOrCreate(Functionalizer.spark.sparkContext)
+        sqlContext = SQLContext.getOrCreate(sc)
         # Apparently functions are instantiated on every executed query
         sqlContext.registerJavaFunction("gauss_rand", "spykfunc.udfs.GaussRand")
         sqlContext.registerJavaFunction("float2binary", "spykfunc.udfs.FloatArraySerializer")
 
-        # _conc = self.spark.sparkContext._jvm.spykfunc.udfs.BinaryConcat().apply
-        # self.binary_agg_func = utils.make_agg_f(self.spark.sparkContext, _conc)
+        # _conc = sc._jvm.spykfunc.udfs.BinaryConcat().apply
+        # self.binary_agg_func = utils.make_agg_f(sc, _conc)
 
     # ---
     def init_data(self, recipe_file, mvd_file, morpho_dir, touch_files):
@@ -94,12 +90,13 @@ class Functionalizer(object):
         self.neuron_stats = NeuronStats()
 
         # Load Neurons data
-        fdata = NeuronDataSpark(MVD_Morpho_Loader(mvd_file, morpho_dir), self.spark)
+        fdata = NeuronDataSpark(MVD_Morpho_Loader(mvd_file, morpho_dir), spark)
         fdata.load_mvd_neurons_morphologies()
 
         # Load synapse properties
         # self.synapse_properties_class = fdata.load_synapse_properties_and_classification(self.recipe)
-        self.synapse_properties_matrix = fdata.load_synapse_prop_matrix(self.recipe)
+        synapse_class_matrix = fdata.load_synapse_prop_matrix(self.recipe)
+        synapse_class_prop_df = fdata.load_synapse_properties_and_classification(self.recipe)
 
         # Shortcuts
         self._spark_data = fdata
@@ -127,7 +124,9 @@ class Functionalizer(object):
         self.neuron_stats.update_touch_graph_source(self.neuronG, overwrite_previous_gf=False)
 
         # Data exporter
-        self.exporter = NeuronExporter(self.morpho_dir, self.recipe, self.synapse_properties_class, output_path=self.output_dir)
+        self.exporter = NeuronExporter(self.morpho_dir, self.recipe,
+                                       synapse_class_matrix, synapse_class_prop_df,
+                                       output_path=self.output_dir)
 
     # ---
     @property
@@ -231,7 +230,7 @@ class Functionalizer(object):
         # self.touchDF = cumulative_distance_f.apply(self.neuronG)
 
         logger.info("Applying Reduce and Cut...")
-        rc = filters.ReduceAndCut(mtype_conn_rules, self.neuron_stats, self.spark.sparkContext)
+        rc = filters.ReduceAndCut(mtype_conn_rules, self.neuron_stats, sc)
         self.touchDF = rc.apply(self.neuronG)
 
     # ---
