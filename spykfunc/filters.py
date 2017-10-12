@@ -168,7 +168,6 @@ class ReduceAndCut(DataSetOperation):
         # TODO: Apparently it doesn't cut. We should issue a warning!
 
         # Extract p_A, mu_A, activeFraction
-        # TODO: activeFraction is calculated the legacy way. We should change
         return (
             mtype_stats
             .select("*",  # We can see here the fields of mtype_stats, which are used for rc_param_maker

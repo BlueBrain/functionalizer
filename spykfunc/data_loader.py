@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+
+from lazy_property import LazyProperty
 import os
 import numpy as np
 from pyspark import SparkContext
@@ -25,6 +27,8 @@ class NeuronDataSpark(NeuronData):
     """
     Neuron data loader.
     It inherits from NeuronData (extension type), which has the following C++ fields (accessible from Python):
+     - bool globals_loaded
+     - int nNeurons
      - vector[string] mtypeVec
      - vector[string] etypeVec
      - vector[string] synaClassVec
@@ -44,6 +48,11 @@ class NeuronDataSpark(NeuronData):
         if not os.path.isdir(".cache"):
             os.makedirs(".cache")
 
+    def require_mvd_globals(self):
+        if not self.globals_loaded:
+            logger.info("Loading global Neuron data...")
+            self.load_globals()
+
     # ---
     def load_mvd_neurons_morphologies(self, neuron_filter=None, **kwargs):
         self._load_mvd_neurons(neuron_filter, **kwargs)
@@ -54,9 +63,7 @@ class NeuronDataSpark(NeuronData):
 
     # ---
     def _load_mvd_neurons(self, neuron_filter=None, total_parts=None):
-        # Neuron data which stays in client
-        logger.info("Loading global Neuron data...")
-        self.load_globals()
+        self.require_mvd_globals()
         n_neurons = int(self.nNeurons)
 
         if total_parts is None:
@@ -142,6 +149,26 @@ class NeuronDataSpark(NeuronData):
         logger.error("Binary touches converted to dataframe not implemented yet")
         return touch_info
 
+    @LazyProperty
+    def sclass_df(self):
+        self.require_mvd_globals()
+        return F.broadcast(self._sc.parallelize(enumerate(self.synaClassVec))
+                           .toDF(["sclass_i", "sclass_name"], schema.INT_STR_SCHEMA).cache())
+
+    @LazyProperty
+    def mtype_df(self):
+        self.require_mvd_globals()
+        if not self.globals_loaded: raise RuntimeError("Global MVD info not loaded")
+        return F.broadcast(self._sc.parallelize(enumerate(self.mtypeVec))
+                           .toDF(["mtype_i", "mtype_name"], schema.INT_STR_SCHEMA).cache())
+
+    @LazyProperty
+    def etype_df(self):
+        self.require_mvd_globals()
+        if not self.globals_loaded: raise RuntimeError("Global MVD info not loaded")
+        return F.broadcast(self._sc.parallelize(enumerate(self.etypeVec))
+                           .toDF(["etype_i", "etype_name"], schema.INT_STR_SCHEMA).cache())
+
     # ----
     def load_synapse_properties_and_classification(self, recipe, map_ids=False):
         """Loader for SynapsesProperties
@@ -154,25 +181,19 @@ class NeuronDataSpark(NeuronData):
         if map_ids:
             # Mapping entities from str to int ids
             # Case 1: SClass
-            sclass_df = F.broadcast(
-                self._sc.parallelize(enumerate(self.synaClassVec))
-                .toDF(["sclass_i", "sclass_name"], schema.INT_STR_SCHEMA))
+            sclass_df = self.sclass_df
             prop_df = prop_df\
                 .join(sclass_df.toDF("fromSClass_i", "fromSClass"), "fromSClass", "left_outer")\
                 .join(sclass_df.toDF("toSClass_i", "toSClass"), "toSClass", "left_outer")
 
             # Case 2: Mtype
-            mtype_df = F.broadcast(
-                self._sc.parallelize(enumerate(self.mtypeVec))
-                .toDF(["mtype_i", "mtype_name"], schema.INT_STR_SCHEMA))
+            mtype_df = self.mtype_df
             prop_df = prop_df\
                 .join(mtype_df.toDF("fromMType_i", "fromMType"), "fromMType", "left_outer")\
                 .join(mtype_df.toDF("toMType_i", "toMType"), "toMType", "left_outer")
 
             # Case 3: Etype
-            etype_df = F.broadcast(
-                self._sc.parallelize(enumerate(self.etypeVec))
-                .toDF(["etype_i", "etype_name"], schema.INT_STR_SCHEMA))
+            etype_df = self.etype_df
             prop_df = prop_df\
                 .join(etype_df.toDF("fromEType_i", "fromEType"), "fromEType", "left_outer")\
                 .join(etype_df.toDF("toEType_i", "toEType"), "toEType", "left_outer")

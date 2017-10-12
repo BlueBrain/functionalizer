@@ -61,6 +61,9 @@ class Functionalizer(object):
         self._run_s2f = not only_s2s
         self.output_dir = "spykfunc_output"
 
+        if only_s2s:
+            logger.info("Running S2S only")
+
         # register random udef
         sqlContext = SQLContext.getOrCreate(sc)
         # Apparently functions are instantiated on every executed query

@@ -100,4 +100,3 @@ def compute_additional_h5_fields(neuronG, syn_class_matrix, syn_props_df):
         t.prop.ase.alias("ase"),
         F.lit(0).alias("branch_type"),  # TBD (0 soma, 1 axon, 2 basel dendrite, 3 apical dendrite)
     )
-

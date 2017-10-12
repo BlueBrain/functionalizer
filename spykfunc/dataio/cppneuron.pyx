@@ -3,6 +3,7 @@ from __future__ import print_function, absolute_import
 from libcpp.string cimport string
 from libcpp.vector cimport vector
 from libcpp cimport utility
+from libcpp cimport bool
 from libc.stdlib cimport malloc, free
 from libc.stdio cimport printf
 from libc.string cimport memcpy
@@ -67,7 +68,7 @@ cdef class NeuronData(NeuronDataI):
     # Common objects defined in interface
     # cdef readonly NeuronLoaderI _loader
     # cdef readonly size_t nNeurons
-
+    cdef readonly bool globals_loaded
     cdef readonly vector[string] mtypeVec
     cdef readonly vector[string] etypeVec
     cdef readonly vector[string] synaClassVec
@@ -88,6 +89,7 @@ cdef class NeuronData(NeuronDataI):
         # Nr neurons can be initialized
         # so that one can load_neurons without load_globals again
         # which can be particularly interesting for distributed loading
+        self.globals_loaded = False
         self.nNeurons = nr_neurons
         self.nameMap = defaultdict(list)
         self.morphologies = {}
@@ -97,6 +99,7 @@ cdef class NeuronData(NeuronDataI):
 
     def load_globals(self):
         self._loader.load_globals(self)
+        self.globals_loaded = True
 
     def load_neurons(self, _Part_t part=None):
         # We delegate memory allocation to the loader, that we must free
