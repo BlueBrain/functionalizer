@@ -58,6 +58,7 @@ class Functionalizer(object):
     def __init__(self, only_s2s=False):
         self._run_s2f = not only_s2s
         self.output_dir = "spykfunc_output"
+        self.neuron_stats = NeuronStats()
 
         if only_s2s:
             logger.info("Running S2S only")
@@ -67,9 +68,7 @@ class Functionalizer(object):
         # Apparently functions are instantiated on every executed query
         sqlContext.registerJavaFunction("gauss_rand", "spykfunc.udfs.GaussRand")
         sqlContext.registerJavaFunction("float2binary", "spykfunc.udfs.FloatArraySerializer")
-
-        # _conc = sc._jvm.spykfunc.udfs.BinaryConcat().apply
-        # self.binary_agg_func = utils.make_agg_f(sc, _conc)
+        sqlContext.registerJavaFunction("int2binary", "spykfunc.udfs.IntArraySerializer")
 
     # ---
     def init_data(self, recipe_file, mvd_file, morpho_dir, touch_files):
@@ -86,7 +85,6 @@ class Functionalizer(object):
         all_touch_files = glob(touch_files)
         if not all_touch_files:
             logger.critical("Invalid touch file path")
-        self.neuron_stats = NeuronStats()
 
         # Load Neurons data
         fdata = NeuronDataSpark(MVD_Morpho_Loader(mvd_file, morpho_dir), spark)
@@ -175,6 +173,8 @@ class Functionalizer(object):
         extended_touches = synapse_properties.compute_additional_h5_fields(self.neuronG,
                                                                            self.synapse_class_matrix,
                                                                            self.synapse_class_prop_df)
+        extended_touches = self.exporter.save_temp(extended_touches, "extended_touches.parquet")
+
         logger.info("Exporting touches...")
         exporter = self.exporter
         if output_path is not None:
