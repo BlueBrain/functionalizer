@@ -7,7 +7,8 @@ random.jar: spykfunc/udfs/*.java spykfunc/udfs/Float2Bin.class
 	jar cf spykfunc_udfs.jar random/*.class spykfunc/udfs/*.class
 
 spykfunc/udfs/Float2Bin.class: spykfunc/udfs/Float2Bin.scala
-	scalac spykfunc/udfs/Float2Bin.scala -cp $(SPARK_JARS)/spark-catalyst_2.11-2.2.0.jar:$(SPARK_JARS)/spark-sql_2.11-2.2.0.jar:$(SPARK_JARS)/spark-tags_2.11-2.2.0.jar:$(SPARK_JARS)/spark-sql_2.11-2.2.0.jar:$(SPARK_JARS)/spark-core_2.11-2.2.0.jar
+	#scalac spykfunc/udfs/Float2Bin.scala -cp $(SPARK_JARS)/spark-catalyst_2.11-2.2.0.jar:$(SPARK_JARS)/spark-sql_2.11-2.2.0.jar:$(SPARK_JARS)/spark-tags_2.11-2.2.0.jar:$(SPARK_JARS)/spark-sql_2.11-2.2.0.jar:$(SPARK_JARS)/spark-core_2.11-2.2.0.jar
+	echo "Skipping scala Float2Bin"
 
 
 clean:

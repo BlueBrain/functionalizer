@@ -8,15 +8,15 @@ import java.nio.ByteBuffer
 
 
 class Float2Bin() extends Serializable {
-    
+
     def float2bin(input_array: Seq[Float]) : Array[Byte] = {
         var b : ByteBuffer = ByteBuffer.allocate(input_array.length*4)
-        var n = .0
-        for( n <- input_array ) {
+        var x = .0
+        for( x <- input_array ) {
             b.putFloat(x)
         }
         return b.array()
     }
-    
+
     def getUDF(): UserDefinedFunction = udf(float2bin _)
 }

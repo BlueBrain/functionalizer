@@ -6,15 +6,15 @@ import java.nio.ByteOrder;
 import scala.collection.mutable.WrappedArray;
 import scala.collection.Iterator;
 
-public class FloatArraySerializer implements UDF1<WrappedArray<Float>, byte[]> {
+public class IntArraySerializer implements UDF1<WrappedArray<Integer>, byte[]> {
 
     @Override
-    public byte[] call(WrappedArray<Float> nrs) throws Exception {
+    public byte[] call(WrappedArray<Integer> nrs) throws Exception {
         ByteBuffer b = ByteBuffer.allocate(nrs.length()*4);
         b.order(ByteOrder.nativeOrder());
-        Iterator<Float> it = nrs.toIterator();
+        Iterator<Integer> it = nrs.toIterator();
         while(it.hasNext()) {
-            b.putFloat(it.next());
+            b.putInt(it.next());
         }
         return b.array();
     }
