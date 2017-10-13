@@ -20,11 +20,8 @@ class BoutonDistanceFilter(DataSetOperation):
     Class implementing filtering by Bouton Distance (min. distance to soma)
     """
 # --------------------------------------------------------------------------------------------------------------------
-    synapse_classes_by_index_default = [CellClass.CLASS_INH, CellClass.CLASS_EXC]
-
-    def __init__(self, bouton_distance_obj, synapse_classes_by_index=synapse_classes_by_index_default):
+    def __init__(self, bouton_distance_obj):
         self._bouton_distance_obj = bouton_distance_obj
-        self.synapse_classes_indexes = {syn: index for index, syn in enumerate(synapse_classes_by_index)}
 
     def apply(self, neuronG, *args, **kw):
         # neuronDF = F.broadcast(neuronG.vertices)
@@ -36,9 +33,9 @@ class BoutonDistanceFilter(DataSetOperation):
             .where("(t.distance_soma >= %f AND n.syn_class_index = %d) OR "
                    "(t.distance_soma >= %f AND n.syn_class_index = %d)" % (
                        self._bouton_distance_obj.inhibitorySynapsesDistance,
-                       self.synapse_classes_indexes[CellClass.CLASS_INH],
+                       CellClass.CLASS_INH.fzer_index,
                        self._bouton_distance_obj.excitatorySynapsesDistance,
-                       self.synapse_classes_indexes[CellClass.CLASS_EXC])
+                       CellClass.CLASS_EXC.fzer_index)
                    ) \
             .select("t.*")
         return newTouches

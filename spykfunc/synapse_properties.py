@@ -12,7 +12,6 @@ spark = SparkSession.builder.getOrCreate()
 
 # -----
 def compute_additional_h5_fields(neuronG, syn_class_matrix, syn_props_df):
-
     touches = neuronG.find("(n1)-[t]->(n2)")
     syn_class_dims = syn_class_matrix.shape  # tuple of len 6
 

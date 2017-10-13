@@ -6,7 +6,6 @@ import numpy as np
 from pyspark import SparkContext
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
-from .definitions import MType
 from .dataio.cppneuron import NeuronData
 from . import schema
 from .dataio import touches
@@ -18,6 +17,8 @@ import fnmatch
 
 import logging
 logger = get_logger(__name__)
+
+sc = SparkContext.getOrCreate()
 
 
 ###################################################################
@@ -52,6 +53,16 @@ class NeuronDataSpark(NeuronData):
         if not self.globals_loaded:
             logger.info("Loading global Neuron data...")
             self.load_globals()
+
+    @property
+    def mTypes(self):
+        self.require_mvd_globals()
+        return self.mtypeVec
+
+    @property
+    def cellClasses(self):
+        self.require_mvd_globals()
+        return self.synaClassVec
 
     # ---
     def load_mvd_neurons_morphologies(self, neuron_filter=None, **kwargs):
@@ -309,7 +320,7 @@ def _load_from_recipe(recipe_group, group_schema):
 
 # Load a given neuron set
 def neuron_loader_gen(data_class, loader_class, loader_params, n_neurons,
-                      total_parts, name_accumulator, mtypeVec):
+                      total_parts, name_accumulator, mtypes):
     """
     Generates a loading "map" function, to operate on RDDs of range objects
     The loading function shall return a list (or a  generator) of details compatible with the Neuron schema.
@@ -323,6 +334,10 @@ def neuron_loader_gen(data_class, loader_class, loader_params, n_neurons,
     :param mtypeVec: The vector of mTypes
     :return: The loading function
     """
+
+    # Every loader builds the list of MTypes - avoid serialize/deserialize of the more complex struct
+    mtype_bc = sc.broadcast(mtypes)
+
     def _convert_entry(nrn, name, mtype_name, layer):
         return (int(nrn[0]),                    # id  (0==schema.NeuronFields["id"], but lets avoid all those lookups
                 int(nrn[1]),                    # morphology_index
@@ -336,9 +351,7 @@ def neuron_loader_gen(data_class, loader_class, loader_params, n_neurons,
 
     def load_neurons_par(part_nr):
         logging.debug("Gonna read part %d/%d", part_nr, total_parts)
-
-        # Every loader builds the list of MTypes - avoid serialize/deserialize of the more complex struct
-        mtypes = [MType(mtype) for mtype in mtypeVec]
+        mtypes = mtype_bc.value
 
         # Recreates objects to store subset data, avoiding Spark to serialize them
         da = data_class(nr_neurons=n_neurons)

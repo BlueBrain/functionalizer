@@ -1,18 +1,32 @@
-class CellClass:
-    CLASS_NONE = 0
-    CLASS_EXC = 1
-    CLASS_INH = 2
+from enum import Enum
 
-    def __init__(cls, *args, **kwargs):
-        raise TypeError("No instantiation of Enums")
+class CellClass(Enum):
+    """
+    Enumeration of Cell Classes, typically Inhibitory or Excitatory.
+    At any point we can register functionalizer indexes and get the corresponding index from the items directly
+    """
+    NONE = 0
+    EXC = 1
+    INH = 2
+
+    def __int__(self):
+        return self.value
 
     @classmethod
-    def from_string(cls, cellClassName):
-        if cellClassName == "EXC":
-            return cls.CLASS_EXC
-        elif cellClassName == "INH":
-            return cls.CLASS_INH
-        return cls.CLASS_NONE
+    def init_fzer_indexes(cls, vec):
+        for i, name in enumerate(vec):
+            cls[name].fzer_index = i
+
+    @classmethod
+    def from_fzer_index(cls, i):
+        for cc in cls:
+            if cc is cls.NONE:
+                continue
+            if not hasattr(cc, "fzer_index"):
+                raise RuntimeError("CellClass indexes no available. Please init_fzer_indexes()")
+            if cc.fzer_index == i:
+                return cc
+        return cls.NONE
 
 
 class MType(object):
@@ -44,6 +58,10 @@ class MType(object):
         else:
             mt.end_layer = None
         return mt
+
+    @classmethod
+    def get(cls, name):
+        return cls._cache.get(name)
 
     def __repr__(self):
         return "<MType: %s>" % (self.name,)

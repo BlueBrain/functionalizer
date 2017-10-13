@@ -10,15 +10,16 @@ import os
 from pyspark.sql import SparkSession, SQLContext
 from pyspark import StorageLevel
 
-from .definitions import CellClass, MType
 from .recipe import Recipe
 from .data_loader import NeuronDataSpark
 from .data_export import NeuronExporter
 from .dataio.cppneuron import MVD_Morpho_Loader
 from .stats import NeuronStats
+from .definitions import CellClass
 from . import _filtering
 from . import filters
 from . import utils
+from . import synapse_properties
 if False: from .recipe import ConnectivityPathRule  # NOQA
 
 logger = utils.get_logger(__name__)
@@ -44,18 +45,15 @@ class Functionalizer(object):
     """ Functionalizer Session class
     """
     # Defaults for instance vars
+    fdata = None
     recipe = None
     touch_info = None
     neuron_stats = None
-    cellClassesIndexed = None
     morphologies = None
     neuronDF = None
     neuronG = None
-    eTypes = None
-    mTypes = None
     # TouchDF is volatile and we trigger events on update
     _touchDF = None
-    _spark_data = None
 
     def __init__(self, only_s2s=False):
         self._run_s2f = not only_s2s
@@ -80,8 +78,6 @@ class Functionalizer(object):
         if not os.path.isdir(self.output_dir):
             os.makedirs(self.output_dir)
 
-        self.morpho_dir = morpho_dir
-
         logger.debug("%s: Data loading...", time.ctime())
         # Load recipe
         self.recipe = Recipe(recipe_file)
@@ -96,19 +92,17 @@ class Functionalizer(object):
         fdata = NeuronDataSpark(MVD_Morpho_Loader(mvd_file, morpho_dir), spark)
         fdata.load_mvd_neurons_morphologies()
 
+        # Init the Enumeration to contain fzer CellClass index
+        CellClass.init_fzer_indexes(fdata.cellClasses)
+
         # Load synapse properties
-        # self.synapse_properties_class = fdata.load_synapse_properties_and_classification(self.recipe)
-        synapse_class_matrix = fdata.load_synapse_prop_matrix(self.recipe)
-        synapse_class_prop_df = fdata.load_synapse_properties_and_classification(self.recipe)
+        self.synapse_class_matrix = fdata.load_synapse_prop_matrix(self.recipe)
+        self.synapse_class_prop_df = fdata.load_synapse_properties_and_classification(self.recipe)
 
         # Shortcuts
-        self._spark_data = fdata
+        self.fdata = fdata
         self.neuronDF = fdata.neuronDF
         self.morphologies = fdata.morphologyRDD
-        self.mTypes = [MType(mtype) for mtype in fdata.mtypeVec]
-        self.eTypes = fdata.etypeVec
-        self.cellClassesIndexed = [CellClass.from_string(syn_class_name)
-                                   for syn_class_name in fdata.synaClassVec]
 
         # 'Load' touches, from parquet if possible
         _file0 = all_touch_files[0]
@@ -127,9 +121,7 @@ class Functionalizer(object):
         self.neuron_stats.update_touch_graph_source(self.neuronG, overwrite_previous_gf=False)
 
         # Data exporter
-        self.exporter = NeuronExporter(self.morpho_dir, self.recipe,
-                                       synapse_class_matrix, synapse_class_prop_df,
-                                       output_path=self.output_dir)
+        self.exporter = NeuronExporter(output_path=self.output_dir)
 
     # ---
     @property
@@ -154,7 +146,7 @@ class Functionalizer(object):
     def reset(self):
         """Discards any filtering applied to touches
         """
-        self.touchDF = self._spark_data.touchDF
+        self.touchDF = self.fdata.touchDF
 
     # ---
     def process_filters(self):
@@ -166,18 +158,23 @@ class Functionalizer(object):
             if self._run_s2f:
                 self.filter_by_touch_rules()
                 self.run_reduce_and_cut()
-
-        except Exception:
+        except:
             import traceback
-            logger.error(traceback.format_exc(1))
+            logger.error(traceback.format_list(traceback.extract_stack()[-1:])[0])
             return 1
 
         # Force compute, saving to parquet - fast and space efficient
-        self.exporter.save_temp(self.neuronG)
+        self.touchDF = self.exporter.save_temp(self.touchDF)
+
         return 0
 
     # ---
     def export_results(self, format_parquet=False, output_path=None):
+
+        logger.info("Computing touch synaptical properties")
+        extended_touches = synapse_properties.compute_additional_h5_fields(self.neuronG,
+                                                                           self.synapse_class_matrix,
+                                                                           self.synapse_class_prop_df)
         logger.info("Exporting touches...")
         exporter = self.exporter
         if output_path is not None:
@@ -185,12 +182,12 @@ class Functionalizer(object):
 
         if True: #try:
             if format_parquet:
-                exporter.export_parquet(self.neuronG)
+                exporter.export_parquet(extended_touches)
             else:
-                exporter.export_hdf5(self.neuronG)
+                exporter.export_hdf5(extended_touches,self.fdata.nNeurons)
         # except:
         #     import traceback
-        #     logger.error(traceback.format_exc(1))
+        #     logger.error(traceback.format_list(traceback.extract_stack()[-1:])[0])
         #     return 1
         # else:
         #     logger.info("Done exporting.")
@@ -227,7 +224,7 @@ class Functionalizer(object):
         """Apply Reduce and Cut
         """
         # Index and distribute mtype rules across the cluster
-        mtype_conn_rules = self.build_concrete_mtype_conn_rules(self.recipe.conn_rules, self._spark_data.mtypeVec)
+        mtype_conn_rules = self.build_concrete_mtype_conn_rules(self.recipe.conn_rules, self.fdata.mTypes)
 
         # cumulative_distance_f = filters.CumulativeDistanceFilter(distributed_conn_rules, self.neuron_stats)
         # self.touchDF = cumulative_distance_f.apply(self.neuronG)
@@ -274,10 +271,10 @@ def session(options):
     if options.output_dir:
         fzer.output_dir = options.output_dir
 
-    if True: #try:
+    try:
         fzer.init_data(options.recipe_file, options.mvd_file, options.morpho_dir, options.touch_files)
-    # except:
-    #     import traceback
-    #     logger.error(traceback.format_exc(1))
-    #     return None
+    except:
+        import traceback
+        logger.error(traceback.format_list(traceback.extract_stack()[-1:])[0])
+        return None
     return fzer
