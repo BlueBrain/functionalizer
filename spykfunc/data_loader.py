@@ -10,6 +10,7 @@ from .dataio.cppneuron import NeuronData
 from . import schema
 from .dataio import touches
 from .dataio.common import Part
+from .definitions import MType
 from .utils.spark_udef import DictAccum
 from .utils import get_logger, make_slices
 from collections import OrderedDict, defaultdict
@@ -73,29 +74,25 @@ class NeuronDataSpark(NeuronData):
         self.morphologyRDD = None
 
     # ---
-    def _load_mvd_neurons(self, neuron_filter=None, total_parts=None):
+    def _load_mvd_neurons(self, neuron_filter=None):
         self.require_mvd_globals()
         n_neurons = int(self.nNeurons)
 
-        if total_parts is None:
-            total_parts = n_neurons // 256
-        if total_parts < 4:
-            total_parts = 4
-        elif total_parts > 5120:
-            total_parts = 5120
-
         logger.info("Total neurons: %d", n_neurons)
-        logger.debug("Partitions: %d", total_parts)
-
-        mvd_parquet = ".cache/neuronDF{}k.parquet".format(n_neurons//1000)
+        mvd_parquet = ".cache/neuronDF{}k.parquet".format(n_neurons/1000.0)
 
         if os.path.exists(mvd_parquet):
             logger.info("Loading from MVD parquet")
             mvd = self._spark.read.parquet(mvd_parquet)
-            self.neuronDF = F.broadcast(mvd).cache()
+            self.neuronDF = F.broadcast(mvd.cache())
+            n_neurons = self.neuronDF.count()  # Force broadcast to meterialize
+            logger.info("Loaded {} neurons from MVD".format(n_neurons))
 
         else:
             logger.info("Building MVD from raw mvd files")
+            total_parts = max(sc.defaultParallelism * 4, n_neurons // 10000 + 1)
+            logger.debug("Partitions: %d", total_parts)
+
             # Initial RDD has only the range objects
             neuronRDD = self._sc.parallelize(range(total_parts), total_parts)
 
@@ -212,6 +209,9 @@ class NeuronDataSpark(NeuronData):
         class_df = F.broadcast(class_df)
         merged_props = F.broadcast(
             prop_df.join(class_df, prop_df.type == class_df.id, "left").cache())
+
+        n_syn_prop = merged_props.count()
+        logger.info("Found {} synpse property entries".format(n_syn_prop))
 
         return merged_props
 
@@ -336,7 +336,7 @@ def neuron_loader_gen(data_class, loader_class, loader_params, n_neurons,
     """
 
     # Every loader builds the list of MTypes - avoid serialize/deserialize of the more complex struct
-    mtype_bc = sc.broadcast(mtypes)
+    mtype_bc = sc.broadcast([MType(mt) for mt in mtypes])
 
     def _convert_entry(nrn, name, mtype_name, layer):
         return (int(nrn[0]),                    # id  (0==schema.NeuronFields["id"], but lets avoid all those lookups

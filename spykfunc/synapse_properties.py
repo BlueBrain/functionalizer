@@ -30,6 +30,10 @@ def compute_additional_h5_fields(neuronG, syn_class_matrix, syn_props_df):
 
     to_syn_prop_i = filter_udfs.get_synapse_property_udf(syn_class_matrix)
     touches = touches.withColumn("syn_prop_i", to_syn_prop_i(touches.syn_prop_index))
+
+    # According to benchmarks in pyspark, applying to_syn_prop_i (py) with 1000 N (2M touches) split by three cores takes 5 more seconds
+    # That means that in average there's 5min overhead per 20k neurons per core
+
     touches = touches.drop("syn_prop_index")
     syn_props_df = syn_props_df.select(F.struct("*").alias("prop"))
 

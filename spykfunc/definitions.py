@@ -38,7 +38,9 @@ class MType(object):
     __slots__ = ("name", "layer", "morpho_type", "end_layer")
     _cache = {}
 
-    def __new__(cls, mtype):
+    def __new__(cls, mtype=None):
+        if not mtype:
+            return object.__new__(MType)
         mt = cls._cache.get(mtype)
         if not mt:
             mt = cls._cache[mtype] = cls.create_mtype(mtype)

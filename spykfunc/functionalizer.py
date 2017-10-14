@@ -7,7 +7,9 @@ from glob import glob
 import time
 import os
 
+import pyspark
 from pyspark.sql import SparkSession, SQLContext
+from pyspark.sql import functions as F
 from pyspark import StorageLevel
 
 from .recipe import Recipe
@@ -192,6 +194,7 @@ class Functionalizer(object):
         # else:
         #     logger.info("Done exporting.")
         #     return 0
+        logger.info("Finished")
 
     # ---------------------------------------------------------
     # Functions to create/apply filters for the current session
@@ -271,10 +274,10 @@ def session(options):
     if options.output_dir:
         fzer.output_dir = options.output_dir
 
-    try:
+    if True:
         fzer.init_data(options.recipe_file, options.mvd_file, options.morpho_dir, options.touch_files)
-    except:
-        import traceback
-        logger.error(traceback.format_list(traceback.extract_stack()[-1:])[0])
-        return None
+    # except:
+    #     import traceback
+    #     logger.error(traceback.format_list(traceback.extract_stack()[-1:])[0])
+    #     return None
     return fzer

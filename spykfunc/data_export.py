@@ -41,8 +41,7 @@ class NeuronExporter(object):
     def export_hdf5(self, extended_touches_df, n_gids, filename="nrn.h5"):
         # In the export a lot of shuffling happens, we must carefully control partitioning
         n_partitions = ((n_gids - 1) // N_NEURONS_FILE) + 1
-        n_partitions_work = (n_partitions*4) if (n_partitions*4 < 256) else n_partitions
-        spark.conf.set("spark.sql.shuffle.partitions", n_partitions_work)
+        spark.conf.set("spark.sql.shuffle.partitions", n_partitions)
 
         nrn_filepath = self.ensure_file_path(filename)
         df = extended_touches_df
@@ -61,11 +60,8 @@ class NeuronExporter(object):
                      .selectExpr("post_gid", "bin_matrix", "int2binary(pre_gids) as pre_gids_bin", "int2binary(conn_counts) as conn_counts_bin")
                      )
 
-        # Number of partitions to number of files
-        logger.debug("Ordering into {} partitions".format(n_partitions))
-        arrays_df = arrays_df.orderBy("post_gid").coalesce(n_partitions)
-
         # Export via partition mapping
+        logger.debug("Ordering into {} partitions".format(n_partitions))
         write_hdf5 = get_export_hdf5_f(nrn_filepath)
         result_files = arrays_df.rdd.mapPartitions(write_hdf5).collect()
         logger.info("Files written: %s", ", ".join(result_files))
