@@ -2,7 +2,7 @@ from pyspark.accumulators import AccumulatorParam
 from future.utils import iteritems
 from pyspark.sql import functions as F
 
-__all__ = ["DictAccum", "wrap_java_udf"]
+__all__ = ["DictAccum", "ListAccum", "wrap_java_udf"]
 
 class DictAccum(AccumulatorParam):
     def zero(self, initialValue):
@@ -14,6 +14,15 @@ class DictAccum(AccumulatorParam):
                 a[key].extend(item)
             else:
                 a[key] = item
+        return a
+
+
+class ListAccum(AccumulatorParam):
+    def zero(self, initialValue):
+        return list(initialValue)
+
+    def addInPlace(self, a, b):
+        a += b
         return a
 
 

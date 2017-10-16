@@ -1,6 +1,7 @@
 import h5py
 import os
 from os import path
+import glob
 import numpy
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
@@ -23,6 +24,7 @@ class NeuronExporter(object):
     def ensure_file_path(self, filename):
         if not os.path.exists(self.output_path):
             os.makedirs(self.output_path)
+
         return path.join(self.output_path, filename)
 
     # ---
@@ -44,6 +46,10 @@ class NeuronExporter(object):
         spark.conf.set("spark.sql.shuffle.partitions", n_partitions)
 
         nrn_filepath = self.ensure_file_path(filename)
+        # Remove existing results
+        for fn in glob.glob1(self.output_path, "nrn*h5*"):
+            os.remove(path.join(self.output_path, fn))
+
         df = extended_touches_df
 
         # Massive conversion to binary using 'float2binary' java UDF and 'concat_bin' UDAF
@@ -54,17 +60,30 @@ class NeuronExporter(object):
                      .sortWithinPartitions("post_gid", "pre_gid")
                      .groupBy("post_gid", "pre_gid")
                      .agg(self.concat_bin("bin_arr").alias("bin_matrix"), F.count("*").cast("int").alias("conn_count"))
-                     .sort("post_gid")
                      .groupBy("post_gid")
                      .agg(self.concat_bin("bin_matrix").alias("bin_matrix"), F.collect_list("pre_gid").alias("pre_gids"), F.collect_list("conn_count").alias("conn_counts"))
                      .selectExpr("post_gid", "bin_matrix", "int2binary(pre_gids) as pre_gids_bin", "int2binary(conn_counts) as conn_counts_bin")
                      )
 
-        # Export via partition mapping
+        # Init a list accumulator to gather output filenames
+        nrn_filenames = sc.accumulator([], utils.ListAccum())
+
+        # Export nrn.h5 via partition mapping
         logger.debug("Ordering into {} partitions".format(n_partitions))
-        write_hdf5 = get_export_hdf5_f(nrn_filepath)
-        result_files = arrays_df.rdd.mapPartitions(write_hdf5).collect()
-        logger.info("Files written: %s", ", ".join(result_files))
+        write_hdf5 = get_export_hdf5_f(nrn_filepath, nrn_filenames)
+        summary_rdd = arrays_df.rdd.mapPartitions(write_hdf5)
+        # Export nrn_summary
+        summary_h5_store = h5py.File(path.join(self.output_path, "nrn_summary.h5"), "w")
+        for post_gid, summary_npa in summary_rdd.toLocalIterator():
+            summary_h5_store.create_dataset("a{}".format(post_gid), data=summary_npa)
+        summary_h5_store.close()
+
+        # Mass rename
+        it = iter(nrn_filenames.value)
+        os.rename(next(it), path.join(self.output_path, "nrn.h5"))
+        for i, fn in enumerate(it):
+            os.rename(fn, path.join(self.output_path, "nrn.h5.{}".format(i+1)))
+
 
     @staticmethod
     def nrn_fields_as_float(df):
@@ -88,8 +107,7 @@ class NeuronExporter(object):
         )
 
 
-
-def get_export_hdf5_f(nrn_filepath):
+def get_export_hdf5_f(nrn_filepath, nrn_filenames_accu):
     # The export routine - applied to each partition
     def write_hdf5(part_it):
         h5store = None
@@ -97,13 +115,25 @@ def get_export_hdf5_f(nrn_filepath):
         for row in part_it:
             post_id = row[0]
             buff = row[1]
+            pre_gids_buff = row[2]
+            conn_counts_buff = row[3]
             if h5store is None:
                 output_filename = "{}.{}".format(nrn_filepath, post_id)
                 h5store = h5py.File(output_filename, "w")
             # We reconstruct the array in Numpy from the binary
-            np_array = numpy.frombuffer(buff, dtype=">f4").reshape((-1, 19))
+            np_array = numpy.frombuffer(buff, dtype="f4").reshape((-1, 19))
             h5store.create_dataset("a{}".format(post_id), data=np_array)
+
+            # Gather pre_gids and conn_counts as np to be passed to the master
+            # Where they are centrally written to nrn_summary
+            # This is RDDs here, so we are free to pass numpy arrays
+            pre_gids = numpy.frombuffer(pre_gids_buff, dtype="i4")
+            afferent_counts = numpy.frombuffer(conn_counts_buff, dtype="i4")
+            efferent_counts = numpy.zeros(len(pre_gids), dtype="i4")
+            counts = numpy.column_stack((pre_gids, efferent_counts, afferent_counts))
+            yield (post_id, counts)
+
         h5store.close()
-        return [output_filename]
+        nrn_filenames_accu.add([output_filename])
 
     return write_hdf5
