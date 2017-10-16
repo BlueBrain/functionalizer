@@ -1,5 +1,6 @@
 from spykfunc import functionalizer as fz, commands
 from os import path
+import sys
 
 BASE_DIR = path.expanduser("~/dev/TestData/circuitBuilding_1000neurons")
 args = (
@@ -12,5 +13,7 @@ args = (
 if __name__ == "__main__":
     opts = commands.arg_parser.parse_args(args)
     fuzer = fz.session(opts)
-    # fuzer.process_filters()
+    res = fuzer.process_filters()
+    if res:
+        sys.exit(res)
     fuzer.export_results()

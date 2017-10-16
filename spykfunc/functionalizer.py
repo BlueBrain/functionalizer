@@ -8,6 +8,7 @@ import time
 import os
 
 import pyspark
+import sys
 from pyspark.sql import SparkSession, SQLContext
 from pyspark.sql import functions as F
 from pyspark import StorageLevel
@@ -159,8 +160,7 @@ class Functionalizer(object):
                 self.filter_by_touch_rules()
                 self.run_reduce_and_cut()
         except:
-            import traceback
-            logger.error(traceback.format_list(traceback.extract_stack()[-1:])[0])
+            logger.error(utils.format_cur_exception())
             return 1
 
         # Force compute, saving to parquet - fast and space efficient
@@ -182,18 +182,17 @@ class Functionalizer(object):
         if output_path is not None:
             exporter.output_path = output_path
 
-        if True: #try:
+        try:
             if format_parquet:
                 exporter.export_parquet(extended_touches)
             else:
                 exporter.export_hdf5(extended_touches,self.fdata.nNeurons)
-        # except:
-        #     import traceback
-        #     logger.error(traceback.format_list(traceback.extract_stack()[-1:])[0])
-        #     return 1
-        # else:
-        #     logger.info("Done exporting.")
-        #     return 0
+        except:
+            logger.error(utils.format_cur_exception())
+            return 1
+        else:
+            logger.info("Done exporting.")
+            return 0
         logger.info("Finished")
 
     # ---------------------------------------------------------
@@ -273,11 +272,9 @@ def session(options):
     fzer = Functionalizer(options.s2s)
     if options.output_dir:
         fzer.output_dir = options.output_dir
-
-    if True:
+    try:
         fzer.init_data(options.recipe_file, options.mvd_file, options.morpho_dir, options.touch_files)
-    # except:
-    #     import traceback
-    #     logger.error(traceback.format_list(traceback.extract_stack()[-1:])[0])
-    #     return None
+    except:
+        logger.error(utils.format_cur_exception())
+        return None
     return fzer

@@ -92,6 +92,16 @@ class ConsoleColors:
         return cls.set_text_color(color) + text + cls._RESET_SEQ
 
 
+# ---
+def format_cur_exception():
+    import traceback
+    if Config.log_level == _logging.DEBUG:
+        return traceback.format_exc()
+    exc_type, exc_value, exc_traceback = sys.exc_info()
+    exc_infos = traceback.format_exception(exc_type, exc_value, exc_traceback)
+    return exc_infos[1] + "".join(exc_infos[-2:])
+
+
 # -----------------------------------------------
 # Logging
 # -----------------------------------------------

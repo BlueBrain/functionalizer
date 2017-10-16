@@ -33,9 +33,9 @@ class BoutonDistanceFilter(DataSetOperation):
             .where("(t.distance_soma >= %f AND n.syn_class_index = %d) OR "
                    "(t.distance_soma >= %f AND n.syn_class_index = %d)" % (
                        self._bouton_distance_obj.inhibitorySynapsesDistance,
-                       CellClass.CLASS_INH.fzer_index,
+                       CellClass.INH.fzer_index,
                        self._bouton_distance_obj.excitatorySynapsesDistance,
-                       CellClass.CLASS_EXC.fzer_index)
+                       CellClass.EXC.fzer_index)
                    ) \
             .select("t.*")
         return newTouches
