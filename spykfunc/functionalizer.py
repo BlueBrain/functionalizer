@@ -27,6 +27,9 @@ if False: from .recipe import ConnectivityPathRule  # NOQA
 
 logger = utils.get_logger(__name__)
 
+__all__ = ["Functionalizer", "session"]
+
+
 # =====================================
 # Global Initting
 # =====================================
@@ -62,6 +65,7 @@ class Functionalizer(object):
         self._run_s2f = not only_s2s
         self.output_dir = "spykfunc_output"
         self.neuron_stats = NeuronStats()
+        self._initial_touchDF = None
 
         if only_s2s:
             logger.info("Running S2S only")
@@ -110,7 +114,7 @@ class Functionalizer(object):
         touches_parquet_files_expr = _file0[:_file0.rfind(".")] + "Data.*.parquet"
         touch_files_parquet = glob(touches_parquet_files_expr)
         if touch_files_parquet:
-            self._touchDF = fdata.load_touch_parquet(touches_parquet_files_expr) \
+            self._touchDF = self._initial_touchDF = fdata.load_touch_parquet(touches_parquet_files_expr) \
                 .withColumnRenamed("pre_neuron_id", "src") \
                 .withColumnRenamed("post_neuron_id", "dst")
         else:
@@ -124,6 +128,11 @@ class Functionalizer(object):
         # Data exporter
         self.exporter = NeuronExporter(output_path=self.output_dir)
 
+    #---
+    def ensure_data_loaded(self):
+        if self.recipe is None or self.neuronG is None:
+            raise RuntimeError("No touches available. Please load data first.")
+
     # ---
     @property
     def touchDF(self):
@@ -136,6 +145,7 @@ class Functionalizer(object):
         self.neuron_stats.update_touch_graph_source(self.neuronG)  # Reset stats source
 
     # ---
+    @property
     def dataQ(self):
         """
         Return a DataSetQ object, offering a high-level yet flexible query API on the current Neuron-Touch Graph
@@ -147,12 +157,13 @@ class Functionalizer(object):
     def reset(self):
         """Discards any filtering applied to touches
         """
-        self.touchDF = self.fdata.touchDF
+        self.touchDF = self._initial_touchDF
 
     # ---
     def process_filters(self):
         """Runs all functionalizer filters
         """
+        self.ensure_data_loaded()
         logger.info("%s: Starting Filtering...", time.ctime())
         try:
             self.filter_by_soma_axon_distance()
@@ -170,7 +181,7 @@ class Functionalizer(object):
 
     # ---
     def export_results(self, format_parquet=False, output_path=None):
-
+        self.ensure_data_loaded()
         logger.info("Computing touch synaptical properties")
         extended_touches = synapse_properties.compute_additional_h5_fields(self.neuronG,
                                                                            self.synapse_class_matrix,
@@ -201,6 +212,7 @@ class Functionalizer(object):
     def filter_by_soma_axon_distance(self):
         """BLBLD-42: filter by soma-axon distance
         """
+        self.ensure_data_loaded()
         logger.info("Filtering by soma-axon distance...")
         distance_filter = filters.BoutonDistanceFilter(self.recipe.synapses_distance)
         self.touchDF = distance_filter.apply(self.neuronG)
@@ -209,6 +221,7 @@ class Functionalizer(object):
     def filter_by_touch_rules(self):
         """Filter according to recipe TouchRules
         """
+        self.ensure_data_loaded()
         logger.info("Filtering by touchRules...")
         touch_rules_filter = filters.TouchRulesFilter(self.recipe.touch_rules)
         newtouchDF = touch_rules_filter.apply(self.neuronG)
@@ -225,8 +238,9 @@ class Functionalizer(object):
     def run_reduce_and_cut(self):
         """Apply Reduce and Cut
         """
+        self.ensure_data_loaded()
         # Index and distribute mtype rules across the cluster
-        mtype_conn_rules = self.build_concrete_mtype_conn_rules(self.recipe.conn_rules, self.fdata.mTypes)
+        mtype_conn_rules = self._build_concrete_mtype_conn_rules(self.recipe.conn_rules, self.fdata.mTypes)
 
         # cumulative_distance_f = filters.CumulativeDistanceFilter(distributed_conn_rules, self.neuron_stats)
         # self.touchDF = cumulative_distance_f.apply(self.neuronG)
@@ -237,7 +251,7 @@ class Functionalizer(object):
 
     # ---
     @staticmethod
-    def build_concrete_mtype_conn_rules(src_conn_rules, mTypes):
+    def _build_concrete_mtype_conn_rules(src_conn_rules, mTypes):
         """ Transform conn rules into concrete rule instances (without wildcards) and indexed by mtype-mtype
             Index is a string in the form "src>dst"
         """

@@ -2,7 +2,7 @@ from  __future__ import print_function
 import logging as _logging
 from future.builtins import input
 from contextlib import contextmanager
-from .. import Config
+from .. import config
 import sys
 
 
@@ -95,7 +95,7 @@ class ConsoleColors:
 # ---
 def format_cur_exception():
     import traceback
-    if Config.log_level == _logging.DEBUG:
+    if config.log_level == _logging.DEBUG:
         return traceback.format_exc()
     exc_type, exc_value, exc_traceback = sys.exc_info()
     exc_infos = traceback.format_exception(exc_type, exc_value, exc_traceback)
@@ -141,7 +141,7 @@ DefaultHandler.setFormatter(ColoredFormatter('[%(levelname)s] %(name)s: %(messag
 def get_logger(name):
     logger = _logging.getLogger(name)
     logger.propagate = False
-    logger.setLevel(Config.log_level)
+    logger.setLevel(config.log_level)
     logger.addHandler(DefaultHandler)
     # logger.addHandler(ContinueAbortErrorLogHandler)
     return logger

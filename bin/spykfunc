@@ -54,7 +54,8 @@ while [[ -n "$1" && $1 != "--" ]]; do
 done
 [ "$1" == "--" ] && shift
 
-(set -x; spark-submit \
+set -x
+spark-submit \
   --packages graphframes:graphframes:0.5.0-spark2.1-s_2.11 \
   --jars $BASEDIR/../share/spykfunc/spykfunc_udfs.jar \
   --driver-memory 8G \
@@ -66,5 +67,3 @@ done
       $morpho_dir \
       $touch_files \
       ${args_to_spykfunc[@]}
-)
-

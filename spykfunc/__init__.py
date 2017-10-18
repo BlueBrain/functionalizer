@@ -33,5 +33,28 @@ except:
 _log.basicConfig(level=_log.WARN)
 
 
-class Config:
+class config:
     log_level = _log.DEBUG
+
+
+# #################################################################################################
+# Shortcuts (mind the import must be done inside, otherwise we will start a cluster in each worker)
+###################################################################################################
+def Functionalizer():
+    """
+    Direct Functionalizer object
+    """
+    from .functionalizer import Functionalizer
+    return Functionalizer()
+
+
+def session(recipe, mvd_file, first_touch):
+    """
+    Creates and Initializes a Functionalizer session
+    :return:Functionalizer instance
+    """
+    from .commands import arg_parser
+    from .functionalizer import session
+    args = (recipe, mvd_file, ".", first_touch)
+    opts = arg_parser.parse_args(args)
+    return session(opts)
