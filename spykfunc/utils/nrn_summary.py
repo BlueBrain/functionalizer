@@ -6,12 +6,15 @@ Program which takes a nrn_summary with only post_neuron touch count and calculat
 import h5py
 import numpy
 from future.builtins import range
+from future.utils import iteritems
+from collections import defaultdict
 
 class NrnCompleter(object):
     # mem usage is 4 * GROUP_SIZE^2 (yes, squared!)
     # Please use base2 vals
     _GROUP_SIZE = 1024
     _ARRAY_LEN = _GROUP_SIZE ** 2
+    _MAX_OUTBUFFER_LEN = 1024**2  # 1M entries ~ 8MB mem
 
     def __init__(self, input_filename, output_filename):
         self.in_file = h5py.File(input_filename)
@@ -20,6 +23,8 @@ class NrnCompleter(object):
         self.max_id = max(int(x[1:]) for x in self.in_file.keys())
         self._n_neurons = len(self.in_file)
         self._array = numpy.zeros(array_len, dtype="i4")
+        self._outbuffers = defaultdict(list)
+        self._outbuffer_entries = 0
 
     def store_clear_group(self, group_id_start, gid_start):
         # For each neuron in the group
@@ -39,13 +44,21 @@ class NrnCompleter(object):
             cur_ds_i = idx_start // self._GROUP_SIZE + group_id_start
             merged_data = numpy.stack((filtered_gids, filtered_counts), axis=1)
             ds_name = "a" + str(cur_ds_i)
-            if ds_name not in self.outfile:
-                self.outfile.create_dataset(ds_name, data=merged_data, chunks=(20, 2), maxshape=(None,2))
-            else:
-                ds = self.outfile[ds_name]
-                cur_length = len(ds)
-                ds.resize(cur_length + len(filtered_counts), axis=0)
-                ds[cur_length:] = merged_data
+
+            # if ds_name not in self.outfile:
+            #     self.outfile.create_dataset(ds_name, data=merged_data, chunks=(20, 2), maxshape=(None,2))
+            # else:
+            #     ds = self.outfile[ds_name]
+            #     cur_length = len(ds)
+            #     ds.resize(cur_length + len(filtered_counts), axis=0)
+            #     ds[cur_length:] = merged_data
+
+            # We have outbuffers since HDF5 appends are extremely expensive
+            self._outbuffers[ds_name].append(merged_data)
+            self._outbuffer_entries += len(merged_data)
+
+        if self._outbuffer_entries > self._MAX_OUTBUFFER_LEN:
+            self._flush_outbuffers()
 
         # Clean for next block
         self._array.fill(0)
@@ -86,6 +99,26 @@ class NrnCompleter(object):
 
                 self.store_clear_group(id_start_2, id_start)
 
+        print("Final buffer flush")
+        self._flush_outbuffers(final=True)
+
+    # ---
+    def _flush_outbuffers(self, final=False):
+        for ds_name, ds_parts in iteritems(self._outbuffers):
+            merged_data = numpy.concatenate(ds_parts)
+            if ds_name not in self.outfile:
+                if final:
+                    self.outfile.create_dataset(ds_name, data=merged_data)
+                else:
+                    self.outfile.create_dataset(ds_name, data=merged_data, chunks=(100, 2), maxshape=(None,2))
+            else:
+                ds = self.outfile[ds_name]
+                cur_length = len(ds)
+                ds.resize(cur_length + len(merged_data), axis=0)
+                ds[cur_length:] = merged_data
+
+        self._outbuffers = defaultdict(list)
+        self._outbuffer_entries = 0
 
 
 if __name__ == "__main__":
