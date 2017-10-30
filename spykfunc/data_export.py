@@ -59,10 +59,15 @@ class NeuronExporter(object):
                      .sort("post_gid")
                      .sortWithinPartitions("post_gid", "pre_gid")
                      .groupBy("post_gid", "pre_gid")
-                     .agg(self.concat_bin("bin_arr").alias("bin_matrix"), F.count("*").cast("int").alias("conn_count"))
+                     .agg(self.concat_bin("bin_arr").alias("bin_matrix"),
+                          F.count("*").cast("int").alias("conn_count"))
                      .groupBy("post_gid")
-                     .agg(self.concat_bin("bin_matrix").alias("bin_matrix"), F.collect_list("pre_gid").alias("pre_gids"), F.collect_list("conn_count").alias("conn_counts"))
-                     .selectExpr("post_gid", "bin_matrix", "int2binary(pre_gids) as pre_gids_bin", "int2binary(conn_counts) as conn_counts_bin")
+                     .agg(self.concat_bin("bin_matrix").alias("bin_matrix"),
+                          F.collect_list("pre_gid").alias("pre_gids"),
+                          F.collect_list("conn_count").alias("conn_counts"))
+                     .selectExpr("post_gid", "bin_matrix",
+                                 "int2binary(pre_gids) as pre_gids_bin",
+                                 "int2binary(conn_counts) as conn_counts_bin")
                      )
 
         # Init a list accumulator to gather output filenames
@@ -72,8 +77,9 @@ class NeuronExporter(object):
         logger.debug("Ordering into {} partitions".format(n_partitions))
         write_hdf5 = get_export_hdf5_f(nrn_filepath, nrn_filenames)
         summary_rdd = arrays_df.rdd.mapPartitions(write_hdf5)
-        # Export nrn_summary
-        summary_h5_store = h5py.File(path.join(self.output_path, "nrn_summary.h5"), "w")
+
+        # Export the base for nrn_summary (only afferent counts)
+        summary_h5_store = h5py.File(path.join(self.output_path, "nrn_summary0.h5"), "w")
         for post_gid, summary_npa in summary_rdd.toLocalIterator():
             summary_h5_store.create_dataset("a{}".format(post_gid), data=summary_npa)
         summary_h5_store.close()
@@ -128,10 +134,9 @@ def get_export_hdf5_f(nrn_filepath, nrn_filenames_accu):
             # Where they are centrally written to nrn_summary
             # This is RDDs here, so we are free to pass numpy arrays
             pre_gids = numpy.frombuffer(pre_gids_buff, dtype="i4")
-            afferent_counts = numpy.frombuffer(conn_counts_buff, dtype="i4")
-            efferent_counts = numpy.zeros(len(pre_gids), dtype="i4")
-            counts = numpy.column_stack((pre_gids, efferent_counts, afferent_counts))
-            yield (post_id, counts)
+            total_counts = numpy.frombuffer(conn_counts_buff, dtype="i4")
+            count_array = numpy.column_stack((pre_gids, total_counts))
+            yield (post_id, count_array)
 
         h5store.close()
         nrn_filenames_accu.add([output_filename])

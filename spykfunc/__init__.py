@@ -24,9 +24,9 @@ import pkg_resources as _pkg
 import logging as _log
 
 try:
-        __version__ = _pkg.get_distribution(__name__).version
+    __version__ = _pkg.get_distribution(__name__).version
 except:
-        __version__ = 'unknown'
+    __version__ = 'unknown'
 
 
 # General logging
