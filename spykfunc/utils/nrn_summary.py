@@ -8,6 +8,7 @@ import numpy
 from future.builtins import range
 from future.utils import iteritems
 from collections import defaultdict
+from bisect import bisect_left
 
 class NrnCompleter(object):
     # mem usage is 4 * GROUP_SIZE^2 (yes, squared!)
@@ -22,7 +23,7 @@ class NrnCompleter(object):
         array_len = self._GROUP_SIZE ** 2
         self.max_id = max(int(x[1:]) for x in self.in_file.keys())
         self._n_neurons = len(self.in_file)
-        self._array = numpy.zeros(array_len, dtype="i4")
+        self._array = numpy.zeros(array_len, dtype="int32")
         self._outbuffers = defaultdict(list)
         self._outbuffer_entries = 0
 
@@ -31,7 +32,7 @@ class NrnCompleter(object):
         # Move the values from the array into the Hdf5
 
         # Common gids for group
-        all_gids = numpy.arange(self._GROUP_SIZE) + gid_start
+        all_gids = numpy.arange(self._GROUP_SIZE, dtype="int32") + gid_start
 
         for idx_start in range(0, self._ARRAY_LEN, self._GROUP_SIZE):
             idx_end = idx_start + self._GROUP_SIZE
@@ -65,10 +66,10 @@ class NrnCompleter(object):
 
     # ---
     def run(self):
-
+        id_limit = self.max_id + 1
         # For loop just to control the min-max outer gid
-        for id_start in range(0, self.max_id, self._GROUP_SIZE):
-            id_stop = min(self.max_id, id_start+self._GROUP_SIZE)
+        for id_start in range(0, id_limit, self._GROUP_SIZE):
+            id_stop = min(id_limit, id_start+self._GROUP_SIZE)
 
             print("Group {} - {}".format(id_start, id_stop))
 
@@ -83,14 +84,16 @@ class NrnCompleter(object):
                 sub_offset.append(0)
 
             # For loop to control the inner gid
-            for id_start_2 in range(0, self.max_id, self._GROUP_SIZE):
-                id_stop_2 = min(self.max_id, id_start_2 + self._GROUP_SIZE)
+            for id_start_2 in range(0, id_limit, self._GROUP_SIZE):
+                id_stop_2 = min(id_limit, id_start_2 + self._GROUP_SIZE)
+                # The max inner GID isn't necessarily the max out
+                last_section = id_stop_2 == id_limit
                 group_max_len = id_stop_2 - id_start_2
                 for i, post_gid in enumerate(postgids):
                     cur_offset = sub_offset[i]
                     data = self.in_file["a"+str(post_gid)][cur_offset:cur_offset+group_max_len]
                     for pre_gid, touch_count in data:
-                        if pre_gid >= id_stop_2:
+                        if not last_section and pre_gid >= id_stop_2:
                             sub_offset[i] = cur_offset
                             break
                         cur_offset += 1
@@ -120,7 +123,39 @@ class NrnCompleter(object):
         self._outbuffers = defaultdict(list)
         self._outbuffer_entries = 0
 
+    def validate(self, reverse=False):
+        in_file = self.in_file if not reverse else self.outfile
+        out_file = self.outfile if not reverse else self.in_file
+
+        problematic_grps = set()
+        missing_points = []
+        for name, group in in_file.iteritems():
+            for id, cnt in group:
+                if cnt == 0:
+                    continue
+                try:
+                    ds = out_file["a" + str(id)]
+                except Exception:
+                    problematic_grps.add(id)
+                    continue
+                id2 = int(name[1:])
+                posic = bisect_left(ds[:, 0], id2)  # logN search
+                try:
+                    if ds[posic, 0] != id2:
+                        missing_points.append((id, id2))
+                    elif ds[posic, 1] != cnt:
+                        print("screwed in ID {}-{}. Counts: {}. Entry: {}".format(name, id, cnt, ds[posic]))
+                except:
+                    missing_points.append((id, id2))
+        print("Problematic grps", list(problematic_grps))
+        print("Missing points:", missing_points)
+
 
 if __name__ == "__main__":
     cter = NrnCompleter("spykfunc_output/nrn_summary0.h5", "spykfunc_output/nrn_summary.h5")
     cter.run()
+    print("Validating...")
+    cter.validate()
+
+    print("Reverse validating...")
+    cter.validate(reverse=True)
