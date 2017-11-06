@@ -9,6 +9,7 @@ from future.builtins import range
 from future.utils import iteritems
 from collections import defaultdict
 from bisect import bisect_left
+import logging
 
 class NrnCompleter(object):
     # mem usage is 4 * GROUP_SIZE^2 (yes, squared!)
@@ -18,7 +19,7 @@ class NrnCompleter(object):
     _MAX_OUTBUFFER_LEN = 1024**2  # 1M entries ~ 8MB mem
 
     def __init__(self, input_filename, output_filename):
-        self.in_file = h5py.File(input_filename)
+        self.in_file = h5py.File(input_filename, "r")
         self.outfile = h5py.File(output_filename, "w")
         array_len = self._GROUP_SIZE ** 2
         self.max_id = max(int(x[1:]) for x in self.in_file.keys())
@@ -28,9 +29,6 @@ class NrnCompleter(object):
         self._outbuffer_entries = 0
 
     def store_clear_group(self, group_id_start, gid_start):
-        # For each neuron in the group
-        # Move the values from the array into the Hdf5
-
         # Common gids for group
         all_gids = numpy.arange(self._GROUP_SIZE, dtype="int32") + gid_start
 
@@ -46,14 +44,6 @@ class NrnCompleter(object):
             merged_data = numpy.stack((filtered_gids, filtered_counts), axis=1)
             ds_name = "a" + str(cur_ds_i)
 
-            # if ds_name not in self.outfile:
-            #     self.outfile.create_dataset(ds_name, data=merged_data, chunks=(20, 2), maxshape=(None,2))
-            # else:
-            #     ds = self.outfile[ds_name]
-            #     cur_length = len(ds)
-            #     ds.resize(cur_length + len(filtered_counts), axis=0)
-            #     ds[cur_length:] = merged_data
-
             # We have outbuffers since HDF5 appends are extremely expensive
             self._outbuffers[ds_name].append(merged_data)
             self._outbuffer_entries += len(merged_data)
@@ -66,6 +56,7 @@ class NrnCompleter(object):
 
     # ---
     def run(self):
+        self._errors = False
         id_limit = self.max_id + 1
         # For loop just to control the min-max outer gid
         for id_start in range(0, id_limit, self._GROUP_SIZE):
@@ -102,11 +93,16 @@ class NrnCompleter(object):
 
                 self.store_clear_group(id_start_2, id_start)
 
-        print("Final buffer flush")
+        logging.debug("Final buffer flush")
         self._flush_outbuffers(final=True)
 
-    # ---
+    # ----
     def _flush_outbuffers(self, final=False):
+        """
+        Flush output buffers to destination file
+        :param final: If it's the last flush, so that datasets dion't have to be resizable
+        :return:
+        """
         for ds_name, ds_parts in iteritems(self._outbuffers):
             merged_data = numpy.concatenate(ds_parts)
             if ds_name not in self.outfile:
@@ -123,37 +119,65 @@ class NrnCompleter(object):
         self._outbuffers = defaultdict(list)
         self._outbuffer_entries = 0
 
+    # ----
     def validate(self, reverse=False):
+        """
+        Validates, by checking 1-1 if the files were correctly reversed.
+        NOTE the performance is expected to be bad, since we shall not introduce complex optimizations
+        :param reverse:
+        :return:
+        """
         in_file = self.in_file if not reverse else self.outfile
         out_file = self.outfile if not reverse else self.in_file
 
         problematic_grps = set()
         missing_points = []
         for name, group in in_file.iteritems():
-            for id, cnt in group:
+            for id1, cnt in group:
                 if cnt == 0:
                     continue
                 try:
-                    ds = out_file["a" + str(id)]
+                    ds = out_file["a" + str(id1)]
                 except Exception:
-                    problematic_grps.add(id)
+                    problematic_grps.add(id1)
                     continue
+
                 id2 = int(name[1:])
                 posic = bisect_left(ds[:, 0], id2)  # logN search
-                try:
-                    if ds[posic, 0] != id2:
-                        missing_points.append((id, id2))
-                    elif ds[posic, 1] != cnt:
-                        print("screwed in ID {}-{}. Counts: {}. Entry: {}".format(name, id, cnt, ds[posic]))
-                except:
-                    missing_points.append((id, id2))
-        print("Problematic grps", list(problematic_grps))
-        print("Missing points:", missing_points)
 
+                if posic == len(ds) or ds[posic, 0] != id2:
+                    missing_points.append((id1, id2))
+                elif ds[posic, 1] != cnt:
+                    # This is really not supposed to happen
+                    logging.error("Different values in ID {}-{}. Counts: {}. Entry: {}".format(name, id1, cnt, ds[posic]))
+                    self._errors = True
+
+        if problematic_grps:
+            logging.error("Problematic grps: %s", str(list(problematic_grps)))
+            self._errors = True
+        if missing_points:
+            logging.error("Missing points: %s", str(missing_points))
+            self._errors = True
+
+    # ----
+    def check_ordered(self):
+        for name, group in self.in_file.iteritems():
+            if not numpy.array_equal(numpy.sort(group[:,0]), group[:,0]):
+                logging.error("Dataset %s not ordered!", name)
+                self._errors = True
+
+
+# **************************
+# Tests
+# **************************
 
 if __name__ == "__main__":
     cter = NrnCompleter("spykfunc_output/nrn_summary0.h5", "spykfunc_output/nrn_summary.h5")
     cter.run()
+
+    cter.check_ordered()
+    assert not cter._errors, "Order errors were found"
+
     print("Validating...")
     cter.validate()
 
