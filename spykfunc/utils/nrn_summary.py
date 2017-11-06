@@ -12,22 +12,21 @@ from bisect import bisect_left
 import logging
 
 class NrnCompleter(object):
-    # mem usage is 4 * GROUP_SIZE^2 (yes, squared!)
     # Please use base2 vals
-    _GROUP_SIZE = 1024
+    _GROUP_SIZE = 1024  # mem usage is 4 * GROUP_SIZE^2 on dense matrixes
     _ARRAY_LEN = _GROUP_SIZE ** 2
     _MAX_OUTBUFFER_LEN = 1024**2  # 1M entries ~ 8MB mem
 
-    def __init__(self, input_filename, output_filename):
+    def __init__(self, input_filename, output_filename, merge=False):
         self.in_file = h5py.File(input_filename, "r")
         self.outfile = h5py.File(output_filename, "w")
-        array_len = self._GROUP_SIZE ** 2
         self.max_id = max(int(x[1:]) for x in self.in_file.keys())
         self._n_neurons = len(self.in_file)
-        self._array = numpy.zeros(array_len, dtype="int32")
         self._outbuffers = defaultdict(list)
         self._outbuffer_entries = 0
+        self._array = None
 
+    # ----
     def store_clear_group(self, group_id_start, gid_start):
         # Common gids for group
         all_gids = numpy.arange(self._GROUP_SIZE, dtype="int32") + gid_start
@@ -54,16 +53,17 @@ class NrnCompleter(object):
         # Clean for next block
         self._array.fill(0)
 
-    # ---
-    def run(self):
+    # ----
+    def run(self, sparse=False):
         self._errors = False
+        if not sparse:
+            self._array = numpy.zeros(self._ARRAY_LEN, dtype="int32")
+
         id_limit = self.max_id + 1
         # For loop just to control the min-max outer gid
         for id_start in range(0, id_limit, self._GROUP_SIZE):
             id_stop = min(id_limit, id_start+self._GROUP_SIZE)
-
-            print("Group {} - {}".format(id_start, id_stop))
-
+            logging.info("Group %d - %d", id_start, id_stop)
             postgids = []
             sub_offset = []
 
@@ -77,21 +77,33 @@ class NrnCompleter(object):
             # For loop to control the inner gid
             for id_start_2 in range(0, id_limit, self._GROUP_SIZE):
                 id_stop_2 = min(id_limit, id_start_2 + self._GROUP_SIZE)
-                # The max inner GID isn't necessarily the max out
-                last_section = id_stop_2 == id_limit
+                last_section = id_stop_2 == id_limit  # The max inner GID isn't necessarily the max out
                 group_max_len = id_stop_2 - id_start_2
                 for i, post_gid in enumerate(postgids):
+                    ds_name = "a"+str(post_gid)
+                    ds = self.in_file[ds_name]
                     cur_offset = sub_offset[i]
-                    data = self.in_file["a"+str(post_gid)][cur_offset:cur_offset+group_max_len]
-                    for pre_gid, touch_count in data:
+                    data = ds[cur_offset:cur_offset+group_max_len]
+                    for row in data:
+                        pre_gid, touch_count = row
                         if not last_section and pre_gid >= id_stop_2:
+                            # Stop and save iteration state here, except in last section
                             sub_offset[i] = cur_offset
                             break
                         cur_offset += 1
-                        self._array[(pre_gid - id_start_2) * self._GROUP_SIZE + post_gid-id_start] = touch_count
+                        if not sparse:
+                            self._array[(pre_gid - id_start_2) * self._GROUP_SIZE + post_gid-id_start] = touch_count
+                        else:
+                            row[0] = post_gid
+                            self._outbuffers["a"+str(pre_gid)].append(row.reshape((1,2)))
+                            self._outbuffer_entries += 1
                     sub_offset[i] = cur_offset
 
-                self.store_clear_group(id_start_2, id_start)
+                if not sparse:
+                    self.store_clear_group(id_start_2, id_start)
+                else:
+                    if self._outbuffer_entries > self._MAX_OUTBUFFER_LEN:
+                        self._flush_outbuffers()
 
         logging.debug("Final buffer flush")
         self._flush_outbuffers(final=True)
@@ -119,12 +131,15 @@ class NrnCompleter(object):
         self._outbuffers = defaultdict(list)
         self._outbuffer_entries = 0
 
-    # ----
+
+    # *********************************
+    # Validation
+    # *********************************
     def validate(self, reverse=False):
         """
         Validates, by checking 1-1 if the files were correctly reversed.
         NOTE the performance is expected to be bad, since we shall not introduce complex optimizations
-        :param reverse:
+        :param reverse: Checking if all entries in the generated file are there in the original
         :return:
         """
         in_file = self.in_file if not reverse else self.outfile
@@ -173,7 +188,7 @@ class NrnCompleter(object):
 
 if __name__ == "__main__":
     cter = NrnCompleter("spykfunc_output/nrn_summary0.h5", "spykfunc_output/nrn_summary.h5")
-    cter.run()
+    cter.run(sparse=True)
 
     cter.check_ordered()
     assert not cter._errors, "Order errors were found"
