@@ -25,7 +25,6 @@ class NrnCompleter(object):
         self._outbuffers = defaultdict(list)
         self._outbuffer_entries = 0
         self._array = None
-        self._errors = False
 
     # ----
     def create_transposed(self, sparse=False):
@@ -34,7 +33,6 @@ class NrnCompleter(object):
         :param sparse: If the h5 file matrix is not dense (case of touches) we can use sparse to avoid creating an \
         intermediate matrix structure and use a simple algorithm.
         """
-        self._errors = False
         if not sparse:
             # With dense datasets we use a temporary array
             self._array = numpy.zeros(self._ARRAY_LEN, dtype="int32")
@@ -75,7 +73,7 @@ class NrnCompleter(object):
                             self._array[(pre_gid - id_start_2) * self._GROUP_SIZE + post_gid-id_start] = touch_count
                         else:
                             row[0] = post_gid
-                            self._outbuffers["a"+str(pre_gid)].append(row.reshape((1,2)))
+                            self._outbuffers["a"+str(pre_gid)].append(row.reshape((1, 2)))
                             self._outbuffer_entries += 1
                     sub_offset[i] = cur_offset
 
@@ -122,8 +120,7 @@ class NrnCompleter(object):
     def _flush_outbuffers(self, final=False):
         """
         Flush output buffers to destination file
-        :param final: If it's the last flush, so that datasets dion't have to be resizable
-        :return:
+        :param final: If True, non-existing datasets are created non-resizable, optimizing space
         """
         for ds_name, ds_parts in iteritems(self._outbuffers):
             merged_data = numpy.concatenate(ds_parts)
@@ -131,7 +128,7 @@ class NrnCompleter(object):
                 if final:
                     self.outfile.create_dataset(ds_name, data=merged_data)
                 else:
-                    self.outfile.create_dataset(ds_name, data=merged_data, chunks=(100, 2), maxshape=(None,2))
+                    self.outfile.create_dataset(ds_name, data=merged_data, chunks=(100, 2), maxshape=(None, 2))
             else:
                 ds = self.outfile[ds_name]
                 cur_length = len(ds)
@@ -140,10 +137,6 @@ class NrnCompleter(object):
 
         self._outbuffers = defaultdict(list)
         self._outbuffer_entries = 0
-
-    @property
-    def errors(self):
-        return self._errors
 
     # ----
     def merge(self, merged_filename):
@@ -193,6 +186,7 @@ class NrnCompleter(object):
         """
         in_file = self.in_file if not reverse else self.outfile
         out_file = self.outfile if not reverse else self.in_file
+        errors = 0
 
         problematic_grps = set()
         missing_points = []
@@ -202,7 +196,7 @@ class NrnCompleter(object):
                     continue
                 try:
                     ds = out_file["a" + str(id1)]
-                except Exception:
+                except KeyError:
                     problematic_grps.add(id1)
                     continue
 
@@ -214,38 +208,41 @@ class NrnCompleter(object):
                 elif ds[posic, 1] != cnt:
                     # This is really not supposed to happen
                     logging.error("Different values in ID {}-{}. Counts: {}. Entry: {}".format(name, id1, cnt, ds[posic]))
-                    self._errors = True
+                    errors = 1
 
         if problematic_grps:
             logging.error("Problematic grps: %s", str(list(problematic_grps)))
-            self._errors = True
+            errors |= 2
         if missing_points:
             logging.error("Missing points: %s", str(missing_points))
-            self._errors = True
+            errors |= 4
+        return errors
 
     # ----
     def check_ordered(self):
+        errors = 0
         for name, group in iteritems(self.in_file):
             if not numpy.array_equal(numpy.sort(group[:,0]), group[:,0]):
                 logging.error("Dataset %s not ordered!", name)
-                self._errors = True
+                errors = 1
+        return errors
 
 
-# **************************
-# Tests
-# **************************
-
-if __name__ == "__main__":
-    cter = NrnCompleter("spykfunc_output/nrn_summary0.h5", "spykfunc_output/nrn_summary.h5")
-    cter.create_transposed(sparse=True)
-
-    cter.check_ordered()
-    assert not cter.errors, "Order errors were found"
+def validate():
+    assert cter.check_ordered() == 0, "Order errors were found"
 
     cter.merge("spykfunc_output/nrn_merged.h5")
 
     print("Validating...")
-    cter.validate()
+    assert cter.validate() == 0
 
     print("Reverse validating...")
-    cter.validate(reverse=True)
+    assert cter.validate(reverse=True) == 0
+
+
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv):
+        #cter = NrnCompleter("spykfunc_output/nrn_summary0.h5", "spykfunc_output/nrn_summary.h5")
+        cter = NrnCompleter(sys.argv[0], sys.argv[1])
+        cter.create_transposed(sparse=True)

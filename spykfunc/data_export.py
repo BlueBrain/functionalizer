@@ -14,6 +14,7 @@ N_NEURONS_FILE = 1000
 spark = SparkSession.builder.getOrCreate()
 sc = spark.sparkContext
 
+
 class NeuronExporter(object):
     def __init__(self, output_path):
         self.output_path = output_path
@@ -53,7 +54,7 @@ class NeuronExporter(object):
         df = extended_touches_df
 
         # Massive conversion to binary using 'float2binary' java UDF and 'concat_bin' UDAF
-        nrn_vals = df.select(df.pre_gid, df.post_gid, F.array(*self.nrn_fields_as_float(df)).alias("floatvec") )
+        nrn_vals = df.select(df.pre_gid, df.post_gid, F.array(*self.nrn_fields_as_float(df)).alias("floatvec"))
         arrays_df = (nrn_vals
                      .selectExpr("pre_gid", "post_gid", "float2binary(floatvec) as bin_arr")
                      .sort("post_gid")
@@ -120,6 +121,11 @@ class NeuronExporter(object):
 
 
 def get_export_hdf5_f(nrn_filepath, nrn_filenames_accu):
+    """
+    Returns the export_hdf5 routine, parametrized
+    :param nrn_filepath: The base filename for the nrn files
+    :param nrn_filenames_accu: The accumulator where to append the generated files' name
+    """
     # The export routine - applied to each partition
     def write_hdf5(part_it):
         h5store = None
