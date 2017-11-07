@@ -17,7 +17,7 @@ class NrnCompleter(object):
     _ARRAY_LEN = _GROUP_SIZE ** 2
     _MAX_OUTBUFFER_LEN = 1024**2  # 1M entries ~ 8MB mem
 
-    def __init__(self, input_filename, output_filename, merge=False):
+    def __init__(self, input_filename, output_filename):
         self.in_file = h5py.File(input_filename, "r")
         self.outfile = h5py.File(output_filename, "w")
         self.max_id = max(int(x[1:]) for x in self.in_file.keys())
@@ -25,38 +25,18 @@ class NrnCompleter(object):
         self._outbuffers = defaultdict(list)
         self._outbuffer_entries = 0
         self._array = None
+        self._errors = False
 
     # ----
-    def store_clear_group(self, group_id_start, gid_start):
-        # Common gids for group
-        all_gids = numpy.arange(self._GROUP_SIZE, dtype="int32") + gid_start
-
-        for idx_start in range(0, self._ARRAY_LEN, self._GROUP_SIZE):
-            idx_end = idx_start + self._GROUP_SIZE
-            data_view = self._array[idx_start:idx_end]
-            filter_mask = data_view > 0
-            filtered_counts = data_view[filter_mask]
-            if not len(filtered_counts):
-                continue
-            filtered_gids = all_gids[filter_mask]
-            cur_ds_i = idx_start // self._GROUP_SIZE + group_id_start
-            merged_data = numpy.stack((filtered_gids, filtered_counts), axis=1)
-            ds_name = "a" + str(cur_ds_i)
-
-            # We have outbuffers since HDF5 appends are extremely expensive
-            self._outbuffers[ds_name].append(merged_data)
-            self._outbuffer_entries += len(merged_data)
-
-        if self._outbuffer_entries > self._MAX_OUTBUFFER_LEN:
-            self._flush_outbuffers()
-
-        # Clean for next block
-        self._array.fill(0)
-
-    # ----
-    def run(self, sparse=False):
+    def create_transposed(self, sparse=False):
+        """
+        Create a transposed version of the h5 file, datasets ("columns") become rows, rows become datasets
+        :param sparse: If the h5 file matrix is not dense (case of touches) we can use sparse to avoid creating an \
+        intermediate matrix structure and use a simple algorithm.
+        """
         self._errors = False
         if not sparse:
+            # With dense datasets we use a temporary array
             self._array = numpy.zeros(self._ARRAY_LEN, dtype="int32")
 
         id_limit = self.max_id + 1
@@ -100,13 +80,43 @@ class NrnCompleter(object):
                     sub_offset[i] = cur_offset
 
                 if not sparse:
-                    self.store_clear_group(id_start_2, id_start)
+                    self._store_clear_group(id_start_2, id_start)
                 else:
                     if self._outbuffer_entries > self._MAX_OUTBUFFER_LEN:
                         self._flush_outbuffers()
 
         logging.debug("Final buffer flush")
         self._flush_outbuffers(final=True)
+
+    # ----
+    def _store_clear_group(self, group_id_start, gid_start):
+        """
+        Write the intermediate matrix, clearing it to the next iteration
+        """
+        # Common gids for group
+        all_gids = numpy.arange(self._GROUP_SIZE, dtype="int32") + gid_start
+
+        for idx_start in range(0, self._ARRAY_LEN, self._GROUP_SIZE):
+            idx_end = idx_start + self._GROUP_SIZE
+            data_view = self._array[idx_start:idx_end]
+            filter_mask = data_view > 0
+            filtered_counts = data_view[filter_mask]
+            if not len(filtered_counts):
+                continue
+            filtered_gids = all_gids[filter_mask]
+            cur_ds_i = idx_start // self._GROUP_SIZE + group_id_start
+            merged_data = numpy.stack((filtered_gids, filtered_counts), axis=1)
+            ds_name = "a" + str(cur_ds_i)
+
+            # We have outbuffers since HDF5 appends are extremely expensive
+            self._outbuffers[ds_name].append(merged_data)
+            self._outbuffer_entries += len(merged_data)
+
+        if self._outbuffer_entries > self._MAX_OUTBUFFER_LEN:
+            self._flush_outbuffers()
+
+        # Clean for next block
+        self._array.fill(0)
 
     # ----
     def _flush_outbuffers(self, final=False):
@@ -131,6 +141,45 @@ class NrnCompleter(object):
         self._outbuffers = defaultdict(list)
         self._outbuffer_entries = 0
 
+    @property
+    def errors(self):
+        return self._errors
+
+    # ----
+    def merge(self, merged_filename):
+        """
+        Merger of both forward and reverse matrixes (afferent and efferent touch count)
+        :param merged_filename: The name of the output merged file
+        """
+        merged_file = h5py.File(merged_filename, mode="w")
+
+        for ds_name, ds in iteritems(self.in_file):
+            other_ds = self.outfile[ds_name]
+            out_arr = numpy.empty((len(ds) + len(other_ds), 3), dtype="int32")
+            cur_index = 0
+            ds_T_iter = iter(other_ds)
+            other_gid, efferent_count = next(ds_T_iter, (None, 0))
+
+            for gid, afferent_count in ds:
+                while other_gid is not None and other_gid < gid:
+                    out_arr[cur_index] = (other_gid, efferent_count, 0)
+                    cur_index += 1
+                    other_gid, efferent_count = next(ds_T_iter, (None, 0))
+                if gid == other_gid:
+                    out_arr[cur_index] = (other_gid, efferent_count, afferent_count)
+                else:
+                    out_arr[cur_index] = (gid, 0, afferent_count)
+                cur_index += 1
+
+            # Remaining - other_gid's > last gid
+            while other_gid is not None:
+                out_arr[cur_index] = (other_gid, efferent_count, 0)
+                cur_index += 1
+                other_gid, efferent_count = next(ds_T_iter, (None, 0))
+
+            merged_file.create_dataset(ds_name, data=out_arr[:cur_index])
+
+        merged_file.close()
 
     # *********************************
     # Validation
@@ -147,7 +196,7 @@ class NrnCompleter(object):
 
         problematic_grps = set()
         missing_points = []
-        for name, group in in_file.iteritems():
+        for name, group in iteritems(in_file):
             for id1, cnt in group:
                 if cnt == 0:
                     continue
@@ -176,7 +225,7 @@ class NrnCompleter(object):
 
     # ----
     def check_ordered(self):
-        for name, group in self.in_file.iteritems():
+        for name, group in iteritems(self.in_file):
             if not numpy.array_equal(numpy.sort(group[:,0]), group[:,0]):
                 logging.error("Dataset %s not ordered!", name)
                 self._errors = True
@@ -188,10 +237,12 @@ class NrnCompleter(object):
 
 if __name__ == "__main__":
     cter = NrnCompleter("spykfunc_output/nrn_summary0.h5", "spykfunc_output/nrn_summary.h5")
-    cter.run(sparse=True)
+    cter.create_transposed(sparse=True)
 
     cter.check_ordered()
-    assert not cter._errors, "Order errors were found"
+    assert not cter.errors, "Order errors were found"
+
+    cter.merge("spykfunc_output/nrn_merged.h5")
 
     print("Validating...")
     cter.validate()
