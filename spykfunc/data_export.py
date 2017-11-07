@@ -79,10 +79,16 @@ class NeuronExporter(object):
         summary_rdd = arrays_df.rdd.mapPartitions(write_hdf5)
 
         # Export the base for nrn_summary (only afferent counts)
-        summary_h5_store = h5py.File(path.join(self.output_path, "nrn_summary0.h5"), "w")
+        summary_path = path.join(self.output_path, ".nrn_summary0.h5")
+        summary_h5_store = h5py.File(summary_path, "w")
         for post_gid, summary_npa in summary_rdd.toLocalIterator():
             summary_h5_store.create_dataset("a{}".format(post_gid), data=summary_npa)
         summary_h5_store.close()
+
+        # Build merged nrn_summary
+        summary_merger = utils.NrnCompleter(summary_path, summary_path + ".T")
+        summary_merger.create_transposed(True)
+        summary_merger.merge(path.join(self.output_path, "nrn_summary.h5"))
 
         # Mass rename
         it = iter(nrn_filenames.value)
