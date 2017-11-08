@@ -202,10 +202,10 @@ class Functionalizer(object):
         except:
             logger.error(utils.format_cur_exception())
             return 1
-        else:
-            logger.info("Done exporting.")
-            return 0
+
+        logger.info("Done exporting.")
         logger.info("Finished")
+        return 0
 
     # ---------------------------------------------------------
     # Functions to create/apply filters for the current session

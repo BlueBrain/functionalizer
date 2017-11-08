@@ -91,9 +91,14 @@ class NeuronExporter(object):
         summary_h5_store.close()
 
         # Build merged nrn_summary
-        summary_merger = utils.NrnCompleter(summary_path, logger=logger)
-        summary_merger.create_transposed(sparse=True)
-        summary_merger.merge(path.join(self.output_path, "nrn_summary.h5"))
+        final_nrn_summary = path.join(self.output_path, "nrn_summary.h5")
+        nrn_completer = utils.NrnCompleter(summary_path, logger=logger)
+        nrn_completer.create_transposed(sparse=True)
+        nrn_completer.merge(final_nrn_summary)
+        nrn_completer.add_meta(final_nrn_summary, dict(
+            version=3,
+            numberOfFiles=len(nrn_filenames.value)
+        ))
 
         # Mass rename
         it = iter(nrn_filenames.value)

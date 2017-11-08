@@ -206,6 +206,7 @@ class NrnCompleter(object):
                         other_gid, efferent_count = next(ds_T_iter, (None, 0))
                     if gid == other_gid:
                         out_arr[cur_index] = (other_gid, efferent_count, afferent_count)
+                        other_gid, efferent_count = next(ds_T_iter, (None, 0))
                     else:
                         out_arr[cur_index] = (gid, 0, afferent_count)
                     cur_index += 1
@@ -226,6 +227,13 @@ class NrnCompleter(object):
         merged_file.close()
         self.logger.info("Merging complete.")
 
+    # ----
+    @staticmethod
+    def add_meta(filename, infodic):
+        f = h5py.File(filename)
+        i = f.require_dataset("info", [], dtype="int32")
+        i.attrs.update(infodic)
+        f.close()
 
     # *********************************
     # Validation

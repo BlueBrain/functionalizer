@@ -86,8 +86,9 @@ def compute_additional_h5_fields(neuronG, syn_class_matrix, syn_props_df):
 
     # Select fields
     return t.select(
-        t.t.src.alias("pre_gid"),
-        t.t.dst.alias("post_gid"),
+        # Exported touch gids are 1-base, not 0
+        (t.t.src + 1).alias("pre_gid"),
+        (t.t.dst + 1).alias("post_gid"),
         t.axional_delay,
         t.t.post_section.alias("post_section"),
         t.t.post_segment.alias("post_segment"),

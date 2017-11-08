@@ -8,6 +8,7 @@ args = (
     path.join(BASE_DIR, "circuits/circuit.mvd3"),                # mvd_file
     path.join(BASE_DIR, "morphologies/h5"),                      # morpho_dir
     path.join(BASE_DIR, "BlueDetector_output/touches.0"),        # touch_files
+    "--s2s"
 )
 
 if __name__ == "__main__":
