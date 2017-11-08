@@ -1,49 +1,69 @@
-from __future__ import print_function
 """
 Program which takes a nrn_summary with only post_neuron touch count and calculates the pre_neuron counterpart
 """
-
+from __future__ import print_function
 import h5py
 import numpy
+from docopt import docopt
 from future.builtins import range
 from future.utils import iteritems
 from collections import defaultdict
 from bisect import bisect_left
 import logging
 
+
 class NrnCompleter(object):
     # Please use base2 vals
     _GROUP_SIZE = 1024  # mem usage is 4 * GROUP_SIZE^2 on dense matrixes
     _ARRAY_LEN = _GROUP_SIZE ** 2
     _MAX_OUTBUFFER_LEN = 1024**2  # 1M entries ~ 8MB mem
+    _OPTS_DEFAULT = dict(verbose=0)
 
-    def __init__(self, input_filename, output_filename):
+    def __init__(self, input_filename, **opts):
+        self._in_filename = input_filename
         self.in_file = h5py.File(input_filename, "r")
-        self.outfile = h5py.File(output_filename, "w")
+        self.outfile = None
         self.max_id = max(int(x[1:]) for x in self.in_file.keys())
         self._n_neurons = len(self.in_file)
         self._outbuffers = defaultdict(list)
         self._outbuffer_entries = 0
         self._array = None
+        self._opts = self._OPTS_DEFAULT.copy()
+        self._opts.update(opts)
+        if "logger" in opts:
+            self.logger = opts["logger"]
+        else:
+            self.logger = logging
+            if self._opts["verbose"] == 1:
+                logging.basicConfig(level=logging.INFO)
+            elif self._opts["verbose"] == 2:
+                logging.basicConfig(level=logging.DEBUG)
 
     # ----
-    def create_transposed(self, sparse=False):
+    def create_transposed(self, output_filename=None, sparse=False):
         """
         Create a transposed version of the h5 file, datasets ("columns") become rows, rows become datasets
         :param sparse: If the h5 file matrix is not dense (case of touches) we can use sparse to avoid creating an \
         intermediate matrix structure and use a simple algorithm.
         """
+        output_filename = output_filename or self._in_filename + ".T"
+        self.outfile = h5py.File(output_filename, "w")
+        id_limit = self.max_id + 1
+        print("[TRANSPOSING] %d neurons in blocks of %dx%d (mode: %s)" %
+              (id_limit, self._GROUP_SIZE, self._GROUP_SIZE, "sparse" if sparse else "dense_matrix"))
+
         if not sparse:
             # With dense datasets we use a temporary array
             self._array = numpy.zeros(self._ARRAY_LEN, dtype="int32")
 
-        id_limit = self.max_id + 1
         # For loop just to control the min-max outer gid
         for id_start in range(0, id_limit, self._GROUP_SIZE):
             id_stop = min(id_limit, id_start+self._GROUP_SIZE)
-            logging.info("Group %d - %d", id_start, id_stop)
             postgids = []
             sub_offset = []
+
+            self.logger.info("Group %d-%d [%3d%%]",
+                             id_start, id_stop, (id_stop-id_start)*100//id_limit)
 
             # Init structures for the current group block
             for post_gid in range(id_start, id_stop):
@@ -83,8 +103,9 @@ class NrnCompleter(object):
                     if self._outbuffer_entries > self._MAX_OUTBUFFER_LEN:
                         self._flush_outbuffers()
 
-        logging.debug("Final buffer flush")
+        self.logger.debug("Final buffer flush")
         self._flush_outbuffers(final=True)
+        self.logger.info("Transposing complete")
 
     # ----
     def _store_clear_group(self, group_id_start, gid_start):
@@ -93,6 +114,8 @@ class NrnCompleter(object):
         """
         # Common gids for group
         all_gids = numpy.arange(self._GROUP_SIZE, dtype="int32") + gid_start
+        self.logger.debug("Processing matrix to buffers [group offset: %d, base gid: %d]",
+                          group_id_start, gid_start)
 
         for idx_start in range(0, self._ARRAY_LEN, self._GROUP_SIZE):
             idx_end = idx_start + self._GROUP_SIZE
@@ -111,6 +134,7 @@ class NrnCompleter(object):
             self._outbuffer_entries += len(merged_data)
 
         if self._outbuffer_entries > self._MAX_OUTBUFFER_LEN:
+            self.logger.debug("Flushing buffers")
             self._flush_outbuffers()
 
         # Clean for next block
@@ -139,40 +163,69 @@ class NrnCompleter(object):
         self._outbuffer_entries = 0
 
     # ----
-    def merge(self, merged_filename):
+    def merge(self, merged_filename=None):
         """
         Merger of both forward and reverse matrixes (afferent and efferent touch count)
         :param merged_filename: The name of the output merged file
         """
+        merged_filename = merged_filename or self._in_filename + ".merged"
         merged_file = h5py.File(merged_filename, mode="w")
+        all_ds_names = set(self.in_file.keys()) | set(self.outfile.keys())
+        ds_count = len(all_ds_names)
+        progress_each = ds_count // min(100, round(ds_count / 500.0, 0))
+        cur_i = 0
+        print("[MERGING] %d + %d datasets -> %d" % (self._n_neurons, len(self.outfile), ds_count))
 
-        for ds_name, ds in iteritems(self.in_file):
-            other_ds = self.outfile[ds_name]
-            out_arr = numpy.empty((len(ds) + len(other_ds), 3), dtype="int32")
-            cur_index = 0
-            ds_T_iter = iter(other_ds)
-            other_gid, efferent_count = next(ds_T_iter, (None, 0))
+        for ds_name in all_ds_names:
+            if ds_name not in self.outfile:
+                ds = self.in_file[ds_name]
+                out_arr = numpy.empty((len(ds), 3), dtype="int32")
+                out_arr[:, (0, 2)] = ds
+                out_arr[:, 1].fill(0)
+                merged_file.create_dataset(ds_name, data=out_arr)
 
-            for gid, afferent_count in ds:
-                while other_gid is not None and other_gid < gid:
+            elif ds_name not in self.in_file:
+                ds = self.outfile[ds_name]
+                out_arr = numpy.empty((len(ds), 3), dtype="int32")
+                out_arr[:, (0, 1)] = ds
+                out_arr[:, 2].fill(0)
+                merged_file.create_dataset(ds_name, data=out_arr)
+
+            else:
+                ds = self.in_file[ds_name][:]  # Force load to mem
+                other_ds = self.outfile[ds_name][:]
+                out_arr = numpy.empty((len(ds) + len(other_ds), 3), dtype="int32")
+                cur_index = 0
+                ds_T_iter = iter(other_ds)
+                other_gid, efferent_count = next(ds_T_iter, (None, 0))
+
+                for gid, afferent_count in ds:
+                    while other_gid is not None and other_gid < gid:
+                        out_arr[cur_index] = (other_gid, efferent_count, 0)
+                        cur_index += 1
+                        other_gid, efferent_count = next(ds_T_iter, (None, 0))
+                    if gid == other_gid:
+                        out_arr[cur_index] = (other_gid, efferent_count, afferent_count)
+                    else:
+                        out_arr[cur_index] = (gid, 0, afferent_count)
+                    cur_index += 1
+
+                # Remaining - other_gid's > last gid
+                while other_gid is not None:
                     out_arr[cur_index] = (other_gid, efferent_count, 0)
                     cur_index += 1
                     other_gid, efferent_count = next(ds_T_iter, (None, 0))
-                if gid == other_gid:
-                    out_arr[cur_index] = (other_gid, efferent_count, afferent_count)
-                else:
-                    out_arr[cur_index] = (gid, 0, afferent_count)
-                cur_index += 1
 
-            # Remaining - other_gid's > last gid
-            while other_gid is not None:
-                out_arr[cur_index] = (other_gid, efferent_count, 0)
-                cur_index += 1
-                other_gid, efferent_count = next(ds_T_iter, (None, 0))
+                merged_file.create_dataset(ds_name, data=out_arr[:cur_index])
 
-            merged_file.create_dataset(ds_name, data=out_arr[:cur_index])
+            cur_i += 1
+            if cur_i % progress_each == 0:
+                self.logger.info("Merged %5d /%5d [%3d%%]",
+                                 cur_i, ds_count, 100 * cur_i // ds_count)
 
         merged_file.close()
+        self.logger.info("Merging complete.")
+
 
     # *********************************
     # Validation
@@ -184,6 +237,7 @@ class NrnCompleter(object):
         :param reverse: Checking if all entries in the generated file are there in the original
         :return:
         """
+        assert self.outfile is not None, "Please run the transposition"
         in_file = self.in_file if not reverse else self.outfile
         out_file = self.outfile if not reverse else self.in_file
         errors = 0
@@ -207,14 +261,14 @@ class NrnCompleter(object):
                     missing_points.append((id1, id2))
                 elif ds[posic, 1] != cnt:
                     # This is really not supposed to happen
-                    logging.error("Different values in ID {}-{}. Counts: {}. Entry: {}".format(name, id1, cnt, ds[posic]))
+                    self.logger.error("Different values in ID {}-{}. Counts: {}. Entry: {}".format(name, id1, cnt, ds[posic]))
                     errors = 1
 
         if problematic_grps:
-            logging.error("Problematic grps: %s", str(list(problematic_grps)))
+            self.logger.error("Problematic grps: %s", str(list(problematic_grps)))
             errors |= 2
         if missing_points:
-            logging.error("Missing points: %s", str(missing_points))
+            self.logger.error("Missing points: %s", str(missing_points))
             errors |= 4
         return errors
 
@@ -223,15 +277,13 @@ class NrnCompleter(object):
         errors = 0
         for name, group in iteritems(self.in_file):
             if not numpy.array_equal(numpy.sort(group[:,0]), group[:,0]):
-                logging.error("Dataset %s not ordered!", name)
+                self.logger.error("Dataset %s not ordered!", name)
                 errors = 1
         return errors
 
 
-def validate():
+def run_validation():
     assert cter.check_ordered() == 0, "Order errors were found"
-
-    cter.merge("spykfunc_output/nrn_merged.h5")
 
     print("Validating...")
     assert cter.validate() == 0
@@ -240,9 +292,25 @@ def validate():
     assert cter.validate(reverse=True) == 0
 
 
+_doc = """
+Usage:
+  nrn_summary transpose <input-file> [-o=<output-file>] [--sparse] [-vv]
+  nrn_summary tmerge <input-file> [-o=<output-file>] [--sparse] [-vv]
+  nrn_summary -h
+
+Options:
+  -h                Show help
+  -o=<output-file>  By default creates input_name.T (transposed) or input_name.merged (tmerge)
+  --sparse          Runs the sparse algorithm, which saves memory and might be faster on highly sparse datasets
+  -vv               Verbose mode (-v for info, -vv for debug) 
+"""
+
 if __name__ == "__main__":
-    import sys
-    if len(sys.argv):
-        #cter = NrnCompleter("spykfunc_output/nrn_summary0.h5", "spykfunc_output/nrn_summary.h5")
-        cter = NrnCompleter(sys.argv[0], sys.argv[1])
-        cter.create_transposed(sparse=True)
+    args = docopt(_doc)
+    cter = NrnCompleter(args["<input-file>"], verbose=args["-v"])
+
+    if args["transpose"]:
+        cter.create_transposed(args["-o"], sparse=args["--sparse"])
+    elif args["tmerge"]:
+        cter.create_transposed(sparse=args["--sparse"])
+        cter.merge(args["-o"])

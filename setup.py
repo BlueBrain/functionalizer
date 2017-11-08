@@ -93,6 +93,7 @@ def setup_package():
         ext_modules=extensions,
         install_requires=[
             'future',
+            'docopt',
             'enum34;python_version<"3.4"',
             'numpy',
             'lazy-property',

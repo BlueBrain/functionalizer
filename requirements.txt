@@ -1,6 +1,7 @@
 # Add your requirements here like:
 #pyspark
 future
+docopt
 enum34
 lazy-property
 numpy
