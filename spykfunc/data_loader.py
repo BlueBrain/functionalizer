@@ -17,9 +17,9 @@ from collections import OrderedDict, defaultdict
 import fnmatch
 
 import logging
-logger = get_logger(__name__)
 
-sc = SparkContext.getOrCreate()
+# Globals
+logger = get_logger(__name__)
 
 
 ###################################################################
@@ -90,7 +90,7 @@ class NeuronDataSpark(NeuronData):
 
         else:
             logger.info("Building MVD from raw mvd files")
-            total_parts = max(sc.defaultParallelism * 4, n_neurons // 10000 + 1)
+            total_parts = max(self._sc.defaultParallelism * 4, n_neurons // 10000 + 1)
             logger.debug("Partitions: %d", total_parts)
 
             # Initial RDD has only the range objects
@@ -336,6 +336,7 @@ def neuron_loader_gen(data_class, loader_class, loader_params, n_neurons,
     """
 
     # Every loader builds the list of MTypes - avoid serialize/deserialize of the more complex struct
+    sc = SparkContext.getOrCreate()
     mtype_bc = sc.broadcast([MType(mt) for mt in mtypes])
 
     def _convert_entry(nrn, name, mtype_name, layer):

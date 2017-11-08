@@ -11,12 +11,16 @@ from . import utils
 logger = utils.get_logger(__name__)
 N_NEURONS_FILE = 1000
 
-spark = SparkSession.builder.getOrCreate()
-sc = spark.sparkContext
+# Globals
+spark = None
+sc = None
 
 
 class NeuronExporter(object):
     def __init__(self, output_path):
+        global spark, sc
+        spark = SparkSession.builder.getOrCreate()
+        sc = spark.sparkContext
         self.output_path = output_path
         # Get the concat_bin agg function form the java world
         _j_conc_udaf = sc._jvm.spykfunc.udfs.BinaryConcat().apply
@@ -87,8 +91,8 @@ class NeuronExporter(object):
         summary_h5_store.close()
 
         # Build merged nrn_summary
-        summary_merger = utils.NrnCompleter(summary_path, summary_path + ".T")
-        summary_merger.create_transposed(True)
+        summary_merger = utils.NrnCompleter(summary_path, logger=logger)
+        summary_merger.create_transposed(sparse=True)
         summary_merger.merge(path.join(self.output_path, "nrn_summary.h5"))
 
         # Mass rename

@@ -25,18 +25,12 @@ from . import utils
 from . import synapse_properties
 if False: from .recipe import ConnectivityPathRule  # NOQA
 
-logger = utils.get_logger(__name__)
-
 __all__ = ["Functionalizer", "session"]
 
-
-# =====================================
-# Global Initting
-# =====================================
-spark = SparkSession.builder.getOrCreate()
-sc = spark.sparkContext
-sc.setLogLevel("WARN")
-spark.conf.set("spark.sql.shuffle.partitions", min(sc.defaultParallelism * 4, 256))
+# Globals
+spark = None
+sc = None
+logger = utils.get_logger(__name__)
 
 try:
     from graphframes import GraphFrame
@@ -62,6 +56,13 @@ class Functionalizer(object):
     _touchDF = None
 
     def __init__(self, only_s2s=False):
+        # Global session Initting
+        global spark, sc
+        spark = SparkSession.builder.getOrCreate()
+        sc = spark.sparkContext
+        sc.setLogLevel("WARN")
+        spark.conf.set("spark.sql.shuffle.partitions", min(sc.defaultParallelism * 4, 256))
+
         self._run_s2f = not only_s2s
         self.output_dir = "spykfunc_output"
         self.neuron_stats = NeuronStats()
