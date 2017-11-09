@@ -16,7 +16,6 @@ import numpy
 from docopt import docopt
 import logging
 logging.basicConfig(level=logging.INFO)
-from pprint import pformat
 
 
 def check_summary(summary1, summary2):
@@ -40,6 +39,20 @@ def check_summary(summary1, summary2):
         ds1 = f1[ds_name][:]
         ds2 = f2[ds_name][:]
         if not numpy.array_equal(ds1, ds2):
+            ds1_len = len(ds1)
+            ds2_len = len(ds2)
+            # If different lengths, compare with N/A and trim for next phase
+            if ds1_len > ds2_len:
+                array_remain = ds1[ds2_len:]
+                diff_len = len(array_remain)
+                probs.extend(zip([ds_name]*diff_len, range(ds2_len, ds1_len), ["<N/A>"]*diff_len, array_remain.tolist()))
+                ds1 = ds2[:ds1_len]
+            elif ds2_len > ds1_len:
+                array_remain = ds2[ds1_len:]
+                diff_len = len(array_remain)
+                probs.extend(zip([ds_name] * diff_len, range(ds1_len, ds2_len), array_remain.tolist(), ["<N/A>"] * diff_len))
+                ds2 = ds1[:ds2_len]
+
             prob_index = numpy.nonzero(ds1-ds2)[0]
             probs.extend(zip([ds_name]*len(prob_index),
                              prob_index.tolist(),
@@ -49,7 +62,7 @@ def check_summary(summary1, summary2):
             logging.info("Progress: %4d /%4d", i, ds_count)
 
     if probs:
-        print("Problematic datasets:\n")
+        print("Problematic datasets:")
         format = "| %10s | %10s | %15s | %15s |"
         print(format % ("Dataset", "Index", "Left val", "Right val"))
         print("|" + '=' * 61 + "|")
@@ -57,6 +70,7 @@ def check_summary(summary1, summary2):
             print(format % p)
     else:
         print("No differences found!")
+    logging.info("Done comparison.")
 
 
 if __name__ == "__main__":
