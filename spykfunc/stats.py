@@ -14,6 +14,7 @@ class NeuronStats(object):
         self._touch_graph_frame = None
         self._prev_gf = None
         self._neurons_touch_counts = None
+        self._morpho_touches_conns = None
 
     @staticmethod
     def create_from_touch_info(touch_info):
@@ -32,15 +33,18 @@ class NeuronStats(object):
     def update_touch_graph_source(self, touch_GF, overwrite_previous_gf=True):
         self._touch_graph_frame = touch_GF
         self._neurons_touch_counts = None
+        self._morpho_touches_conns = None
         if overwrite_previous_gf:
             self._prev_gf = self._touch_graph_frame
             self.total_neurons = self._touch_graph_frame.vertices.count()
 
     @property
     def neurons_touch_counts(self):
-        """Lazily calculate/cache neurons_touch_counts
+        """Lazily calculate neurons_touch_counts
         """
         if not self._neurons_touch_counts:
+            # Cache is not being used since it will just consume memory and potentially avoid optimizations
+            # User can still cache explicitly the returned ds
             self._neurons_touch_counts = self.get_neurons_touch_counts(self._touch_graph_frame)
         return self._neurons_touch_counts
 
@@ -64,6 +68,9 @@ class NeuronStats(object):
     def mtype_touch_stats(self):
         """For every pair of mtype (src-dst) calc the number of touches, connections, and the mean (touches/connection)
         """
+        if self._morpho_touches_conns:
+            return self._morpho_touches_conns
+
         neuron_touches = self.neurons_touch_counts
 
         # Group by morphos
@@ -75,7 +82,9 @@ class NeuronStats(object):
             "average_touches_conn",
             morpho_touches_conns.total_touches / morpho_touches_conns.total_connections)
 
-        return morpho_touches_conns.cache()
+        self._morpho_touches_conns = morpho_touches_conns.cache()
+        self._morpho_touches_conns.count()
+        return self._morpho_touches_conns
 
     @staticmethod
     def get_neurons_touch_counts(neuronG):

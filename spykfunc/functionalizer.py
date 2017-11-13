@@ -61,6 +61,7 @@ class Functionalizer(object):
         spark = SparkSession.builder.getOrCreate()
         sc = spark.sparkContext
         sc.setLogLevel("WARN")
+        sc.setCheckpointDir("_checkpoints")
         spark.conf.set("spark.sql.shuffle.partitions", min(sc.defaultParallelism * 4, 256))
 
         self._run_s2f = not only_s2s
@@ -176,7 +177,8 @@ class Functionalizer(object):
             return 1
 
         # Force compute, saving to parquet - fast and space efficient
-        self.touchDF = self.exporter.save_temp(self.touchDF)
+        # self.touchDF = self.exporter.save_temp(self.touchDF)
+        # We are now using checkpoint which is the equivalent standard way of doing it
 
         return 0
 
@@ -227,13 +229,8 @@ class Functionalizer(object):
         touch_rules_filter = filters.TouchRulesFilter(self.recipe.touch_rules)
         newtouchDF = touch_rules_filter.apply(self.neuronG)
 
-        # So far there was quite some processing which would be lost since data
-        # is read everytime from disk, so we persist it for next RC step
-        self.touchDF = newtouchDF.persist(StorageLevel.DISK_ONLY)
-
-        # NOTE: Using count() or other functions which materialize the DF might incur
-        #       an extra read step for the subsequent action (to be analyzed)
-        #       In the case of DISK_ONLY caches() that would have a signifficant impact, so we avoid it.
+        # So far there was quite some processing which would be recomputed
+        self.touchDF = newtouchDF.checkpoint()
 
     # ---
     def run_reduce_and_cut(self):
@@ -248,7 +245,7 @@ class Functionalizer(object):
 
         logger.info("Applying Reduce and Cut...")
         rc = filters.ReduceAndCut(mtype_conn_rules, self.neuron_stats, sc)
-        self.touchDF = rc.apply(self.neuronG)
+        self.touchDF = rc.apply(self.neuronG).checkpoint()
 
     # ---
     @staticmethod

@@ -121,7 +121,8 @@ class ReduceAndCut(DataSetOperation):
 
     # ---
     def apply(self, neuronG, *args, **kw):
-        params_df = F.broadcast(self.compute_reduce_cut_params()
+        rc_params_df = self.compute_reduce_cut_params()
+        params_df = F.broadcast(rc_params_df
                                 .select(self._make_assoc_expr("n1_morpho", "n2_morpho"), "*")
                                 .cache())
 
@@ -132,13 +133,13 @@ class ReduceAndCut(DataSetOperation):
         # Reduce
         logger.info("Applying Reduce step...")
         reduced_touches = self.apply_reduce(full_touches, params_df)
-        # Cache results so far (to disk - wont fit in mem!) - required otherwise they'r recomputed several times
-        reduced_touches = reduced_touches.persist(StorageLevel.DISK_ONLY)
+
+        # Checkpoint results so far
+        reduced_touches = reduced_touches.checkpoint()
 
         # Cut
         logger.info("Applying Cut step...")
         cut_touches = self.apply_cut(reduced_touches, params_df)
-        if _DEBUG: logger.info("Cut touch count:      %d", cut_touches.count())  # NOQA
 
         return cut_touches
 
@@ -156,7 +157,8 @@ class ReduceAndCut(DataSetOperation):
 
         # Materializing MType Assoc counts now, it was cached
         logger.info("Computing Pathway stats...")
-        logger.debug("Number of Mtype Associations: %d", mtype_stats.count())
+        len_mtype_stats = mtype_stats.count()
+        logger.debug("Number of Mtype Associations: %d", len_mtype_stats)
 
         # param create udf
         rc_param_maker = reduce_cut_parameter_udef(self.conn_rules)
