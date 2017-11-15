@@ -54,36 +54,29 @@ def reduce_cut_parameter_udef(conn_rules_map, debug=False):
                 p = 1.0 / structuralMean
                 syn_pprime, p_A, mu_A, syn_R_actual = pprime_approximation(rt_star, cv_syns_connection, p)
                 pActiveFraction = rule.active_fraction
-                if debug:
-                    _debug = "s2f 4.3: (r=%.3f, cv=%.3f, p=%.3f) -> pprime=%.3f, pA=%.3f, mu_A=%.3f" % (rt_star, cv_syns_connection, p, syn_pprime, p_A, mu_A)
+                if debug: _debug = "s2f 4.3: (r=%.3f, cv=%.3f, p=%.3f) -> pprime=%.3f, pA=%.3f, mu_A=%.3f" % (rt_star, cv_syns_connection, p, syn_pprime, p_A, mu_A)
 
             elif rule.mean_syns_connection:
                 # 4.2 of s2f 2.0
                 p = 1.0 / structuralMean
-                sdt = min(rule.mean_syns_connection * cv_syns_connection, structuralMean - 0.5)
+                sdt = min(1.0 * rule.mean_syns_connection * cv_syns_connection, structuralMean - 0.5)
                 mu_A = 0.5 + rule.mean_syns_connection - sdt
                 syn_pprime = 1.0 / (sqrt(sdt*sdt + 0.25) + 0.5)
-                p_A = (p / (1 - p) * (1 - syn_pprime) / syn_pprime) if (p > 1.0) else 1.0
+                p_A = (p / (1.0 - p) * (1.0 - syn_pprime) / syn_pprime) if (p != 1.0) else 1.0   # Control DIV/0
                 pActiveFraction = activeFraction_default
-                if debug:
-                    _debug = "s2f 4.2: p=%.3f, pprime=%.3f, pA=%.3f, mu_A=%.3f" % (p, syn_pprime, p_A, mu_A)
+                if debug: _debug = "s2f 4.2: p=%.3f, pprime=%.3f, pA=%.3f, mu_A=%.3f" % (p, syn_pprime, p_A, mu_A)
 
             elif rule.probability:
                 # unassigned in s2f 2.0
-                logging.warning("Did the column assignment problem get solved?")
                 # pActiveFraction = exp(...) * boutonReductionFactor*(structuralMean-1)/(structuralMean*modifier);
                 # double modifier = exp(...) * boutonReductionFactor*(structuralMean-1)/(structuralMean*pActiveFraction);
                 modifier = boutonReductionFactor * structuralProbability / rule.probability
-                pActiveFraction = (exp((1 - cv_syns_connection) / cv_syns_connection) * boutonReductionFactor *
-                                   (structuralMean - 1) / (structuralMean * modifier))
+                pActiveFraction = (exp((1.0 - cv_syns_connection) / cv_syns_connection) * boutonReductionFactor *
+                                   (structuralMean - 1.0) / (structuralMean * modifier))
                 p_A = modifier * cv_syns_connection
-                if p_A > 1:
-                    p_A = 1
                 mu_A = (structuralMean - cv_syns_connection * structuralMean + cv_syns_connection) * modifier
-                if mu_A < 1:
-                    mu_A = 1
-                if debug:
-                    _debug = "s2f unassigned: modifier=%.3f, pA=%.3f, mu_A=%.3f" % (modifier, p_A, mu_A)
+                if mu_A < 1.0: mu_A = 1.0
+                if debug: _debug = "s2f unassigned: modifier=%.3f, pA=%.3f, mu_A=%.3f" % (modifier, p_A, mu_A)
 
             else:
                 logging.warning("Rule not supported")
@@ -93,20 +86,19 @@ def reduce_cut_parameter_udef(conn_rules_map, debug=False):
             # 4.1 of s2f 2.0
             logging.warning("Warning: method 4.1?")
             mu_A = 0.5 + rule.mean_syns_connection - rule.stdev_syns_connection
-            pprime = 1 / (rule.stdev_syns_connection + 0.5)
-            p = 1 / structuralMean
-            p_A = (p / (1 - p) * (1 - pprime) / pprime) if (p > 1.0) else 1.0
+            pprime = 1.0 / (rule.stdev_syns_connection + 0.5)
+            p = 1.0 / structuralMean
+            p_A = (p / (1.0 - p) * (1.0 - pprime) / pprime) if (p != 1.0) else 1.0
             pActiveFraction = rule.active_fraction
-            if debug:
-                _debug = "s2f 4.1: p=%.3f, pprime=%.3f, pA=%.3f, mu_A=%.3f" % (p, pprime, p_A, mu_A)
+            if debug: _debug = "s2f 4.1: p=%.3f, pprime=%.3f, pA=%.3f, mu_A=%.3f" % (p, pprime, p_A, mu_A)
 
         else:
             logging.warning("Rule not supported")
             return nil
 
         pMu_A = mu_A - 0.5
-        if pActiveFraction > 1.0:
-            pActiveFraction = 0
+        if p_A > 1.0: p_A = 1.0
+        if pActiveFraction > 1.0: pActiveFraction = 1.0
 
         # ActiveFraction calculated here is legacy and only used if boutonReductionFactor is null
         return p_A, pMu_A, boutonReductionFactor, pActiveFraction, _debug
@@ -122,7 +114,7 @@ def pprime_approximation(r, cv, p):
     """
     epsilon = 0.00001
     step = 1.0
-    mnprime = 1
+    mnprime = 1.0
 
     pprime = None
     f1 = None
@@ -133,16 +125,16 @@ def pprime_approximation(r, cv, p):
     hasFailedPrimary = False
 
     # to avoid division by zero, add small epsilon if p is 1
-    if p == 1:
+    if p == 1.0:
         p += epsilon
 
     for tryIndex in range(100):
         if not hasFailedPrimary:
             # calculate the actual reduction factor for the estimate
-            pprime = 1 / mnprime
-            f1 = (p / (1 - p)) * ((1 - pprime) / pprime)
-            mu2 = 1 - 0.5 / cv + (1 / cv - 1) * 1 / pprime
-        r_actual = (p / (1 - p)) * (mu2 * pow((1 - pprime), mu2) + (pow(1 - pprime, mu2 + 1) / pprime))
+            pprime = 1.0 / mnprime
+            f1 = (p / (1.0 - p)) * ((1.0 - pprime) / pprime)
+            mu2 = 1.0 - 0.5 / cv + (1.0 / cv - 1.0) * 1.0 / pprime
+        r_actual = (p / (1.0 - p)) * (mu2 * pow((1.0 - pprime), mu2) + (pow(1.0 - pprime, mu2 + 1.0) / pprime))
 
         # check if estimate is good enough
         if abs(r - r_actual) < epsilon:
@@ -150,25 +142,25 @@ def pprime_approximation(r, cv, p):
 
         # which direction for a better estimate?
         if ((r > r_actual) != (step > 0)) != hasFailedPrimary:
-            step = -step / 2
+            step = -step / 2.0
 
         if not hasFailedPrimary:
             # stay within boundaries
-            if (mnprime + step) > (1 / p):
-                step = (1 / p) - mnprime
+            if (mnprime + step) > (1.0 / p):
+                step = (1.0 / p) - mnprime
 
-            if (mnprime + step) < 1:
-                step = 1 - mnprime
+            if (mnprime + step) < 1.0:
+                step = 1.0 - mnprime
 
             # adjust mnprime
             mnprime = mnprime + step
 
-            if step == 0:
+            if step == .0:
                 hasFailedPrimary = True
-                step = 1
+                step = 1.0
         else:
-            if (mu2 + step) < 1:
-                step = 1 - mu2
+            if (mu2 + step) < 1.0:
+                step = 1.0 - mu2
             mu2 = mu2 + step
 
     return pprime, f1, mu2, r_actual

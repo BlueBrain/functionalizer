@@ -263,11 +263,14 @@ class Functionalizer(object):
                 for dst in dsts:
                     key = src + ">" + dst
                     if key in conn_rules:
-                        logger.warning("Several rules applying to the same mtype connection: %s->%s [Rule: %s->%s]",
+                        logger.debug("Several rules applying to the same mtype connection: %s->%s [Rule: %s->%s]",
                                        src, dst, rule.source, rule.destination)
-                        if '*' not in rule.source and '*' not in rule.destination:
-                            # Overwrite if it is specific
+                        prev_rule = conn_rules[key]
+                        # Overwrite if it is specific
+                        if (('*' in prev_rule.source and '*' not in rule.source) or
+                            ('*' in prev_rule.destination and '*' not in rule.destination)):
                             conn_rules[key] = rule
+                            logger.debug(" -> Used instead")
                     else:
                         conn_rules[key] = rule
 
