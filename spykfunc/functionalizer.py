@@ -56,12 +56,15 @@ class Functionalizer(object):
     _touchDF = None
 
     def __init__(self, only_s2s=False):
-        # Global session Initting
+        # Create Spark session with the static config
         global spark, sc
-        spark = SparkSession.builder.getOrCreate()
+        spark = (SparkSession.builder.appName("Functionalizer")
+                 .config("spark.checkpoint.compress", True)
+                 .getOrCreate())
         sc = spark.sparkContext
         sc.setLogLevel("WARN")
         sc.setCheckpointDir("_checkpoints")
+        # Runtime properties
         spark.conf.set("spark.sql.shuffle.partitions", min(sc.defaultParallelism * 4, 256))
 
         self._run_s2f = not only_s2s
@@ -72,9 +75,8 @@ class Functionalizer(object):
         if only_s2s:
             logger.info("Running S2S only")
 
-        # register random udef
         sqlContext = SQLContext.getOrCreate(sc)
-        # Apparently functions are instantiated on every executed query
+        # register java udef
         sqlContext.registerJavaFunction("gauss_rand", "spykfunc.udfs.GaussRand")
         sqlContext.registerJavaFunction("float2binary", "spykfunc.udfs.FloatArraySerializer")
         sqlContext.registerJavaFunction("int2binary", "spykfunc.udfs.IntArraySerializer")

@@ -66,17 +66,15 @@ def compute_additional_h5_fields(neuronG, syn_class_matrix, syn_props_df):
         ).cast(T.FloatType())
     )
 
-    # Compute #8-12
-    # We ruse a Java UDFs (gauss_rand) which requires using spark.sql
-    touches.createOrReplaceTempView("cur_touches")
-    touches = spark.sql(
-        "select *,"
-        " gauss_rand(0) * prop.gsynVar + prop.gsyn as gsyn, "  # g
-        " gauss_rand(0) * prop.uVar + prop.u as u,"     # u
-        " gauss_rand(0) * prop.dVar + prop.d as d,"     # d
-        " gauss_rand(0) * prop.fVar + prop.f as f,"     # f
-        " gauss_rand(0) * prop.dtcVar + prop.dtc as dtc"  # dtc
-        " from cur_touches")
+    # Compute #8-12: g, u, d, f, dtc
+    touches = touches.selectExpr(
+        "*",
+        "gauss_rand(0) * prop.gsynVar + prop.gsyn as gsyn",
+        "gauss_rand(0) * prop.uVar + prop.u as u",
+        "gauss_rand(0) * prop.dVar + prop.d as d",
+        "gauss_rand(0) * prop.fVar + prop.f as f",
+        "gauss_rand(0) * prop.dtcVar + prop.dtc as dtc"
+        )
 
     # Compute #13: synapseType:  Inhibitory < 100 or  Excitatory >= 100
     t = touches.withColumn("synapseType",

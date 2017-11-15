@@ -11,7 +11,7 @@ from filter_udfs import reduce_cut_parameter_udef
 logger = get_logger(__name__)
 
 # Control variable that outputs intermediate calculations, and makes processing slower
-_DEBUG = False
+_DEBUG = True
 
 
 # --------------------------------------------------------------------------------------------------------------------
@@ -122,9 +122,15 @@ class ReduceAndCut(DataSetOperation):
     # ---
     def apply(self, neuronG, *args, **kw):
         rc_params_df = self.compute_reduce_cut_params()
+
         params_df = F.broadcast(rc_params_df
                                 .select(self._make_assoc_expr("n1_morpho", "n2_morpho"), "*")
-                                .cache())
+                                .cache()).coalesce(1)
+
+        # show params info
+        debug_info = params_df.select("morpho_assoc", "total_touches", "structural_mean", "pP_A", "pMu_A", "active_fraction_legacy", "_debug")
+        debug_info.show(1000)
+        debug_info.write.mode("overwrite").csv("pathway_params.csv", header=True)
 
         # Flatten GraphFrame and include morpho>morpho row
         full_touches = neuronG.find("(n1)-[t]->(n2)") \
@@ -161,21 +167,24 @@ class ReduceAndCut(DataSetOperation):
         logger.debug("Number of Mtype Associations: %d", len_mtype_stats)
 
         # param create udf
-        rc_param_maker = reduce_cut_parameter_udef(self.conn_rules)
+        rc_param_maker = reduce_cut_parameter_udef(self.conn_rules, _DEBUG)
 
         # NOTE: Case of Pathway [MType-MType] not in the recipe
         # TODO: Apparently it doesn't cut. We should issue a warning!
 
         # Extract p_A, mu_A, activeFraction
-        return (
+        params_df = (
             mtype_stats
             .select("*",  # We can see here the fields of mtype_stats, which are used for rc_param_maker
                     rc_param_maker(mtype_stats.n1_morpho, mtype_stats.n2_morpho, mtype_stats.average_touches_conn)
                     .alias("rc_params"))
             .where(F.col("rc_params.pP_A").isNotNull())
-            # Return the params (activeFraction is no longer calculated in this step)
-            .select("n1_morpho", "n2_morpho", "total_touches", "rc_params.*")
         )
+
+        # Return the params
+        return params_df.select("n1_morpho", "n2_morpho", "total_touches",
+                                F.col("average_touches_conn").alias("structural_mean"),
+                                "rc_params.*")
 
     # ---
     @staticmethod
