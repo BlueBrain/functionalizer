@@ -255,13 +255,17 @@ class Functionalizer(object):
         """ Transform conn rules into concrete rule instances (without wildcards) and indexed by mtype-mtype
             Index is a string in the form "src>dst"
         """
+        mtypes_rev = {mtype:i for i, mtype in enumerate(mTypes)}
         conn_rules = {}
+
         for rule in src_conn_rules:  # type: ConnectivityPathRule
             srcs = matchfilter(mTypes, rule.source)
             dsts = matchfilter(mTypes, rule.destination)
             for src in srcs:
                 for dst in dsts:
-                    key = src + ">" + dst
+                    #  key = src + ">" + dst
+                    # Key is now an int
+                    key = (mtypes_rev[src] << 16) + mtypes_rev[dst]
                     if key in conn_rules:
                         logger.debug("Several rules applying to the same mtype connection: %s->%s [Rule: %s->%s]",
                                        src, dst, rule.source, rule.destination)

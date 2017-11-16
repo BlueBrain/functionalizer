@@ -13,7 +13,7 @@ class DataSets:
 NEURON_SCHEMA = types.StructType([
     types.StructField("id", types.IntegerType(), False),
     types.StructField("morphology_i", types.IntegerType(), False),  # mtype
-    types.StructField("morphology", types.StringType(), False),  # mtype
+    types.StructField("morphology", types.StringType(), False),     # mtype
     types.StructField("electrophysiology", types.IntegerType(), False),  # etype
     types.StructField("syn_class_index", types.IntegerType(), False),
     types.StructField("position", types.ArrayType(types.DoubleType(), False), False),

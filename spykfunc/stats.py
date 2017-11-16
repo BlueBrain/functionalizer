@@ -74,7 +74,7 @@ class NeuronStats(object):
         neuron_touches = self.neurons_touch_counts
 
         # Group by morphos
-        morpho_touches_conns = neuron_touches.groupBy("n1_morpho", "n2_morpho").agg(
+        morpho_touches_conns = neuron_touches.groupBy("n1_morpho_i", "n2_morpho_i").agg(
             F.sum(col("count")).alias("total_touches"),
             F.count(col("*")).alias("total_connections"))
 
@@ -82,8 +82,10 @@ class NeuronStats(object):
             "average_touches_conn",
             morpho_touches_conns.total_touches / morpho_touches_conns.total_connections)
 
-        self._morpho_touches_conns = morpho_touches_conns.cache()
-        self._morpho_touches_conns.count()
+        # We better not cache yet, as there may be further calculations/cache
+        self._morpho_touches_conns = morpho_touches_conns
+        # self._morpho_touches_conns = morpho_touches_conns.cache()
+        # self._morpho_touches_conns.count()
         return self._morpho_touches_conns
 
     @staticmethod
@@ -91,8 +93,8 @@ class NeuronStats(object):
         """ Counts the total touches between morphologies and neurons.
         """
         return neuronG.find("(n1)-[t]->(n2)").groupBy(
-            col("n1.morphology").alias("n1_morpho"),
-            col("n2.morphology").alias("n2_morpho"),
+            col("n1.morphology_i").alias("n1_morpho_i"),
+            col("n2.morphology_i").alias("n2_morpho_i"),
             col("n1.id").alias("n1_id"),
             col("n2.id").alias("n2_id"),
         ).count()

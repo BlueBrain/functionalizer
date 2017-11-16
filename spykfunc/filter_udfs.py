@@ -24,7 +24,7 @@ def reduce_cut_parameter_udef(conn_rules_map, debug=False):
     structuralProbability = 1.0
 
     # this f will be serialized and transmitted to workers
-    def f(mtype_src, mtype_dst, structuralMean):
+    def f(pathway_i, structuralMean):
         """Calculates the parameters for R&C mtype-mtype
         :param structuralMean: The average of touches/connection for the given mtype-mtype rule
         :return: a tuple of (pP_A, pMu_A, bouton_reduction_factor, activeFraction_legacy)
@@ -38,7 +38,9 @@ def reduce_cut_parameter_udef(conn_rules_map, debug=False):
 
         # conn_rules_map is optimized as a Broadcast variable
         # unfortunately in pyspark it is not transparent, we must use ".value"
-        rule = conn_rules_map.value.get(mtype_src + ">" + mtype_dst)
+        # key = mtype_src + ">" + mtype_dst
+        rule = conn_rules_map.value.get(pathway_i)
+
         if not rule:
             return nil
 
