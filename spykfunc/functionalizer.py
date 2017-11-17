@@ -179,8 +179,8 @@ class Functionalizer(object):
             return 1
 
         # Force compute, saving to parquet - fast and space efficient
-        # self.touchDF = self.exporter.save_temp(self.touchDF)
-        # We are now using checkpoint which is the equivalent standard way of doing it
+        # We should be using checkpoint which is the standard way of doing it, but it is still buggy and recomputes twice
+        self.touchDF = self.exporter.save_temp(self.touchDF)
 
         return 0
 
@@ -232,6 +232,7 @@ class Functionalizer(object):
         newtouchDF = touch_rules_filter.apply(self.neuronG)
 
         # So far there was quite some processing which would be recomputed
+        # self.touchDF = newtouchDF.persist(StorageLevel.DISK_ONLY)  # checkpoint is still not working well
         self.touchDF = newtouchDF.checkpoint()
 
     # ---
@@ -246,8 +247,8 @@ class Functionalizer(object):
         # self.touchDF = cumulative_distance_f.apply(self.neuronG)
 
         logger.info("Applying Reduce and Cut...")
-        rc = filters.ReduceAndCut(mtype_conn_rules, self.neuron_stats, sc)
-        self.touchDF = rc.apply(self.neuronG).checkpoint()
+        rc = filters.ReduceAndCut(mtype_conn_rules, self.neuron_stats, spark)
+        self.touchDF = rc.apply(self.neuronG)
 
     # ---
     @staticmethod

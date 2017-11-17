@@ -29,10 +29,10 @@ def reduce_cut_parameter_udef(conn_rules_map, debug=False):
         :param structuralMean: The average of touches/connection for the given mtype-mtype rule
         :return: a tuple of (pP_A, pMu_A, bouton_reduction_factor, activeFraction_legacy)
         """
-        # If there are no connections for a pathway (mean=0), cannot compute valid numbers
         _debug = None
-        nil = (None, None, None, None, _debug)
+        nil = (1.0, None, None, None, _debug)  # On error don't cut
 
+        # If there are no connections for a pathway (mean=0), cannot compute valid numbers
         if structuralMean == 0:
             return nil
 
