@@ -14,6 +14,8 @@ logger = get_logger(__name__)
 # Control variable that outputs intermediate calculations, and makes processing slower
 _DEBUG = True
 _DEBUG_REDUCE = False
+_DEBUG_CUT = False
+_DEBUG_CUT2AF = False
 
 
 if _DEBUG:
@@ -131,7 +133,11 @@ class ReduceAndCut(DataSetOperation):
         # Get and broadcast reduce and count
         logger.info("Computing Pathway stats...")
         rc_params_df = self.compute_reduce_cut_params()
-        params_df = F.broadcast(rc_params_df.checkpoint())
+
+        if _DEBUG:
+            params_df = F.broadcast(rc_params_df.cache().checkpoint())
+        else:
+            params_df = F.broadcast(rc_params_df.cache())
 
         # Debug params info ------------------------------------------------------------------------
         if _DEBUG and _DEBUG_REDUCE:
@@ -147,7 +153,9 @@ class ReduceAndCut(DataSetOperation):
                         .withColumn("pathway_i", self.to_pathway_i("n1.morphology_i", "n2.morphology_i"))
                         .select("pathway_i", "t.*"))  # Only pathway and touch
 
+        # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         # Reduce
+        # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         logger.info("Applying Reduce step...")
         reduced_touches = self.apply_reduce(full_touches, params_df)
 
@@ -157,15 +165,31 @@ class ReduceAndCut(DataSetOperation):
         reduced_touches.write.parquet("_tmp/cut_touches.parquet", mode="overwrite", partitionBy="pathway_i")
         reduced_touches = self.spark.read.parquet("_tmp/cut_touches.parquet")
 
-        # if _DEBUG: (reduced_touches
-        #             .groupBy("pathway_i").count()
-        #             .coalesce(1)
-        #             .write.csv("_debug/reduce_counts.csv", header=True, mode="overwrite"))
+        if _DEBUG and _DEBUG_REDUCE: (reduced_touches
+                    .groupBy("pathway_i").count()
+                    .coalesce(1)
+                    .write.csv("_debug/reduce_counts.csv", header=True, mode="overwrite"))
 
+        # Compute the touch_counts per connection
+        reduced_touch_counts_connection = (
+            reduced_touches
+                .groupBy(F.col("pathway_i"),
+                         F.col("src"),  # Pre Neuron id
+                         F.col("dst"),  # Post Neuron id
+                         )
+                .count()
+                .withColumnRenamed("count", "reduced_touch_counts_connection")
+                # Result can be large
+                .persist(StorageLevel.DISK_ONLY)
+        )
+
+        # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         # Cut
+        # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         logger.info("Applying Cut step...")
-        cut_touches = self.apply_cut(reduced_touches, params_df)
-        if _DEBUG:
+        cut_touches, cut_touch_counts_pathway = self.apply_cut(reduced_touches, params_df, reduced_touch_counts_connection)
+
+        if _DEBUG and _DEBUG_CUT:
             # We only checkpoint here if debugging, otherwise processing goes on until saved as extended touches
             cut_touches = cut_touches.checkpoint(False)
             (cut_touches
@@ -173,8 +197,23 @@ class ReduceAndCut(DataSetOperation):
                 .coalesce(1)
                 .write.csv("_debug/cut_counts.csv", header=True, mode="overwrite"))
 
+
+        # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        # Cut 2: by Active Fraction
+        # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        logger.info("Applying Cut step part 2: Active Fraction...")
+        cut2AF_touches = self.apply_cut_active_fraction(cut_touches, params_df, cut_touch_counts_pathway)
+
+        if _DEBUG and _DEBUG_CUT2AF:
+            # We only checkpoint here if debugging, otherwise processing goes on until saved as extended touches
+            cut2AF_touches = cut2AF_touches.checkpoint(False)
+            (cut2AF_touches
+                .groupBy("pathway_i").count()
+                .coalesce(1)
+                .write.csv("_debug/cut2af_counts.csv", header=True, mode="overwrite"))
+
         # Only the touch fields
-        return cut_touches.select("t.*")
+        return cut_touches.select(neuronG.edges.schema.names)
 
     # ---
     @staticmethod
@@ -191,17 +230,17 @@ class ReduceAndCut(DataSetOperation):
         # First obtain the morpho-morpho stats dataframe
         #   We use mtype_touch_stats which is cached. It requires a huge shuffle anyway
         #   so we can cache (considering we run on systems with much larger mem, e.g. 2M neurons produce a 40GB DF)
-        mtype_stats = self.stats.mtype_touch_stats\
+        mtype_stats = (
+            self.stats.mtype_touch_stats
             .withColumn("pathway_i", self.to_pathway_i("n1_morpho_i", "n2_morpho_i"))
+            .repartition("pathway_i")
+        )
 
         # Materializing MType Assoc counts now, it was cached
         # Beware we are not caching anything, it shall be done at a higher level
 
         # param create udf
         rc_param_maker = reduce_cut_parameter_udef(self.conn_rules)
-
-        # NOTE: Case of Pathway [MType-MType] not in the recipe
-        # TODO: Apparently it doesn't cut. We should issue a warning!
 
         # Extract p_A, mu_A, activeFraction
         params_df = (
@@ -226,13 +265,14 @@ class ReduceAndCut(DataSetOperation):
         # Reducing touches on a single neuron is equivalent as reducing on
         # the global set of touches within a pathway (morpho-morpho association)
         # fractions = dict(params_df.select("pathway_i", "pP_A").collect())
+        logger.debug(" -> Building reduce fractions")
         fractions = params_df.select("pathway_i", "pP_A").rdd.collectAsMap()
 
         return all_touches.sampleBy("pathway_i", fractions)
 
     # ---
     @staticmethod
-    def apply_cut(reduced_touches, params_df):
+    def apply_cut(reduced_touches, params_df, reduced_touch_counts_connection):
         """
         Apply cut filter
         Cut computes a survivalRate and activeFraction for each post neuron
@@ -242,27 +282,6 @@ class ReduceAndCut(DataSetOperation):
             .where("pP_A < 1.0")
             .select("pathway_i", "pMu_A")
             .withColumn("sigma", params_df.pMu_A / 4))
-
-        # Compute the touch_counts per connection
-        # This triggers the calculation of reduced_touches
-        # The groupBy will incur a large shuffle of the reduced_touches
-        reduced_touch_counts_connection = (
-            reduced_touches
-            .groupBy(F.col("pathway_i"),
-                     F.col("src"),  # Pre Neuron id
-                     F.col("dst"),  # Post Neuron id
-                     )
-            .count()
-            .withColumnRenamed("count", "reduced_touch_counts_connection")
-            .checkpoint()
-        )
-
-        reduced_touch_counts_pathway = (
-            reduced_touch_counts_connection
-            .groupBy("pathway_i")
-            .sum("reduced_touch_counts_connection")
-            .withColumnRenamed("count", "reduced_touch_counts_pathway")
-       )
 
         connection_survival_rate = (
             reduced_touch_counts_connection
@@ -274,9 +293,13 @@ class ReduceAndCut(DataSetOperation):
             .drop("sigma", "pMu_A")
         )
 
+        if _DEBUG and _DEBUG_CUT:
+            connection_survival_rate.show(100)
+            connection_survival_rate.coalesce(1).write.csv("_debug/connection_survival_rate.csv", header=True, mode="overwrite")
 
         # COMPUTING STRATEGY
-        # Shall cut gets us the list of connections which shall be removed -> always 0 count -> little mem
+        # Shall cut gets us the list of connections which shall be removed -> always 0 count -> little mem (12b /entry)
+        # -> ok cache (dont broadcast!)
         # We later reuse this to recompute the updated touch count
         # It should be also quite fast to drop connections given both DFs are partitioned by pathway_i
 
@@ -286,30 +309,30 @@ class ReduceAndCut(DataSetOperation):
             .where(F.rand() >= F.col("survival_rate"))
             .select("pathway_i", "src", "dst")
             .cache()  # This DF is used in two different calculations
+            #.checkpoint()
         )
 
         cut_touches = (reduced_touches
                        .join(shall_cut, ["pathway_i", "src", "dst"], how="left_anti"))
 
-        # Calc reduce_cut_touch_counts_pathway by removing entries from reduced_touch_counts_connection and summing
-        reduce_cut_touch_counts_pathway = (
+        # Calc cut_touch_counts_pathway
+        cut_touch_counts_pathway = (
             reduced_touch_counts_connection
-            .join(shall_cut.withColumn("cut", F.lit(True)), ["pathway_i", "src", "dst"], how="left")
-            .withColumn("cut_touch_counts_connection",
-                        F.when(F.col("cut").isNull(), F.col("reduced_touch_counts_connection"))
-                        .otherwise(F.lit(0)))
+            .join(shall_cut, ["pathway_i", "src", "dst"], how="left_anti")
             .groupBy("pathway_i")
-            .agg(F.sum("reduced_touch_counts_connection").alias("reduced_touch_counts_pathway"),
-                 F.sum("cut_touch_counts_connection").alias("cut_touch_counts_pathway")
-                 )
+            .agg(F.sum("reduced_touch_counts_connection").alias("cut_touch_counts_pathway"))
         )
 
-        # ========= LEFT AT THIS POINT ============== #
+        return cut_touches, cut_touch_counts_pathway
+
+    # ----
+    @staticmethod
+    def apply_cut_active_fraction(cut_touches, params_df, cut_touch_counts_pathway):
         logger.debug("Building active_fractions...")
-        active_fractions = (cut_pathway_counts
+        active_fractions = F.broadcast(cut_touch_counts_pathway
             .join(params_df, "pathway_i")
             .withColumn("actual_reduction_factor",
-                F.col("cut_touches_count") / F.col("total_touches")
+                F.col("cut_touch_counts_pathway") / F.col("total_touches")
             )
             .withColumn("active_fraction",
                 F.when(F.col("bouton_reduction_factor").isNull(),
@@ -323,37 +346,25 @@ class ReduceAndCut(DataSetOperation):
                 )
             )
             .select("pathway_i", "active_fraction")
-        ).checkpoint()
+            .cache()
+            .checkpoint()
+        )
 
-        # # Materialize
+        # Materialize (required when caching instead of checkpointing)
         # active_fractions.count()
 
-        # if _DEBUG:
-        #     connection_survival_rate.show(100)
-        #     connection_survival_rate.coalesce(1).write.csv("_debug/connection_survival_rate.csv", header=True, mode="overwrite")
-        #     active_fractions.show(100)
-        #     active_fractions.coalesce(1).write.csv("_debug/active_fractions.csv", header=True, mode="overwrite")
-        #     sys.exit(0)
-
-        # Connections to keep according to active_fraction
-        # NOTE: Until now shall_not_cut is distributed, but the join with active_fractions should be Broadcasted
-
-        logger.info("Building shall_not_cut2")
-        shall_not_cut2 = F.broadcast(
-            shall_not_cut
-            .join(active_fractions, "pathway_i")
-            .where(F.col("active_fraction") > F.rand())
-            .select("pathway_i", "post_neuron_id")
-        )
+        if _DEBUG and _DEBUG_CUT2AF:
+            active_fractions.show(100)
+            active_fractions.coalesce(1).write.csv("_debug/active_fractions.csv", header=True, mode="overwrite")
 
         logger.info("Cutting touches...")
-        cut_touches = (
-            reduced_touches
-            .withColumn("post_neuron_id", F.col("t.dst"))
-            .join(shall_not_cut2, ["post_neuron_id", "pathway_i"])
+        cut2AF_touches = (
+            cut_touches
+            .join(active_fractions, "pathway_i")
+            .where(F.col("active_fraction") > F.rand())
         )
 
-        return cut_touches.select("pathway_i", "t")
+        return cut2AF_touches
 
 
 # --------------------------------------------------------------------------------------------------------------------
