@@ -303,19 +303,19 @@ class ReduceAndCut(DataSetOperation):
         # We later reuse this to recompute the updated touch count
         # It should be also quite fast to drop connections given both DFs are partitioned by pathway_i
 
-        logger.info("Connections to cut according to survival_rate")
+        logger.debug(" -> Connections to cut according to survival_rate")
         shall_cut = (
             connection_survival_rate
             .where(F.rand() >= F.col("survival_rate"))
             .select("pathway_i", "src", "dst")
             .cache()  # This DF is used in two different calculations
-            #.checkpoint()
         )
 
         cut_touches = (reduced_touches
                        .join(shall_cut, ["pathway_i", "src", "dst"], how="left_anti"))
 
         # Calc cut_touch_counts_pathway
+        logger.debug(" -> Calculating pathway counts after cut")
         cut_touch_counts_pathway = (
             reduced_touch_counts_connection
             .join(shall_cut, ["pathway_i", "src", "dst"], how="left_anti")
@@ -328,7 +328,7 @@ class ReduceAndCut(DataSetOperation):
     # ----
     @staticmethod
     def apply_cut_active_fraction(cut_touches, params_df, cut_touch_counts_pathway):
-        logger.debug("Building active_fractions...")
+        logger.debug(" -> Building active_fractions...")
         active_fractions = F.broadcast(cut_touch_counts_pathway
             .join(params_df, "pathway_i")
             .withColumn("actual_reduction_factor",
@@ -357,7 +357,7 @@ class ReduceAndCut(DataSetOperation):
             active_fractions.show(100)
             active_fractions.coalesce(1).write.csv("_debug/active_fractions.csv", header=True, mode="overwrite")
 
-        logger.info("Cutting touches...")
+        logger.debug(" -> Cutting!")
         cut2AF_touches = (
             cut_touches
             .join(active_fractions, "pathway_i")

@@ -81,7 +81,9 @@ class Functionalizer(object):
         sqlContext.registerJavaFunction("float2binary", "spykfunc.udfs.FloatArraySerializer")
         sqlContext.registerJavaFunction("int2binary", "spykfunc.udfs.IntArraySerializer")
 
-    # ---
+    # -------------------------------------------------------------------------
+    # Data loading and Init
+    # -------------------------------------------------------------------------
     def init_data(self, recipe_file, mvd_file, morpho_dir, touch_files):
         # In "program" mode this dir wont change later, so we can check here
         # for its existence/permission to create
@@ -132,12 +134,12 @@ class Functionalizer(object):
         # Data exporter
         self.exporter = NeuronExporter(output_path=self.output_dir)
 
-    #---
+    # ----
     def ensure_data_loaded(self):
         if self.recipe is None or self.neuronG is None:
             raise RuntimeError("No touches available. Please load data first.")
 
-    # ---
+    # ----
     @property
     def touchDF(self):
         return self._touchDF
@@ -148,7 +150,7 @@ class Functionalizer(object):
         self.neuronG = GraphFrame(self.neuronDF, self._touchDF)    # Rebuild graph
         self.neuron_stats.update_touch_graph_source(self.neuronG)  # Reset stats source
 
-    # ---
+    # ----
     @property
     def dataQ(self):
         """
@@ -157,13 +159,15 @@ class Functionalizer(object):
         """
         return _filtering.DataSetQ(self.neuronG.find("(n1)-[t]->(n2)"))
 
-    # ---
+    # ----
     def reset(self):
         """Discards any filtering applied to touches
         """
         self.touchDF = self._initial_touchDF
 
-    # ---
+    # -------------------------------------------------------------------------
+    # Main entry point of Filter Execution
+    # -------------------------------------------------------------------------
     def process_filters(self):
         """Runs all functionalizer filters
         """
@@ -184,7 +188,9 @@ class Functionalizer(object):
 
         return 0
 
-    # ---
+    # -------------------------------------------------------------------------
+    # Exporting results
+    # -------------------------------------------------------------------------
     def export_results(self, format_parquet=False, output_path=None):
         self.ensure_data_loaded()
         logger.info("Computing touch synaptical properties")
@@ -211,9 +217,10 @@ class Functionalizer(object):
         logger.info("Finished")
         return 0
 
-    # ---------------------------------------------------------
+    # -------------------------------------------------------------------------
     # Functions to create/apply filters for the current session
-    # ---------------------------------------------------------
+    # -------------------------------------------------------------------------
+
     def filter_by_soma_axon_distance(self):
         """BLBLD-42: filter by soma-axon distance
         """
@@ -222,7 +229,7 @@ class Functionalizer(object):
         distance_filter = filters.BoutonDistanceFilter(self.recipe.synapses_distance)
         self.touchDF = distance_filter.apply(self.neuronG)
 
-    # ---
+    # ----
     def filter_by_touch_rules(self):
         """Filter according to recipe TouchRules
         """
@@ -235,7 +242,7 @@ class Functionalizer(object):
         # self.touchDF = newtouchDF.persist(StorageLevel.DISK_ONLY)  # checkpoint is still not working well
         self.touchDF = newtouchDF.checkpoint()
 
-    # ---
+    # ----
     def run_reduce_and_cut(self):
         """Apply Reduce and Cut
         """
@@ -250,7 +257,10 @@ class Functionalizer(object):
         rc = filters.ReduceAndCut(mtype_conn_rules, self.neuron_stats, spark)
         self.touchDF = rc.apply(self.neuronG)
 
-    # ---
+    # -------------------------------------------------------------------------
+    # Helper functions
+    # -------------------------------------------------------------------------
+
     @staticmethod
     def _build_concrete_mtype_conn_rules(src_conn_rules, mTypes):
         """ Transform conn rules into concrete rule instances (without wildcards) and indexed by mtype-mtype
