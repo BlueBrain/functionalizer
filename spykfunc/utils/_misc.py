@@ -77,7 +77,7 @@ class ConsoleColors:
 
     # These are the sequences need to get colored ouput
     _RESET_SEQ = "\033[0m"
-    _COLOR_SEQ = "\033[1;{}m"
+    _COLOR_SEQ = "\033[{}m"
 
     @classmethod
     def reset(cls):
@@ -85,7 +85,7 @@ class ConsoleColors:
 
     @classmethod
     def set_text_color(cls, color):
-        return cls._COLOR_SEQ.format(30 + color)
+        return cls._COLOR_SEQ.format(color + 30)
 
     @classmethod
     def format_text(cls, text, color):
@@ -133,7 +133,7 @@ class ColoredFormatter(_logging.Formatter):
 
 ContinueAbortErrorLogHandler = ErrorHandler()
 ContinueAbortErrorLogHandler.setLevel(_logging.ERROR)
-DefaultHandler = _logging.StreamHandler()
+DefaultHandler = _logging.StreamHandler(sys.stdout)
 DefaultHandler.setLevel(_logging.DEBUG)
 DefaultHandler.setFormatter(ColoredFormatter('[%(levelname)s] %(name)s: %(message)s'))
 

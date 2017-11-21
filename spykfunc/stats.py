@@ -84,8 +84,6 @@ class NeuronStats(object):
 
         # We better not cache yet, as there may be further calculations/cache
         self._morpho_touches_conns = morpho_touches_conns
-        # self._morpho_touches_conns = morpho_touches_conns.cache()
-        # self._morpho_touches_conns.count()
         return self._morpho_touches_conns
 
     @staticmethod

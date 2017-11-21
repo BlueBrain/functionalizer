@@ -21,6 +21,7 @@ from .stats import NeuronStats
 from .definitions import CellClass
 from . import _filtering
 from . import filters
+from . import schema
 from . import utils
 from . import synapse_properties
 if False: from .recipe import ConnectivityPathRule  # NOQA
@@ -102,6 +103,9 @@ class Functionalizer(object):
         # Load Neurons data
         fdata = NeuronDataSpark(MVD_Morpho_Loader(mvd_file, morpho_dir), spark)
         fdata.load_mvd_neurons_morphologies()
+
+        # Reverse DF name vectors
+        self.mtypes_df = spark.createDataFrame(enumerate(fdata.mTypes), schema.INT_STR_SCHEMA)
 
         # Init the Enumeration to contain fzer CellClass index
         CellClass.init_fzer_indexes(fdata.cellClasses)
@@ -254,8 +258,8 @@ class Functionalizer(object):
         # self.touchDF = cumulative_distance_f.apply(self.neuronG)
 
         logger.info("Applying Reduce and Cut...")
-        rc = filters.ReduceAndCut(mtype_conn_rules, self.neuron_stats, spark)
-        self.touchDF = rc.apply(self.neuronG)
+        rc = filters.ReduceAndCut(mtype_conn_rules, self.neuron_stats, spark, )
+        self.touchDF = rc.apply(self.neuronG, mtypes=self.mtypes_df)
 
     # -------------------------------------------------------------------------
     # Helper functions
@@ -274,7 +278,7 @@ class Functionalizer(object):
             dsts = matchfilter(mTypes, rule.destination)
             for src in srcs:
                 for dst in dsts:
-                    #  key = src + ">" + dst
+                    # key = src + ">" + dst
                     # Key is now an int
                     key = (mtypes_rev[src] << 16) + mtypes_rev[dst]
                     if key in conn_rules:
