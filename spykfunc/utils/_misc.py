@@ -73,11 +73,12 @@ def query_yes_no(question, default=None):
 
 
 class ConsoleColors:
-    BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
+    BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE, _, DEFAULT = range(10)
+    NORMAL, BOLD, DIM, UNDERLINED, BLINK, INVERTED, HIDDEN = [a << 4 for a in range(7)]
 
     # These are the sequences need to get colored ouput
     _RESET_SEQ = "\033[0m"
-    _COLOR_SEQ = "\033[{}m"
+    _CHANGE_SEQ = "\033[{}m"
 
     @classmethod
     def reset(cls):
@@ -85,11 +86,16 @@ class ConsoleColors:
 
     @classmethod
     def set_text_color(cls, color):
-        return cls._COLOR_SEQ.format(color + 30)
+        return cls._CHANGE_SEQ.format(color + 30)
 
     @classmethod
-    def format_text(cls, text, color):
-        return cls.set_text_color(color) + text + cls._RESET_SEQ
+    def format_text(cls, text, color, style=None):
+        if color > 7:
+            style = (color >> 4)
+            color = color & 0xf
+        format_seq = "" if style is None else cls._CHANGE_SEQ.format(style)
+
+        return format_seq + cls.set_text_color(color) + text + cls._RESET_SEQ
 
 
 # ---
@@ -117,7 +123,7 @@ class ErrorHandler(_logging.StreamHandler):
 class ColoredFormatter(_logging.Formatter):
     COLORS = {
         'WARNING': ConsoleColors.YELLOW,
-        'INFO': ConsoleColors.WHITE,
+        'INFO': ConsoleColors.DEFAULT + ConsoleColors.BOLD,
         'DEBUG': ConsoleColors.BLUE,
         'ERROR': ConsoleColors.RED,
         'CRITICAL': ConsoleColors.RED

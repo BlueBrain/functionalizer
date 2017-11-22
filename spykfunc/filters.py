@@ -158,10 +158,9 @@ class ReduceAndCut(DataSetOperation):
         logger.info("Applying Reduce step...")
         reduced_touches = self.apply_reduce(full_touches, params_df)
 
-        # PERSIST RESULTS
-        #.persist(StorageLevel.DISK_ONLY)  # checkpoint is still not working well
-        # so we output directly to parquet, and immediately partition by pathway, which has a good granularity
-        reduced_touches.write.parquet("_tmp/cut_touches.parquet", mode="overwrite", partitionBy="pathway_i")
+        # PERSIST RESULTS (to parquet while checkpoint() is not an option)
+        logger.debug(" -> Checkpointing...")
+        reduced_touches.write.parquet("_tmp/cut_touches.parquet", mode="overwrite")
         reduced_touches = self.spark.read.parquet("_tmp/cut_touches.parquet")
 
         if _DEBUG and _DEBUG_REDUCE:
@@ -170,7 +169,7 @@ class ReduceAndCut(DataSetOperation):
                 .coalesce(1)
                 .write.csv("_debug/reduce_counts.csv", header=True, mode="overwrite"))
 
-        # Compute the touch_counts per connection
+        logger.debug(" -> Computing reduced touch counts")
         reduced_touch_counts_connection = (
             reduced_touches
                 .groupBy(F.col("pathway_i"),
@@ -179,10 +178,8 @@ class ReduceAndCut(DataSetOperation):
                          )
                 .count()
                 .withColumnRenamed("count", "reduced_touch_counts_connection")
-                #.persist(StorageLevel.DISK_ONLY)  # Result can be large -> only disk
                 .checkpoint()
         )
-
 
         # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         # Cut
@@ -284,6 +281,7 @@ class ReduceAndCut(DataSetOperation):
         logger.debug(" -> Building reduce fractions")
         fractions = params_df.select("pathway_i", "pP_A").rdd.collectAsMap()
 
+        logger.debug(" -> Cutting touches")
         return all_touches.sampleBy("pathway_i", fractions)
 
     # ---
@@ -332,7 +330,6 @@ class ReduceAndCut(DataSetOperation):
                        .join(shall_cut, ["pathway_i", "src", "dst"], how="left_anti"))
 
         # Calc cut_touch_counts_connection
-        logger.debug(" -> Calculating connection counts after cut")
         cut_touch_counts_connection = (
             reduced_touch_counts_connection
             .join(shall_cut, ["pathway_i", "src", "dst"], how="left_anti")
@@ -350,7 +347,7 @@ class ReduceAndCut(DataSetOperation):
         :param cut_touch_counts_connection: The DF with the cut touch counts per connection (built previously in an optimized way)
         :return: The final cut touches
         """
-        logger.debug(" -> Building active_fractions...")
+        logger.debug(" -> Calculating connection counts after cut")
         cut_touch_counts_connection = cut_touch_counts_connection.checkpoint()
 
         active_fractions = (
@@ -389,7 +386,6 @@ class ReduceAndCut(DataSetOperation):
             active_fractions.coalesce(1).write.csv("_debug/active_fractions.csv", header=True, mode="overwrite")
             sys.exit(0)
 
-        logger.debug(" -> Cutting...")
         cut2AF_touches = (
             cut_touches
             .join(shall_cut2, ["pathway_i", "src", "dst"], how="left_anti")

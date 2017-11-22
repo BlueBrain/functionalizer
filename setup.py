@@ -87,7 +87,7 @@ def setup_package():
 
     setup(
         # name and other metadata are in setup.cfg
-        version="0.1.dev1",
+        version="0.2.dev1",
         # use_scm_version=True,
         packages=find_packages(),
         ext_modules=extensions,

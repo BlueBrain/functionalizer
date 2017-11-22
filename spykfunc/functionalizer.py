@@ -188,6 +188,7 @@ class Functionalizer(object):
 
         # Force compute, saving to parquet - fast and space efficient
         # We should be using checkpoint which is the standard way of doing it, but it is still buggy and recomputes twice
+        logger.info("Cutting touches...")
         self.touchDF = self.exporter.save_temp(self.touchDF)
 
         return 0
@@ -243,8 +244,10 @@ class Functionalizer(object):
         newtouchDF = touch_rules_filter.apply(self.neuronG)
 
         # So far there was quite some processing which would be recomputed
-        # self.touchDF = newtouchDF.persist(StorageLevel.DISK_ONLY)  # checkpoint is still not working well
-        self.touchDF = newtouchDF.checkpoint()
+        # self.touchDF = newtouchDF.checkpoint()  # checkpoint is still not working well
+        logger.debug(" -> Checkpointing...")
+        newtouchDF.write.parquet("_tmp/filtered_touches.parquet", mode="overwrite")
+        self.touchDF = spark.read.parquet("_tmp/filtered_touches.parquet")
 
     # ----
     def run_reduce_and_cut(self):
