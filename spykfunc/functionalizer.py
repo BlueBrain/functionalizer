@@ -285,14 +285,14 @@ class Functionalizer(object):
                     # Key is now an int
                     key = (mtypes_rev[src] << 16) + mtypes_rev[dst]
                     if key in conn_rules:
-                        logger.debug("Several rules applying to the same mtype connection: %s->%s [Rule: %s->%s]",
-                                       src, dst, rule.source, rule.destination)
+                        # logger.debug("Several rules applying to the same mtype connection: %s->%s [Rule: %s->%s]",
+                        #                src, dst, rule.source, rule.destination)
                         prev_rule = conn_rules[key]
                         # Overwrite if it is specific
                         if (('*' in prev_rule.source and '*' not in rule.source) or
                             ('*' in prev_rule.destination and '*' not in rule.destination)):
                             conn_rules[key] = rule
-                            logger.debug(" -> Used instead")
+                            # logger.debug(" -> Used instead")
                     else:
                         conn_rules[key] = rule
 

@@ -37,10 +37,10 @@ class config:
     log_level = _log.DEBUG
 
 
-# #################################################################################################
-# Shortcuts (mind the import must be done inside, otherwise we will start a cluster in each worker)
-###################################################################################################
-def Functionalizer():
+# ####################################################################################################
+# Shortcuts (mind the import must be done inside, as we want to allow importing spykfunc without spark)
+######################################################################################################
+def functionalizer_new():
     """
     Direct Functionalizer object
     """
