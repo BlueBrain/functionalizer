@@ -1,6 +1,6 @@
 from pyspark.sql import functions as F
 from pyspark.sql.functions import col
-
+from .schema import to_pathway_i
 
 class NeuronStats(object):
     """
@@ -71,10 +71,8 @@ class NeuronStats(object):
         if self._morpho_touches_conns:
             return self._morpho_touches_conns
 
-        neuron_touches = self.neurons_touch_counts
-
-        # Group by morphos
-        morpho_touches_conns = neuron_touches.groupBy("n1_morpho_i", "n2_morpho_i").agg(
+        # Group by pathway
+        morpho_touches_conns = self.neurons_touch_counts.groupBy("pathway_i").agg(
             F.sum(col("count")).alias("total_touches"),
             F.count(col("*")).alias("total_connections"))
 
@@ -90,12 +88,16 @@ class NeuronStats(object):
     def get_neurons_touch_counts(neuronG):
         """ Counts the total touches between morphologies and neurons.
         """
-        return neuronG.find("(n1)-[t]->(n2)").groupBy(
-            col("n1.morphology_i").alias("n1_morpho_i"),
-            col("n2.morphology_i").alias("n2_morpho_i"),
-            col("n1.id").alias("n1_id"),
-            col("n2.id").alias("n2_id"),
-        ).count()
+        return (
+            neuronG.find("(n1)-[t]->(n2)")
+            .select(
+                to_pathway_i("n1.morphology_i", "n2.morphology_i"),
+                col("n1.id").alias("n1_id"),
+                col("n2.id").alias("n2_id"))
+            .sort("pathway_i")  # Force range partitioner
+            .groupBy("pathway_i", "n1_id", "n2_id")
+            .count()
+        )
 
 
 class MTYPE_STATS_FIELDS:
