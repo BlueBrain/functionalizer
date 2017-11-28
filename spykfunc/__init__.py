@@ -41,17 +41,16 @@ class config:
 # Shortcuts (mind the import must be done inside, otherwise we will start a cluster in each worker)
 ###################################################################################################
 def Functionalizer():
-    """
-    Direct Functionalizer object
+    """ Direct Functionalizer object
     """
     from .functionalizer import Functionalizer
     return Functionalizer()
 
 
 def session(recipe, mvd_file, first_touch):
-    """
-    Creates and Initializes a Functionalizer session
-    :return:Functionalizer instance
+    """ Creates and Initializes a Functionalizer session
+
+    :returns: A :py:class:`~spykfunc.Functionalizer` instance
     """
     from .commands import arg_parser
     from .functionalizer import session

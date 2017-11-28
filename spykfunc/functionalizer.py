@@ -5,10 +5,10 @@ from __future__ import absolute_import
 from fnmatch import filter as matchfilter
 from glob import glob
 import time
+import sys
 import os
 
 import pyspark
-import sys
 from pyspark.sql import SparkSession, SQLContext
 from pyspark.sql import functions as F
 from pyspark import StorageLevel
@@ -24,7 +24,6 @@ from . import filters
 from . import schema
 from . import utils
 from . import synapse_properties
-if False: from .recipe import ConnectivityPathRule  # NOQA
 
 __all__ = ["Functionalizer", "session"]
 
@@ -47,12 +46,23 @@ class Functionalizer(object):
     """
     # Defaults for instance vars
     fdata = None
+    """:property: Functionalizer low-level data"""
+
     recipe = None
-    touch_info = None
+    """:property: The parsed recipe"""
+
     neuron_stats = None
+    """:property: The :py:class:`~spykfunc.stats.NeuronStats` object for the current touch set"""
+
     morphologies = None
+    """:property: The morphology RDD"""
+
     neuronDF = None
+    """:property: The Neurons info (from MVD) as a Dataframe"""
+
     neuronG = None
+    """:property: The Graph representation of the touches (GraphFrame)"""
+
     # TouchDF is volatile and we trigger events on update
     _touchDF = None
 
@@ -86,6 +96,14 @@ class Functionalizer(object):
     # Data loading and Init
     # -------------------------------------------------------------------------
     def init_data(self, recipe_file, mvd_file, morpho_dir, touch_files):
+        """ Initializes all data for a Functionalizer session, reading MVDs, morphologies, recipe,
+        and making all conversions
+
+        :param recipe_file: The recipe file (XML)
+        :param mvd_file: The mvd file
+        :param morpho_dir: The dir containing all required morphologies
+        :param touch_file: The first touch file, given all others can be found followig the naming convention"
+        """
         # In "program" mode this dir wont change later, so we can check here
         # for its existence/permission to create
         if not os.path.isdir(self.output_dir):
@@ -139,13 +157,12 @@ class Functionalizer(object):
         self.exporter = NeuronExporter(output_path=self.output_dir)
 
     # ----
-    def ensure_data_loaded(self):
-        if self.recipe is None or self.neuronG is None:
-            raise RuntimeError("No touches available. Please load data first.")
-
-    # ----
     @property
     def touchDF(self):
+        """
+        :property: The current touch set Dataframe.
+        NOTE that setting to this attribute will trigger updating the graph
+        """
         return self._touchDF
 
     @touchDF.setter
@@ -158,14 +175,14 @@ class Functionalizer(object):
     @property
     def dataQ(self):
         """
-        Return a DataSetQ object, offering a high-level yet flexible query API on the current Neuron-Touch Graph
-        Refer to the API of DataSetQ in _filtering.py
+        :property: A :py:class:`~spykfunc._filtering.DataSetQ` object, offering a high-level query API on
+        the current Neuron-Touch Graph
         """
         return _filtering.DataSetQ(self.neuronG.find("(n1)-[t]->(n2)"))
 
     # ----
     def reset(self):
-        """Discards any filtering applied to touches
+        """Discards any filtering and reverts the touches to the original state.
         """
         self.touchDF = self._initial_touchDF
 
@@ -173,9 +190,10 @@ class Functionalizer(object):
     # Main entry point of Filter Execution
     # -------------------------------------------------------------------------
     def process_filters(self):
-        """Runs all functionalizer filters
+        """Runs all functionalizer filters in order, according to the classic functionalizer:
+        (1) Soma-axon distance, (2) Touch rules, (3.1) Reduce and (3.2) Cut
         """
-        self.ensure_data_loaded()
+        self._ensure_data_loaded()
         logger.info("%s: Starting Filtering...", time.ctime())
         try:
             self.filter_by_soma_axon_distance()
@@ -197,11 +215,15 @@ class Functionalizer(object):
     # Exporting results
     # -------------------------------------------------------------------------
     def export_results(self, format_parquet=False, output_path=None):
-        self.ensure_data_loaded()
+        """ Exports the current touches to storage, appending the synapse property fields
+
+        :param format_parquet: If True will export the touches in parquet format (rather than hdf5)
+        :param output_path: Changes the default export directory
+        """
+        self._ensure_data_loaded()
         logger.info("Computing touch synaptical properties")
-        extended_touches = synapse_properties.compute_additional_h5_fields(self.neuronG,
-                                                                           self.synapse_class_matrix,
-                                                                           self.synapse_class_prop_df)
+        extended_touches = synapse_properties.compute_additional_h5_fields(
+            self.neuronG, self.synapse_class_matrix, self.synapse_class_prop_df)
         extended_touches = self.exporter.save_temp(extended_touches, "extended_touches.parquet")
 
         logger.info("Exporting touches...")
@@ -227,18 +249,18 @@ class Functionalizer(object):
     # -------------------------------------------------------------------------
 
     def filter_by_soma_axon_distance(self):
-        """BLBLD-42: filter by soma-axon distance
+        """BLBLD-42: Creates a Soma-axon distance filter and applies it to the current touch set.
         """
-        self.ensure_data_loaded()
+        self._ensure_data_loaded()
         logger.info("Filtering by soma-axon distance...")
         distance_filter = filters.BoutonDistanceFilter(self.recipe.synapses_distance)
         self.touchDF = distance_filter.apply(self.neuronG)
 
     # ----
     def filter_by_touch_rules(self):
-        """Filter according to recipe TouchRules
+        """Creates a TouchRules filter according to recipe and applies it to the current touch set
         """
-        self.ensure_data_loaded()
+        self._ensure_data_loaded()
         logger.info("Filtering by touchRules...")
         touch_rules_filter = filters.TouchRulesFilter(self.recipe.touch_rules)
         newtouchDF = touch_rules_filter.apply(self.neuronG)
@@ -251,9 +273,9 @@ class Functionalizer(object):
 
     # ----
     def run_reduce_and_cut(self):
-        """Apply Reduce and Cut
+        """Create and apply Reduce and Cut filter
         """
-        self.ensure_data_loaded()
+        self._ensure_data_loaded()
         # Index and distribute mtype rules across the cluster
         mtype_conn_rules = self._build_concrete_mtype_conn_rules(self.recipe.conn_rules, self.fdata.mTypes)
 
@@ -267,6 +289,11 @@ class Functionalizer(object):
     # -------------------------------------------------------------------------
     # Helper functions
     # -------------------------------------------------------------------------
+
+    def _ensure_data_loaded(self):
+        """"""
+        if self.recipe is None or self.neuronG is None:
+            raise RuntimeError("No touches available. Please load data first.")
 
     @staticmethod
     def _build_concrete_mtype_conn_rules(src_conn_rules, mTypes):
@@ -305,6 +332,9 @@ class Functionalizer(object):
 def session(options):
     """
     Main execution function to work similarly to functionalizer app
+
+    :param options: An object containing the required option attributes, as built \
+    by the arg parser: :py:data:`commands.arg_parser`.
     """
     assert "NeuronDataSpark" in globals(), "Use spark-submit to run your job"
 

@@ -6,8 +6,6 @@ from __future__ import absolute_import
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
 from . import filter_udfs
-from pyspark.sql import SparkSession
-spark = SparkSession.builder.getOrCreate()
 
 
 # -----
