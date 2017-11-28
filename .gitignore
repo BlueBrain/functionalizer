@@ -44,5 +44,4 @@ docs/api/*
 docs/_build/*
 cover/*
 MANIFEST
-spykfunc/dataio/*.cpp
 tests/*.cpp
