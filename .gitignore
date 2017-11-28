@@ -44,4 +44,3 @@ docs/api/*
 docs/_build/*
 cover/*
 MANIFEST
-tests/*.cpp
