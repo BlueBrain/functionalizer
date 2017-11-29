@@ -20,12 +20,10 @@ class NrnConverter(object):
     _MAX_OUTBUFFER_LEN = 1024**2  # 1M entries ~ 8MB mem
     _OPTS_DEFAULT = dict(verbose=0)
 
-    def __init__(self, input_filename, **opts):
-        self._in_filename = input_filename
-        self.in_file = h5py.File(input_filename, "r")
+    def __init__(self, **opts):
+        self.in_file = None
         self.outfile = None
-        self.max_id = max(int(x[1:]) for x in self.in_file.keys())
-        self._n_neurons = len(self.in_file)
+        self._n_nerons = None
         self._outbuffers = defaultdict(list)
         self._outbuffer_entries = 0
         self._array = None
@@ -41,14 +39,20 @@ class NrnConverter(object):
                 logging.basicConfig(level=logging.DEBUG)
 
     # --
-    def create_efferent(self, output_filename=None):
+    def create_efferent(self, input_filename, output_filename=None):
         """
         Create a transposed version of the h5 file, datasets ("columns") become rows, rows become datasets
         """
-        self.outfile = h5py.File(output_filename or "nrn_efferent.h5", "w")
-        id_limit = self.max_id + 1
-        print("[TRANSPOSING] %d touches in blocks of %dx%d" %
-              (id_limit, self._GROUP_SIZE, self._GROUP_SIZE))
+        self.in_file = h5py.File(input_filename, "r")
+        self._n_neurons = len(self.in_file)
+        max_id = max(int(x[1:]) for x in self.in_file.keys())
+        last_doth5_pos = input_filename.rfind(".h5")
+        self.outfile = h5py.File(output_filename or (input_filename[:last_doth5_pos] + "_efferent" +
+                                                     input_filename[last_doth5_pos:]))
+        id_limit = max_id + 1
+
+        print("[TRANSPOSING] %s in blocks of %dx%d" %
+              (input_filename, self._GROUP_SIZE, self._GROUP_SIZE))
 
         # For loop just to control the min-max outer gid
         for id_start in range(0, id_limit, self._GROUP_SIZE):

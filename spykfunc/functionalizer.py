@@ -31,14 +31,7 @@ __all__ = ["Functionalizer", "session"]
 spark = None
 sc = None
 logger = utils.get_logger(__name__)
-
-try:
-    from graphframes import GraphFrame
-except ImportError:
-    GraphFrame = None
-    logger.error("""graphframes could not be imported
-    Please start a spark instance with GraphFrames support
-    e.g. pyspark --packages graphframes:graphframes:0.5.0-spark2.1-s_2.11""")
+GraphFrame = None
 
 
 class Functionalizer(object):
@@ -68,10 +61,17 @@ class Functionalizer(object):
 
     def __init__(self, only_s2s=False):
         # Create Spark session with the static config
-        global spark, sc
+        global spark, sc, GraphFrame
         spark = (SparkSession.builder.appName("Functionalizer")
                  .config("spark.checkpoint.compress", True)
                  .getOrCreate())
+        try:
+            from graphframes import GraphFrame
+        except ImportError:
+            logger.error("Graphframes could not be imported"
+                         "Please start a spark instance with GraphFrames support"
+                         "e.g. pyspark --packages graphframes:graphframes:0.5.0-spark2.1-s_2.11")
+
         sc = spark.sparkContext
         sc.setLogLevel("WARN")
         sc.setCheckpointDir("_checkpoints")
@@ -205,7 +205,7 @@ class Functionalizer(object):
             return 1
 
         # Force compute, saving to parquet - fast and space efficient
-        # We should be using checkpoint which is the standard way of doing it, but it is still buggy and recomputes twice
+        # We should be using checkpoint which is the standard way of doing it, but it still recomputes twice
         logger.info("Cutting touches...")
         self.touchDF = self.exporter.save_temp(self.touchDF)
 
@@ -235,7 +235,7 @@ class Functionalizer(object):
             if format_parquet:
                 exporter.export_parquet(extended_touches)
             else:
-                exporter.export_hdf5(extended_touches,self.fdata.nNeurons)
+                exporter.export_hdf5(extended_touches, self.fdata.nNeurons, create_efferent=True)
         except:
             logger.error(utils.format_cur_exception())
             return 1
