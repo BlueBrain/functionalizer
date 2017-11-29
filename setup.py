@@ -9,6 +9,7 @@ import sys
 import os
 import glob
 
+SPYKFUNC_VERSION = "0.3.dev1"
 
 force_rebuild_cython = os.getenv('FORCE_CYTHONIZE', False)
 if not force_rebuild_cython and glob.glob('spykfunc/dataio/*.cpp'):
@@ -87,7 +88,7 @@ def setup_package():
 
     setup(
         # name and other metadata are in setup.cfg
-        version="0.2.dev1",
+        version=SPYKFUNC_VERSION,
         # use_scm_version=True,
         packages=find_packages(),
         ext_modules=extensions,

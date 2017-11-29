@@ -320,7 +320,7 @@ class ReduceAndCut(DataSetOperation):
         :return: The final cut touches
         """
         logger.debug(" -> Calculating connection counts after cut")
-        cut_touch_counts_connection = cut_touch_counts_connection.localCheckpoint()
+        cut_touch_counts_connection = cut_touch_counts_connection.checkpoint()
 
         active_fractions = (
             cut_touch_counts_connection
