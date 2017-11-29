@@ -14,7 +14,7 @@ Spykfunc module
 Functionalizer
 ``````````````
 
-.. automodule:: spykfunc.Functionalizer
+.. automodule:: spykfunc.functionalizer
     :members: Functionalizer, session
     :undoc-members:
     :show-inheritance:
