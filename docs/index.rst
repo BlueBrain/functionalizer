@@ -1,8 +1,22 @@
-========
-spykfunc
-========
+=================================
+Welcome to Spykfunc documentation
+=================================
 
 This is the documentation of **spykfunc**.
+
+Spykfunc is a new Functionalizer implementation on top of Spark (PySpark).
+
+Contents
+--------
+
+.. toctree::
+   :maxdepth: 2
+
+   License <license>
+   Authors <authors>
+   Changelog <changes>
+   Module Reference <api>
+
 
 .. note::
 
@@ -37,17 +51,6 @@ This is the documentation of **spykfunc**.
     <http://www.sphinx-doc.org/en/stable/domains.html#info-field-lists>`__
     style.
 
-
-Contents
-========
-
-.. toctree::
-   :maxdepth: 2
-
-   License <license>
-   Authors <authors>
-   Changelog <changes>
-   Module Reference <api/modules>
 
 
 Indices and tables

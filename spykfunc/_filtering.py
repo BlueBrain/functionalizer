@@ -93,6 +93,12 @@ class DataSetQ(object):
         self._flat_structure = flat_structure
 
     def filter(self, field1, value_or_field, comparator="="):
+        """ Filters the dataset according by a value or another field \n
+        :param field1: The field to select, refer to :py:mod:`spykfunc.schema` classes.
+        :param value_or_field: A literal value or another field.
+        :param comparator: The comparator sign (default: '=')
+        :return: The new dataset (lazy evaluated)
+        """
         # Ensure fields exist
         assert field1 in self._fields_avail, Exception(
             "Please use a field from the available set:" + str(self._fields_avail))
@@ -104,24 +110,35 @@ class DataSetQ(object):
         return DataSetQ(self)
 
     def select(self, *fields):
+        """Selects a subset of the fields from the current Dataframe
+        """
         self._op = Projection(fields)
         return DataSetQ(self, self._flat_fields(fields), flat_structure=True)
 
     def groupBy(self, *grouping_fields, **aggregating_func_per_field):
+        """Performs basic aggregation by a field
+        """
         self._op = Grouping(grouping_fields, aggregating_func_per_field)
         return DataSetQ(self, self._fields_avail)  # todo: fields are kept if aggregation is not performed
 
     # Terminating queries -> return a value, not another DataSetQ
     def count(self):
+        """ Counts the number of records from the dataframe \n
+        :return: The dataframe record count
+        """
         self._op = _Raw_Operation(".count()")
         return self._dataframe.count()
 
     def get_stats(self):
-        # stats and collect
+        """ Collects the statistics of the current dataframe (df.describe())
+        """
         self._op = _Raw_Operation(".describe().collect()")
         return self._dataframe.describe()
 
     def show(self, n=10):
+        """ Shows a subset of the records, by default first 10 \n
+        :param n: The number of records to show
+        """
         self._op = _Raw_Operation(".show(%d)" % (n,))
         return self._dataframe.show(n)
 
@@ -133,8 +150,9 @@ class DataSetQ(object):
 
         return "[DATA]" + op_repr
 
-    # Execute will perform the operatin on the dataset from the previous level
     def apply(self):
+        """ perform the operatin on the dataset from the previous level
+        """
         return self._op.apply(self._dataframe)
 
     # Except in the top-level, where the dataset is the dataframe, we must execute the DatasetQ operation to obtain it

@@ -5,6 +5,7 @@ from pyspark.sql import functions as F
 from pyspark.sql import types as T
 from pyspark import StorageLevel
 from .definitions import CellClass
+from .schema import to_pathway_i, pathway_i_to_str
 from ._filtering import DataSetOperation
 from .utils import get_logger
 from .filter_udfs import reduce_cut_parameter_udef
@@ -134,7 +135,7 @@ class ReduceAndCut(DataSetOperation):
         logger.info("Computing Pathway stats...")
         rc_params_df = self.compute_reduce_cut_params()
 
-        params_df = F.broadcast(rc_params_df.cache())
+        params_df = F.broadcast(rc_params_df.cache().checkpoint())
 
         # Debug params info ------------------------------------------------------------------------
         if _DEBUG and "mtypes" not in kw:
@@ -149,7 +150,7 @@ class ReduceAndCut(DataSetOperation):
         # Flatten GraphFrame and include pathway (morpho>morpho) column
         # apply_reduce and apply_cut require touches with the schema as created here
         full_touches = (neuronG.find("(n1)-[t]->(n2)")
-                        .withColumn("pathway_i", self.to_pathway_i("n1.morphology_i", "n2.morphology_i"))
+                        .withColumn("pathway_i", to_pathway_i("n1.morphology_i", "n2.morphology_i"))
                         .select("pathway_i", "t.*"))  # Only pathway and touch
 
         # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -195,7 +196,7 @@ class ReduceAndCut(DataSetOperation):
             cut_touch_counts_pathway = (cut_touch_counts_connection
                 .groupBy("pathway_i")
                 .agg(F.sum("reduced_touch_counts_connection").alias("cut_touch_counts_pathway")))
-            self.pathway_i_to_str(cut_touch_counts_pathway, kw["mtypes"])\
+            pathway_i_to_str(cut_touch_counts_pathway, kw["mtypes"])\
                 .coalesce(1)\
                 .write.csv("_debug/cut_counts.csv", header=True, mode="overwrite")
             logger.warning("Debugging: Execution terminated for debugging Cut")
@@ -216,32 +217,7 @@ class ReduceAndCut(DataSetOperation):
                 .write.csv("_debug/cut2af_counts.csv", header=True, mode="overwrite"))
 
         # Only the touch fields
-        return cut_touches.select(neuronG.edges.schema.names)
-
-    # ---
-    @staticmethod
-    def to_pathway_str(col1, col2):
-        return F.concat(F.col(col1), F.lit("->"), F.col(col2))
-
-    # ---
-    @staticmethod
-    def to_pathway_i(col1, col2):
-        return (F.shiftLeft(col1, 16) + F.col(col2)).cast(T.IntegerType())
-
-    # ---
-    @staticmethod
-    def pathway_i_to_str(df_pathway_i, mtypes):
-        col = "pathway_i"
-        return (
-            df_pathway_i
-            .withColumn("src_morpho_i", F.shiftRight(col, 16))
-            .withColumn("dst_morpho_i", F.col(col).bitwiseAND((1<<16)-1))
-            .join(mtypes.toDF("src_morpho_i", "src_morpho"), "src_morpho_i")
-            .join(mtypes.toDF("dst_morpho_i", "dst_morpho"), "dst_morpho_i")
-            .withColumn("pathway_str", F.concat("src_morpho", F.lit('->'), "dst_morpho"))
-            .drop("src_morpho_i", "src_morpho", "dst_morpho_i", "dst_morpho")
-        )
-
+        return cut2AF_touches.select(neuronG.edges.schema.names)
 
     # ---
     def compute_reduce_cut_params(self):
@@ -249,11 +225,7 @@ class ReduceAndCut(DataSetOperation):
         Computes the pathway parameters, used by Reduce and Cut filters
         """
         # First obtain the pathway (morpho-morpho) stats dataframe
-        mtype_stats = (
-            self.stats.mtype_touch_stats
-            .withColumn("pathway_i", self.to_pathway_i("n1_morpho_i", "n2_morpho_i"))
-            .repartition("pathway_i")
-        )
+        mtype_stats = self.stats.mtype_touch_stats.repartition("pathway_i")
 
         # param create udf
         rc_param_maker = reduce_cut_parameter_udef(self.conn_rules)
@@ -348,7 +320,7 @@ class ReduceAndCut(DataSetOperation):
         :return: The final cut touches
         """
         logger.debug(" -> Calculating connection counts after cut")
-        cut_touch_counts_connection = cut_touch_counts_connection.checkpoint()
+        cut_touch_counts_connection = cut_touch_counts_connection.localCheckpoint()
 
         active_fractions = (
             cut_touch_counts_connection
@@ -374,14 +346,14 @@ class ReduceAndCut(DataSetOperation):
 
         shall_cut2 = (
             cut_touch_counts_connection
-            .join(active_fractions, "pathway_i")
+            .join(F.broadcast(active_fractions), "pathway_i")
             .where(F.rand() >= F.col("active_fraction"))
             # Pathway_i is kept in order to make a join with the same keys as the partitioning
             .select("pathway_i", "src", "dst")
         )
 
         if _DEBUG and _DEBUG_CUT2AF:
-            active_fractions = ReduceAndCut.pathway_i_to_str(active_fractions, kw["mtypes"])
+            active_fractions = pathway_i_to_str(active_fractions, kw["mtypes"])
             active_fractions.show()
             active_fractions.coalesce(1).write.csv("_debug/active_fractions.csv", header=True, mode="overwrite")
             sys.exit(0)

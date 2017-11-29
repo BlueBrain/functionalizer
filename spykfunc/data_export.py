@@ -7,6 +7,7 @@ from pyspark.sql import functions as F
 from pyspark.sql import types as T
 from pyspark.sql import SparkSession
 from . import utils
+from . import tools
 
 logger = utils.get_logger(__name__)
 N_NEURONS_FILE = 1000
@@ -45,7 +46,7 @@ class NeuronExporter(object):
         return extended_touches_df.write.partitionBy("post_gid").parquet(output_path, mode="overwrite")
 
     # ---
-    def export_hdf5(self, extended_touches_df, n_gids, filename="nrn.h5"):
+    def export_hdf5(self, extended_touches_df, n_gids, filename="nrn.h5", create_efferent=False):
         # In the export a lot of shuffling happens, we must carefully control partitioning
         n_partitions = ((n_gids - 1) // N_NEURONS_FILE) + 1
         spark.conf.set("spark.sql.shuffle.partitions", n_partitions)
@@ -92,7 +93,7 @@ class NeuronExporter(object):
 
         # Build merged nrn_summary
         final_nrn_summary = path.join(self.output_path, "nrn_summary.h5")
-        nrn_completer = utils.NrnCompleter(summary_path, logger=logger)
+        nrn_completer = tools.NrnCompleter(summary_path, logger=logger)
         nrn_completer.create_transposed(sparse=True)
         nrn_completer.merge(final_nrn_summary)
         nrn_completer.add_meta(final_nrn_summary, dict(
@@ -101,10 +102,14 @@ class NeuronExporter(object):
         ))
 
         # Mass rename
-        it = iter(nrn_filenames.value)
-        os.rename(next(it), path.join(self.output_path, "nrn.h5"))
-        for i, fn in enumerate(it):
-            os.rename(fn, path.join(self.output_path, "nrn.h5.{}".format(i+1)))
+        for i, fn in enumerate(nrn_filenames.value):
+            os.rename(fn, path.join(self.output_path, "nrn.h5.{}".format(i)))
+
+        if create_efferent:
+            converter = tools.NrnConverter()
+            for i in range(len(nrn_filenames.value)):
+
+                converter.create_efferent(path.join(self.output_path, "nrn.h5.{}".format(i)))
 
 
     @staticmethod
