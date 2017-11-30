@@ -1,8 +1,9 @@
 """
 Program which takes a nrn_summary with only post_neuron touch count and calculates the pre_neuron counterpart
 """
-from __future__ import print_function
+from __future__ import print_function, division
 import h5py
+from array import array
 import numpy
 from docopt import docopt
 from future.builtins import range
@@ -10,13 +11,14 @@ from future.utils import iteritems
 from collections import defaultdict
 from bisect import bisect_left
 import logging
+from progress.bar import Bar
 
 
 class NrnCompleter(object):
     # Please use base2 vals
-    _GROUP_SIZE = 1024  # mem usage is 4 * GROUP_SIZE^2 on dense matrixes
+    _GROUP_SIZE = 8 * 1024  # mem usage is 4 * GROUP_SIZE^2 on dense matrixes
     _ARRAY_LEN = _GROUP_SIZE ** 2
-    _MAX_OUTBUFFER_LEN = 1024**2  # 1M entries ~ 8MB mem
+    _MAX_OUTBUFFER_LEN = 10 * 1024**2  # 1M entries ~ 8MB mem
     _OPTS_DEFAULT = dict(verbose=0)
 
     def __init__(self, input_filename, **opts):
@@ -49,21 +51,23 @@ class NrnCompleter(object):
         output_filename = output_filename or self._in_filename + ".T"
         self.outfile = h5py.File(output_filename, "w")
         id_limit = self.max_id + 1
+
         print("[TRANSPOSING] %d neurons in blocks of %dx%d (mode: %s)" %
               (id_limit, self._GROUP_SIZE, self._GROUP_SIZE, "sparse" if sparse else "dense_matrix"))
 
-        if not sparse:
-            # With dense datasets we use a temporary array
+        if sparse:
+            self._array_dict = defaultdict(lambda: array("i"))
+        else:
             self._array = numpy.zeros(self._ARRAY_LEN, dtype="int32")
 
-        # For loop just to control the min-max outer gid
+        bar = Bar("Blocks DONE", max=(round(id_limit / self._GROUP_SIZE)) ** 2)
+        bar.start()
+
+        # For loop just to control Datasets in the block (outer gid)
         for id_start in range(0, id_limit, self._GROUP_SIZE):
             id_stop = min(id_limit, id_start+self._GROUP_SIZE)
             postgids = []
             sub_offset = []
-
-            self.logger.info("Group %d-%d [%3d%%]",
-                             id_start, id_stop, (id_stop-id_start)*100//id_limit)
 
             # Init structures for the current group block
             for post_gid in range(id_start, id_stop):
@@ -72,36 +76,48 @@ class NrnCompleter(object):
                 postgids.append(post_gid)
                 sub_offset.append(0)
 
-            # For loop to control the inner gid
+            # For loop to control the Datasets' rows in the block (inner gid)
             for id_start_2 in range(0, id_limit, self._GROUP_SIZE):
                 id_stop_2 = min(id_limit, id_start_2 + self._GROUP_SIZE)
                 last_section = id_stop_2 == id_limit  # The max inner GID isn't necessarily the max out
                 group_max_len = id_stop_2 - id_start_2
+                data = None
+
                 for i, post_gid in enumerate(postgids):
                     ds_name = "a"+str(post_gid)
                     ds = self.in_file[ds_name]
                     cur_offset = sub_offset[i]
-                    data = ds[cur_offset:cur_offset+group_max_len]
-                    for row in data:
-                        pre_gid, touch_count = row
-                        if not last_section and pre_gid >= id_stop_2:
-                            # Stop and save iteration state here, except in last section
-                            sub_offset[i] = cur_offset
-                            break
-                        cur_offset += 1
-                        if not sparse:
-                            self._array[(pre_gid - id_start_2) * self._GROUP_SIZE + post_gid-id_start] = touch_count
-                        else:
-                            row[0] = post_gid
-                            self._outbuffers["a"+str(pre_gid)].append(row.reshape((1, 2)))
-                            self._outbuffer_entries += 1
-                    sub_offset[i] = cur_offset
+                    if last_section or data is None:
+                        data = ds[cur_offset:cur_offset + group_max_len]
+                    if last_section:
+                        max_row_i = group_max_len
+                    else:
+                        max_row_i = numpy.searchsorted(data[:, 0], id_stop_2)
+                        if max_row_i == len(data):
+                            # We hit the end, so probably there's not enough data
+                            data = ds[cur_offset:cur_offset + group_max_len]
+                            max_row_i = numpy.searchsorted(data[:, 0], id_stop_2)
+
+                    # Keep the inner loops to the minimum possible code, performance critical
+                    if not sparse:
+                        for row in data[:max_row_i]:
+                            # pre_gid, touch_count = row
+                            self._array[(row[0] - id_start_2) * self._GROUP_SIZE + post_gid-id_start] = row[1]
+                    else:
+                        for row in data[:max_row_i]:
+                            self._array_dict[row[0]].extend([post_gid, row[1]])
+
+                    sub_offset[i] = cur_offset + max_row_i
 
                 if not sparse:
                     self._store_clear_group(id_start_2, id_start)
                 else:
+                    # TODO: We still have to convert _array_dict to _outbuffers
+                    #
                     if self._outbuffer_entries > self._MAX_OUTBUFFER_LEN:
                         self._flush_outbuffers()
+
+                bar.next()
 
         self.logger.debug("Final buffer flush")
         self._flush_outbuffers(final=True)
@@ -172,9 +188,8 @@ class NrnCompleter(object):
         merged_file = h5py.File(merged_filename, mode="w")
         all_ds_names = set(self.in_file.keys()) | set(self.outfile.keys())
         ds_count = len(all_ds_names)
-        progress_each = ds_count // min(100, round(ds_count / 500.0, 0))
-        cur_i = 0
         print("[MERGING] %d + %d datasets -> %d" % (self._n_neurons, len(self.outfile), ds_count))
+        bar = ProgressBar(total=ds_count)
 
         for ds_name in all_ds_names:
             if ds_name not in self.outfile:
@@ -219,10 +234,7 @@ class NrnCompleter(object):
 
                 merged_file.create_dataset(ds_name, data=out_arr[:cur_index])
 
-            cur_i += 1
-            if cur_i % progress_each == 0:
-                self.logger.info("Merged %5d /%5d [%3d%%]",
-                                 cur_i, ds_count, 100 * cur_i // ds_count)
+            bar.update()
 
         merged_file.close()
         self.logger.info("Merging complete.")
