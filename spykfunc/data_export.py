@@ -102,15 +102,18 @@ class NeuronExporter(object):
         ))
 
         # Mass rename
+        new_names = []
         for i, fn in enumerate(nrn_filenames.value):
-            os.rename(fn, path.join(self.output_path, "nrn.h5.{}".format(i)))
+            new_name = path.join(self.output_path, "nrn.h5.{}".format(i))
+            os.rename(fn, new_name)
+            new_names.append(new_name)
 
         if create_efferent:
-            converter = tools.NrnConverter()
-            for i in range(len(nrn_filenames.value)):
-                converter.create_efferent(path.join(self.output_path, "nrn.h5.{}".format(i)))
+            # Process conversion in parallel
+            nrn_files_rdd = sc.parallelize(new_names, len(new_names))
+            nrn_files_rdd.map(create_other_files).count()
 
-
+    # ---
     @staticmethod
     def nrn_fields_as_float(df):
         # Select fields and cast to Float
@@ -167,3 +170,8 @@ def get_export_hdf5_f(nrn_filepath, nrn_filenames_accu):
         nrn_filenames_accu.add([output_filename])
 
     return write_hdf5
+
+
+def create_other_files(nrn_file):
+    converter = tools.NrnConverter()
+    converter.create_efferent(nrn_file)

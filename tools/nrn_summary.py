@@ -13,6 +13,7 @@ from bisect import bisect_left
 import logging
 from progress.bar import Bar
 from itertools import islice
+import math
 
 
 class NrnCompleter(object):
@@ -55,7 +56,7 @@ class NrnCompleter(object):
         print("[TRANSPOSING] %d neurons in blocks of %dx%d (mode: Sparse)" %
               (id_limit, self._GROUP_SIZE, self._GROUP_SIZE))
 
-        bar = Bar("Progress", max=(round(id_limit / self._GROUP_SIZE)) ** 2)
+        bar = Bar("Progress", max=int(math.ceil(id_limit / self._GROUP_SIZE)) ** 2)
         bar.start()
 
         # For loop just to control Datasets in the block (outer gid)
