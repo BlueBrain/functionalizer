@@ -7,5 +7,6 @@ lazy-property
 numpy
 py4j
 lxml
+progress
 #morphotool
 
