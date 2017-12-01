@@ -12,6 +12,7 @@ from collections import defaultdict
 from bisect import bisect_left
 import logging
 from progress.bar import Bar
+from itertools import islice
 
 
 class NrnCompleter(object):
@@ -152,12 +153,17 @@ class NrnCompleter(object):
         Merger of both forward and reverse matrixes (afferent and efferent touch count)
         :param merged_filename: The name of the output merged file
         """
+        if not self.outfile:
+            self.outfile = h5py.File(self._in_filename + ".T", "r")
+
         merged_filename = merged_filename or self._in_filename + ".merged"
         merged_file = h5py.File(merged_filename, mode="w")
         all_ds_names = set(self.in_file.keys()) | set(self.outfile.keys())
         ds_count = len(all_ds_names)
+
         print("[MERGING] %d + %d datasets -> %d" % (self._n_neurons, len(self.outfile), ds_count))
-        bar = Bar("Progress", total=ds_count)
+        i = 0
+        bar = Bar("Progress", max=ds_count//100)
         bar.start()
 
         for ds_name in all_ds_names:
@@ -176,34 +182,58 @@ class NrnCompleter(object):
                 merged_file.create_dataset(ds_name, data=out_arr)
 
             else:
-                ds = self.in_file[ds_name][:]  # Force load to mem
-                other_ds = self.outfile[ds_name][:]
-                out_arr = numpy.empty((len(ds) + len(other_ds), 3), dtype="int32")
-                cur_index = 0
-                ds_T_iter = iter(other_ds)
-                other_gid, efferent_count = next(ds_T_iter, (None, 0))
+                ds1 = self.in_file[ds_name][:]
+                ds2 = self.outfile[ds_name][:]
 
-                for gid, afferent_count in ds:
-                    while other_gid is not None and other_gid < gid:
-                        out_arr[cur_index] = (other_gid, efferent_count, 0)
-                        cur_index += 1
-                        other_gid, efferent_count = next(ds_T_iter, (None, 0))
-                    if gid == other_gid:
-                        out_arr[cur_index] = (other_gid, efferent_count, afferent_count)
-                        other_gid, efferent_count = next(ds_T_iter, (None, 0))
-                    else:
-                        out_arr[cur_index] = (gid, 0, afferent_count)
-                    cur_index += 1
+                only_ds1 = numpy.isin(ds1[:, 0], ds2[:,0], assume_unique=True, invert=True)
+                len_only_ds1 = numpy.count_nonzero(only_ds1)
+                part1 = numpy.zeros((len_only_ds1, 3), dtype="int32")
+                part1[:, [0, 2]] = ds1[only_ds1]
+
+                only_ds2 = numpy.isin(ds2[:, 0], ds1[:, 0], assume_unique=True, invert=True)
+                len_only_ds2 = numpy.count_nonzero(only_ds2)
+                part2 = numpy.zeros((len_only_ds2, 3), dtype="int32")
+                part2[:, [0, 1]] = ds2[only_ds2]
+
+                common_len = numpy.size(only_ds1) - len_only_ds1
+                common = numpy.empty((common_len, 3), dtype="int32")
+                common[:, [0, 1]] = ds2[~only_ds2]
+                common[:, 2] = ds1[~only_ds1][:, 1]
+
+                merged = numpy.concatenate((part1, part2, common))
+                merged.sort(0)
+                merged_file.create_dataset(ds_name, data=merged)
+
+                # ds = self.in_file[ds_name][:]  # Force load to mem
+                # other_ds = self.outfile[ds_name][:]
+                # out_arr = numpy.empty((len(ds) + len(other_ds), 3), dtype="int32")
+                # cur_index = 0
+                # ds_T_iter = iter(other_ds)
+                # other_gid, efferent_count = next(ds_T_iter, (None, 0))
+                #
+                # for gid, afferent_count in ds:
+                #     while other_gid is not None and other_gid < gid:
+                #         out_arr[cur_index] = (other_gid, efferent_count, 0)
+                #         cur_index += 1
+                #         other_gid, efferent_count = next(ds_T_iter, (None, 0))
+                #     if gid == other_gid:
+                #         out_arr[cur_index] = (other_gid, efferent_count, afferent_count)
+                #         other_gid, efferent_count = next(ds_T_iter, (None, 0))
+                #     else:
+                #         out_arr[cur_index] = (gid, 0, afferent_count)
+                #     cur_index += 1
 
                 # Remaining - other_gid's > last gid
-                while other_gid is not None:
-                    out_arr[cur_index] = (other_gid, efferent_count, 0)
-                    cur_index += 1
-                    other_gid, efferent_count = next(ds_T_iter, (None, 0))
+                # while other_gid is not None:
+                #     out_arr[cur_index] = (other_gid, efferent_count, 0)
+                #     cur_index += 1
+                #     other_gid, efferent_count = next(ds_T_iter, (None, 0))
 
-                merged_file.create_dataset(ds_name, data=out_arr[:cur_index])
+                # merged_file.create_dataset(ds_name, data=out_arr[:cur_index])
 
-            bar.next()
+            i += 1
+            if i % 100 == 0:
+                bar.next()
         bar.finish()
 
         merged_file.close()
@@ -233,10 +263,10 @@ class NrnCompleter(object):
         problematic_grps = set()
         missing_points = []
         errors = 0
-        bar = Bar("Progress", total=len(in_file))
+        bar = Bar("Progress", max=20)
         bar.start()
 
-        for name, group in iteritems(in_file):
+        for name, group in islice(iteritems(in_file), 20):
             for id1, cnt in group:
                 if cnt == 0:
                     continue
