@@ -148,13 +148,14 @@ class NrnCompleter(object):
         self._outbuffer_entries = 0
 
     # --
-    def merge(self, merged_filename=None):
+    def merge(self, second_file=None, merged_filename=None):
         """
         Merger of both forward and reverse matrixes (afferent and efferent touch count)
+        :param second_file: The file to merge with. (defaults to input_filename.T)
         :param merged_filename: The name of the output merged file
         """
         if not self.outfile:
-            self.outfile = h5py.File(self._in_filename + ".T", "r")
+            self.outfile = h5py.File(second_file or self._in_filename + ".T", "r")
 
         merged_filename = merged_filename or self._in_filename + ".merged"
         merged_file = h5py.File(merged_filename, mode="w")
@@ -293,12 +294,14 @@ def run_validation():
 _doc = """
 Usage:
   nrn_summary transpose <input-file> [-o=<output-file>] [-vv]
+  nrn_summary merge <input-file> [-a=<other-file>] [-o=<output-file>] [-vv]
   nrn_summary tmerge <input-file> [-o=<output-file>] [-vv]
   nrn_summary -h
 
 Options:
   -h                Show help
   -o=<output-file>  By default creates input_name.T (transposed) or input_name.merged (tmerge)
+  -a=<other-file>   The file to merge with in merge-only mode (by default uses input-file.T)
   --sparse          Runs the sparse algorithm, which saves memory and might be faster on highly sparse datasets
   -vv               Verbose mode (-v for info, -vv for debug) 
 """
@@ -309,6 +312,8 @@ if __name__ == "__main__":
 
     if args["transpose"]:
         cter.create_transposed(args["-o"])
+    elif args["merge"]:
+        cter.merge(args["-a"], merged_filename=args["-o"])
     elif args["tmerge"]:
         cter.create_transposed()
-        cter.merge(args["-o"])
+        cter.merge(merged_filename=args["-o"])
