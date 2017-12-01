@@ -15,9 +15,9 @@ import logging
 
 class NrnConverter(object):
     # Please use base2 vals
-    _GROUP_SIZE = 1024  # mem usage is 4 * GROUP_SIZE^2 on dense matrixes
+    _GROUP_SIZE = 32 * 1024  # mem usage is 4 * GROUP_SIZE^2 on dense matrixes
     _ARRAY_LEN = _GROUP_SIZE ** 2
-    _MAX_OUTBUFFER_LEN = 1024**2  # 1M entries ~ 8MB mem
+    _MAX_OUTBUFFER_LEN = 32 * 1024**2  # 32M entries ~ 256MB mem
     _OPTS_DEFAULT = dict(verbose=0)
 
     def __init__(self, **opts):
@@ -83,6 +83,9 @@ class NrnConverter(object):
 
                     # Find the position using numpy to load only the required data
                     last_elem_i = numpy.searchsorted(pre_gids, id_stop_2)
+                    if last_elem_i == 0:
+                        continue  # No data
+
                     data = ds[cur_offset:cur_offset+last_elem_i]
                     pre_gids = pre_gids[:last_elem_i]
 
@@ -225,6 +228,5 @@ Options:
 
 if __name__ == "__main__":
     args = docopt(_doc)
-    cter = NrnConverter(args["<input-file>"], verbose=args["-v"])
-    cter.create_efferent(args["-o"])
-    cter.validate()
+    cter = NrnConverter(verbose=args["-v"])
+    cter.create_efferent(args["<input-file>"], args["-o"])
