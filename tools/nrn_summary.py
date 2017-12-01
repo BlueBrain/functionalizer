@@ -16,8 +16,7 @@ from progress.bar import Bar
 
 class NrnCompleter(object):
     # Please use base2 vals
-    _GROUP_SIZE = 8 * 1024  # mem usage is 4 * GROUP_SIZE^2 on dense matrixes
-    _ARRAY_LEN = _GROUP_SIZE ** 2
+    _GROUP_SIZE = 8 * 1024
     _MAX_OUTBUFFER_LEN = 10 * 1024**2  # 1M entries ~ 8MB mem
     _OPTS_DEFAULT = dict(verbose=0)
 
@@ -41,8 +40,8 @@ class NrnCompleter(object):
             elif self._opts["verbose"] == 2:
                 logging.basicConfig(level=logging.DEBUG)
 
-    # ----
-    def create_transposed(self, output_filename=None, sparse=False):
+    # --
+    def create_transposed(self, output_filename=None):
         """
         Create a transposed version of the h5 file, datasets ("columns") become rows, rows become datasets
         :param sparse: If the h5 file matrix is not dense (case of touches) we can use sparse to avoid creating an \
@@ -52,111 +51,80 @@ class NrnCompleter(object):
         self.outfile = h5py.File(output_filename, "w")
         id_limit = self.max_id + 1
 
-        print("[TRANSPOSING] %d neurons in blocks of %dx%d (mode: %s)" %
-              (id_limit, self._GROUP_SIZE, self._GROUP_SIZE, "sparse" if sparse else "dense_matrix"))
+        print("[TRANSPOSING] %d neurons in blocks of %dx%d (mode: Sparse)" %
+              (id_limit, self._GROUP_SIZE, self._GROUP_SIZE))
 
-        if sparse:
-            self._array_dict = defaultdict(lambda: array("i"))
-        else:
-            self._array = numpy.zeros(self._ARRAY_LEN, dtype="int32")
-
-        bar = Bar("Blocks DONE", max=(round(id_limit / self._GROUP_SIZE)) ** 2)
+        bar = Bar("Progress", max=(round(id_limit / self._GROUP_SIZE)) ** 2)
         bar.start()
 
         # For loop just to control Datasets in the block (outer gid)
-        for id_start in range(0, id_limit, self._GROUP_SIZE):
-            id_stop = min(id_limit, id_start+self._GROUP_SIZE)
-            postgids = []
-            sub_offset = []
+        for ds_start_i in range(0, id_limit, self._GROUP_SIZE):
+            ds_stop_i = min(id_limit, ds_start_i + self._GROUP_SIZE)
+            postgids = array("i")
+            sub_offset = array("i")
 
             # Init structures for the current group block
-            for post_gid in range(id_start, id_stop):
+            for post_gid in range(ds_start_i, ds_stop_i):
                 if ("a" + str(post_gid)) not in self.in_file:
                     continue
                 postgids.append(post_gid)
                 sub_offset.append(0)
 
             # For loop to control the Datasets' rows in the block (inner gid)
-            for id_start_2 in range(0, id_limit, self._GROUP_SIZE):
-                id_stop_2 = min(id_limit, id_start_2 + self._GROUP_SIZE)
-                last_section = id_stop_2 == id_limit  # The max inner GID isn't necessarily the max out
-                group_max_len = id_stop_2 - id_start_2
-                data = None
-
-                for i, post_gid in enumerate(postgids):
-                    ds_name = "a"+str(post_gid)
-                    ds = self.in_file[ds_name]
-                    cur_offset = sub_offset[i]
-                    if last_section or data is None:
-                        data = ds[cur_offset:cur_offset + group_max_len]
-                    if last_section:
-                        max_row_i = group_max_len
-                    else:
-                        max_row_i = numpy.searchsorted(data[:, 0], id_stop_2)
-                        if max_row_i == len(data):
-                            # We hit the end, so probably there's not enough data
-                            data = ds[cur_offset:cur_offset + group_max_len]
-                            max_row_i = numpy.searchsorted(data[:, 0], id_stop_2)
-
-                    # Keep the inner loops to the minimum possible code, performance critical
-                    if not sparse:
-                        for row in data[:max_row_i]:
-                            # pre_gid, touch_count = row
-                            self._array[(row[0] - id_start_2) * self._GROUP_SIZE + post_gid-id_start] = row[1]
-                    else:
-                        for row in data[:max_row_i]:
-                            self._array_dict[row[0]].extend([post_gid, row[1]])
-
-                    sub_offset[i] = cur_offset + max_row_i
-
-                if not sparse:
-                    self._store_clear_group(id_start_2, id_start)
-                else:
-                    # TODO: We still have to convert _array_dict to _outbuffers
-                    #
-                    if self._outbuffer_entries > self._MAX_OUTBUFFER_LEN:
-                        self._flush_outbuffers()
-
+            for rec_start_i in range(0, id_limit, self._GROUP_SIZE):
+                _array_dict_sub = self.transpose_block(postgids, rec_start_i, id_limit, sub_offset)
+                self._store_block(_array_dict_sub)
                 bar.next()
 
-        self.logger.debug("Final buffer flush")
+        bar.finish()
+        print("Final buffer flush...")
         self._flush_outbuffers(final=True)
-        self.logger.info("Transposing complete")
+        print("Transposing complete")
 
-    # ----
-    def _store_clear_group(self, group_id_start, gid_start):
-        """
-        Write the intermediate matrix, clearing it to the next iteration
-        """
-        # Common gids for group
-        all_gids = numpy.arange(self._GROUP_SIZE, dtype="int32") + gid_start
-        self.logger.debug("Processing matrix to buffers [group offset: %d, base gid: %d]",
-                          group_id_start, gid_start)
+    # --
+    def transpose_block(self, postgids, rec_start_i, id_limit, sub_offset):
+        rec_stop_i = min(id_limit, rec_start_i + self._GROUP_SIZE)
+        last_section = rec_stop_i == id_limit  # The max inner GID isn't necessarily the max out
+        _array_dict = defaultdict(lambda: array("i"))
+        _BLOCK_SIZE = 512  # 4*2*512 = 4K
 
-        for idx_start in range(0, self._ARRAY_LEN, self._GROUP_SIZE):
-            idx_end = idx_start + self._GROUP_SIZE
-            data_view = self._array[idx_start:idx_end]
-            filter_mask = data_view > 0
-            filtered_counts = data_view[filter_mask]
-            if not len(filtered_counts):
-                continue
-            filtered_gids = all_gids[filter_mask]
-            cur_ds_i = idx_start // self._GROUP_SIZE + group_id_start
-            merged_data = numpy.stack((filtered_gids, filtered_counts), axis=1)
-            ds_name = "a" + str(cur_ds_i)
+        for i, post_gid in enumerate(postgids):
+            ds_name = "a" + str(post_gid)
+            ds = self.in_file[ds_name]
+            cur_offset = sub_offset[i]
 
-            # We have outbuffers since HDF5 appends are extremely expensive
-            self._outbuffers[ds_name].append(merged_data)
-            self._outbuffer_entries += len(merged_data)
+            if last_section:
+                data = ds[cur_offset:]
+                for row in data:
+                    _array_dict[row[0]].extend([post_gid, row[1]])
+                sub_offset[i] = cur_offset + len(data)
+            else:
+                while True:
+                    # Lets read blocks, instead of the full length
+                    data = ds[cur_offset: cur_offset + _BLOCK_SIZE]
+                    max_row_i = numpy.searchsorted(data[:, 0], rec_stop_i)
+                    sub_offset[i] = cur_offset + max_row_i
 
-        if self._outbuffer_entries > self._MAX_OUTBUFFER_LEN:
-            self.logger.debug("Flushing buffers")
-            self._flush_outbuffers()
+                    for row in data[:max_row_i]:
+                        _array_dict[row[0]].extend([post_gid, row[1]])
 
-        # Clean for next block
-        self._array.fill(0)
+                    # We can stop reading blocks if our max value is found in the middle of the buffer
+                    if max_row_i < _BLOCK_SIZE:
+                        break
 
-    # ----
+        return _array_dict
+
+    # --
+    def _store_block(self, _array_dict):
+        for ds, arr in iteritems(_array_dict):   # type: int, array
+            arr_np = numpy.frombuffer(arr, dtype="int32").reshape((-1, 2))  # type: numpy.ndarray
+            self._outbuffers["a" + str(ds)].append(arr_np)
+            self._outbuffer_entries += len(arr_np)
+
+            if self._outbuffer_entries > self._MAX_OUTBUFFER_LEN:
+                self._flush_outbuffers()
+
+    # --
     def _flush_outbuffers(self, final=False):
         """
         Flush output buffers to destination file
@@ -178,7 +146,7 @@ class NrnCompleter(object):
         self._outbuffers = defaultdict(list)
         self._outbuffer_entries = 0
 
-    # ----
+    # --
     def merge(self, merged_filename=None):
         """
         Merger of both forward and reverse matrixes (afferent and efferent touch count)
@@ -189,7 +157,8 @@ class NrnCompleter(object):
         all_ds_names = set(self.in_file.keys()) | set(self.outfile.keys())
         ds_count = len(all_ds_names)
         print("[MERGING] %d + %d datasets -> %d" % (self._n_neurons, len(self.outfile), ds_count))
-        bar = ProgressBar(total=ds_count)
+        bar = Bar("Progress", total=ds_count)
+        bar.start()
 
         for ds_name in all_ds_names:
             if ds_name not in self.outfile:
@@ -234,10 +203,11 @@ class NrnCompleter(object):
 
                 merged_file.create_dataset(ds_name, data=out_arr[:cur_index])
 
-            bar.update()
+            bar.next()
+        bar.finish()
 
         merged_file.close()
-        self.logger.info("Merging complete.")
+        print("\nMerging complete.")
 
     # ----
     @staticmethod
@@ -260,10 +230,12 @@ class NrnCompleter(object):
         assert self.outfile is not None, "Please run the transposition"
         in_file = self.in_file if not reverse else self.outfile
         out_file = self.outfile if not reverse else self.in_file
-        errors = 0
-
         problematic_grps = set()
         missing_points = []
+        errors = 0
+        bar = Bar("Progress", total=len(in_file))
+        bar.start()
+
         for name, group in iteritems(in_file):
             for id1, cnt in group:
                 if cnt == 0:
@@ -281,8 +253,11 @@ class NrnCompleter(object):
                     missing_points.append((id1, id2))
                 elif ds[posic, 1] != cnt:
                     # This is really not supposed to happen
-                    self.logger.error("Different values in ID {}-{}. Counts: {}. Entry: {}".format(name, id1, cnt, ds[posic]))
+                    self.logger.error("Different values in ID {}-{}. Counts: {}. Entry: {}"
+                                      .format(name, id1, cnt, ds[posic]))
                     errors = 1
+            bar.next()
+        bar.finish()
 
         if problematic_grps:
             self.logger.error("Problematic grps: %s", str(list(problematic_grps)))
@@ -314,8 +289,8 @@ def run_validation():
 
 _doc = """
 Usage:
-  nrn_summary transpose <input-file> [-o=<output-file>] [--sparse] [-vv]
-  nrn_summary tmerge <input-file> [-o=<output-file>] [--sparse] [-vv]
+  nrn_summary transpose <input-file> [-o=<output-file>] [-vv]
+  nrn_summary tmerge <input-file> [-o=<output-file>] [-vv]
   nrn_summary -h
 
 Options:
@@ -330,7 +305,7 @@ if __name__ == "__main__":
     cter = NrnCompleter(args["<input-file>"], verbose=args["-v"])
 
     if args["transpose"]:
-        cter.create_transposed(args["-o"], sparse=args["--sparse"])
+        cter.create_transposed(args["-o"])
     elif args["tmerge"]:
-        cter.create_transposed(sparse=args["--sparse"])
+        cter.create_transposed()
         cter.merge(args["-o"])
