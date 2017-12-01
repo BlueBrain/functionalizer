@@ -204,33 +204,6 @@ class NrnCompleter(object):
                 merged.sort(0)
                 merged_file.create_dataset(ds_name, data=merged)
 
-                # ds = self.in_file[ds_name][:]  # Force load to mem
-                # other_ds = self.outfile[ds_name][:]
-                # out_arr = numpy.empty((len(ds) + len(other_ds), 3), dtype="int32")
-                # cur_index = 0
-                # ds_T_iter = iter(other_ds)
-                # other_gid, efferent_count = next(ds_T_iter, (None, 0))
-                #
-                # for gid, afferent_count in ds:
-                #     while other_gid is not None and other_gid < gid:
-                #         out_arr[cur_index] = (other_gid, efferent_count, 0)
-                #         cur_index += 1
-                #         other_gid, efferent_count = next(ds_T_iter, (None, 0))
-                #     if gid == other_gid:
-                #         out_arr[cur_index] = (other_gid, efferent_count, afferent_count)
-                #         other_gid, efferent_count = next(ds_T_iter, (None, 0))
-                #     else:
-                #         out_arr[cur_index] = (gid, 0, afferent_count)
-                #     cur_index += 1
-
-                # Remaining - other_gid's > last gid
-                # while other_gid is not None:
-                #     out_arr[cur_index] = (other_gid, efferent_count, 0)
-                #     cur_index += 1
-                #     other_gid, efferent_count = next(ds_T_iter, (None, 0))
-
-                # merged_file.create_dataset(ds_name, data=out_arr[:cur_index])
-
             i += 1
             if i % 100 == 0:
                 bar.next()
