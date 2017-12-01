@@ -46,14 +46,14 @@ class NeuronExporter(object):
         return extended_touches_df.write.partitionBy("post_gid").parquet(output_path, mode="overwrite")
 
     # ---
-    def export_hdf5(self, extended_touches_df, n_gids, filename="nrn.h5", create_efferent=False):
+    def export_hdf5(self, extended_touches_df, n_gids, create_efferent=False):
         # In the export a lot of shuffling happens, we must carefully control partitioning
         n_partitions = ((n_gids - 1) // N_NEURONS_FILE) + 1
         spark.conf.set("spark.sql.shuffle.partitions", n_partitions)
 
-        nrn_filepath = self.ensure_file_path(filename)
+        nrn_filepath = self.ensure_file_path("_nrn.h5")
         # Remove existing results
-        for fn in glob.glob1(self.output_path, "nrn*h5*"):
+        for fn in glob.glob1(self.output_path, "*nrn*.h5*"):
             os.remove(path.join(self.output_path, fn))
 
         df = extended_touches_df
@@ -94,8 +94,8 @@ class NeuronExporter(object):
         # Build merged nrn_summary
         final_nrn_summary = path.join(self.output_path, "nrn_summary.h5")
         nrn_completer = tools.NrnCompleter(summary_path, logger=logger)
-        nrn_completer.create_transposed(sparse=True)
-        nrn_completer.merge(final_nrn_summary)
+        nrn_completer.create_transposed()
+        nrn_completer.merge(merged_filename=final_nrn_summary)
         nrn_completer.add_meta(final_nrn_summary, dict(
             version=3,
             numberOfFiles=len(nrn_filenames.value)
@@ -108,7 +108,6 @@ class NeuronExporter(object):
         if create_efferent:
             converter = tools.NrnConverter()
             for i in range(len(nrn_filenames.value)):
-
                 converter.create_efferent(path.join(self.output_path, "nrn.h5.{}".format(i)))
 
 
