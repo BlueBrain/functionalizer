@@ -100,7 +100,8 @@ def setup_package():
             'lazy-property',
             'py4j',
             'h5py',
-            'lxml'
+            'lxml',
+            'progress'
             #'morphotool'  # Do we really need it?
         ],
         # Setup and testing
