@@ -14,9 +14,10 @@ import logging
 from progress.bar import Bar
 from itertools import islice
 import math
-from numba import jit
+from h5py._hl import selections
 
 _GROUP_SIZE = 8 * 1024
+
 
 class NrnCompleter(object):
     # Please use base2 vals
@@ -63,7 +64,9 @@ class NrnCompleter(object):
 
         # For loop just to control Datasets in the block (outer gid)
         for ds_start_i in range(0, id_limit, self._GROUP_SIZE):
-            for block in self.transpose_blocks_range(self._in_filename, ds_start_i, id_limit):
+            transpose_gen = NrnCompleter.transpose_blocks_range(self._in_filename, ds_start_i, id_limit)
+            # Serial - Dont try to parallelize. Multiprocessing is buggy and multithreaded is even 80% slower
+            for block in transpose_gen:
                 self._store_block(block)
                 bar.next()
 
@@ -100,7 +103,9 @@ class NrnCompleter(object):
         for i, post_gid in enumerate(postgids):
             ds_name = "a" + str(post_gid)
             ds = in_file[ds_name]
+            ds_len = len(ds)
             cur_offset = sub_offset[i]
+            selection = selections.SimpleSelection(ds.shape)
 
             if last_section:
                 data = ds[cur_offset:]
@@ -110,7 +115,12 @@ class NrnCompleter(object):
             else:
                 while True:
                     # Lets read blocks, instead of the full length
-                    data = ds[cur_offset: cur_offset + _BLOCK_SIZE]
+                    block_len = min(_BLOCK_SIZE, ds_len-cur_offset)
+                    data = numpy.empty((block_len, 2), dtype="int32")
+                    #data = ds[cur_offset: cur_offset + _BLOCK_SIZE]
+                    mspace = h5py.h5s.create_simple((block_len, 2))
+                    cur_sel = selection[cur_offset: cur_offset+block_len]
+                    ds.id.read(mspace, cur_sel.id, data)
                     max_row_i = numpy.searchsorted(data[:, 0], rec_stop_i)
                     sub_offset[i] = cur_offset + max_row_i
 
