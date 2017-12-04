@@ -9,7 +9,7 @@ import sys
 import os
 import glob
 
-SPYKFUNC_VERSION = "0.3.dev1"
+SPYKFUNC_VERSION = "0.4.dev1"
 
 force_rebuild_cython = os.getenv('FORCE_CYTHONIZE', False)
 if not force_rebuild_cython and glob.glob('spykfunc/dataio/*.cpp'):
