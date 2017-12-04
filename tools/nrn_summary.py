@@ -14,11 +14,13 @@ import logging
 from progress.bar import Bar
 from itertools import islice
 import math
+from numba import jit
 
+_GROUP_SIZE = 8 * 1024
 
 class NrnCompleter(object):
     # Please use base2 vals
-    _GROUP_SIZE = 8 * 1024
+    _GROUP_SIZE = _GROUP_SIZE
     _MAX_OUTBUFFER_LEN = 10 * 1024**2  # 1M entries ~ 8MB mem
     _OPTS_DEFAULT = dict(verbose=0)
 
@@ -61,21 +63,8 @@ class NrnCompleter(object):
 
         # For loop just to control Datasets in the block (outer gid)
         for ds_start_i in range(0, id_limit, self._GROUP_SIZE):
-            ds_stop_i = min(id_limit, ds_start_i + self._GROUP_SIZE)
-            postgids = array("i")
-            sub_offset = array("i")
-
-            # Init structures for the current group block
-            for post_gid in range(ds_start_i, ds_stop_i):
-                if ("a" + str(post_gid)) not in self.in_file:
-                    continue
-                postgids.append(post_gid)
-                sub_offset.append(0)
-
-            # For loop to control the Datasets' rows in the block (inner gid)
-            for rec_start_i in range(0, id_limit, self._GROUP_SIZE):
-                _array_dict_sub = self.transpose_block(postgids, rec_start_i, id_limit, sub_offset)
-                self._store_block(_array_dict_sub)
+            for block in self.transpose_blocks_range(self._in_filename, ds_start_i, id_limit):
+                self._store_block(block)
                 bar.next()
 
         bar.finish()
@@ -83,16 +72,34 @@ class NrnCompleter(object):
         self._flush_outbuffers(final=True)
         print("Transposing complete")
 
-    # --
-    def transpose_block(self, postgids, rec_start_i, id_limit, sub_offset):
-        rec_stop_i = min(id_limit, rec_start_i + self._GROUP_SIZE)
+    @staticmethod
+    def transpose_blocks_range(in_filename, ds_start_i, id_limit):
+        in_file = h5py.File(in_filename)
+        ds_stop_i = min(id_limit, ds_start_i + _GROUP_SIZE)
+        postgids = array("i")
+        sub_offset = array("i")
+
+        # Init structures for the current group block
+        for post_gid in range(ds_start_i, ds_stop_i):
+            if ("a" + str(post_gid)) not in in_file:
+                continue
+            postgids.append(post_gid)
+            sub_offset.append(0)
+
+        # For loop to control the Datasets' rows in the block (inner gid)
+        for rec_start_i in range(0, id_limit, _GROUP_SIZE):
+            yield NrnCompleter._transpose_block(in_file, postgids, rec_start_i, id_limit, sub_offset)
+
+    @staticmethod
+    def _transpose_block(in_file, postgids, rec_start_i, id_limit, sub_offset):
+        rec_stop_i = min(id_limit, rec_start_i + _GROUP_SIZE)
         last_section = rec_stop_i == id_limit  # The max inner GID isn't necessarily the max out
         _array_dict = defaultdict(lambda: array("i"))
         _BLOCK_SIZE = 512  # 4*2*512 = 4K
 
         for i, post_gid in enumerate(postgids):
             ds_name = "a" + str(post_gid)
-            ds = self.in_file[ds_name]
+            ds = in_file[ds_name]
             cur_offset = sub_offset[i]
 
             if last_section:
