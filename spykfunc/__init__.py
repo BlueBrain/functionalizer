@@ -47,7 +47,7 @@ def functionalizer_new():
     return Functionalizer()
 
 
-def session(recipe, mvd_file, first_touch):
+def session(recipe, mvd_file, first_touch, spark_opts=None):
     """ Creates and Initializes a Functionalizer session
 
     :returns: A :py:class:`~spykfunc.Functionalizer` instance
@@ -55,5 +55,7 @@ def session(recipe, mvd_file, first_touch):
     from .commands import arg_parser
     from .functionalizer import session
     args = (recipe, mvd_file, ".", first_touch)
+    if spark_opts:
+        args += ("--spark-opts", spark_opts)
     opts = arg_parser.parse_args(args)
     return session(opts)

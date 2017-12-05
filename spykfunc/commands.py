@@ -8,7 +8,7 @@ import argparse
 # Executed from the SHELL
 # ------------------------------------
 def _create_parser():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="spykfunc is a pyspark implementation of pyspark.")
     parser.add_argument("recipe_file", help="the XML recipe file")
     parser.add_argument("mvd_file",    help="the input mvd file")
     parser.add_argument("morpho_dir",  help="the H5 morphology database directory")
@@ -21,15 +21,24 @@ def _create_parser():
                         action="store_true", dest="resultparquet", default=False)
     parser.add_argument("--output-dir",
                         help="Specify output directory. Defaults to ./spykfunc_output")
-
+    parser.add_argument("--spark-opts",
+                        help="All arguments to configure the spark session. Use with quotation marks. E.g. "
+                             "--spark-opts \"--master spark://111.222.333.444:7077 --spark.conf.xx 123\"")
     return parser
 
 
-# Singleton
+# Singleton parser
 arg_parser = _create_parser()
 
 
-def run_functionalizer():
+# *****************************************************
+# Application scripts
+# *****************************************************
+
+def spykfunc():
+    """ The main entry-point Spykfunc script. It will launch Spykfunc with a spark instance
+        (created if not provided), run the default filters and export to NRN format (hdf5).
+    """
     # Will exit with code 2 if problems in args
     options = arg_parser.parse_args()
 
@@ -51,4 +60,4 @@ def run_functionalizer():
 
 # Defaults to execute run_functionalizer command
 if __name__ == "__main__":
-    sys.exit(run_functionalizer())
+    sys.exit(spykfunc())

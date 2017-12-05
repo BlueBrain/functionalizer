@@ -22,7 +22,7 @@ class NeuronExporter(object):
         global spark, sc
         spark = SparkSession.builder.getOrCreate()
         sc = spark.sparkContext
-        self.output_path = output_path
+        self.output_path = path.realpath(output_path)
         # Get the concat_bin agg function form the java world
         _j_conc_udaf = sc._jvm.spykfunc.udfs.BinaryConcat().apply
         self.concat_bin = utils.wrap_java_udf(spark.sparkContext, _j_conc_udaf)

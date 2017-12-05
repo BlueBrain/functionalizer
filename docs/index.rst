@@ -6,6 +6,11 @@ This is the documentation of **spykfunc**.
 
 Spykfunc is a new Functionalizer implementation on top of Spark (PySpark).
 
+Functionalizer goal is to filter out Synapse touches, produced by Touch Detector, according to rules
+defined in the recipe. The resulting touches can then be exported to a circuit format as expected
+by the simulator, typically nrn_*.h5.
+
+
 Contents
 --------
 

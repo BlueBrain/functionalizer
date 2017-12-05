@@ -10,12 +10,12 @@ import os
 import glob
 
 SPYKFUNC_VERSION = "0.4.dev1"
+BUILD_TYPE = os.getenv('BUILD_TYPE', "RELEASE").upper()
 
-force_rebuild_cython = os.getenv('FORCE_CYTHONIZE', False)
-if not force_rebuild_cython and glob.glob('spykfunc/dataio/*.cpp'):
-    build_mode = 'release'
-else:
-    build_mode = 'devel'
+assert BUILD_TYPE in ["RELEASE", "DEVEL"], "Build types allowed: DEVEL, RELEASE"
+if BUILD_TYPE == "RELEASE":
+    assert glob.glob('spykfunc/dataio/*.cpp')
+elif BUILD_TYPE == "DEVEL":
     from Cython.Build import cythonize
 
 
@@ -41,7 +41,7 @@ class PyTest(TestCommand):
 # *******************************
 _ext_dir = 'spykfunc/dataio/'
 _ext_mod = 'spykfunc.dataio.'
-_filename_ext = '.pyx' if build_mode == 'devel' else '.cpp'
+_filename_ext = '.pyx' if BUILD_TYPE == 'DEVEL' else '.cpp'
 
 ext_mods = {
     'common': {},
@@ -54,7 +54,7 @@ ext_mods = {
     ),
 }
 
-# Handle simple include cases
+# Quick attempt find INCLUDE_DIRS required by cppneuron
 _libs_env = ['HDF5_ROOT', 'BOOST_ROOT']
 for lib in _libs_env:
     lib_ROOT = os.getenv(lib)
@@ -67,15 +67,15 @@ extensions = [
               **opts)
     for name, opts in ext_mods.items()
 ]
-extensions.append(
-    Extension('tst_neuron_memview',
-              ['tests/tst_neuron_memview' + _filename_ext],
-              language="c++"))
 
-if build_mode == 'devel':
+if BUILD_TYPE == 'DEVEL':
+    extensions.append(
+        Extension('tests.tst_neuron_memview',
+                  ['tests/tst_neuron_memview' + _filename_ext],
+                  language="c++"))
     extensions = cythonize(extensions,
                            cplus=True,
-                           build_dir = "build",
+                           build_dir="build",
                            include_path=['spykfunc/dataio/mvdtool'])
 
 
@@ -89,8 +89,7 @@ def setup_package():
     setup(
         # name and other metadata are in setup.cfg
         version=SPYKFUNC_VERSION,
-        # use_scm_version=True,
-        packages=find_packages(),
+        packages=['spykfunc'],
         ext_modules=extensions,
         install_requires=[
             'future',
@@ -111,12 +110,11 @@ def setup_package():
             'dev': ['cython<0.26', 'flake8']
         },
         cmdclass={'test': PyTest},
-
-        scripts=['bin/spykfunc',
-                 'spykfunc/commands.py'],
-
-        data_files=[('share/spykfunc', ['java/spykfunc_udfs.jar'])],
-        include_package_data=True,
+        entry_points={
+            'console_scripts': [
+                'spykfunc = spykfunc.commands:spykfunc'],
+        },
+        package_data={'spykfunc': ['data/*']},
     )
 
 

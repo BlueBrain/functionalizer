@@ -1,2 +1,3 @@
-graft java
-
+prune java
+prune tools
+exclude tst_neuron_memview.*

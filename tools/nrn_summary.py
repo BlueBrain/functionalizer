@@ -229,7 +229,7 @@ class NrnCompleter(object):
         bar.finish()
 
         merged_file.close()
-        print("\nMerging complete.")
+        print("Merging complete.")
 
     # ----
     @staticmethod
@@ -255,10 +255,10 @@ class NrnCompleter(object):
         problematic_grps = set()
         missing_points = []
         errors = 0
-        bar = Bar("Progress", max=20)
+        bar = Bar("Progress", max=100)
         bar.start()
 
-        for name, group in islice(iteritems(in_file), 20):
+        for name, group in islice(iteritems(in_file), 100):
             for id1, cnt in group:
                 if cnt == 0:
                     continue

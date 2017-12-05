@@ -30,8 +30,8 @@ __all__ = ["Functionalizer", "session"]
 # Globals
 spark = None
 sc = None
-logger = utils.get_logger(__name__)
 GraphFrame = None
+logger = utils.get_logger(__name__)
 
 
 class Functionalizer(object):
@@ -59,24 +59,37 @@ class Functionalizer(object):
     # TouchDF is volatile and we trigger events on update
     _touchDF = None
 
-    def __init__(self, only_s2s=False):
-        # Create Spark session with the static config
+    def __init__(self, only_s2s=False, spark_opts=None):
         global spark, sc, GraphFrame
-        spark = (SparkSession.builder.appName("Functionalizer")
+
+        if spark_opts:
+            os.environ['PYSPARK_SUBMIT_ARGS'] = spark_opts + " pyspark-shell"
+
+        # Create Spark session with the static config
+        spark = (SparkSession.builder
+                 .appName("Functionalizer")
                  .config("spark.checkpoint.compress", True)
+                 .config("spark.jars", os.path.join(os.path.dirname(__file__), "data/spykfunc_udfs.jar"))
+                 .config("spark.jars.packages", "graphframes:graphframes:0.5.0-spark2.1-s_2.11")
                  .getOrCreate())
+
         try:
             from graphframes import GraphFrame
-        except ImportError:
-            logger.error("Graphframes could not be imported"
-                         "Please start a spark instance with GraphFrames support"
-                         "e.g. pyspark --packages graphframes:graphframes:0.5.0-spark2.1-s_2.11")
+        except ImportError as e:
+            logger.error("Graphframes could not be imported\n"
+                         "Please start a spark cluster with GraphFrames support."
+                         " (e.g. pyspark --packages graphframes:graphframes:0.5.0-spark2.1-s_2.11)")
+            raise e
 
+        # Configuring Spark runtime
         sc = spark.sparkContext
         sc.setLogLevel("WARN")
         sc.setCheckpointDir("_checkpoints")
-        # Runtime properties
         spark.conf.set("spark.sql.shuffle.partitions", min(sc.defaultParallelism * 4, 256))
+        sqlContext = SQLContext.getOrCreate(sc)
+        sqlContext.registerJavaFunction("gauss_rand", "spykfunc.udfs.GaussRand")
+        sqlContext.registerJavaFunction("float2binary", "spykfunc.udfs.FloatArraySerializer")
+        sqlContext.registerJavaFunction("int2binary", "spykfunc.udfs.IntArraySerializer")
 
         self._run_s2f = not only_s2s
         self.output_dir = "spykfunc_output"
@@ -85,12 +98,6 @@ class Functionalizer(object):
 
         if only_s2s:
             logger.info("Running S2S only")
-
-        sqlContext = SQLContext.getOrCreate(sc)
-        # register java udef
-        sqlContext.registerJavaFunction("gauss_rand", "spykfunc.udfs.GaussRand")
-        sqlContext.registerJavaFunction("float2binary", "spykfunc.udfs.FloatArraySerializer")
-        sqlContext.registerJavaFunction("int2binary", "spykfunc.udfs.IntArraySerializer")
 
     # -------------------------------------------------------------------------
     # Data loading and Init
@@ -338,7 +345,7 @@ def session(options):
     """
     assert "NeuronDataSpark" in globals(), "Use spark-submit to run your job"
 
-    fzer = Functionalizer(options.s2s)
+    fzer = Functionalizer(options.s2s, options.spark_opts)
     if options.output_dir:
         fzer.output_dir = options.output_dir
     try:
