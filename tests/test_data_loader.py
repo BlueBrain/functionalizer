@@ -18,6 +18,7 @@ def test_loader():
     #spark = SparkSession.builder.getOrCreate()
     #sc = spark.sparkContext
 
+    # Hack to create a NeuronDataSpark without init (which would start a spark session)
     nrData = NeuronData.__new__(NeuronDataSpark)
     nrData.set_loader(MVD_Morpho_Loader(mvd_file, morpho_dir))
 

@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE blueColumn [
+  <!ELEMENT blueColumn (column,NeuronTypes,Seeds?,SynapsesProperties,SynapsesClassification,DendriticMorphologyProbabilities,TouchRules,InterBoutonInterval?)>
+  <!ELEMENT column (layer*)>
+  <!ATTLIST column id CDATA #REQUIRED x CDATA #REQUIRED z CDATA #REQUIRED>
+  <!ELEMENT layer (#PCDATA)>
+  <!ATTLIST layer	id CDATA #REQUIRED height CDATA #REQUIRED>
+  <!ELEMENT NeuronTypes (Layer*)>
+  <!ATTLIST NeuronTypes totalNeurons CDATA #REQUIRED miniColumns CDATA #REQUIRED IntExtendedMinicolumnRadious CDATA #REQUIRED>
+  <!ELEMENT Layer (StructuralType*)>
+  <!ATTLIST Layer id CDATA #REQUIRED percentage CDATA #REQUIRED>
+  <!ELEMENT StructuralType (ElectroType*)>
+  <!ATTLIST StructuralType id CDATA #REQUIRED percentage CDATA #REQUIRED sigma CDATA #REQUIRED exclusionRadius CDATA #REQUIRED mClass CDATA #REQUIRED sClass CDATA #REQUIRED spineLength CDATA #REQUIRED>
+  <!ELEMENT ElectroType (#PCDATA)>
+  <!ATTLIST ElectroType id CDATA #REQUIRED percentage CDATA #REQUIRED>
+  <!ELEMENT Seeds (#PCDATA)>
+  <!ATTLIST Seeds recipeSeed CDATA #IMPLIED columnSeed CDATA #IMPLIED synapseSeed CDATA #IMPLIED>
+  <!ELEMENT InterBoutonInterval (#PCDATA)>
+  <!ATTLIST InterBoutonInterval minDistance CDATA #IMPLIED maxDistance CDATA #IMPLIED regionGap CDATA #IMPLIED>
+  <!ELEMENT SynapsesProperties (synapse*)>
+  <!ELEMENT synapse (#PCDATA)>
+  <!ATTLIST synapse id1 CDATA #REQUIRED id2 CDATA #REQUIRED id3 CDATA #REQUIRED id4 CDATA #REQUIRED GAB1 CDATA #REQUIRED GAB2 CDATA #REQUIRED>
+  <!ELEMENT SynapsesClassification (class*)>
+  <!ELEMENT class (#PCDATA)>
+  <!ATTLIST class id CDATA #REQUIRED gsyn CDATA #REQUIRED gsynVar CDATA #REQUIRED nsyn CDATA #REQUIRED nsynVar CDATA #REQUIRED dtc CDATA #REQUIRED dtcVar CDATA #REQUIRED u CDATA #REQUIRED uVar CDATA #REQUIRED d CDATA #REQUIRED dVar CDATA #REQUIRED f CDATA #REQUIRED fVar CDATA #REQUIRED ase CDATA #REQUIRED>
+  <!ELEMENT ConnectionRules (class*)>  
+  <!ELEMENT TouchRules (class*)>
+  <!ENTITY connectivityRecipe SYSTEM "builderConnectivityRecipeAllPathways.xml">
+]>
+
+<!-- @version: -->
+
+<blueColumn>
+<!-- use following line to modify inter-bouton interval algorithm paramters; defaults are min=3, max=7, gap=5
+        <InterBoutonInterval minDistance="5.0" maxDistance="9.0" regionGap="5.0"/> 
+-->
+    <InterBoutonInterval minDistance="5.0" maxDistance="7.0" regionGap="5.0"/> 
+
+    <column id="hexagon" x="78.08958130848" z="78.08958130848">
+            <!-- <latticeVector id="a1" x="110.00" z="0.0" />
+            <latticeVector id="a2" x="-115.46" z="110.00" />  -->
+	    <layer id="1" thickness="159.0134692" />
+	    <layer id="2" thickness="143.4691697" />
+	    <layer id="3" thickness="340.2280792" />
+	    <layer id="4" thickness="182.7530716" />
+	    <layer id="5" thickness="506.2024000" />
+	    <layer id="6" thickness="674.6820627" />
+    </column>
+
+    <NeuronTypes totalNeurons="1000" miniColumns="10" IntExtendedMinicolumnRadious="23">
+	    <Layer id="1" percentage="2.0">
+		    <StructuralType id="L1_SLAC" percentage="100" sigma="25" exclusionRadius="6.0" mClass="INT" sClass="INH" spineLength="2.5">
+			    <ElectroType id="cACint" percentage="100" />
+		    </StructuralType>
+	    </Layer>
+	    <Layer id="2" percentage="13.0">
+		    <StructuralType id="L23_PC" percentage="50" sigma="20" exclusionRadius="6.0" mClass="PYR" sClass="EXC" spineLength="2.5">
+			    <ElectroType id="cADpyr" percentage="100" />
+		    </StructuralType>
+		    <StructuralType id="L23_MC" percentage="50" sigma="25" exclusionRadius="6.0" mClass="INT" sClass="INH" spineLength="2.5">
+			    <ElectroType id="cACint" percentage="100" />
+		    </StructuralType>
+	    </Layer>
+	    <Layer id="3" percentage="15.0">
+		    <StructuralType id="L23_PC" percentage="70" sigma="20" exclusionRadius="6.0" mClass="PYR" sClass="EXC" spineLength="2.5">
+			    <ElectroType id="cADpyr" percentage="100" />
+		    </StructuralType>
+		    <StructuralType id="L23_MC" percentage="30" sigma="25" exclusionRadius="6.0" mClass="INT" sClass="INH" spineLength="2.5">
+			    <ElectroType id="cACint" percentage="100" />
+		    </StructuralType>
+	    </Layer>
+	    <Layer id="4" percentage="20">
+		    <StructuralType id="L4_PC" percentage="42.0" sigma="20" exclusionRadius="6.0" mClass="PYR" sClass="EXC" spineLength="2.5">
+			    <ElectroType id="cADpyr" percentage="100" />
+		    </StructuralType>
+		    <StructuralType id="L4_MC" percentage="58" sigma="25" exclusionRadius="6.0" mClass="INT" sClass="INH" spineLength="2.5">
+			    <ElectroType id="cACint" percentage="100" />
+		    </StructuralType>
+	    </Layer>
+	    <Layer id="5" percentage="20">
+		    <StructuralType id="L5_TTPC1" percentage="75" sigma="20" exclusionRadius="6.0" mClass="PYR" sClass="EXC" spineLength="2.5">
+			    <ElectroType id="cADpyr" percentage="100" />
+		    </StructuralType>
+		    <StructuralType id="L5_MC" percentage="25" sigma="25" exclusionRadius="6.0" mClass="INT" sClass="INH" spineLength="2.5">
+			    <ElectroType id="cACint" percentage="100" />
+		    </StructuralType>
+	    </Layer>
+	    <Layer id="6" percentage="30">
+		    <StructuralType id="L6_TPC_L1" percentage="80" sigma="20" exclusionRadius="6.0" mClass="PYR" sClass="EXC" spineLength="2.5">
+			    <ElectroType id="cADpyr" percentage="100" />
+		    </StructuralType>
+		    <StructuralType id="L6_MC" percentage="20" sigma="25" exclusionRadius="6.0" mClass="INT" sClass="INH" spineLength="2.5">
+			    <ElectroType id="cACint" percentage="100" />
+		    </StructuralType>
+	    </Layer>
+    </NeuronTypes>
+    
+    <!--	<Seeds recipeSeed="4" columnSeed="45" synapseSeed="50">
+    </Seeds>
+    -->
+    <Seeds recipeSeed="837632" columnSeed="2906729" synapseSeed="4236279"/>
+
+    <!--	Attention: we will have to introduce wildcard a la *MC for L23_MC, L4_MC etc
+    -->
+
+    <SynapsesProperties neuralTransmitterReleaseDelay="0.1" axonalConductionVelocity="0.00333" >
+        <synapse fromSClass="EXC" toSClass="EXC" type="E2" axonalConductionVelocity="0.002" />
+        <synapse fromSClass="INH" toSClass="INH" type="I2" neuralTransmitterReleaseDelay="0.4" axonalConductionVelocity="0.002" />
+        <synapse fromSClass="EXC" toSClass="INH" type="E2" />
+        <synapse fromSClass="INH" toSClass="EXC" type="I2" axonalConductionVelocity="0.004" />
+    </SynapsesProperties>
+
+    <SynapsesClassification>
+	    <class id="I2"  gsyn="0.33" gsynVar="0.28" nsyn="16.0" nsynVar="5.50" dtc="8.30" dtcVar="2.2" u="0.25" uVar="0.13" d="706" dVar="405" f="021" fVar="9" ase="0" />
+	    <class id="E2"  gsyn="0.30" gsynVar="0.20" nsyn="5.00" nsynVar="2.00" dtc="1.74" dtcVar="0.18" u="0.50" uVar="0.02" d="671" dVar="017" f="017" fVar="5" ase="1" />
+    </SynapsesClassification>
+        
+    <ConnectionRules>
+        <mTypeRule from="L1_NGC-DA" to="*" bouton_reduction_factor= "0.114" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L1_NGC-SA" to="*" bouton_reduction_factor= "0.055" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L1_HAC" to="*" bouton_reduction_factor= "0.13" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L1_DAC" to="*" bouton_reduction_factor= "0.123" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L1_DLAC" to="*" bouton_reduction_factor= "0.146" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L1_SLAC" to="*" bouton_reduction_factor= "0.052" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L23_PC" to="L23_PC" bouton_reduction_factor= "0.075" mean_syns_connection= "4.0" cv_syns_connection= "0.25" /> <!-- SR -->
+        <mTypeRule from="L23_PC" to="*" bouton_reduction_factor= "0.075" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L23_MC" to="L23_PC" bouton_reduction_factor= "0.132" cv_syns_connection= "0.52" mean_syns_connection= "12.3"/> <!-- SR -->
+        <mTypeRule from="L23_MC" to="*" bouton_reduction_factor= "0.132" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L23_BTC" to="L23_PC" bouton_reduction_factor= "0.065" cv_syns_connection= "0.3" mean_syns_connection= "15.0"/> <!-- SR -->
+        <mTypeRule from="L23_BTC" to="*" bouton_reduction_factor= "0.065" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L23_DBC" to="*" bouton_reduction_factor= "0.054" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L23_BP" to="*" bouton_reduction_factor= "0.04" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L23_NGC" to="*" bouton_reduction_factor= "0.065" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L23_LBC" to="L23_PC" bouton_reduction_factor= "0.058" cv_syns_connection= "0.25" mean_syns_connection= "13.0"/> <!-- SR -->
+        <mTypeRule from="L23_LBC" to="*" bouton_reduction_factor= "0.058" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L23_NBC" to="L23_PC" bouton_reduction_factor= "0.076" cv_syns_connection= "0.35" mean_syns_connection= "14.1"/> <!-- SR -->
+        <mTypeRule from="L23_NBC" to="*" bouton_reduction_factor= "0.076" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L23_SBC" to="*" bouton_reduction_factor= "0.056" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L23_ChC" to="*" bouton_reduction_factor= "1" active_fraction= "1" cv_syns_connection= "10" />
+        <mTypeRule from="L4_PC" to="*" bouton_reduction_factor= "0.06" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L4_SP" to="L4_SP" bouton_reduction_factor= "0.081" mean_syns_connection= "3.4" cv_syns_connection= "0.3" />
+        <mTypeRule from="L4_SP" to="*" bouton_reduction_factor= "0.081" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L4_SS" to="*" bouton_reduction_factor= "0.089" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L4_MC" to="*" bouton_reduction_factor= "0.074" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L4_BTC" to="L4_PC" bouton_reduction_factor= "0.055" cv_syns_connection= "0.61" mean_syns_connection= "17"/> <!-- SR -->
+        <mTypeRule from="L4_BTC" to="*" bouton_reduction_factor= "0.055" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L4_DBC" to="*" bouton_reduction_factor= "0.045" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L4_BP" to="*" bouton_reduction_factor= "0.047" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L4_NGC" to="*" bouton_reduction_factor= "0.034" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L4_LBC" to="L4_PC" bouton_reduction_factor= "0.056" cv_syns_connection= "0.12" mean_syns_connection= "14.3"/> <!-- SR -->
+        <mTypeRule from="L4_LBC" to="*" bouton_reduction_factor= "0.056" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L4_NBC" to="*" bouton_reduction_factor= "0.048" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L4_SBC" to="L4_PC" bouton_reduction_factor= "0.056" cv_syns_connection= "0.6" mean_syns_connection= "18.7"/> <!-- SR -->
+        <mTypeRule from="L4_SBC" to="*" bouton_reduction_factor= "0.056" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L4_ChC" to="*" bouton_reduction_factor= "1" active_fraction= "1" cv_syns_connection= "10" />
+        <mTypeRule from="L5_TTPC1" to="L5_TTPC1" bouton_reduction_factor= "0.06" cv_syns_connection= "0.25" mean_syns_connection= "5.5" />
+        <mTypeRule from="L5_TTPC2" to="L5_TTPC1" bouton_reduction_factor= "0.06" cv_syns_connection= "0.25" mean_syns_connection= "5.5" />
+        <mTypeRule from="L5_TTPC1" to="L5_TTPC2" bouton_reduction_factor= "0.06" cv_syns_connection= "0.25" mean_syns_connection= "5.5" />
+        <mTypeRule from="L5_TTPC2" to="L5_TTPC2" bouton_reduction_factor= "0.06" cv_syns_connection= "0.25" mean_syns_connection= "5.5" />
+        <mTypeRule from="L5_TTPC1" to="L5_MC" bouton_reduction_factor= "0.06" cv_syns_connection= "0.25" mean_syns_connection= "8.6" />
+        <mTypeRule from="L5_TTPC2" to="L5_MC" bouton_reduction_factor= "0.06" cv_syns_connection= "0.25" mean_syns_connection= "8.6" />
+        <mTypeRule from="L5_TTPC1" to="*" bouton_reduction_factor= "0.054" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L5_TTPC2" to="*" bouton_reduction_factor= "0.054" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L5_UTPC" to="*" bouton_reduction_factor= "0.08" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L5_STPC" to="L5_STPC" bouton_reduction_factor= "0.07" cv_syns_connection= "0.25" mean_syns_connection= "4.0" />
+        <mTypeRule from="L5_STPC" to="*" bouton_reduction_factor= "0.07" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L5_MC" to="L5_TTPC1" bouton_reduction_factor= "0.072" mean_syns_connection= "12.00" cv_syns_connection= "0.25" />
+        <mTypeRule from="L5_MC" to="L5_TTPC2" bouton_reduction_factor= "0.072" mean_syns_connection= "12.00" cv_syns_connection= "0.25" />
+        <mTypeRule from="L5_MC" to="*" bouton_reduction_factor= "0.062" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L5_BTC" to="*" bouton_reduction_factor= "0.044" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L5_DBC" to="*" bouton_reduction_factor= "0.059" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L5_BP" to="*" bouton_reduction_factor= "0.042" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L5_NGC" to="*" bouton_reduction_factor= "0.037" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L5_LBC" to="L5_TTPC1" bouton_reduction_factor= "0.065" cv_syns_connection= "0.25" mean_syns_connection= "13.0"/> <!-- SR -->
+        <mTypeRule from="L5_LBC" to="L5_TTPC2" bouton_reduction_factor= "0.065" cv_syns_connection= "0.25" mean_syns_connection= "13.0"/> <!-- SR -->
+        <mTypeRule from="L5_LBC" to="*" bouton_reduction_factor= "0.065" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L5_NBC" to="*" bouton_reduction_factor= "0.049" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L5_SBC" to="*" bouton_reduction_factor= "0.048" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L5_ChC" to="*" bouton_reduction_factor= "1" active_fraction= "1" cv_syns_connection= "10" />
+        <mTypeRule from="L6_TPC_L1" to="*" bouton_reduction_factor= "0.15" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L6_TPC_L4" to="*" bouton_reduction_factor= "0.15" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L6_UTPC" to="*" bouton_reduction_factor= "0.2" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L6_IPC" to="*" bouton_reduction_factor= "0.17" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L6_BPC" to="*" bouton_reduction_factor= "0.114" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L6_MC" to="*" bouton_reduction_factor= "0.077" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L6_BTC" to="*" bouton_reduction_factor= "0.041" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L6_DBC" to="*" bouton_reduction_factor= "0.212" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L6_BP" to="*" bouton_reduction_factor= "0.051" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L6_NGC" to="*" bouton_reduction_factor= "0.09" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L6_LBC" to="*" bouton_reduction_factor= "0.072" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L6_NBC" to="*" bouton_reduction_factor= "0.089" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L6_SBC" to="*" bouton_reduction_factor= "0.061" active_fraction= "0.50" cv_syns_connection= "0.25" />
+        <mTypeRule from="L6_ChC" to="*" bouton_reduction_factor= "1" active_fraction= "1" cv_syns_connection= "10" />
+    </ConnectionRules>
+
+
+
+    <TouchRules>
+    <!-- INT to INT with soma or dend, but to PCs, only some.  others are dendrite only -->
+        
+        <touchRule fromLayer="*" fromMType="L*_MC" toLayer="*" toMType="*" type="dendrite" />
+        
+        <touchRule fromLayer="*" fromMType="L1_*" toLayer="*" toMType="*" type="dendrite" />
+        
+        <touchRule fromLayer="*" fromMType="*PC" toLayer="*" toMType="*" type="soma" />
+        <touchRule fromLayer="*" fromMType="*PC" toLayer="*" toMType="*" type="dendrite" />
+        
+        <touchRule fromLayer="*" fromMType="L5_TTPC*" toLayer="*" toMType="*" type="soma" />
+        <touchRule fromLayer="*" fromMType="L5_TTPC*" toLayer="*" toMType="*" type="dendrite" />
+        <touchRule fromLayer="*" fromMType="L6_TPC_L*" toLayer="*" toMType="*" type="soma" />
+        <touchRule fromLayer="*" fromMType="L6_TPC_L*" toLayer="*" toMType="*" type="dendrite" />
+        
+        <touchRule fromLayer="*" fromMType="L*_MC" toLayer="*" toMType="L1_*" type="soma" />
+        <touchRule fromLayer="*" fromMType="L*_MC" toLayer="*" toMType="L*_MC" type="soma" />
+
+    </TouchRules>
+
+	
+</blueColumn>

@@ -4,13 +4,11 @@ import numpy
 numpy.set_printoptions(formatter={'int': '{: 4d}'.format,
                                   'float': '{: 7.2f}'.format})
 
-BASE_DIR = os.path.join(os.path.dirname(__file__), "circuitBuilding_1000neurons/BlueDetector_output")
+BASE_DIR = os.path.join(os.path.dirname(__file__), "circuit_1000n/touches")
 _DEBUG = False
 
 
 def test_bin_touch():
-    assert os.path.isdir(BASE_DIR), "{} doesnt exist. please create link to TestData".format(BASE_DIR)
-
     # Create obj
     touch = touches.TouchInfo(os.path.join(BASE_DIR, "touches.0"))
     touch_window = touch.touches[5:20]

@@ -92,12 +92,12 @@ def setup_package():
         packages=['spykfunc'],
         ext_modules=extensions,
         install_requires=[
+            'pyspark',
             'future',
             'docopt',
             'enum34;python_version<"3.4"',
             'numpy',
             'lazy-property',
-            'py4j',
             'h5py',
             'lxml',
             'progress'

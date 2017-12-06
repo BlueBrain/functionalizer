@@ -6,22 +6,15 @@ A Pyton executable showing/testing the use of NeuronData
 from spykfunc.dataio import cppneuron, common
 import logging
 import os
-try:
-    import morphotool
-except ImportError:
-    morphotool = None
+morphotool = None
 
 CURDIR = os.path.dirname(__file__)
-viz = "/gpfs/bbp.cscs.ch/project/proj16/leite/TestData"
-mvd_file = os.path.join(CURDIR, "circuitBuilding_1000neurons/circuits/circuit.mvd3")
-morpho_dir = os.path.join(CURDIR, "circuitBuilding_1000neurons/morphologies/h5")
-# large_mvd_file = "/gpfs/bbp.cscs.ch/scratch/gss/bgq/devresse/circuits/8x8/circuit.mvd3"
-# large_morpho_dir = "/gpfs/bbp.cscs.ch/release/l2/2012.07.23/morphologies/h5"
-
+mvd_file = os.path.join(CURDIR, "circuit_1000n/circuit.mvd3")
+morpho_dir = os.path.join(CURDIR, "circuit_1000n/morphologies/h5")
 
 def test_loader():
     da = cppneuron.NeuronData()
-    da.set_loader(cppneuron.MVD_Morpho_Loader(mvd_file, morpho_dir))
+    da.set_loader(cppneuron.MVD_Morpho_Loader(mvd_file, CURDIR))
 
     da.load_globals()
     print("nr neurons: {}".format(da.nNeurons))

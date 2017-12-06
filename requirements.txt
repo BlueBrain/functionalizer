@@ -1,12 +1,10 @@
 # Add your requirements here like:
-#pyspark
+pyspark
 future
 docopt
 enum34
 lazy-property
 numpy
-py4j
 lxml
 progress
 #morphotool
-

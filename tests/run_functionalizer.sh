@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-BASE_DIR="/home/leite/dev/TestData/circuitBuilding_1000neurons"
+BASE_DIR="circuit_1000n"
 recipe_file="$BASE_DIR/recipe/builderRecipeAllPathways.xml"
 mvd_file="$BASE_DIR/circuits/circuit.mvd3"
 morpho_dir="$BASE_DIR/morphologies/h5"
