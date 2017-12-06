@@ -139,10 +139,13 @@ class _GenericPropHolder(object):
                 continue
 
             # Attempt conversion to real types
-            try: value = int(value)
+            try:
+                value = int(value)
             except ValueError:
-                try: value = float(value)
-                except ValueError: pass
+                try:
+                    value = float(value)
+                except ValueError:
+                    pass
 
             setattr(self, name, value)
 
@@ -151,7 +154,7 @@ class _GenericPropHolder(object):
 
     def __repr__(self):
         attrs = " ".join('{0}="{1}"'.format(attr_name, getattr(self, attr_name))
-                        for attr_name in self._supported_attrs)
+                         for attr_name in self._supported_attrs)
         return '<{cls_name} {attrs}>'.format(cls_name=type(self).__name__, attrs=attrs)
 
 
@@ -206,7 +209,7 @@ class SynapsesClassification(_GenericPropHolder):
     id = ""
     gsyn = .0
     gsynVar = .0
-    nsyn =.0
+    nsyn = .0
     nsynVar = .0
     dtc = .0
     dtcVar = .0

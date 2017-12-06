@@ -147,7 +147,6 @@ class NrnConverter(object):
         i.attrs.update(infodic)
         f.close()
 
-
     # *********************************
     # Validation
     # *********************************
@@ -170,12 +169,13 @@ class NrnConverter(object):
 
         for name, group in iteritems(in_file):
             print(".", end="", file=sys.stderr)
-            count +=1
+            count += 1
             if count % (n_items//20) == 0:
-                print("\n{:.1f}%".format(100.0*count/n_items), end="")
+                print("\n{:.1f}%".format(100.0 * count / n_items), end="")
 
             prev_id = None
             id2 = int(name[1:])
+            posic = 0
 
             for row in group:
                 id1 = int(row[0])
@@ -223,7 +223,7 @@ Usage:
 Options:
   -h                Show help
   -o=<output-file>  By default creates nrn_efferent.h5
-  -vv               Verbose mode (-v for info, -vv for debug) 
+  -vv               Verbose mode (-v for info, -vv for debug)
 """
 
 if __name__ == "__main__":

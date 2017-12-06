@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class CellClass(Enum):
     """
     Enumeration of Cell Classes, typically Inhibitory or Excitatory.

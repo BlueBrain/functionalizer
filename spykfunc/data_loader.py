@@ -13,7 +13,7 @@ from .dataio.common import Part
 from .definitions import MType
 from .utils.spark_udef import DictAccum
 from .utils import get_logger, make_slices
-from collections import OrderedDict, defaultdict
+from collections import defaultdict
 import fnmatch
 
 import logging
@@ -79,7 +79,7 @@ class NeuronDataSpark(NeuronData):
         n_neurons = int(self.nNeurons)
 
         logger.info("Total neurons: %d", n_neurons)
-        mvd_parquet = ".cache/neuronDF{}k.parquet".format(n_neurons/1000.0)
+        mvd_parquet = ".cache/neuronDF{}k.parquet".format(n_neurons / 1000.0)
 
         if os.path.exists(mvd_parquet):
             logger.info("Loading from MVD parquet")
@@ -166,14 +166,16 @@ class NeuronDataSpark(NeuronData):
     @LazyProperty
     def mtype_df(self):
         self.require_mvd_globals()
-        if not self.globals_loaded: raise RuntimeError("Global MVD info not loaded")
+        if not self.globals_loaded:
+            raise RuntimeError("Global MVD info not loaded")
         return F.broadcast(self._sc.parallelize(enumerate(self.mtypeVec))
                            .toDF(["mtype_i", "mtype_name"], schema.INT_STR_SCHEMA).cache())
 
     @LazyProperty
     def etype_df(self):
         self.require_mvd_globals()
-        if not self.globals_loaded: raise RuntimeError("Global MVD info not loaded")
+        if not self.globals_loaded:
+            raise RuntimeError("Global MVD info not loaded")
         return F.broadcast(self._sc.parallelize(enumerate(self.etypeVec))
                            .toDF(["etype_i", "etype_name"], schema.INT_STR_SCHEMA).cache())
 
@@ -231,9 +233,7 @@ class NeuronDataSpark(NeuronData):
             dtype="uint16"
         )
 
-
         expanded_names = defaultdict(dict)
-
         field_to_values = {"MType": self.mtypeVec,
                            "EType": self.etypeVec,
                            "SClass": self.synaClassVec}
@@ -257,7 +257,8 @@ class NeuronDataSpark(NeuronData):
                         val_matches = expanded_names[field_t].get(field_val)
                         if not val_matches:
                             # Expand it
-                            val_matches = expanded_names[field_t][field_val] = fnmatch.filter(field_to_values[field_t], field_val)
+                            val_matches = expanded_names[field_t][field_val] = \
+                                fnmatch.filter(field_to_values[field_t], field_val)
                         # Convert to int
                         selectors[i*3+j] = [field_to_reverses[field_t][v] for v in val_matches]
                     else:
@@ -304,12 +305,9 @@ def cast_in_eq_py_t(val, spark_t):
 
 
 def _load_from_recipe(recipe_group, group_schema):
-    return [tuple(cast_in_eq_py_t(getattr(entry, field.name),
-                                  field.dataType)
-                  for field in group_schema
-                 )
-            for entry in recipe_group
-           ]
+    return [tuple(cast_in_eq_py_t(getattr(entry, field.name), field.dataType)
+                  for field in group_schema)
+            for entry in recipe_group]
 
 
 ####################################################################

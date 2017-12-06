@@ -3,7 +3,6 @@ from os import path
 
 BASE_DIR = path.expanduser("~/dev/TestData/circuitBuilding_1000neurons")
 DATA = "/gpfs/bbp.cscs.ch/scratch/gss/leite/circuit_2M"
-#DATA_31K = "/home/leite/scratch"
 
 print("Path for touches: " + path.join(DATA, "circuit/touches.*"))
 args = (

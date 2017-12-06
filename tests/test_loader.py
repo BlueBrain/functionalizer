@@ -12,6 +12,7 @@ CURDIR = os.path.dirname(__file__)
 mvd_file = os.path.join(CURDIR, "circuit_1000n/circuit.mvd3")
 morpho_dir = os.path.join(CURDIR, "circuit_1000n/morphologies/h5")
 
+
 def test_loader():
     da = cppneuron.NeuronData()
     da.set_loader(cppneuron.MVD_Morpho_Loader(mvd_file, CURDIR))

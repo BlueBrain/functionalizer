@@ -1,9 +1,9 @@
 from __future__ import division
-
-import os, sys
+import os
+import sys
 from pyspark.sql import functions as F
-from pyspark.sql import types as T
-from pyspark import StorageLevel
+# from pyspark.sql import types as T
+# from pyspark import StorageLevel
 from .definitions import CellClass
 from .schema import to_pathway_i, pathway_i_to_str
 from ._filtering import DataSetOperation
@@ -87,8 +87,8 @@ class TouchRulesFilter(DataSetOperation):
         """ .apply() method (runner) of the filter
         """
         # For each neuron we require: preLayer, preMType, postLayer, postMType, postBranchIsSoma
-        # The first four fields are properties of the neurons, part of neuronDF,
-        #  while postBranchIsSoma is a property if the touch, checked by the index of the target neuron section (0->soma)
+        # The first four fields are properties of the neurons, part of neuronDF, while postBranchIsSoma
+        # is a property if the touch, checked by the index of the target neuron section (0->soma)
         sql_queries = []
 
         for rule in self._rules:
@@ -173,41 +173,39 @@ class ReduceAndCut(DataSetOperation):
         logger.debug(" -> Computing reduced touch counts")
         reduced_touch_counts_connection = (
             reduced_touches
-                .groupBy(F.col("pathway_i"),
-                         F.col("src"),  # Pre Neuron id
-                         F.col("dst"),  # Post Neuron id
-                         )
-                .count()
-                .withColumnRenamed("count", "reduced_touch_counts_connection")
-                .checkpoint()
+            .groupBy(F.col("pathway_i"),
+                     F.col("src"),  # Pre Neuron id
+                     F.col("dst"),  # Post Neuron id
+                     )
+            .count()
+            .withColumnRenamed("count", "reduced_touch_counts_connection")
+            .checkpoint()
         )
 
         # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         # Cut
         # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         logger.info("Applying Cut step...")
-        cut_touches, cut_touch_counts_connection = self.apply_cut(
-            reduced_touches,
-            params_df,
-            reduced_touch_counts_connection,
-            mtypes=kw["mtypes"])
-
+        cut_touches, cut_touch_counts_connection = self.apply_cut(reduced_touches, params_df,
+                                                                  reduced_touch_counts_connection,
+                                                                  mtypes=kw["mtypes"])
         if _DEBUG and _DEBUG_CUT:
-            cut_touch_counts_pathway = (cut_touch_counts_connection
+            cut_touch_counts_pathway = (
+                cut_touch_counts_connection
                 .groupBy("pathway_i")
                 .agg(F.sum("reduced_touch_counts_connection").alias("cut_touch_counts_pathway")))
             pathway_i_to_str(cut_touch_counts_pathway, kw["mtypes"])\
                 .coalesce(1)\
                 .write.csv("_debug/cut_counts.csv", header=True, mode="overwrite")
             logger.warning("Debugging: Execution terminated for debugging Cut")
-            sys.exit(0)
 
         # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         # Cut 2: by Active Fraction
         # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         logger.info("Applying Cut step part 2: Active Fraction...")
-        cut2AF_touches = self.apply_cut_active_fraction(cut_touches, params_df, cut_touch_counts_connection, mtypes=kw["mtypes"])
-
+        cut2AF_touches = self.apply_cut_active_fraction(cut_touches, params_df,
+                                                        cut_touch_counts_connection,
+                                                        mtypes=kw["mtypes"])
         if _DEBUG and _DEBUG_CUT2AF:
             # We only checkpoint here if debugging, otherwise processing goes on until saved as extended touches
             cut2AF_touches = cut2AF_touches.checkpoint(False)
@@ -233,8 +231,7 @@ class ReduceAndCut(DataSetOperation):
         # Run UDF
         params_df = mtype_stats.select(
             "*",
-            rc_param_maker(mtype_stats.pathway_i, mtype_stats.average_touches_conn)
-                .alias("rc_params")
+            rc_param_maker(mtype_stats.pathway_i, mtype_stats.average_touches_conn).alias("rc_params")
         )
 
         # Return the interesting params
@@ -271,7 +268,6 @@ class ReduceAndCut(DataSetOperation):
 
         connection_survival_rate = (
             reduced_touch_counts_connection
-            # params_df_sigma is broadcasted -> ok the partitioning is different
             .join(params_df_sigma, "pathway_i")  # Fetch the pathway params
             .withColumn("survival_rate",         # Calc survivalRate
                         F.expr("1.0 / (1.0 + exp((-4.0/sigma) * (reduced_touch_counts_connection-pMu_A)))"))
@@ -316,7 +312,8 @@ class ReduceAndCut(DataSetOperation):
         Performs the second part of the cut algorithm according to the active_fractions
         :param cut_touches: The cut (phase1) touches (probably not materialized yet)
         :param params_df: The parameters DF (pA, uA, active_fraction_legacy)
-        :param cut_touch_counts_connection: The DF with the cut touch counts per connection (built previously in an optimized way)
+        :param cut_touch_counts_connection: The DF with the cut touch counts per connection \
+               (built previously in an optimized way)
         :return: The final cut touches
         """
         logger.debug(" -> Calculating connection counts after cut")
@@ -332,11 +329,13 @@ class ReduceAndCut(DataSetOperation):
             )
             .withColumn("active_fraction",
                 F.when(F.col("bouton_reduction_factor").isNull(),
-                    F.col("active_fraction_legacy")
-                ).otherwise(
+                       F.col("active_fraction_legacy")
+                       )
+                .otherwise(
                     F.when(F.col("bouton_reduction_factor") > F.col("actual_reduction_factor"),
-                        F.lit(1.0)
-                    ).otherwise(
+                           F.lit(1.0)
+                           )
+                    .otherwise(
                         F.col("bouton_reduction_factor") / F.col("actual_reduction_factor")
                     )
                 )

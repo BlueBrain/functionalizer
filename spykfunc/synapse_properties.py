@@ -29,8 +29,8 @@ def compute_additional_h5_fields(neuronG, syn_class_matrix, syn_props_df):
     to_syn_prop_i = filter_udfs.get_synapse_property_udf(syn_class_matrix)
     touches = touches.withColumn("syn_prop_i", to_syn_prop_i(touches.syn_prop_index))
 
-    # According to benchmarks in pyspark, applying to_syn_prop_i (py) with 1000 N (2M touches) split by three cores takes 5 more seconds
-    # That means that in average there's 5min overhead per 20k neurons per core
+    # According to benchmarks in pyspark, applying to_syn_prop_i (py) with 1000 N (2M touches) split by three cores
+    # takes 5 more seconds. That means that in average there's 5min overhead per 20k neurons per core
 
     touches = touches.drop("syn_prop_index")
     syn_props_df = syn_props_df.select(F.struct("*").alias("prop"))
@@ -39,10 +39,10 @@ def compute_additional_h5_fields(neuronG, syn_class_matrix, syn_props_df):
     touches = touches.join(syn_props_df, touches.syn_prop_i == syn_props_df.prop._prop_i)
 
     # 0: Connecting gid: presynaptic for nrn.h5, postsynaptic for nrn_efferent.h5
-    # 1: Axonal delay: computed using the distance of the presynaptic axon to the post synaptic terminal (milliseconds) (float)
+    # 1: Axonal delay: computed using the distance of the presynaptic axon to the post synaptic terminal (milliseconds)
     # 2: postSection ID (int)
     # 3: postSegment ID (int)
-    # 4: The post distance (in microns) of the synapse from the begining of the post segment 3D point, or \-1 for soma connections  (float)
+    # 4: The post distance (in microns) of the synapse from the begining of the post segment 3D point, or \-1 for soma
     # 5: preSection ID (int)
     # 6: preSegment ID (int)
     # 7: The pre distance (in microns) of the synapse from the begining of the pre segment  3D point (float)
@@ -51,14 +51,15 @@ def compute_additional_h5_fields(neuronG, syn_class_matrix, syn_props_df):
     # 10: d_syn is the time constant of depression (milliseconds) (int)
     # 11: f_syn is the time constant of facilitation (milliseconds) (int)
     # 12: DTC - Decay Time Constant (milliseconds) (float)
-    # 13: synapseType, the synapse type Inhibitory < 100 or Excitatory >= 100 (specific value corresponds to generating recipe)
+    # 13: synapseType, the synapse type Inhibitory < 100 or Excitatory >= 100 (specific value depends recipe)
     # 14: The morphology type of the pre neuron.  Index corresponds with circuit.mvd2
     # 15-16: BranchOrder of the dendrite, BranchOrder of the axon (int,int)
     # 17: ASE Absolute Synaptic Efficacy (Millivolts) (int)
     # 18: Branch Type from the post neuron(0 for soma,
 
     # Compute #1: delaySomaDistance
-    touches = touches.withColumn("axional_delay", (
+    touches = touches.withColumn("axional_delay",
+        (
             touches.prop.neuralTransmitterReleaseDelay +
             touches.t.distance_soma / touches.prop.axonalConductionVelocity
         ).cast(T.FloatType())
@@ -72,7 +73,7 @@ def compute_additional_h5_fields(neuronG, syn_class_matrix, syn_props_df):
         "gauss_rand(0) * prop.dVar + prop.d as d",
         "gauss_rand(0) * prop.fVar + prop.f as f",
         "gauss_rand(0) * prop.dtcVar + prop.dtc as dtc"
-        )
+    )
 
     # Compute #13: synapseType:  Inhibitory < 100 or  Excitatory >= 100
     t = touches.withColumn("synapseType",

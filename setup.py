@@ -3,18 +3,21 @@
 """
     Setup file for spykfunc.
 """
-from setuptools import setup, find_packages, Extension
+from setuptools import setup, Extension
 from setuptools.command.test import test as TestCommand
 import sys
 import os
+import os.path as osp
 import glob
 
 SPYKFUNC_VERSION = "0.4.dev1"
 BUILD_TYPE = os.getenv('BUILD_TYPE', "RELEASE").upper()
+BASE_DIR = osp.dirname(__file__)
 
 assert BUILD_TYPE in ["RELEASE", "DEVEL"], "Build types allowed: DEVEL, RELEASE"
+
 if BUILD_TYPE == "RELEASE":
-    assert glob.glob('spykfunc/dataio/*.cpp')
+    assert glob.glob(osp.join(BASE_DIR, 'spykfunc/dataio/*.cpp'))
 elif BUILD_TYPE == "DEVEL":
     from Cython.Build import cythonize
 
@@ -39,7 +42,7 @@ class PyTest(TestCommand):
 # *******************************
 # Extensions setup
 # *******************************
-_ext_dir = 'spykfunc/dataio/'
+_ext_dir = osp.join(BASE_DIR, 'spykfunc/dataio/')
 _ext_mod = 'spykfunc.dataio.'
 _filename_ext = '.pyx' if BUILD_TYPE == 'DEVEL' else '.cpp'
 
@@ -47,9 +50,9 @@ ext_mods = {
     'common': {},
     'structbuf': {},
     'cppneuron': dict(
-        include_dirs=['../deps/hadoken/include',
-                      '../deps/mvd-tool/include',
-                      '../deps/mvd-tool/deps/highfive/include'],
+        include_dirs=[osp.join(BASE_DIR, '../deps/hadoken/include'),
+                      osp.join(BASE_DIR, '../deps/mvd-tool/include'),
+                      osp.join(BASE_DIR, '../deps/mvd-tool/deps/highfive/include')],
         libraries=['hdf5']
     ),
 }
@@ -76,7 +79,7 @@ if BUILD_TYPE == 'DEVEL':
     extensions = cythonize(extensions,
                            cplus=True,
                            build_dir="build",
-                           include_path=['spykfunc/dataio/mvdtool'])
+                           include_path=[osp.join(BASE_DIR, 'spykfunc/dataio/mvdtool')])
 
 
 # *******************************
@@ -101,7 +104,6 @@ def setup_package():
             'h5py',
             'lxml',
             'progress'
-            #'morphotool'  # Do we really need it?
         ],
         # Setup and testing
         setup_requires=['setuptools_scm'] + sphinx,

@@ -1,4 +1,4 @@
-from  __future__ import print_function
+from __future__ import print_function
 import logging as _logging
 from future.builtins import input
 from contextlib import contextmanager

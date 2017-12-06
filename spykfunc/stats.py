@@ -2,6 +2,7 @@ from pyspark.sql import functions as F
 from pyspark.sql.functions import col
 from .schema import to_pathway_i
 
+
 class NeuronStats(object):
     """
     Retrieve and store the properties of the neurons,

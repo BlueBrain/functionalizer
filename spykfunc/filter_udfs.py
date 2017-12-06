@@ -56,7 +56,9 @@ def reduce_cut_parameter_udef(conn_rules_map, debug=False):
                 p = 1.0 / structuralMean
                 syn_pprime, p_A, mu_A, syn_R_actual = pprime_approximation(rt_star, cv_syns_connection, p)
                 pActiveFraction = rule.active_fraction
-                if debug: _debug = "s2f 4.3: (r=%.3f, cv=%.3f, p=%.3f) -> pprime=%.3f, pA=%.3f, mu_A=%.3f" % (rt_star, cv_syns_connection, p, syn_pprime, p_A, mu_A)
+                if debug:
+                    _debug = "s2f 4.3: (r=%.3f, cv=%.3f, p=%.3f) -> pprime=%.3f, pA=%.3f, mu_A=%.3f" % (
+                        rt_star, cv_syns_connection, p, syn_pprime, p_A, mu_A)
 
             elif rule.mean_syns_connection:
                 # 4.2 of s2f 2.0
@@ -66,19 +68,22 @@ def reduce_cut_parameter_udef(conn_rules_map, debug=False):
                 syn_pprime = 1.0 / (sqrt(sdt*sdt + 0.25) + 0.5)
                 p_A = (p / (1.0 - p) * (1.0 - syn_pprime) / syn_pprime) if (p != 1.0) else 1.0   # Control DIV/0
                 pActiveFraction = activeFraction_default
-                if debug: _debug = "s2f 4.2: p=%.3f, pprime=%.3f, pA=%.3f, mu_A=%.3f" % (p, syn_pprime, p_A, mu_A)
+                if debug:
+                    _debug = "s2f 4.2: p=%.3f, pprime=%.3f, pA=%.3f, mu_A=%.3f" % (p, syn_pprime, p_A, mu_A)
 
             elif rule.probability:
                 # unassigned in s2f 2.0
                 # pActiveFraction = exp(...) * boutonReductionFactor*(structuralMean-1)/(structuralMean*modifier);
-                # double modifier = exp(...) * boutonReductionFactor*(structuralMean-1)/(structuralMean*pActiveFraction);
+                # double modifier = exp(...) * boutonReductionFactor*(structuralMean-1)/(structuralMean*pActiveFraction)
                 modifier = boutonReductionFactor * structuralProbability / rule.probability
                 pActiveFraction = (exp((1.0 - cv_syns_connection) / cv_syns_connection) * boutonReductionFactor *
                                    (structuralMean - 1.0) / (structuralMean * modifier))
                 p_A = modifier * cv_syns_connection
                 mu_A = (structuralMean - cv_syns_connection * structuralMean + cv_syns_connection) * modifier
-                if mu_A < 1.0: mu_A = 1.0
-                if debug: _debug = "s2f unassigned: modifier=%.3f, pA=%.3f, mu_A=%.3f" % (modifier, p_A, mu_A)
+                if mu_A < 1.0:
+                    mu_A = 1.0
+                if debug:
+                    _debug = "s2f unassigned: modifier=%.3f, pA=%.3f, mu_A=%.3f" % (modifier, p_A, mu_A)
 
             else:
                 logging.warning("Rule not supported")
@@ -92,15 +97,19 @@ def reduce_cut_parameter_udef(conn_rules_map, debug=False):
             p = 1.0 / structuralMean
             p_A = (p / (1.0 - p) * (1.0 - pprime) / pprime) if (p != 1.0) else 1.0
             pActiveFraction = rule.active_fraction
-            if debug: _debug = "s2f 4.1: p=%.3f, pprime=%.3f, pA=%.3f, mu_A=%.3f" % (p, pprime, p_A, mu_A)
+            boutonReductionFactor = boutonReductionFactor_default
+            if debug:
+                _debug = "s2f 4.1: p=%.3f, pprime=%.3f, pA=%.3f, mu_A=%.3f" % (p, pprime, p_A, mu_A)
 
         else:
             logging.warning("Rule not supported")
             return nil
 
         pMu_A = mu_A - 0.5
-        if p_A > 1.0: p_A = 1.0
-        if pActiveFraction > 1.0: pActiveFraction = 1.0
+        if p_A > 1.0:
+            p_A = 1.0
+        if pActiveFraction > 1.0:
+            pActiveFraction = 1.0
 
         # ActiveFraction calculated here is legacy and only used if boutonReductionFactor is null
         return p_A, pMu_A, boutonReductionFactor, pActiveFraction, _debug

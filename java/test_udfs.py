@@ -12,13 +12,14 @@ sqlContext.registerJavaFunction("float2binary", "spykfunc.udfs.FloatArraySeriali
 sqlContext.registerJavaFunction("int2binary", "spykfunc.udfs.IntArraySerializer")
 _conc = sc._jvm.spykfunc.udfs.BinaryConcat().apply
 
+
 def concat_bin(col):
     return F.Column(_conc(F._to_seq(sc, [col], F._to_java_column)))
 
 
 def test_float2bin():
-    df0 = sc.parallelize([(1.1,2.2,3.3),(4.4,5.5,6.6)]).toDF(["a", "b", "c"])
-    df1 = df0.select(df0.a.cast("float"), df0.b.cast("float"),df0.c.cast("float"))
+    df0 = sc.parallelize([(1.1, 2.2, 3.3), (4.4, 5.5, 6.6)]).toDF(["a", "b", "c"])
+    df1 = df0.select(df0.a.cast("float"), df0.b.cast("float"), df0.c.cast("float"))
     df2 = df1.select(F.array("*").alias("floatvec"))
 
     indiv = df2.selectExpr("float2binary(floatvec) as binary")

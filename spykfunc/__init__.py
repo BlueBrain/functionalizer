@@ -25,7 +25,7 @@ import logging as _log
 
 try:
     __version__ = _pkg.get_distribution(__name__).version
-except:
+except Exception:
     __version__ = 'unknown'
 
 

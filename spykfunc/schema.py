@@ -106,13 +106,12 @@ def pathway_i_to_str(df_pathway_i, mtypes):
     return (
         df_pathway_i
         .withColumn("src_morpho_i", F.shiftRight(col, 16))
-        .withColumn("dst_morpho_i", F.col(col).bitwiseAND((1<<16)-1))
+        .withColumn("dst_morpho_i", F.col(col).bitwiseAND((1 << 16)-1))
         .join(mtypes.toDF("src_morpho_i", "src_morpho"), "src_morpho_i")
         .join(mtypes.toDF("dst_morpho_i", "dst_morpho"), "dst_morpho_i")
         .withColumn("pathway_str", F.concat("src_morpho", F.lit('->'), "dst_morpho"))
         .drop("src_morpho_i", "src_morpho", "dst_morpho_i", "dst_morpho")
     )
-
 
 
 # Fields as Enumerations
@@ -297,14 +296,20 @@ class PostPostNeuronField(NeuronField):
 
 _graph_entitiy_to_fields = {
     Neuron_Graph_Entity.PRE_NEURON: tuple(
-        getattr(PreNeuronFields, fname) for fname, field in NeuronFields.__dict__.items() if isinstance(field, Field)),
+        getattr(PreNeuronFields, fname)
+        for fname, field in NeuronFields.__dict__.items() if isinstance(field, Field)),
     Neuron_Graph_Entity.POST_NEURON: tuple(
-        getattr(PostNeuronFields, fname) for fname, field in NeuronFields.__dict__.items() if isinstance(field, Field)),
-    Neuron_Graph_Entity.TOUCH: tuple(field for field in TouchFields.__dict__.values() if isinstance(field, Field)),
+        getattr(PostNeuronFields, fname)
+        for fname, field in NeuronFields.__dict__.items() if isinstance(field, Field)),
+    Neuron_Graph_Entity.TOUCH: tuple(
+        field
+        for field in TouchFields.__dict__.values() if isinstance(field, Field)),
     Neuron_Graph_Entity.POST_POST_NEURON: tuple(
-        getattr(PostPostNeuronFields, fname) for fname, field in NeuronFields.__dict__.items() if isinstance(field, Field)),
+        getattr(PostPostNeuronFields, fname)
+        for fname, field in NeuronFields.__dict__.items() if isinstance(field, Field)),
     Neuron_Graph_Entity.SECOND_TOUCH: tuple(
-        getattr(SecondTouchFields, fname) for fname, field in TouchFields.__dict__.items() if isinstance(field, Field)),
+        getattr(SecondTouchFields, fname)
+        for fname, field in TouchFields.__dict__.items() if isinstance(field, Field)),
 }
 
 _default_graph_entities = {

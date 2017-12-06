@@ -115,9 +115,9 @@ class NrnCompleter(object):
             else:
                 while True:
                     # Lets read blocks, instead of the full length
+                    # data = ds[cur_offset: cur_offset + _BLOCK_SIZE]
                     block_len = min(_BLOCK_SIZE, ds_len-cur_offset)
                     data = numpy.empty((block_len, 2), dtype="int32")
-                    #data = ds[cur_offset: cur_offset + _BLOCK_SIZE]
                     mspace = h5py.h5s.create_simple((block_len, 2))
                     cur_sel = selection[cur_offset: cur_offset+block_len]
                     ds.id.read(mspace, cur_sel.id, data)
@@ -204,7 +204,7 @@ class NrnCompleter(object):
                 ds1 = self.in_file[ds_name][:]
                 ds2 = self.outfile[ds_name][:]
 
-                only_ds1 = numpy.isin(ds1[:, 0], ds2[:,0], assume_unique=True, invert=True)
+                only_ds1 = numpy.isin(ds1[:, 0], ds2[:, 0], assume_unique=True, invert=True)
                 len_only_ds1 = numpy.count_nonzero(only_ds1)
                 part1 = numpy.zeros((len_only_ds1, 3), dtype="int32")
                 part1[:, [0, 2]] = ds1[only_ds1]
@@ -293,7 +293,7 @@ class NrnCompleter(object):
     def check_ordered(self):
         errors = 0
         for name, group in iteritems(self.in_file):
-            if not numpy.array_equal(numpy.sort(group[:,0]), group[:,0]):
+            if not numpy.array_equal(numpy.sort(group[:, 0]), group[:, 0]):
                 self.logger.error("Dataset %s not ordered!", name)
                 errors = 1
         return errors
@@ -321,7 +321,7 @@ Options:
   -o=<output-file>  By default creates input_name.T (transposed) or input_name.merged (tmerge)
   -a=<other-file>   The file to merge with in merge-only mode (by default uses input-file.T)
   --sparse          Runs the sparse algorithm, which saves memory and might be faster on highly sparse datasets
-  -vv               Verbose mode (-v for info, -vv for debug) 
+  -vv               Verbose mode (-v for info, -vv for debug)
 """
 
 if __name__ == "__main__":

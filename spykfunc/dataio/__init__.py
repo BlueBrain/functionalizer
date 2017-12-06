@@ -5,4 +5,4 @@ try:
     import morphotool
 except ImportError:
     morphotool = False
-    #logger.warning("Morphotool is not available. Export to h5 won't be possible")
+    # logger.warning("Morphotool is not available. Export to h5 won't be possible")

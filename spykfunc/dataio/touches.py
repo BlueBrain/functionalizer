@@ -1,5 +1,4 @@
 from __future__ import print_function
-import sys
 from lazy_property import LazyProperty
 import numpy as np
 from abc import ABCMeta, abstractproperty
@@ -10,6 +9,7 @@ from ._caching import CachedDataset, _DataSet
 from ..utils import show_wait_message, get_logger
 
 logger = get_logger(__name__)
+
 
 class NEURON_STATS_F:
     neuronID = 0
@@ -95,7 +95,7 @@ class _TouchInfo(TouchInfo_Interface):
     def _read_header(self, f_handler):
         try:
             header = np.rec.fromfile(f_handler, dtype=_TouchInfo._header_dtype, aligned=True, shape=1)[0]
-        except:
+        except Exception:
             logger.fatal("Could not read header record from touches")
             return
 
@@ -131,7 +131,7 @@ class _TouchInfo(TouchInfo_Interface):
     def touches(self):
         print("WARNING: TouchInfo.touches is lazily evaluated, returning an iterator.\n"
               "         Please select a small region and/or avoid converting to a full array")
-        _ = self.header  # Init endianness if needed
+        _ = self.header  # NOQA - Init endianness if needed
         return CachedDataset(_Touches(self))
 
 

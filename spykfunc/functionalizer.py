@@ -5,13 +5,10 @@ from __future__ import absolute_import
 from fnmatch import filter as matchfilter
 from glob import glob
 import time
-import sys
 import os
 
-import pyspark
 from pyspark.sql import SparkSession, SQLContext
-from pyspark.sql import functions as F
-from pyspark import StorageLevel
+# from pyspark.sql import functions as F
 
 from .recipe import Recipe
 from .data_loader import NeuronDataSpark
@@ -207,7 +204,7 @@ class Functionalizer(object):
             if self._run_s2f:
                 self.filter_by_touch_rules()
                 self.run_reduce_and_cut()
-        except:
+        except Exception:
             logger.error(utils.format_cur_exception())
             return 1
 
@@ -243,7 +240,7 @@ class Functionalizer(object):
                 exporter.export_parquet(extended_touches)
             else:
                 exporter.export_hdf5(extended_touches, self.fdata.nNeurons, create_efferent=True)
-        except:
+        except Exception:
             logger.error(utils.format_cur_exception())
             return 1
 
@@ -307,7 +304,7 @@ class Functionalizer(object):
         """ Transform conn rules into concrete rule instances (without wildcards) and indexed by mtype-mtype
             Index is a string in the form "src>dst"
         """
-        mtypes_rev = {mtype:i for i, mtype in enumerate(mTypes)}
+        mtypes_rev = {mtype: i for i, mtype in enumerate(mTypes)}
         conn_rules = {}
 
         for rule in src_conn_rules:  # type: ConnectivityPathRule
@@ -324,7 +321,7 @@ class Functionalizer(object):
                         prev_rule = conn_rules[key]
                         # Overwrite if it is specific
                         if (('*' in prev_rule.source and '*' not in rule.source) or
-                            ('*' in prev_rule.destination and '*' not in rule.destination)):
+                                ('*' in prev_rule.destination and '*' not in rule.destination)):
                             conn_rules[key] = rule
                             # logger.debug(" -> Used instead")
                     else:
@@ -350,7 +347,7 @@ def session(options):
         fzer.output_dir = options.output_dir
     try:
         fzer.init_data(options.recipe_file, options.mvd_file, options.morpho_dir, options.touch_files)
-    except:
+    except Exception:
         logger.error(utils.format_cur_exception())
         return None
     return fzer
