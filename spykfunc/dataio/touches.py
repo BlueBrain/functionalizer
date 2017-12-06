@@ -109,7 +109,7 @@ class _TouchInfo(TouchInfo_Interface):
 
     @property
     def _neuron_stats(self):
-        with open(self._neuron_file) as neuron_f:
+        with open(self._neuron_file, "rb") as neuron_f:
             self._read_header(neuron_f)
             with show_wait_message("Loading " + os.path.basename(self._neuron_file)):
                 info = np.fromfile(neuron_f, dtype=self._neuron_touches_dtype)
@@ -117,7 +117,7 @@ class _TouchInfo(TouchInfo_Interface):
 
     @property
     def header(self):
-        return self._header or self._read_header(open(self._neuron_file))
+        return self._header or self._read_header(open(self._neuron_file, "rb"))
 
     @property
     def neuron_stats(self):
@@ -155,7 +155,7 @@ class _Touches(_DataSet):
         # Some infos we read from the neuron_stats struct, e.g. length
         self._neuron_stats = touch_info.neuron_stats
         self._length = touch_info.touch_count
-        self._touch_f = open(touch_info.touches_file)
+        self._touch_f = open(touch_info.touches_file, "rb")
         self._touches_dtype = _Touches._touches_dtype if not touch_info._byte_swap\
             else _Touches._touches_dtype_reversed
 

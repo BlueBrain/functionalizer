@@ -1,4 +1,4 @@
-from __future__ import print_function, absolute_import
+from __future__ import absolute_import
 
 from libcpp.string cimport string
 from libcpp.vector cimport vector
@@ -50,7 +50,7 @@ cdef class NeuronBuffer(StructBuffer):
 
     def __init__(self, NeuronData data_owner):
         cdef Py_ssize_t s_size=sizeof(NeuronInfo)
-        super(self.__class__, self).__init__(self.block_t)
+        super(NeuronBuffer, self).__init__(self.block_t)
         self._neuron_data_owner = data_owner
 
 
@@ -115,7 +115,6 @@ cdef class NeuronData(NeuronDataI):
 
     def __dealloc__(self):
         # Dealloc data...
-        if DEBUG: print("Freeing data")
         free(self._neurons)
 
 
@@ -129,9 +128,9 @@ cdef class MVD_Morpho_Loader(NeuronLoaderI):
     cdef readonly string mvd_filename
     cdef readonly string morphology_dir
 
-    def __init__(self, string mvd_filename, string morphology_dir):
-        self.mvd_filename = mvd_filename
-        self.morphology_dir = morphology_dir
+    def __init__(self, str mvd_filename, str morphology_dir):
+        self.mvd_filename = mvd_filename.encode("utf8")
+        self.morphology_dir = morphology_dir.encode("utf8")
 
     def load_globals(self, NeuronData neuron_data_dst):
         #Load and then set ptr
@@ -176,7 +175,7 @@ cdef class MVD_Morpho_Loader(NeuronLoaderI):
         cdef vector[size_t] index_syn_class = f.getIndexSynapseClass(mvd_range)
 
         # Populate structure
-        if DEBUG: print("Alloc'ting", subset_count, "neuron structs")
+        # if DEBUG: print("Alloc'ting", subset_count, "neuron structs")
         cdef NeuronInfo *_neurons = <NeuronInfo*>malloc( subset_count * sizeof(NeuronInfo) )
 
         cdef size_t cur_neuron

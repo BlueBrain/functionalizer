@@ -21,7 +21,7 @@ cdef class Struct:
 
 
 cdef class _TYPE(object):
-    def __init__(self, name, dtype_repr, pystruct_repr):
+    def __init__(self, str name, str dtype_repr, str pystruct_repr):
         self.name = name
         self._dtype_repr = dtype_repr
         self._pystruct_repr = pystruct_repr
@@ -110,8 +110,7 @@ cdef class StructBuffer:
     def __init__(self, StructType struct_type=None):
         if struct_type:
             self.struct_t = struct_type
-            #print "Initting StructBuffer with stuct t: %s, size: %d" % ( struct_type.pystruct_t, struct_type.size_bytes)
-            self.init( struct_type.pystruct_t, struct_type.size_bytes)
+            self.init(struct_type.pystruct_t.encode("utf8"), struct_type.size_bytes)
         else:
             self.struct_t = None
 

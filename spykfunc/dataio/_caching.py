@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, division
 import abc
 from functools import reduce
 from operator import mul
@@ -48,7 +48,7 @@ class CachedDataset(_DataSet):
             self._item_size = ds.dtype.itemsize
             if len(ds.shape) > 1:
                 self._item_size *= reduce(mul, ds.shape[1:])
-            self._base_cached_lines = cache_size / self._item_size
+            self._base_cached_lines = cache_size // self._item_size
             self._ds_len = len(ds)
             self._cache_len = 0
             self._cache_offset = 0

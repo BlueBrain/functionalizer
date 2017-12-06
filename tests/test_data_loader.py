@@ -10,7 +10,7 @@ import logging
 
 CURDIR = os.path.dirname(__file__)
 mvd_file = os.path.join(CURDIR, "v5circuit.mvd3")
-morpho_dir = os.path.join(CURDIR, "circuitBuilding_1000neurons/morphologies/h5")
+morpho_dir = os.path.join(CURDIR, "circuit_1000n/morphologies/h5")
 mega_recipe = os.path.join(CURDIR, "v5builderRecipeAllPathways.xml")
 
 
@@ -21,6 +21,10 @@ def test_loader():
 
     nrData.load_globals()
     recipe = Recipe(mega_recipe)
+
+    import spykfunc
+    print(spykfunc)
+    print(nrData)
 
     matrx = nrData.load_synapse_prop_matrix(recipe)
     return matrx

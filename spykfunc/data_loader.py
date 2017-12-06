@@ -13,7 +13,7 @@ from .dataio.common import Part
 from .definitions import MType
 from .utils.spark_udef import DictAccum
 from .utils import get_logger, make_slices
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 import fnmatch
 
 import logging
@@ -234,9 +234,9 @@ class NeuronDataSpark(NeuronData):
         )
 
         expanded_names = defaultdict(dict)
-        field_to_values = {"MType": self.mtypeVec,
-                           "EType": self.etypeVec,
-                           "SClass": self.synaClassVec}
+        field_to_values = OrderedDict((("MType", [str(x) for x in self.mtypeVec]),
+                                       ("EType", [str(x) for x in self.etypeVec]),
+                                       ("SClass", [str(x) for x in self.synaClassVec])))
         field_to_reverses = {"MType": syn_mtype_rev,
                              "EType": syn_etype_rev,
                              "SClass": syn_sclass_rev}

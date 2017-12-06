@@ -9,13 +9,13 @@ cdef class Struct:
     cdef int size
 
 cdef class _TYPE(object):
-    cdef string name
-    cdef string  _dtype_repr
-    cdef string _pystruct_repr
+    cdef str name
+    cdef str _dtype_repr
+    cdef str _pystruct_repr
 
 cdef class StructType(_TYPE):
-    cdef string _dtype_spec
-    cdef string _pystruct_spec
+    cdef str _dtype_spec
+    cdef str _pystruct_spec
     cdef dict _names_to_i
     cdef object _dtype
 
