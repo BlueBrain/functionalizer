@@ -10,7 +10,7 @@ import os
 import os.path as osp
 import glob
 
-SPYKFUNC_VERSION = "0.4.dev1"
+SPYKFUNC_VERSION = "0.5.0"
 BUILD_TYPE = os.getenv('BUILD_TYPE', "RELEASE").upper()
 BASE_DIR = osp.dirname(__file__)
 
