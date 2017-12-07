@@ -5,4 +5,6 @@ MORPHO_DIR="."
 spykfunc $CIRCUIT_DIR/builderRecipeAllPathways.xml \
          $CIRCUIT_DIR/circuit.mvd3 \
          $MORPHO_DIR \
-         $CIRCUIT_DIR/touches/touches.0
+         $CIRCUIT_DIR/touches/touches.0 \
+         --spark-opts "--driver-memory 4G"
+
