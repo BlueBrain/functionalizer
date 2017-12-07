@@ -756,28 +756,28 @@ struct __pyx_obj_8spykfunc_6dataio_9structbuf_Struct {
  *     cdef int size
  * 
  * cdef class _TYPE(object):             # <<<<<<<<<<<<<<
- *     cdef string name
- *     cdef string  _dtype_repr
+ *     cdef str name
+ *     cdef str _dtype_repr
  */
 struct __pyx_obj_8spykfunc_6dataio_9structbuf__TYPE {
   PyObject_HEAD
-  std::string name;
-  std::string _dtype_repr;
-  std::string _pystruct_repr;
+  PyObject *name;
+  PyObject *_dtype_repr;
+  PyObject *_pystruct_repr;
 };
 
 
 /* "structbuf.pxd":16
- *     cdef string _pystruct_repr
+ *     cdef str _pystruct_repr
  * 
  * cdef class StructType(_TYPE):             # <<<<<<<<<<<<<<
- *     cdef string _dtype_spec
- *     cdef string _pystruct_spec
+ *     cdef str _dtype_spec
+ *     cdef str _pystruct_spec
  */
 struct __pyx_obj_8spykfunc_6dataio_9structbuf_StructType {
   struct __pyx_obj_8spykfunc_6dataio_9structbuf__TYPE __pyx_base;
-  std::string _dtype_spec;
-  std::string _pystruct_spec;
+  PyObject *_dtype_spec;
+  PyObject *_pystruct_spec;
   PyObject *_names_to_i;
   PyObject *_dtype;
 };
@@ -903,7 +903,7 @@ struct __pyx_obj_8spykfunc_6dataio_9cppneuron_NeuronData {
 };
 
 
-/* "spykfunc/dataio/cppneuron.pyx":124
+/* "spykfunc/dataio/cppneuron.pyx":123
  * 
  * # ==================================================================================
  * cdef class MVD_Morpho_Loader(NeuronLoaderI):             # <<<<<<<<<<<<<<
@@ -1087,35 +1087,6 @@ static CYTHON_INLINE PyObject* __Pyx_PyObject_CallNoArg(PyObject *func);
 #else
 #define __Pyx_PyObject_CallNoArg(func) __Pyx_PyObject_Call(func, __pyx_empty_tuple, NULL)
 #endif
-
-/* PyThreadStateGet.proto */
-#if CYTHON_FAST_THREAD_STATE
-#define __Pyx_PyThreadState_declare  PyThreadState *__pyx_tstate;
-#define __Pyx_PyThreadState_assign  __pyx_tstate = PyThreadState_GET();
-#else
-#define __Pyx_PyThreadState_declare
-#define __Pyx_PyThreadState_assign
-#endif
-
-/* PyErrFetchRestore.proto */
-#if CYTHON_FAST_THREAD_STATE
-#define __Pyx_ErrRestoreWithState(type, value, tb)  __Pyx_ErrRestoreInState(PyThreadState_GET(), type, value, tb)
-#define __Pyx_ErrFetchWithState(type, value, tb)    __Pyx_ErrFetchInState(PyThreadState_GET(), type, value, tb)
-#define __Pyx_ErrRestore(type, value, tb)  __Pyx_ErrRestoreInState(__pyx_tstate, type, value, tb)
-#define __Pyx_ErrFetch(type, value, tb)    __Pyx_ErrFetchInState(__pyx_tstate, type, value, tb)
-static CYTHON_INLINE void __Pyx_ErrRestoreInState(PyThreadState *tstate, PyObject *type, PyObject *value, PyObject *tb);
-static CYTHON_INLINE void __Pyx_ErrFetchInState(PyThreadState *tstate, PyObject **type, PyObject **value, PyObject **tb);
-#else
-#define __Pyx_ErrRestoreWithState(type, value, tb)  PyErr_Restore(type, value, tb)
-#define __Pyx_ErrFetchWithState(type, value, tb)  PyErr_Fetch(type, value, tb)
-#define __Pyx_ErrRestore(type, value, tb)  PyErr_Restore(type, value, tb)
-#define __Pyx_ErrFetch(type, value, tb)  PyErr_Fetch(type, value, tb)
-#endif
-
-/* WriteUnraisableException.proto */
-static void __Pyx_WriteUnraisable(const char *name, int clineno,
-                                  int lineno, const char *filename,
-                                  int full_traceback, int nogil);
 
 /* RaiseTooManyValuesToUnpack.proto */
 static CYTHON_INLINE void __Pyx_RaiseTooManyValuesError(Py_ssize_t expected);
@@ -1352,9 +1323,8 @@ int __pyx_module_is_main_spykfunc__dataio__cppneuron = 0;
 
 /* Implementation of 'spykfunc.dataio.cppneuron' */
 static PyObject *__pyx_builtin_super;
-static PyObject *__pyx_builtin_print;
 static PyObject *__pyx_builtin_range;
-static const char __pyx_k__2[] = "";
+static const char __pyx_k__3[] = "";
 static const char __pyx_k_h5[] = ".h5";
 static const char __pyx_k_id[] = "id";
 static const char __pyx_k_os[] = "os";
@@ -1365,21 +1335,20 @@ static const char __pyx_k_main[] = "__main__";
 static const char __pyx_k_part[] = "part";
 static const char __pyx_k_path[] = "path";
 static const char __pyx_k_test[] = "__test__";
+static const char __pyx_k_utf8[] = "utf8";
 static const char __pyx_k_Array[] = "Array";
 static const char __pyx_k_TYPES[] = "TYPES";
-static const char __pyx_k_class[] = "__class__";
-static const char __pyx_k_print[] = "print";
 static const char __pyx_k_range[] = "range";
 static const char __pyx_k_super[] = "super";
 static const char __pyx_k_DOUBLE[] = "DOUBLE";
 static const char __pyx_k_append[] = "append";
+static const char __pyx_k_encode[] = "encode";
 static const char __pyx_k_import[] = "__import__";
 static const char __pyx_k_block_t[] = "block_t";
 static const char __pyx_k_morphos[] = "morphos";
 static const char __pyx_k_position[] = "position";
 static const char __pyx_k_rotation[] = "rotation";
 static const char __pyx_k_structbuf[] = "structbuf";
-static const char __pyx_k_Alloc_ting[] = "Alloc'ting";
 static const char __pyx_k_StructType[] = "StructType";
 static const char __pyx_k_data_owner[] = "data_owner";
 static const char __pyx_k_morphology[] = "morphology";
@@ -1390,14 +1359,12 @@ static const char __pyx_k_collections[] = "collections";
 static const char __pyx_k_defaultdict[] = "defaultdict";
 static const char __pyx_k_morpho_name[] = "morpho_name";
 static const char __pyx_k_neuron_data[] = "neuron_data";
-static const char __pyx_k_Freeing_data[] = "Freeing data";
 static const char __pyx_k_MorphoReader[] = "MorphoReader";
 static const char __pyx_k_UNSIGNED_INT[] = "UNSIGNED_INT";
 static const char __pyx_k_load_globals[] = "load_globals";
 static const char __pyx_k_load_neurons[] = "load_neurons";
 static const char __pyx_k_mvd_filename[] = "mvd_filename";
 static const char __pyx_k_morphology_dir[] = "morphology_dir";
-static const char __pyx_k_neuron_structs[] = "neuron structs";
 static const char __pyx_k_load_morphology[] = "load_morphology";
 static const char __pyx_k_syn_class_index[] = "syn_class_index";
 static const char __pyx_k_get_offset_count[] = "get_offset_count";
@@ -1405,24 +1372,22 @@ static const char __pyx_k_electrophysiology[] = "electrophysiology";
 static const char __pyx_k_load_morphologies[] = "load_morphologies";
 static const char __pyx_k_create_morpho_tree[] = "create_morpho_tree";
 static const char __pyx_k_Morphotool_isnt_available[] = "Morphotool isnt available.";
-static PyObject *__pyx_kp_s_Alloc_ting;
 static PyObject *__pyx_n_s_Array;
 static PyObject *__pyx_n_s_DOUBLE;
-static PyObject *__pyx_kp_s_Freeing_data;
 static PyObject *__pyx_n_s_MorphoReader;
 static PyObject *__pyx_kp_s_Morphotool_isnt_available;
 static PyObject *__pyx_n_s_StructType;
 static PyObject *__pyx_n_s_TYPES;
 static PyObject *__pyx_n_s_UNSIGNED_INT;
-static PyObject *__pyx_n_s__2;
+static PyObject *__pyx_n_s__3;
 static PyObject *__pyx_n_s_append;
 static PyObject *__pyx_n_s_block_t;
-static PyObject *__pyx_n_s_class;
 static PyObject *__pyx_n_s_collections;
 static PyObject *__pyx_n_s_create_morpho_tree;
 static PyObject *__pyx_n_s_data_owner;
 static PyObject *__pyx_n_s_defaultdict;
 static PyObject *__pyx_n_s_electrophysiology;
+static PyObject *__pyx_n_s_encode;
 static PyObject *__pyx_n_s_get_offset_count;
 static PyObject *__pyx_kp_s_h5;
 static PyObject *__pyx_n_s_id;
@@ -1442,13 +1407,11 @@ static PyObject *__pyx_n_s_morphos;
 static PyObject *__pyx_n_s_morphotool;
 static PyObject *__pyx_n_s_mvd_filename;
 static PyObject *__pyx_n_s_neuron_data;
-static PyObject *__pyx_kp_s_neuron_structs;
 static PyObject *__pyx_n_s_nr_neurons;
 static PyObject *__pyx_n_s_os;
 static PyObject *__pyx_n_s_part;
 static PyObject *__pyx_n_s_path;
 static PyObject *__pyx_n_s_position;
-static PyObject *__pyx_n_s_print;
 static PyObject *__pyx_n_s_pyx_vtable;
 static PyObject *__pyx_n_s_range;
 static PyObject *__pyx_n_s_rotation;
@@ -1456,6 +1419,7 @@ static PyObject *__pyx_n_s_structbuf;
 static PyObject *__pyx_n_s_super;
 static PyObject *__pyx_n_s_syn_class_index;
 static PyObject *__pyx_n_s_test;
+static PyObject *__pyx_n_s_utf8;
 static int __pyx_pf_8spykfunc_6dataio_9cppneuron_12NeuronBuffer___init__(struct __pyx_obj_8spykfunc_6dataio_9cppneuron_NeuronBuffer *__pyx_v_self, struct __pyx_obj_8spykfunc_6dataio_9cppneuron_NeuronData *__pyx_v_data_owner); /* proto */
 static int __pyx_pf_8spykfunc_6dataio_9cppneuron_10NeuronData___init__(struct __pyx_obj_8spykfunc_6dataio_9cppneuron_NeuronData *__pyx_v_self, PyObject *__pyx_v_nr_neurons); /* proto */
 static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_10NeuronData_2set_loader(struct __pyx_obj_8spykfunc_6dataio_9cppneuron_NeuronData *__pyx_v_self, struct __pyx_obj_8spykfunc_6dataio_6common_NeuronLoaderI *__pyx_v_loader); /* proto */
@@ -1474,7 +1438,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_10NeuronData_7nameMap___g
 static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_10NeuronData_12morphologies___get__(struct __pyx_obj_8spykfunc_6dataio_9cppneuron_NeuronData *__pyx_v_self); /* proto */
 static int __pyx_pf_8spykfunc_6dataio_9cppneuron_10NeuronData_12morphologies_2__set__(struct __pyx_obj_8spykfunc_6dataio_9cppneuron_NeuronData *__pyx_v_self, PyObject *__pyx_v_value); /* proto */
 static int __pyx_pf_8spykfunc_6dataio_9cppneuron_10NeuronData_12morphologies_4__del__(struct __pyx_obj_8spykfunc_6dataio_9cppneuron_NeuronData *__pyx_v_self); /* proto */
-static int __pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader___init__(struct __pyx_obj_8spykfunc_6dataio_9cppneuron_MVD_Morpho_Loader *__pyx_v_self, std::string __pyx_v_mvd_filename, std::string __pyx_v_morphology_dir); /* proto */
+static int __pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader___init__(struct __pyx_obj_8spykfunc_6dataio_9cppneuron_MVD_Morpho_Loader *__pyx_v_self, PyObject *__pyx_v_mvd_filename, PyObject *__pyx_v_morphology_dir); /* proto */
 static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_2load_globals(struct __pyx_obj_8spykfunc_6dataio_9cppneuron_MVD_Morpho_Loader *__pyx_v_self, struct __pyx_obj_8spykfunc_6dataio_9cppneuron_NeuronData *__pyx_v_neuron_data_dst); /* proto */
 static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_4load_neurons(struct __pyx_obj_8spykfunc_6dataio_9cppneuron_MVD_Morpho_Loader *__pyx_v_self, struct __pyx_obj_8spykfunc_6dataio_9cppneuron_NeuronData *__pyx_v_neuron_data, struct __pyx_obj_8spykfunc_6dataio_6common__Part_t *__pyx_v_part); /* proto */
 static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_6load_morphologies(struct __pyx_obj_8spykfunc_6dataio_9cppneuron_MVD_Morpho_Loader *__pyx_v_self, struct __pyx_obj_8spykfunc_6dataio_9cppneuron_NeuronData *__pyx_v_neuron_data, PyObject *__pyx_v_morphos); /* proto */
@@ -1489,13 +1453,14 @@ static PyObject *__pyx_int_0;
 static PyObject *__pyx_int_3;
 static PyObject *__pyx_int_4;
 static PyObject *__pyx_tuple_;
+static PyObject *__pyx_tuple__2;
 
 /* "spykfunc/dataio/cppneuron.pyx":51
  *     cdef NeuronData _neuron_data_owner
  * 
  *     def __init__(self, NeuronData data_owner):             # <<<<<<<<<<<<<<
  *         cdef Py_ssize_t s_size=sizeof(NeuronInfo)
- *         super(self.__class__, self).__init__(self.block_t)
+ *         super(NeuronBuffer, self).__init__(self.block_t)
  */
 
 /* Python wrapper */
@@ -1567,7 +1532,7 @@ static int __pyx_pf_8spykfunc_6dataio_9cppneuron_12NeuronBuffer___init__(struct 
  * 
  *     def __init__(self, NeuronData data_owner):
  *         cdef Py_ssize_t s_size=sizeof(NeuronInfo)             # <<<<<<<<<<<<<<
- *         super(self.__class__, self).__init__(self.block_t)
+ *         super(NeuronBuffer, self).__init__(self.block_t)
  *         self._neuron_data_owner = data_owner
  */
   __pyx_v_s_size = (sizeof(struct __pyx_t_8spykfunc_6dataio_9cppneuron_NeuronInfo));
@@ -1575,79 +1540,77 @@ static int __pyx_pf_8spykfunc_6dataio_9cppneuron_12NeuronBuffer___init__(struct 
   /* "spykfunc/dataio/cppneuron.pyx":53
  *     def __init__(self, NeuronData data_owner):
  *         cdef Py_ssize_t s_size=sizeof(NeuronInfo)
- *         super(self.__class__, self).__init__(self.block_t)             # <<<<<<<<<<<<<<
+ *         super(NeuronBuffer, self).__init__(self.block_t)             # <<<<<<<<<<<<<<
  *         self._neuron_data_owner = data_owner
  * 
  */
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_class); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 53, __pyx_L1_error)
+  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 53, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 53, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_GIVEREF(__pyx_t_2);
-  PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_2);
+  __Pyx_INCREF(((PyObject *)__pyx_ptype_8spykfunc_6dataio_9cppneuron_NeuronBuffer));
+  __Pyx_GIVEREF(((PyObject *)__pyx_ptype_8spykfunc_6dataio_9cppneuron_NeuronBuffer));
+  PyTuple_SET_ITEM(__pyx_t_2, 0, ((PyObject *)__pyx_ptype_8spykfunc_6dataio_9cppneuron_NeuronBuffer));
   __Pyx_INCREF(((PyObject *)__pyx_v_self));
   __Pyx_GIVEREF(((PyObject *)__pyx_v_self));
-  PyTuple_SET_ITEM(__pyx_t_3, 1, ((PyObject *)__pyx_v_self));
-  __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin_super, __pyx_t_3, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 53, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_init); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 53, __pyx_L1_error)
+  PyTuple_SET_ITEM(__pyx_t_2, 1, ((PyObject *)__pyx_v_self));
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_super, __pyx_t_2, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 53, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_block_t); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 53, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_init); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 53, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_block_t); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 53, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
   __pyx_t_4 = NULL;
-  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_3))) {
-    __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_3);
+  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
+    __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_2);
     if (likely(__pyx_t_4)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
       __Pyx_INCREF(__pyx_t_4);
       __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_3, function);
+      __Pyx_DECREF_SET(__pyx_t_2, function);
     }
   }
   if (!__pyx_t_4) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 53, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 53, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_GOTREF(__pyx_t_1);
   } else {
     #if CYTHON_FAST_PYCALL
-    if (PyFunction_Check(__pyx_t_3)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_t_2};
-      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 53, __pyx_L1_error)
+    if (PyFunction_Check(__pyx_t_2)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_t_3};
+      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 53, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_GOTREF(__pyx_t_1);
-      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     } else
     #endif
     #if CYTHON_FAST_PYCCALL
-    if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_t_2};
-      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 53, __pyx_L1_error)
+    if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_t_3};
+      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 53, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_GOTREF(__pyx_t_1);
-      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     } else
     #endif
     {
       __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 53, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_4); __pyx_t_4 = NULL;
-      __Pyx_GIVEREF(__pyx_t_2);
-      PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_t_2);
-      __pyx_t_2 = 0;
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 53, __pyx_L1_error)
+      __Pyx_GIVEREF(__pyx_t_3);
+      PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_t_3);
+      __pyx_t_3 = 0;
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 53, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     }
   }
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "spykfunc/dataio/cppneuron.pyx":54
  *         cdef Py_ssize_t s_size=sizeof(NeuronInfo)
- *         super(self.__class__, self).__init__(self.block_t)
+ *         super(NeuronBuffer, self).__init__(self.block_t)
  *         self._neuron_data_owner = data_owner             # <<<<<<<<<<<<<<
  * 
  * 
@@ -1663,7 +1626,7 @@ static int __pyx_pf_8spykfunc_6dataio_9cppneuron_12NeuronBuffer___init__(struct 
  * 
  *     def __init__(self, NeuronData data_owner):             # <<<<<<<<<<<<<<
  *         cdef Py_ssize_t s_size=sizeof(NeuronInfo)
- *         super(self.__class__, self).__init__(self.block_t)
+ *         super(NeuronBuffer, self).__init__(self.block_t)
  */
 
   /* function exit code */
@@ -2495,7 +2458,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_10NeuronData_10set_name_m
  * 
  *     def __dealloc__(self):             # <<<<<<<<<<<<<<
  *         # Dealloc data...
- *         if DEBUG: print("Freeing data")
+ *         free(self._neurons)
  */
 
 /* Python wrapper */
@@ -2511,27 +2474,11 @@ static void __pyx_pw_8spykfunc_6dataio_9cppneuron_10NeuronData_13__dealloc__(PyO
 
 static void __pyx_pf_8spykfunc_6dataio_9cppneuron_10NeuronData_12__dealloc__(struct __pyx_obj_8spykfunc_6dataio_9cppneuron_NeuronData *__pyx_v_self) {
   __Pyx_RefNannyDeclarations
-  int __pyx_t_1;
-  PyObject *__pyx_t_2 = NULL;
   __Pyx_RefNannySetupContext("__dealloc__", 0);
 
   /* "spykfunc/dataio/cppneuron.pyx":118
  *     def __dealloc__(self):
  *         # Dealloc data...
- *         if DEBUG: print("Freeing data")             # <<<<<<<<<<<<<<
- *         free(self._neurons)
- * 
- */
-  __pyx_t_1 = (__pyx_v_8spykfunc_6dataio_9cppneuron_DEBUG != 0);
-  if (__pyx_t_1) {
-    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin_print, __pyx_tuple_, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 118, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_2);
-    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  }
-
-  /* "spykfunc/dataio/cppneuron.pyx":119
- *         # Dealloc data...
- *         if DEBUG: print("Freeing data")
  *         free(self._neurons)             # <<<<<<<<<<<<<<
  * 
  * 
@@ -2543,15 +2490,10 @@ static void __pyx_pf_8spykfunc_6dataio_9cppneuron_10NeuronData_12__dealloc__(str
  * 
  *     def __dealloc__(self):             # <<<<<<<<<<<<<<
  *         # Dealloc data...
- *         if DEBUG: print("Freeing data")
+ *         free(self._neurons)
  */
 
   /* function exit code */
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_WriteUnraisable("spykfunc.dataio.cppneuron.NeuronData.__dealloc__", __pyx_clineno, __pyx_lineno, __pyx_filename, 0, 0);
-  __pyx_L0:;
   __Pyx_RefNannyFinishContext();
 }
 
@@ -2944,19 +2886,19 @@ static int __pyx_pf_8spykfunc_6dataio_9cppneuron_10NeuronData_12morphologies_4__
   return __pyx_r;
 }
 
-/* "spykfunc/dataio/cppneuron.pyx":132
+/* "spykfunc/dataio/cppneuron.pyx":131
  *     cdef readonly string morphology_dir
  * 
- *     def __init__(self, string mvd_filename, string morphology_dir):             # <<<<<<<<<<<<<<
- *         self.mvd_filename = mvd_filename
- *         self.morphology_dir = morphology_dir
+ *     def __init__(self, str mvd_filename, str morphology_dir):             # <<<<<<<<<<<<<<
+ *         self.mvd_filename = mvd_filename.encode("utf8")
+ *         self.morphology_dir = morphology_dir.encode("utf8")
  */
 
 /* Python wrapper */
 static int __pyx_pw_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_1__init__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
 static int __pyx_pw_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_1__init__(PyObject *__pyx_v_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
-  std::string __pyx_v_mvd_filename;
-  std::string __pyx_v_morphology_dir;
+  PyObject *__pyx_v_mvd_filename = 0;
+  PyObject *__pyx_v_morphology_dir = 0;
   int __pyx_r;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__init__ (wrapper)", 0);
@@ -2980,11 +2922,11 @@ static int __pyx_pw_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_1__init__(P
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_morphology_dir)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__init__", 1, 2, 2, 1); __PYX_ERR(0, 132, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__init__", 1, 2, 2, 1); __PYX_ERR(0, 131, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__init__") < 0)) __PYX_ERR(0, 132, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__init__") < 0)) __PYX_ERR(0, 131, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 2) {
       goto __pyx_L5_argtuple_error;
@@ -2992,63 +2934,93 @@ static int __pyx_pw_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_1__init__(P
       values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
       values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
     }
-    __pyx_v_mvd_filename = __pyx_convert_string_from_py_std__in_string(values[0]); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 132, __pyx_L3_error)
-    __pyx_v_morphology_dir = __pyx_convert_string_from_py_std__in_string(values[1]); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 132, __pyx_L3_error)
+    __pyx_v_mvd_filename = ((PyObject*)values[0]);
+    __pyx_v_morphology_dir = ((PyObject*)values[1]);
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 132, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__init__", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 131, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("spykfunc.dataio.cppneuron.MVD_Morpho_Loader.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return -1;
   __pyx_L4_argument_unpacking_done:;
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_mvd_filename), (&PyString_Type), 1, "mvd_filename", 1))) __PYX_ERR(0, 131, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_morphology_dir), (&PyString_Type), 1, "morphology_dir", 1))) __PYX_ERR(0, 131, __pyx_L1_error)
   __pyx_r = __pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader___init__(((struct __pyx_obj_8spykfunc_6dataio_9cppneuron_MVD_Morpho_Loader *)__pyx_v_self), __pyx_v_mvd_filename, __pyx_v_morphology_dir);
 
   /* function exit code */
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __pyx_r = -1;
+  __pyx_L0:;
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static int __pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader___init__(struct __pyx_obj_8spykfunc_6dataio_9cppneuron_MVD_Morpho_Loader *__pyx_v_self, std::string __pyx_v_mvd_filename, std::string __pyx_v_morphology_dir) {
+static int __pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader___init__(struct __pyx_obj_8spykfunc_6dataio_9cppneuron_MVD_Morpho_Loader *__pyx_v_self, PyObject *__pyx_v_mvd_filename, PyObject *__pyx_v_morphology_dir) {
   int __pyx_r;
   __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  PyObject *__pyx_t_2 = NULL;
+  std::string __pyx_t_3;
   __Pyx_RefNannySetupContext("__init__", 0);
 
-  /* "spykfunc/dataio/cppneuron.pyx":133
+  /* "spykfunc/dataio/cppneuron.pyx":132
  * 
- *     def __init__(self, string mvd_filename, string morphology_dir):
- *         self.mvd_filename = mvd_filename             # <<<<<<<<<<<<<<
- *         self.morphology_dir = morphology_dir
+ *     def __init__(self, str mvd_filename, str morphology_dir):
+ *         self.mvd_filename = mvd_filename.encode("utf8")             # <<<<<<<<<<<<<<
+ *         self.morphology_dir = morphology_dir.encode("utf8")
  * 
  */
-  __pyx_v_self->mvd_filename = __pyx_v_mvd_filename;
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_mvd_filename, __pyx_n_s_encode); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 132, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple_, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 132, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_t_3 = __pyx_convert_string_from_py_std__in_string(__pyx_t_2); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 132, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_v_self->mvd_filename = __pyx_t_3;
 
-  /* "spykfunc/dataio/cppneuron.pyx":134
- *     def __init__(self, string mvd_filename, string morphology_dir):
- *         self.mvd_filename = mvd_filename
- *         self.morphology_dir = morphology_dir             # <<<<<<<<<<<<<<
+  /* "spykfunc/dataio/cppneuron.pyx":133
+ *     def __init__(self, str mvd_filename, str morphology_dir):
+ *         self.mvd_filename = mvd_filename.encode("utf8")
+ *         self.morphology_dir = morphology_dir.encode("utf8")             # <<<<<<<<<<<<<<
  * 
  *     def load_globals(self, NeuronData neuron_data_dst):
  */
-  __pyx_v_self->morphology_dir = __pyx_v_morphology_dir;
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_morphology_dir, __pyx_n_s_encode); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 133, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_tuple__2, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 133, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_3 = __pyx_convert_string_from_py_std__in_string(__pyx_t_1); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 133, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_v_self->morphology_dir = __pyx_t_3;
 
-  /* "spykfunc/dataio/cppneuron.pyx":132
+  /* "spykfunc/dataio/cppneuron.pyx":131
  *     cdef readonly string morphology_dir
  * 
- *     def __init__(self, string mvd_filename, string morphology_dir):             # <<<<<<<<<<<<<<
- *         self.mvd_filename = mvd_filename
- *         self.morphology_dir = morphology_dir
+ *     def __init__(self, str mvd_filename, str morphology_dir):             # <<<<<<<<<<<<<<
+ *         self.mvd_filename = mvd_filename.encode("utf8")
+ *         self.morphology_dir = morphology_dir.encode("utf8")
  */
 
   /* function exit code */
   __pyx_r = 0;
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_AddTraceback("spykfunc.dataio.cppneuron.MVD_Morpho_Loader.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = -1;
+  __pyx_L0:;
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-/* "spykfunc/dataio/cppneuron.pyx":136
- *         self.morphology_dir = morphology_dir
+/* "spykfunc/dataio/cppneuron.pyx":135
+ *         self.morphology_dir = morphology_dir.encode("utf8")
  * 
  *     def load_globals(self, NeuronData neuron_data_dst):             # <<<<<<<<<<<<<<
  *         #Load and then set ptr
@@ -3061,7 +3033,7 @@ static PyObject *__pyx_pw_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_3load
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("load_globals (wrapper)", 0);
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_neuron_data_dst), __pyx_ptype_8spykfunc_6dataio_9cppneuron_NeuronData, 1, "neuron_data_dst", 0))) __PYX_ERR(0, 136, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_neuron_data_dst), __pyx_ptype_8spykfunc_6dataio_9cppneuron_NeuronData, 1, "neuron_data_dst", 0))) __PYX_ERR(0, 135, __pyx_L1_error)
   __pyx_r = __pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_2load_globals(((struct __pyx_obj_8spykfunc_6dataio_9cppneuron_MVD_Morpho_Loader *)__pyx_v_self), ((struct __pyx_obj_8spykfunc_6dataio_9cppneuron_NeuronData *)__pyx_v_neuron_data_dst));
 
   /* function exit code */
@@ -3084,7 +3056,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_2load
   std::vector<std::string>  __pyx_t_2;
   __Pyx_RefNannySetupContext("load_globals", 0);
 
-  /* "spykfunc/dataio/cppneuron.pyx":138
+  /* "spykfunc/dataio/cppneuron.pyx":137
  *     def load_globals(self, NeuronData neuron_data_dst):
  *         #Load and then set ptr
  *         cdef MVD3.MVD3File *f = new MVD3.MVD3File(self.mvd_filename)             # <<<<<<<<<<<<<<
@@ -3095,11 +3067,11 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_2load
     __pyx_t_1 = new MVD3::MVD3File(__pyx_v_self->mvd_filename);
   } catch(...) {
     __Pyx_CppExn2PyErr();
-    __PYX_ERR(0, 138, __pyx_L1_error)
+    __PYX_ERR(0, 137, __pyx_L1_error)
   }
   __pyx_v_f = __pyx_t_1;
 
-  /* "spykfunc/dataio/cppneuron.pyx":142
+  /* "spykfunc/dataio/cppneuron.pyx":141
  *         # --- Global info ---
  *         #Nr
  *         neuron_data_dst.nNeurons = f.getNbNeuron()             # <<<<<<<<<<<<<<
@@ -3108,7 +3080,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_2load
  */
   __pyx_v_neuron_data_dst->__pyx_base.nNeurons = __pyx_v_f->getNbNeuron();
 
-  /* "spykfunc/dataio/cppneuron.pyx":144
+  /* "spykfunc/dataio/cppneuron.pyx":143
  *         neuron_data_dst.nNeurons = f.getNbNeuron()
  *         #ETypes
  *         cdef vector[string] list_etypes = f.listAllEtypes()             # <<<<<<<<<<<<<<
@@ -3119,11 +3091,11 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_2load
     __pyx_t_2 = __pyx_v_f->listAllEtypes();
   } catch(...) {
     __Pyx_CppExn2PyErr();
-    __PYX_ERR(0, 144, __pyx_L1_error)
+    __PYX_ERR(0, 143, __pyx_L1_error)
   }
   __pyx_v_list_etypes = __pyx_t_2;
 
-  /* "spykfunc/dataio/cppneuron.pyx":145
+  /* "spykfunc/dataio/cppneuron.pyx":144
  *         #ETypes
  *         cdef vector[string] list_etypes = f.listAllEtypes()
  *         neuron_data_dst.etypeVec.swap(list_etypes)             # <<<<<<<<<<<<<<
@@ -3132,7 +3104,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_2load
  */
   __pyx_v_neuron_data_dst->etypeVec.swap(__pyx_v_list_etypes);
 
-  /* "spykfunc/dataio/cppneuron.pyx":147
+  /* "spykfunc/dataio/cppneuron.pyx":146
  *         neuron_data_dst.etypeVec.swap(list_etypes)
  *         #MTypes
  *         cdef vector[string] list_mtypes = f.listAllMtypes()             # <<<<<<<<<<<<<<
@@ -3143,11 +3115,11 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_2load
     __pyx_t_2 = __pyx_v_f->listAllMtypes();
   } catch(...) {
     __Pyx_CppExn2PyErr();
-    __PYX_ERR(0, 147, __pyx_L1_error)
+    __PYX_ERR(0, 146, __pyx_L1_error)
   }
   __pyx_v_list_mtypes = __pyx_t_2;
 
-  /* "spykfunc/dataio/cppneuron.pyx":148
+  /* "spykfunc/dataio/cppneuron.pyx":147
  *         #MTypes
  *         cdef vector[string] list_mtypes = f.listAllMtypes()
  *         neuron_data_dst.mtypeVec.swap(list_mtypes)             # <<<<<<<<<<<<<<
@@ -3156,7 +3128,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_2load
  */
   __pyx_v_neuron_data_dst->mtypeVec.swap(__pyx_v_list_mtypes);
 
-  /* "spykfunc/dataio/cppneuron.pyx":150
+  /* "spykfunc/dataio/cppneuron.pyx":149
  *         neuron_data_dst.mtypeVec.swap(list_mtypes)
  *         #SynapseClasses
  *         cdef vector[string] list_syn_class = f.listAllSynapseClass()             # <<<<<<<<<<<<<<
@@ -3167,11 +3139,11 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_2load
     __pyx_t_2 = __pyx_v_f->listAllSynapseClass();
   } catch(...) {
     __Pyx_CppExn2PyErr();
-    __PYX_ERR(0, 150, __pyx_L1_error)
+    __PYX_ERR(0, 149, __pyx_L1_error)
   }
   __pyx_v_list_syn_class = __pyx_t_2;
 
-  /* "spykfunc/dataio/cppneuron.pyx":151
+  /* "spykfunc/dataio/cppneuron.pyx":150
  *         #SynapseClasses
  *         cdef vector[string] list_syn_class = f.listAllSynapseClass()
  *         neuron_data_dst.synaClassVec.swap(list_syn_class)             # <<<<<<<<<<<<<<
@@ -3180,7 +3152,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_2load
  */
   __pyx_v_neuron_data_dst->synaClassVec.swap(__pyx_v_list_syn_class);
 
-  /* "spykfunc/dataio/cppneuron.pyx":152
+  /* "spykfunc/dataio/cppneuron.pyx":151
  *         cdef vector[string] list_syn_class = f.listAllSynapseClass()
  *         neuron_data_dst.synaClassVec.swap(list_syn_class)
  *         del f             # <<<<<<<<<<<<<<
@@ -3189,8 +3161,8 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_2load
  */
   delete __pyx_v_f;
 
-  /* "spykfunc/dataio/cppneuron.pyx":136
- *         self.morphology_dir = morphology_dir
+  /* "spykfunc/dataio/cppneuron.pyx":135
+ *         self.morphology_dir = morphology_dir.encode("utf8")
  * 
  *     def load_globals(self, NeuronData neuron_data_dst):             # <<<<<<<<<<<<<<
  *         #Load and then set ptr
@@ -3209,7 +3181,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_2load
   return __pyx_r;
 }
 
-/* "spykfunc/dataio/cppneuron.pyx":155
+/* "spykfunc/dataio/cppneuron.pyx":154
  * 
  * 
  *     def load_neurons(self, NeuronData neuron_data, _Part_t part=None):             # <<<<<<<<<<<<<<
@@ -3250,7 +3222,7 @@ static PyObject *__pyx_pw_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_5load
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "load_neurons") < 0)) __PYX_ERR(0, 155, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "load_neurons") < 0)) __PYX_ERR(0, 154, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -3265,14 +3237,14 @@ static PyObject *__pyx_pw_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_5load
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("load_neurons", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 155, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("load_neurons", 0, 1, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 154, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("spykfunc.dataio.cppneuron.MVD_Morpho_Loader.load_neurons", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_neuron_data), __pyx_ptype_8spykfunc_6dataio_9cppneuron_NeuronData, 1, "neuron_data", 0))) __PYX_ERR(0, 155, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_part), __pyx_ptype_8spykfunc_6dataio_6common__Part_t, 1, "part", 0))) __PYX_ERR(0, 155, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_neuron_data), __pyx_ptype_8spykfunc_6dataio_9cppneuron_NeuronData, 1, "neuron_data", 0))) __PYX_ERR(0, 154, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_part), __pyx_ptype_8spykfunc_6dataio_6common__Part_t, 1, "part", 0))) __PYX_ERR(0, 154, __pyx_L1_error)
   __pyx_r = __pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_4load_neurons(((struct __pyx_obj_8spykfunc_6dataio_9cppneuron_MVD_Morpho_Loader *)__pyx_v_self), __pyx_v_neuron_data, __pyx_v_part);
 
   /* function exit code */
@@ -3317,7 +3289,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_4load
   int __pyx_t_16;
   __Pyx_RefNannySetupContext("load_neurons", 0);
 
-  /* "spykfunc/dataio/cppneuron.pyx":156
+  /* "spykfunc/dataio/cppneuron.pyx":155
  * 
  *     def load_neurons(self, NeuronData neuron_data, _Part_t part=None):
  *         cdef MVD3.MVD3File *f = new MVD3.MVD3File(self.mvd_filename)             # <<<<<<<<<<<<<<
@@ -3328,11 +3300,11 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_4load
     __pyx_t_1 = new MVD3::MVD3File(__pyx_v_self->mvd_filename);
   } catch(...) {
     __Pyx_CppExn2PyErr();
-    __PYX_ERR(0, 156, __pyx_L1_error)
+    __PYX_ERR(0, 155, __pyx_L1_error)
   }
   __pyx_v_f = __pyx_t_1;
 
-  /* "spykfunc/dataio/cppneuron.pyx":157
+  /* "spykfunc/dataio/cppneuron.pyx":156
  *     def load_neurons(self, NeuronData neuron_data, _Part_t part=None):
  *         cdef MVD3.MVD3File *f = new MVD3.MVD3File(self.mvd_filename)
  *         cdef size_t total_neurons = neuron_data.nNeurons             # <<<<<<<<<<<<<<
@@ -3342,7 +3314,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_4load
   __pyx_t_2 = __pyx_v_neuron_data->__pyx_base.nNeurons;
   __pyx_v_total_neurons = __pyx_t_2;
 
-  /* "spykfunc/dataio/cppneuron.pyx":161
+  /* "spykfunc/dataio/cppneuron.pyx":160
  *         # Range
  *         cdef MVD.Range mvd_range
  *         if part is not None:             # <<<<<<<<<<<<<<
@@ -3353,16 +3325,16 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_4load
   __pyx_t_4 = (__pyx_t_3 != 0);
   if (__pyx_t_4) {
 
-    /* "spykfunc/dataio/cppneuron.pyx":162
+    /* "spykfunc/dataio/cppneuron.pyx":161
  *         cdef MVD.Range mvd_range
  *         if part is not None:
  *             mvd_range.offset, mvd_range.count = part.get_offset_count(total_neurons)             # <<<<<<<<<<<<<<
  *         cdef size_t subset_count = mvd_range.count or total_neurons
  *         cdef size_t subset_offset = mvd_range.offset
  */
-    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_part), __pyx_n_s_get_offset_count); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 162, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_part), __pyx_n_s_get_offset_count); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 161, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_7 = __Pyx_PyInt_FromSize_t(__pyx_v_total_neurons); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 162, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyInt_FromSize_t(__pyx_v_total_neurons); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 161, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __pyx_t_8 = NULL;
     if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_6))) {
@@ -3375,14 +3347,14 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_4load
       }
     }
     if (!__pyx_t_8) {
-      __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_7); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 162, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_7); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 161, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
       __Pyx_GOTREF(__pyx_t_5);
     } else {
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_6)) {
         PyObject *__pyx_temp[2] = {__pyx_t_8, __pyx_t_7};
-        __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 162, __pyx_L1_error)
+        __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 161, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
         __Pyx_GOTREF(__pyx_t_5);
         __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
@@ -3391,20 +3363,20 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_4load
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_6)) {
         PyObject *__pyx_temp[2] = {__pyx_t_8, __pyx_t_7};
-        __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 162, __pyx_L1_error)
+        __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 161, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
         __Pyx_GOTREF(__pyx_t_5);
         __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
       } else
       #endif
       {
-        __pyx_t_9 = PyTuple_New(1+1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 162, __pyx_L1_error)
+        __pyx_t_9 = PyTuple_New(1+1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 161, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_9);
         __Pyx_GIVEREF(__pyx_t_8); PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_8); __pyx_t_8 = NULL;
         __Pyx_GIVEREF(__pyx_t_7);
         PyTuple_SET_ITEM(__pyx_t_9, 0+1, __pyx_t_7);
         __pyx_t_7 = 0;
-        __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_9, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 162, __pyx_L1_error)
+        __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_9, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 161, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_5);
         __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
       }
@@ -3420,7 +3392,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_4load
       if (unlikely(size != 2)) {
         if (size > 2) __Pyx_RaiseTooManyValuesError(2);
         else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
-        __PYX_ERR(0, 162, __pyx_L1_error)
+        __PYX_ERR(0, 161, __pyx_L1_error)
       }
       #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
       if (likely(PyTuple_CheckExact(sequence))) {
@@ -3433,15 +3405,15 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_4load
       __Pyx_INCREF(__pyx_t_6);
       __Pyx_INCREF(__pyx_t_9);
       #else
-      __pyx_t_6 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 162, __pyx_L1_error)
+      __pyx_t_6 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 161, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_6);
-      __pyx_t_9 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 162, __pyx_L1_error)
+      __pyx_t_9 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 161, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_9);
       #endif
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     } else {
       Py_ssize_t index = -1;
-      __pyx_t_7 = PyObject_GetIter(__pyx_t_5); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 162, __pyx_L1_error)
+      __pyx_t_7 = PyObject_GetIter(__pyx_t_5); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 161, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_7);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       __pyx_t_10 = Py_TYPE(__pyx_t_7)->tp_iternext;
@@ -3449,7 +3421,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_4load
       __Pyx_GOTREF(__pyx_t_6);
       index = 1; __pyx_t_9 = __pyx_t_10(__pyx_t_7); if (unlikely(!__pyx_t_9)) goto __pyx_L4_unpacking_failed;
       __Pyx_GOTREF(__pyx_t_9);
-      if (__Pyx_IternextUnpackEndCheck(__pyx_t_10(__pyx_t_7), 2) < 0) __PYX_ERR(0, 162, __pyx_L1_error)
+      if (__Pyx_IternextUnpackEndCheck(__pyx_t_10(__pyx_t_7), 2) < 0) __PYX_ERR(0, 161, __pyx_L1_error)
       __pyx_t_10 = NULL;
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
       goto __pyx_L5_unpacking_done;
@@ -3457,17 +3429,17 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_4load
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
       __pyx_t_10 = NULL;
       if (__Pyx_IterFinish() == 0) __Pyx_RaiseNeedMoreValuesError(index);
-      __PYX_ERR(0, 162, __pyx_L1_error)
+      __PYX_ERR(0, 161, __pyx_L1_error)
       __pyx_L5_unpacking_done:;
     }
-    __pyx_t_11 = __Pyx_PyInt_As_int(__pyx_t_6); if (unlikely((__pyx_t_11 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 162, __pyx_L1_error)
+    __pyx_t_11 = __Pyx_PyInt_As_int(__pyx_t_6); if (unlikely((__pyx_t_11 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 161, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __pyx_t_12 = __Pyx_PyInt_As_int(__pyx_t_9); if (unlikely((__pyx_t_12 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 162, __pyx_L1_error)
+    __pyx_t_12 = __Pyx_PyInt_As_int(__pyx_t_9); if (unlikely((__pyx_t_12 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 161, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
     __pyx_v_mvd_range.offset = __pyx_t_11;
     __pyx_v_mvd_range.count = __pyx_t_12;
 
-    /* "spykfunc/dataio/cppneuron.pyx":161
+    /* "spykfunc/dataio/cppneuron.pyx":160
  *         # Range
  *         cdef MVD.Range mvd_range
  *         if part is not None:             # <<<<<<<<<<<<<<
@@ -3476,7 +3448,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_4load
  */
   }
 
-  /* "spykfunc/dataio/cppneuron.pyx":163
+  /* "spykfunc/dataio/cppneuron.pyx":162
  *         if part is not None:
  *             mvd_range.offset, mvd_range.count = part.get_offset_count(total_neurons)
  *         cdef size_t subset_count = mvd_range.count or total_neurons             # <<<<<<<<<<<<<<
@@ -3492,7 +3464,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_4load
   __pyx_L6_bool_binop_done:;
   __pyx_v_subset_count = __pyx_t_2;
 
-  /* "spykfunc/dataio/cppneuron.pyx":164
+  /* "spykfunc/dataio/cppneuron.pyx":163
  *             mvd_range.offset, mvd_range.count = part.get_offset_count(total_neurons)
  *         cdef size_t subset_count = mvd_range.count or total_neurons
  *         cdef size_t subset_offset = mvd_range.offset             # <<<<<<<<<<<<<<
@@ -3502,7 +3474,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_4load
   __pyx_t_12 = __pyx_v_mvd_range.offset;
   __pyx_v_subset_offset = __pyx_t_12;
 
-  /* "spykfunc/dataio/cppneuron.pyx":167
+  /* "spykfunc/dataio/cppneuron.pyx":166
  * 
  *         # Neuron morphologies
  *         neuron_data.neuronNames = f.getMorphologies(mvd_range)             # <<<<<<<<<<<<<<
@@ -3513,11 +3485,11 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_4load
     __pyx_t_13 = __pyx_v_f->getMorphologies(__pyx_v_mvd_range);
   } catch(...) {
     __Pyx_CppExn2PyErr();
-    __PYX_ERR(0, 167, __pyx_L1_error)
+    __PYX_ERR(0, 166, __pyx_L1_error)
   }
   __pyx_v_neuron_data->neuronNames = __pyx_t_13;
 
-  /* "spykfunc/dataio/cppneuron.pyx":170
+  /* "spykfunc/dataio/cppneuron.pyx":169
  * 
  *         # # Neuron Positions and Rotations
  *         cdef MVD.Positions *pos = new MVD.Positions(f.getPositions(mvd_range))             # <<<<<<<<<<<<<<
@@ -3526,7 +3498,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_4load
  */
   __pyx_v_pos = new MVD::Positions(__pyx_v_f->getPositions(__pyx_v_mvd_range));
 
-  /* "spykfunc/dataio/cppneuron.pyx":171
+  /* "spykfunc/dataio/cppneuron.pyx":170
  *         # # Neuron Positions and Rotations
  *         cdef MVD.Positions *pos = new MVD.Positions(f.getPositions(mvd_range))
  *         cdef MVD.Rotations *rot = new MVD.Rotations(f.getRotations(mvd_range))             # <<<<<<<<<<<<<<
@@ -3535,7 +3507,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_4load
  */
   __pyx_v_rot = new MVD::Rotations(__pyx_v_f->getRotations(__pyx_v_mvd_range));
 
-  /* "spykfunc/dataio/cppneuron.pyx":174
+  /* "spykfunc/dataio/cppneuron.pyx":173
  * 
  *         # Neuron Mtype, Etype and
  *         cdef vector[size_t] index_mtypes = f.getIndexMtypes(mvd_range)             # <<<<<<<<<<<<<<
@@ -3546,11 +3518,11 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_4load
     __pyx_t_14 = __pyx_v_f->getIndexMtypes(__pyx_v_mvd_range);
   } catch(...) {
     __Pyx_CppExn2PyErr();
-    __PYX_ERR(0, 174, __pyx_L1_error)
+    __PYX_ERR(0, 173, __pyx_L1_error)
   }
   __pyx_v_index_mtypes = ((std::vector<size_t> )__pyx_t_14);
 
-  /* "spykfunc/dataio/cppneuron.pyx":175
+  /* "spykfunc/dataio/cppneuron.pyx":174
  *         # Neuron Mtype, Etype and
  *         cdef vector[size_t] index_mtypes = f.getIndexMtypes(mvd_range)
  *         cdef vector[size_t] index_etypes = f.getIndexEtypes(mvd_range)             # <<<<<<<<<<<<<<
@@ -3561,11 +3533,11 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_4load
     __pyx_t_14 = __pyx_v_f->getIndexEtypes(__pyx_v_mvd_range);
   } catch(...) {
     __Pyx_CppExn2PyErr();
-    __PYX_ERR(0, 175, __pyx_L1_error)
+    __PYX_ERR(0, 174, __pyx_L1_error)
   }
   __pyx_v_index_etypes = ((std::vector<size_t> )__pyx_t_14);
 
-  /* "spykfunc/dataio/cppneuron.pyx":176
+  /* "spykfunc/dataio/cppneuron.pyx":175
  *         cdef vector[size_t] index_mtypes = f.getIndexMtypes(mvd_range)
  *         cdef vector[size_t] index_etypes = f.getIndexEtypes(mvd_range)
  *         cdef vector[size_t] index_syn_class = f.getIndexSynapseClass(mvd_range)             # <<<<<<<<<<<<<<
@@ -3576,48 +3548,20 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_4load
     __pyx_t_14 = __pyx_v_f->getIndexSynapseClass(__pyx_v_mvd_range);
   } catch(...) {
     __Pyx_CppExn2PyErr();
-    __PYX_ERR(0, 176, __pyx_L1_error)
+    __PYX_ERR(0, 175, __pyx_L1_error)
   }
   __pyx_v_index_syn_class = ((std::vector<size_t> )__pyx_t_14);
 
   /* "spykfunc/dataio/cppneuron.pyx":179
- * 
  *         # Populate structure
- *         if DEBUG: print("Alloc'ting", subset_count, "neuron structs")             # <<<<<<<<<<<<<<
- *         cdef NeuronInfo *_neurons = <NeuronInfo*>malloc( subset_count * sizeof(NeuronInfo) )
- * 
- */
-  __pyx_t_4 = (__pyx_v_8spykfunc_6dataio_9cppneuron_DEBUG != 0);
-  if (__pyx_t_4) {
-    __pyx_t_5 = __Pyx_PyInt_FromSize_t(__pyx_v_subset_count); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 179, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_9 = PyTuple_New(3); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 179, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_9);
-    __Pyx_INCREF(__pyx_kp_s_Alloc_ting);
-    __Pyx_GIVEREF(__pyx_kp_s_Alloc_ting);
-    PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_kp_s_Alloc_ting);
-    __Pyx_GIVEREF(__pyx_t_5);
-    PyTuple_SET_ITEM(__pyx_t_9, 1, __pyx_t_5);
-    __Pyx_INCREF(__pyx_kp_s_neuron_structs);
-    __Pyx_GIVEREF(__pyx_kp_s_neuron_structs);
-    PyTuple_SET_ITEM(__pyx_t_9, 2, __pyx_kp_s_neuron_structs);
-    __pyx_t_5 = 0;
-    __pyx_t_5 = __Pyx_PyObject_Call(__pyx_builtin_print, __pyx_t_9, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 179, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_5);
-    __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  }
-
-  /* "spykfunc/dataio/cppneuron.pyx":180
- *         # Populate structure
- *         if DEBUG: print("Alloc'ting", subset_count, "neuron structs")
+ *         # if DEBUG: print("Alloc'ting", subset_count, "neuron structs")
  *         cdef NeuronInfo *_neurons = <NeuronInfo*>malloc( subset_count * sizeof(NeuronInfo) )             # <<<<<<<<<<<<<<
  * 
  *         cdef size_t cur_neuron
  */
   __pyx_v__neurons = ((struct __pyx_t_8spykfunc_6dataio_9cppneuron_NeuronInfo *)malloc((__pyx_v_subset_count * (sizeof(struct __pyx_t_8spykfunc_6dataio_9cppneuron_NeuronInfo)))));
 
-  /* "spykfunc/dataio/cppneuron.pyx":183
+  /* "spykfunc/dataio/cppneuron.pyx":182
  * 
  *         cdef size_t cur_neuron
  *         for cur_neuron in range(subset_count):             # <<<<<<<<<<<<<<
@@ -3628,7 +3572,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_4load
   for (__pyx_t_15 = 0; __pyx_t_15 < __pyx_t_2; __pyx_t_15+=1) {
     __pyx_v_cur_neuron = __pyx_t_15;
 
-    /* "spykfunc/dataio/cppneuron.pyx":184
+    /* "spykfunc/dataio/cppneuron.pyx":183
  *         cdef size_t cur_neuron
  *         for cur_neuron in range(subset_count):
  *             _neurons[cur_neuron].id = subset_offset + cur_neuron             # <<<<<<<<<<<<<<
@@ -3637,7 +3581,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_4load
  */
     (__pyx_v__neurons[__pyx_v_cur_neuron]).id = (__pyx_v_subset_offset + __pyx_v_cur_neuron);
 
-    /* "spykfunc/dataio/cppneuron.pyx":185
+    /* "spykfunc/dataio/cppneuron.pyx":184
  *         for cur_neuron in range(subset_count):
  *             _neurons[cur_neuron].id = subset_offset + cur_neuron
  *             _neurons[cur_neuron].morphology = index_mtypes[cur_neuron]             # <<<<<<<<<<<<<<
@@ -3646,7 +3590,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_4load
  */
     (__pyx_v__neurons[__pyx_v_cur_neuron]).morphology = (__pyx_v_index_mtypes[__pyx_v_cur_neuron]);
 
-    /* "spykfunc/dataio/cppneuron.pyx":186
+    /* "spykfunc/dataio/cppneuron.pyx":185
  *             _neurons[cur_neuron].id = subset_offset + cur_neuron
  *             _neurons[cur_neuron].morphology = index_mtypes[cur_neuron]
  *             _neurons[cur_neuron].electrophysiology = index_etypes[cur_neuron]             # <<<<<<<<<<<<<<
@@ -3655,7 +3599,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_4load
  */
     (__pyx_v__neurons[__pyx_v_cur_neuron]).electrophysiology = (__pyx_v_index_etypes[__pyx_v_cur_neuron]);
 
-    /* "spykfunc/dataio/cppneuron.pyx":187
+    /* "spykfunc/dataio/cppneuron.pyx":186
  *             _neurons[cur_neuron].morphology = index_mtypes[cur_neuron]
  *             _neurons[cur_neuron].electrophysiology = index_etypes[cur_neuron]
  *             _neurons[cur_neuron].syn_class_index = index_syn_class[cur_neuron]             # <<<<<<<<<<<<<<
@@ -3664,7 +3608,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_4load
  */
     (__pyx_v__neurons[__pyx_v_cur_neuron]).syn_class_index = (__pyx_v_index_syn_class[__pyx_v_cur_neuron]);
 
-    /* "spykfunc/dataio/cppneuron.pyx":188
+    /* "spykfunc/dataio/cppneuron.pyx":187
  *             _neurons[cur_neuron].electrophysiology = index_etypes[cur_neuron]
  *             _neurons[cur_neuron].syn_class_index = index_syn_class[cur_neuron]
  *             memcpy(<void*>_neurons[cur_neuron].position, <void*>(pos.data()+cur_neuron*3), 3*sizeof(double))             # <<<<<<<<<<<<<<
@@ -3673,7 +3617,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_4load
  */
     memcpy(((void *)(__pyx_v__neurons[__pyx_v_cur_neuron]).position), ((void *)(__pyx_v_pos->data() + (__pyx_v_cur_neuron * 3))), (3 * (sizeof(double))));
 
-    /* "spykfunc/dataio/cppneuron.pyx":189
+    /* "spykfunc/dataio/cppneuron.pyx":188
  *             _neurons[cur_neuron].syn_class_index = index_syn_class[cur_neuron]
  *             memcpy(<void*>_neurons[cur_neuron].position, <void*>(pos.data()+cur_neuron*3), 3*sizeof(double))
  *             memcpy(<void*>_neurons[cur_neuron].rotation, <void*>(rot.data()+cur_neuron*4), 4*sizeof(double))             # <<<<<<<<<<<<<<
@@ -3682,34 +3626,34 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_4load
  */
     memcpy(((void *)(__pyx_v__neurons[__pyx_v_cur_neuron]).rotation), ((void *)(__pyx_v_rot->data() + (__pyx_v_cur_neuron * 4))), (4 * (sizeof(double))));
 
-    /* "spykfunc/dataio/cppneuron.pyx":192
+    /* "spykfunc/dataio/cppneuron.pyx":191
  * 
  *             # names to multimap
  *             neuron_data.nameMap[neuron_data.neuronNames[cur_neuron]].append(int(_neurons[cur_neuron].id))             # <<<<<<<<<<<<<<
  * 
  *         #Attach _neurons to object so that we can keep a reference to be later freed
  */
-    __pyx_t_5 = __pyx_convert_PyBytes_string_to_py_std__in_string((__pyx_v_neuron_data->neuronNames[__pyx_v_cur_neuron])); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 192, __pyx_L1_error)
+    __pyx_t_5 = __pyx_convert_PyBytes_string_to_py_std__in_string((__pyx_v_neuron_data->neuronNames[__pyx_v_cur_neuron])); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 191, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_9 = PyObject_GetItem(__pyx_v_neuron_data->nameMap, __pyx_t_5); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 192, __pyx_L1_error)
+    __pyx_t_9 = PyObject_GetItem(__pyx_v_neuron_data->nameMap, __pyx_t_5); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 191, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_9);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    __pyx_t_5 = __Pyx_PyInt_From_unsigned_int((__pyx_v__neurons[__pyx_v_cur_neuron]).id); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 192, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyInt_From_unsigned_int((__pyx_v__neurons[__pyx_v_cur_neuron]).id); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 191, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 192, __pyx_L1_error)
+    __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 191, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_GIVEREF(__pyx_t_5);
     PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_5);
     __pyx_t_5 = 0;
-    __pyx_t_5 = __Pyx_PyObject_Call(((PyObject *)(&PyInt_Type)), __pyx_t_6, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 192, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyObject_Call(((PyObject *)(&PyInt_Type)), __pyx_t_6, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 191, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __pyx_t_16 = __Pyx_PyObject_Append(__pyx_t_9, __pyx_t_5); if (unlikely(__pyx_t_16 == -1)) __PYX_ERR(0, 192, __pyx_L1_error)
+    __pyx_t_16 = __Pyx_PyObject_Append(__pyx_t_9, __pyx_t_5); if (unlikely(__pyx_t_16 == -1)) __PYX_ERR(0, 191, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   }
 
-  /* "spykfunc/dataio/cppneuron.pyx":195
+  /* "spykfunc/dataio/cppneuron.pyx":194
  * 
  *         #Attach _neurons to object so that we can keep a reference to be later freed
  *         neuron_data._neurons = _neurons             # <<<<<<<<<<<<<<
@@ -3718,7 +3662,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_4load
  */
   __pyx_v_neuron_data->_neurons = __pyx_v__neurons;
 
-  /* "spykfunc/dataio/cppneuron.pyx":196
+  /* "spykfunc/dataio/cppneuron.pyx":195
  *         #Attach _neurons to object so that we can keep a reference to be later freed
  *         neuron_data._neurons = _neurons
  *         neuron_data.neurons.set_ptr(_neurons, subset_count)             # <<<<<<<<<<<<<<
@@ -3727,7 +3671,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_4load
  */
   ((struct __pyx_vtabstruct_8spykfunc_6dataio_9cppneuron_NeuronBuffer *)__pyx_v_neuron_data->neurons->__pyx_base.__pyx_vtab)->__pyx_base.set_ptr(((struct __pyx_obj_8spykfunc_6dataio_9structbuf_StructBuffer *)__pyx_v_neuron_data->neurons), __pyx_v__neurons, __pyx_v_subset_count);
 
-  /* "spykfunc/dataio/cppneuron.pyx":197
+  /* "spykfunc/dataio/cppneuron.pyx":196
  *         neuron_data._neurons = _neurons
  *         neuron_data.neurons.set_ptr(_neurons, subset_count)
  *         del f             # <<<<<<<<<<<<<<
@@ -3736,7 +3680,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_4load
  */
   delete __pyx_v_f;
 
-  /* "spykfunc/dataio/cppneuron.pyx":198
+  /* "spykfunc/dataio/cppneuron.pyx":197
  *         neuron_data.neurons.set_ptr(_neurons, subset_count)
  *         del f
  *         return neuron_data.neurons             # <<<<<<<<<<<<<<
@@ -3748,7 +3692,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_4load
   __pyx_r = ((PyObject *)__pyx_v_neuron_data->neurons);
   goto __pyx_L0;
 
-  /* "spykfunc/dataio/cppneuron.pyx":155
+  /* "spykfunc/dataio/cppneuron.pyx":154
  * 
  * 
  *     def load_neurons(self, NeuronData neuron_data, _Part_t part=None):             # <<<<<<<<<<<<<<
@@ -3771,7 +3715,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_4load
   return __pyx_r;
 }
 
-/* "spykfunc/dataio/cppneuron.pyx":201
+/* "spykfunc/dataio/cppneuron.pyx":200
  * 
  * 
  *     def load_morphologies(self, NeuronData neuron_data, morphos):             # <<<<<<<<<<<<<<
@@ -3807,11 +3751,11 @@ static PyObject *__pyx_pw_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_7load
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_morphos)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("load_morphologies", 1, 2, 2, 1); __PYX_ERR(0, 201, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("load_morphologies", 1, 2, 2, 1); __PYX_ERR(0, 200, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "load_morphologies") < 0)) __PYX_ERR(0, 201, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "load_morphologies") < 0)) __PYX_ERR(0, 200, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 2) {
       goto __pyx_L5_argtuple_error;
@@ -3824,13 +3768,13 @@ static PyObject *__pyx_pw_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_7load
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("load_morphologies", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 201, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("load_morphologies", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 200, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("spykfunc.dataio.cppneuron.MVD_Morpho_Loader.load_morphologies", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_neuron_data), __pyx_ptype_8spykfunc_6dataio_9cppneuron_NeuronData, 1, "neuron_data", 0))) __PYX_ERR(0, 201, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_neuron_data), __pyx_ptype_8spykfunc_6dataio_9cppneuron_NeuronData, 1, "neuron_data", 0))) __PYX_ERR(0, 200, __pyx_L1_error)
   __pyx_r = __pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_6load_morphologies(((struct __pyx_obj_8spykfunc_6dataio_9cppneuron_MVD_Morpho_Loader *)__pyx_v_self), __pyx_v_neuron_data, __pyx_v_morphos);
 
   /* function exit code */
@@ -3856,7 +3800,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_6load
   PyObject *__pyx_t_8 = NULL;
   __Pyx_RefNannySetupContext("load_morphologies", 0);
 
-  /* "spykfunc/dataio/cppneuron.pyx":204
+  /* "spykfunc/dataio/cppneuron.pyx":203
  *         # import progressbar
  *         # bar = progressbar.ProgressBar()
  *         for morpho in morphos:             # <<<<<<<<<<<<<<
@@ -3867,26 +3811,26 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_6load
     __pyx_t_1 = __pyx_v_morphos; __Pyx_INCREF(__pyx_t_1); __pyx_t_2 = 0;
     __pyx_t_3 = NULL;
   } else {
-    __pyx_t_2 = -1; __pyx_t_1 = PyObject_GetIter(__pyx_v_morphos); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 204, __pyx_L1_error)
+    __pyx_t_2 = -1; __pyx_t_1 = PyObject_GetIter(__pyx_v_morphos); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 203, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_3 = Py_TYPE(__pyx_t_1)->tp_iternext; if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 204, __pyx_L1_error)
+    __pyx_t_3 = Py_TYPE(__pyx_t_1)->tp_iternext; if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 203, __pyx_L1_error)
   }
   for (;;) {
     if (likely(!__pyx_t_3)) {
       if (likely(PyList_CheckExact(__pyx_t_1))) {
         if (__pyx_t_2 >= PyList_GET_SIZE(__pyx_t_1)) break;
         #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-        __pyx_t_4 = PyList_GET_ITEM(__pyx_t_1, __pyx_t_2); __Pyx_INCREF(__pyx_t_4); __pyx_t_2++; if (unlikely(0 < 0)) __PYX_ERR(0, 204, __pyx_L1_error)
+        __pyx_t_4 = PyList_GET_ITEM(__pyx_t_1, __pyx_t_2); __Pyx_INCREF(__pyx_t_4); __pyx_t_2++; if (unlikely(0 < 0)) __PYX_ERR(0, 203, __pyx_L1_error)
         #else
-        __pyx_t_4 = PySequence_ITEM(__pyx_t_1, __pyx_t_2); __pyx_t_2++; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 204, __pyx_L1_error)
+        __pyx_t_4 = PySequence_ITEM(__pyx_t_1, __pyx_t_2); __pyx_t_2++; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 203, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         #endif
       } else {
         if (__pyx_t_2 >= PyTuple_GET_SIZE(__pyx_t_1)) break;
         #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-        __pyx_t_4 = PyTuple_GET_ITEM(__pyx_t_1, __pyx_t_2); __Pyx_INCREF(__pyx_t_4); __pyx_t_2++; if (unlikely(0 < 0)) __PYX_ERR(0, 204, __pyx_L1_error)
+        __pyx_t_4 = PyTuple_GET_ITEM(__pyx_t_1, __pyx_t_2); __Pyx_INCREF(__pyx_t_4); __pyx_t_2++; if (unlikely(0 < 0)) __PYX_ERR(0, 203, __pyx_L1_error)
         #else
-        __pyx_t_4 = PySequence_ITEM(__pyx_t_1, __pyx_t_2); __pyx_t_2++; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 204, __pyx_L1_error)
+        __pyx_t_4 = PySequence_ITEM(__pyx_t_1, __pyx_t_2); __pyx_t_2++; if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 203, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         #endif
       }
@@ -3896,7 +3840,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_6load
         PyObject* exc_type = PyErr_Occurred();
         if (exc_type) {
           if (likely(exc_type == PyExc_StopIteration || PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
-          else __PYX_ERR(0, 204, __pyx_L1_error)
+          else __PYX_ERR(0, 203, __pyx_L1_error)
         }
         break;
       }
@@ -3905,14 +3849,14 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_6load
     __Pyx_XDECREF_SET(__pyx_v_morpho, __pyx_t_4);
     __pyx_t_4 = 0;
 
-    /* "spykfunc/dataio/cppneuron.pyx":205
+    /* "spykfunc/dataio/cppneuron.pyx":204
  *         # bar = progressbar.ProgressBar()
  *         for morpho in morphos:
  *             self.load_morphology(neuron_data, morpho)             # <<<<<<<<<<<<<<
  * 
  *     def load_morphology(self, NeuronData neuron_data, string morpho_name):
  */
-    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_load_morphology); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 205, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_load_morphology); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 204, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __pyx_t_6 = NULL;
     __pyx_t_7 = 0;
@@ -3929,7 +3873,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_6load
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_5)) {
       PyObject *__pyx_temp[3] = {__pyx_t_6, ((PyObject *)__pyx_v_neuron_data), __pyx_v_morpho};
-      __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_7, 2+__pyx_t_7); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 205, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_7, 2+__pyx_t_7); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 204, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_GOTREF(__pyx_t_4);
     } else
@@ -3937,13 +3881,13 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_6load
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_5)) {
       PyObject *__pyx_temp[3] = {__pyx_t_6, ((PyObject *)__pyx_v_neuron_data), __pyx_v_morpho};
-      __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_7, 2+__pyx_t_7); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 205, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_7, 2+__pyx_t_7); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 204, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_GOTREF(__pyx_t_4);
     } else
     #endif
     {
-      __pyx_t_8 = PyTuple_New(2+__pyx_t_7); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 205, __pyx_L1_error)
+      __pyx_t_8 = PyTuple_New(2+__pyx_t_7); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 204, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_8);
       if (__pyx_t_6) {
         __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_6); __pyx_t_6 = NULL;
@@ -3954,14 +3898,14 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_6load
       __Pyx_INCREF(__pyx_v_morpho);
       __Pyx_GIVEREF(__pyx_v_morpho);
       PyTuple_SET_ITEM(__pyx_t_8, 1+__pyx_t_7, __pyx_v_morpho);
-      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_8, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 205, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_8, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 204, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
     }
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-    /* "spykfunc/dataio/cppneuron.pyx":204
+    /* "spykfunc/dataio/cppneuron.pyx":203
  *         # import progressbar
  *         # bar = progressbar.ProgressBar()
  *         for morpho in morphos:             # <<<<<<<<<<<<<<
@@ -3971,7 +3915,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_6load
   }
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "spykfunc/dataio/cppneuron.pyx":201
+  /* "spykfunc/dataio/cppneuron.pyx":200
  * 
  * 
  *     def load_morphologies(self, NeuronData neuron_data, morphos):             # <<<<<<<<<<<<<<
@@ -3997,7 +3941,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_6load
   return __pyx_r;
 }
 
-/* "spykfunc/dataio/cppneuron.pyx":207
+/* "spykfunc/dataio/cppneuron.pyx":206
  *             self.load_morphology(neuron_data, morpho)
  * 
  *     def load_morphology(self, NeuronData neuron_data, string morpho_name):             # <<<<<<<<<<<<<<
@@ -4033,11 +3977,11 @@ static PyObject *__pyx_pw_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_9load
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_morpho_name)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("load_morphology", 1, 2, 2, 1); __PYX_ERR(0, 207, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("load_morphology", 1, 2, 2, 1); __PYX_ERR(0, 206, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "load_morphology") < 0)) __PYX_ERR(0, 207, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "load_morphology") < 0)) __PYX_ERR(0, 206, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 2) {
       goto __pyx_L5_argtuple_error;
@@ -4046,17 +3990,17 @@ static PyObject *__pyx_pw_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_9load
       values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
     }
     __pyx_v_neuron_data = ((struct __pyx_obj_8spykfunc_6dataio_9cppneuron_NeuronData *)values[0]);
-    __pyx_v_morpho_name = __pyx_convert_string_from_py_std__in_string(values[1]); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 207, __pyx_L3_error)
+    __pyx_v_morpho_name = __pyx_convert_string_from_py_std__in_string(values[1]); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 206, __pyx_L3_error)
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("load_morphology", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 207, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("load_morphology", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 206, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("spykfunc.dataio.cppneuron.MVD_Morpho_Loader.load_morphology", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_neuron_data), __pyx_ptype_8spykfunc_6dataio_9cppneuron_NeuronData, 1, "neuron_data", 0))) __PYX_ERR(0, 207, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_neuron_data), __pyx_ptype_8spykfunc_6dataio_9cppneuron_NeuronData, 1, "neuron_data", 0))) __PYX_ERR(0, 206, __pyx_L1_error)
   __pyx_r = __pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_8load_morphology(((struct __pyx_obj_8spykfunc_6dataio_9cppneuron_MVD_Morpho_Loader *)__pyx_v_self), __pyx_v_neuron_data, __pyx_v_morpho_name);
 
   /* function exit code */
@@ -4085,7 +4029,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_8load
   PyObject *__pyx_t_11 = NULL;
   __Pyx_RefNannySetupContext("load_morphology", 0);
 
-  /* "spykfunc/dataio/cppneuron.pyx":208
+  /* "spykfunc/dataio/cppneuron.pyx":207
  * 
  *     def load_morphology(self, NeuronData neuron_data, string morpho_name):
  *         assert morphotool, "Morphotool isnt available."             # <<<<<<<<<<<<<<
@@ -4094,42 +4038,42 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_8load
  */
   #ifndef CYTHON_WITHOUT_ASSERTIONS
   if (unlikely(!Py_OptimizeFlag)) {
-    __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_morphotool); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 208, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_morphotool); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 207, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 208, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 207, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     if (unlikely(!__pyx_t_2)) {
       PyErr_SetObject(PyExc_AssertionError, __pyx_kp_s_Morphotool_isnt_available);
-      __PYX_ERR(0, 208, __pyx_L1_error)
+      __PYX_ERR(0, 207, __pyx_L1_error)
     }
   }
   #endif
 
-  /* "spykfunc/dataio/cppneuron.pyx":209
+  /* "spykfunc/dataio/cppneuron.pyx":208
  *     def load_morphology(self, NeuronData neuron_data, string morpho_name):
  *         assert morphotool, "Morphotool isnt available."
  *         morph = neuron_data.morphologies[morpho_name] = morphotool.MorphoReader(os.path.join(self.morphology_dir, morpho_name + ".h5")).create_morpho_tree()             # <<<<<<<<<<<<<<
  *         return morph
  * 
  */
-  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_morphotool); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 209, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_morphotool); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 208, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_MorphoReader); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 209, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_MorphoReader); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 208, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 209, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 208, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_path); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 209, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_path); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 208, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_join); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 209, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_join); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 208, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-  __pyx_t_7 = __pyx_convert_PyBytes_string_to_py_std__in_string(__pyx_v_self->morphology_dir); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 209, __pyx_L1_error)
+  __pyx_t_7 = __pyx_convert_PyBytes_string_to_py_std__in_string(__pyx_v_self->morphology_dir); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 208, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
-  __pyx_t_8 = __pyx_convert_PyBytes_string_to_py_std__in_string(__pyx_v_morpho_name); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 209, __pyx_L1_error)
+  __pyx_t_8 = __pyx_convert_PyBytes_string_to_py_std__in_string(__pyx_v_morpho_name); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 208, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
-  __pyx_t_9 = PyNumber_Add(__pyx_t_8, __pyx_kp_s_h5); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 209, __pyx_L1_error)
+  __pyx_t_9 = PyNumber_Add(__pyx_t_8, __pyx_kp_s_h5); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 208, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_9);
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
   __pyx_t_8 = NULL;
@@ -4147,7 +4091,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_8load
   #if CYTHON_FAST_PYCALL
   if (PyFunction_Check(__pyx_t_6)) {
     PyObject *__pyx_temp[3] = {__pyx_t_8, __pyx_t_7, __pyx_t_9};
-    __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-__pyx_t_10, 2+__pyx_t_10); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 209, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-__pyx_t_10, 2+__pyx_t_10); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 208, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
@@ -4157,7 +4101,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_8load
   #if CYTHON_FAST_PYCCALL
   if (__Pyx_PyFastCFunction_Check(__pyx_t_6)) {
     PyObject *__pyx_temp[3] = {__pyx_t_8, __pyx_t_7, __pyx_t_9};
-    __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-__pyx_t_10, 2+__pyx_t_10); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 209, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-__pyx_t_10, 2+__pyx_t_10); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 208, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
@@ -4165,7 +4109,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_8load
   } else
   #endif
   {
-    __pyx_t_11 = PyTuple_New(2+__pyx_t_10); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 209, __pyx_L1_error)
+    __pyx_t_11 = PyTuple_New(2+__pyx_t_10); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 208, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_11);
     if (__pyx_t_8) {
       __Pyx_GIVEREF(__pyx_t_8); PyTuple_SET_ITEM(__pyx_t_11, 0, __pyx_t_8); __pyx_t_8 = NULL;
@@ -4176,7 +4120,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_8load
     PyTuple_SET_ITEM(__pyx_t_11, 1+__pyx_t_10, __pyx_t_9);
     __pyx_t_7 = 0;
     __pyx_t_9 = 0;
-    __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_11, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 209, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_11, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 208, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
   }
@@ -4192,14 +4136,14 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_8load
     }
   }
   if (!__pyx_t_6) {
-    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 209, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 208, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_GOTREF(__pyx_t_3);
   } else {
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_5)) {
       PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_t_4};
-      __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 209, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 208, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
@@ -4208,26 +4152,26 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_8load
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_5)) {
       PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_t_4};
-      __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 209, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 208, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     } else
     #endif
     {
-      __pyx_t_11 = PyTuple_New(1+1); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 209, __pyx_L1_error)
+      __pyx_t_11 = PyTuple_New(1+1); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 208, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_11);
       __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_11, 0, __pyx_t_6); __pyx_t_6 = NULL;
       __Pyx_GIVEREF(__pyx_t_4);
       PyTuple_SET_ITEM(__pyx_t_11, 0+1, __pyx_t_4);
       __pyx_t_4 = 0;
-      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_11, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 209, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_11, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 208, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
     }
   }
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_create_morpho_tree); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 209, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_create_morpho_tree); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 208, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_t_3 = NULL;
@@ -4241,22 +4185,22 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_8load
     }
   }
   if (__pyx_t_3) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 209, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 208, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   } else {
-    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 209, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 208, __pyx_L1_error)
   }
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_INCREF(__pyx_t_1);
   __pyx_v_morph = __pyx_t_1;
-  __pyx_t_5 = __pyx_convert_PyBytes_string_to_py_std__in_string(__pyx_v_morpho_name); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 209, __pyx_L1_error)
+  __pyx_t_5 = __pyx_convert_PyBytes_string_to_py_std__in_string(__pyx_v_morpho_name); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 208, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  if (unlikely(PyObject_SetItem(__pyx_v_neuron_data->morphologies, __pyx_t_5, __pyx_t_1) < 0)) __PYX_ERR(0, 209, __pyx_L1_error)
+  if (unlikely(PyObject_SetItem(__pyx_v_neuron_data->morphologies, __pyx_t_5, __pyx_t_1) < 0)) __PYX_ERR(0, 208, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "spykfunc/dataio/cppneuron.pyx":210
+  /* "spykfunc/dataio/cppneuron.pyx":209
  *         assert morphotool, "Morphotool isnt available."
  *         morph = neuron_data.morphologies[morpho_name] = morphotool.MorphoReader(os.path.join(self.morphology_dir, morpho_name + ".h5")).create_morpho_tree()
  *         return morph             # <<<<<<<<<<<<<<
@@ -4268,7 +4212,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_8load
   __pyx_r = __pyx_v_morph;
   goto __pyx_L0;
 
-  /* "spykfunc/dataio/cppneuron.pyx":207
+  /* "spykfunc/dataio/cppneuron.pyx":206
  *             self.load_morphology(neuron_data, morpho)
  * 
  *     def load_morphology(self, NeuronData neuron_data, string morpho_name):             # <<<<<<<<<<<<<<
@@ -4296,7 +4240,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_8load
   return __pyx_r;
 }
 
-/* "spykfunc/dataio/cppneuron.pyx":212
+/* "spykfunc/dataio/cppneuron.pyx":211
  *         return morph
  * 
  *     def get_params(self):             # <<<<<<<<<<<<<<
@@ -4324,7 +4268,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_10get
   PyObject *__pyx_t_2 = NULL;
   __Pyx_RefNannySetupContext("get_params", 0);
 
-  /* "spykfunc/dataio/cppneuron.pyx":213
+  /* "spykfunc/dataio/cppneuron.pyx":212
  * 
  *     def get_params(self):
  *         return {             # <<<<<<<<<<<<<<
@@ -4333,35 +4277,35 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_10get
  */
   __Pyx_XDECREF(__pyx_r);
 
-  /* "spykfunc/dataio/cppneuron.pyx":214
+  /* "spykfunc/dataio/cppneuron.pyx":213
  *     def get_params(self):
  *         return {
  *             "mvd_filename" : self.mvd_filename,             # <<<<<<<<<<<<<<
  *             "morphology_dir": self.morphology_dir
  *         }
  */
-  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 214, __pyx_L1_error)
+  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 213, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __pyx_convert_PyBytes_string_to_py_std__in_string(__pyx_v_self->mvd_filename); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 214, __pyx_L1_error)
+  __pyx_t_2 = __pyx_convert_PyBytes_string_to_py_std__in_string(__pyx_v_self->mvd_filename); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 213, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_mvd_filename, __pyx_t_2) < 0) __PYX_ERR(0, 214, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_mvd_filename, __pyx_t_2) < 0) __PYX_ERR(0, 213, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "spykfunc/dataio/cppneuron.pyx":215
+  /* "spykfunc/dataio/cppneuron.pyx":214
  *         return {
  *             "mvd_filename" : self.mvd_filename,
  *             "morphology_dir": self.morphology_dir             # <<<<<<<<<<<<<<
  *         }
  */
-  __pyx_t_2 = __pyx_convert_PyBytes_string_to_py_std__in_string(__pyx_v_self->morphology_dir); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 215, __pyx_L1_error)
+  __pyx_t_2 = __pyx_convert_PyBytes_string_to_py_std__in_string(__pyx_v_self->morphology_dir); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 214, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_morphology_dir, __pyx_t_2) < 0) __PYX_ERR(0, 214, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_morphology_dir, __pyx_t_2) < 0) __PYX_ERR(0, 213, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "spykfunc/dataio/cppneuron.pyx":212
+  /* "spykfunc/dataio/cppneuron.pyx":211
  *         return morph
  * 
  *     def get_params(self):             # <<<<<<<<<<<<<<
@@ -4381,7 +4325,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_10get
   return __pyx_r;
 }
 
-/* "spykfunc/dataio/cppneuron.pyx":129
+/* "spykfunc/dataio/cppneuron.pyx":128
  *     """
  *     # Paths
  *     cdef readonly string mvd_filename             # <<<<<<<<<<<<<<
@@ -4408,7 +4352,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_12mvd
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("__get__", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_convert_PyBytes_string_to_py_std__in_string(__pyx_v_self->mvd_filename); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 129, __pyx_L1_error)
+  __pyx_t_1 = __pyx_convert_PyBytes_string_to_py_std__in_string(__pyx_v_self->mvd_filename); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 128, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -4425,12 +4369,12 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_12mvd
   return __pyx_r;
 }
 
-/* "spykfunc/dataio/cppneuron.pyx":130
+/* "spykfunc/dataio/cppneuron.pyx":129
  *     # Paths
  *     cdef readonly string mvd_filename
  *     cdef readonly string morphology_dir             # <<<<<<<<<<<<<<
  * 
- *     def __init__(self, string mvd_filename, string morphology_dir):
+ *     def __init__(self, str mvd_filename, str morphology_dir):
  */
 
 /* Python wrapper */
@@ -4452,7 +4396,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9cppneuron_17MVD_Morpho_Loader_14mor
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("__get__", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_convert_PyBytes_string_to_py_std__in_string(__pyx_v_self->morphology_dir); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 130, __pyx_L1_error)
+  __pyx_t_1 = __pyx_convert_PyBytes_string_to_py_std__in_string(__pyx_v_self->morphology_dir); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 129, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -5241,24 +5185,22 @@ static struct PyModuleDef __pyx_moduledef = {
 #endif
 
 static __Pyx_StringTabEntry __pyx_string_tab[] = {
-  {&__pyx_kp_s_Alloc_ting, __pyx_k_Alloc_ting, sizeof(__pyx_k_Alloc_ting), 0, 0, 1, 0},
   {&__pyx_n_s_Array, __pyx_k_Array, sizeof(__pyx_k_Array), 0, 0, 1, 1},
   {&__pyx_n_s_DOUBLE, __pyx_k_DOUBLE, sizeof(__pyx_k_DOUBLE), 0, 0, 1, 1},
-  {&__pyx_kp_s_Freeing_data, __pyx_k_Freeing_data, sizeof(__pyx_k_Freeing_data), 0, 0, 1, 0},
   {&__pyx_n_s_MorphoReader, __pyx_k_MorphoReader, sizeof(__pyx_k_MorphoReader), 0, 0, 1, 1},
   {&__pyx_kp_s_Morphotool_isnt_available, __pyx_k_Morphotool_isnt_available, sizeof(__pyx_k_Morphotool_isnt_available), 0, 0, 1, 0},
   {&__pyx_n_s_StructType, __pyx_k_StructType, sizeof(__pyx_k_StructType), 0, 0, 1, 1},
   {&__pyx_n_s_TYPES, __pyx_k_TYPES, sizeof(__pyx_k_TYPES), 0, 0, 1, 1},
   {&__pyx_n_s_UNSIGNED_INT, __pyx_k_UNSIGNED_INT, sizeof(__pyx_k_UNSIGNED_INT), 0, 0, 1, 1},
-  {&__pyx_n_s__2, __pyx_k__2, sizeof(__pyx_k__2), 0, 0, 1, 1},
+  {&__pyx_n_s__3, __pyx_k__3, sizeof(__pyx_k__3), 0, 0, 1, 1},
   {&__pyx_n_s_append, __pyx_k_append, sizeof(__pyx_k_append), 0, 0, 1, 1},
   {&__pyx_n_s_block_t, __pyx_k_block_t, sizeof(__pyx_k_block_t), 0, 0, 1, 1},
-  {&__pyx_n_s_class, __pyx_k_class, sizeof(__pyx_k_class), 0, 0, 1, 1},
   {&__pyx_n_s_collections, __pyx_k_collections, sizeof(__pyx_k_collections), 0, 0, 1, 1},
   {&__pyx_n_s_create_morpho_tree, __pyx_k_create_morpho_tree, sizeof(__pyx_k_create_morpho_tree), 0, 0, 1, 1},
   {&__pyx_n_s_data_owner, __pyx_k_data_owner, sizeof(__pyx_k_data_owner), 0, 0, 1, 1},
   {&__pyx_n_s_defaultdict, __pyx_k_defaultdict, sizeof(__pyx_k_defaultdict), 0, 0, 1, 1},
   {&__pyx_n_s_electrophysiology, __pyx_k_electrophysiology, sizeof(__pyx_k_electrophysiology), 0, 0, 1, 1},
+  {&__pyx_n_s_encode, __pyx_k_encode, sizeof(__pyx_k_encode), 0, 0, 1, 1},
   {&__pyx_n_s_get_offset_count, __pyx_k_get_offset_count, sizeof(__pyx_k_get_offset_count), 0, 0, 1, 1},
   {&__pyx_kp_s_h5, __pyx_k_h5, sizeof(__pyx_k_h5), 0, 0, 1, 0},
   {&__pyx_n_s_id, __pyx_k_id, sizeof(__pyx_k_id), 0, 0, 1, 1},
@@ -5278,13 +5220,11 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_morphotool, __pyx_k_morphotool, sizeof(__pyx_k_morphotool), 0, 0, 1, 1},
   {&__pyx_n_s_mvd_filename, __pyx_k_mvd_filename, sizeof(__pyx_k_mvd_filename), 0, 0, 1, 1},
   {&__pyx_n_s_neuron_data, __pyx_k_neuron_data, sizeof(__pyx_k_neuron_data), 0, 0, 1, 1},
-  {&__pyx_kp_s_neuron_structs, __pyx_k_neuron_structs, sizeof(__pyx_k_neuron_structs), 0, 0, 1, 0},
   {&__pyx_n_s_nr_neurons, __pyx_k_nr_neurons, sizeof(__pyx_k_nr_neurons), 0, 0, 1, 1},
   {&__pyx_n_s_os, __pyx_k_os, sizeof(__pyx_k_os), 0, 0, 1, 1},
   {&__pyx_n_s_part, __pyx_k_part, sizeof(__pyx_k_part), 0, 0, 1, 1},
   {&__pyx_n_s_path, __pyx_k_path, sizeof(__pyx_k_path), 0, 0, 1, 1},
   {&__pyx_n_s_position, __pyx_k_position, sizeof(__pyx_k_position), 0, 0, 1, 1},
-  {&__pyx_n_s_print, __pyx_k_print, sizeof(__pyx_k_print), 0, 0, 1, 1},
   {&__pyx_n_s_pyx_vtable, __pyx_k_pyx_vtable, sizeof(__pyx_k_pyx_vtable), 0, 0, 1, 1},
   {&__pyx_n_s_range, __pyx_k_range, sizeof(__pyx_k_range), 0, 0, 1, 1},
   {&__pyx_n_s_rotation, __pyx_k_rotation, sizeof(__pyx_k_rotation), 0, 0, 1, 1},
@@ -5292,12 +5232,12 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_super, __pyx_k_super, sizeof(__pyx_k_super), 0, 0, 1, 1},
   {&__pyx_n_s_syn_class_index, __pyx_k_syn_class_index, sizeof(__pyx_k_syn_class_index), 0, 0, 1, 1},
   {&__pyx_n_s_test, __pyx_k_test, sizeof(__pyx_k_test), 0, 0, 1, 1},
+  {&__pyx_n_s_utf8, __pyx_k_utf8, sizeof(__pyx_k_utf8), 0, 0, 1, 1},
   {0, 0, 0, 0, 0, 0, 0}
 };
 static int __Pyx_InitCachedBuiltins(void) {
   __pyx_builtin_super = __Pyx_GetBuiltinName(__pyx_n_s_super); if (!__pyx_builtin_super) __PYX_ERR(0, 53, __pyx_L1_error)
-  __pyx_builtin_print = __Pyx_GetBuiltinName(__pyx_n_s_print); if (!__pyx_builtin_print) __PYX_ERR(0, 118, __pyx_L1_error)
-  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(0, 183, __pyx_L1_error)
+  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(0, 182, __pyx_L1_error)
   return 0;
   __pyx_L1_error:;
   return -1;
@@ -5307,16 +5247,27 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__Pyx_InitCachedConstants", 0);
 
-  /* "spykfunc/dataio/cppneuron.pyx":118
- *     def __dealloc__(self):
- *         # Dealloc data...
- *         if DEBUG: print("Freeing data")             # <<<<<<<<<<<<<<
- *         free(self._neurons)
+  /* "spykfunc/dataio/cppneuron.pyx":132
+ * 
+ *     def __init__(self, str mvd_filename, str morphology_dir):
+ *         self.mvd_filename = mvd_filename.encode("utf8")             # <<<<<<<<<<<<<<
+ *         self.morphology_dir = morphology_dir.encode("utf8")
  * 
  */
-  __pyx_tuple_ = PyTuple_Pack(1, __pyx_kp_s_Freeing_data); if (unlikely(!__pyx_tuple_)) __PYX_ERR(0, 118, __pyx_L1_error)
+  __pyx_tuple_ = PyTuple_Pack(1, __pyx_n_s_utf8); if (unlikely(!__pyx_tuple_)) __PYX_ERR(0, 132, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple_);
   __Pyx_GIVEREF(__pyx_tuple_);
+
+  /* "spykfunc/dataio/cppneuron.pyx":133
+ *     def __init__(self, str mvd_filename, str morphology_dir):
+ *         self.mvd_filename = mvd_filename.encode("utf8")
+ *         self.morphology_dir = morphology_dir.encode("utf8")             # <<<<<<<<<<<<<<
+ * 
+ *     def load_globals(self, NeuronData neuron_data_dst):
+ */
+  __pyx_tuple__2 = PyTuple_Pack(1, __pyx_n_s_utf8); if (unlikely(!__pyx_tuple__2)) __PYX_ERR(0, 133, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__2);
+  __Pyx_GIVEREF(__pyx_tuple__2);
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -5448,9 +5399,9 @@ PyMODINIT_FUNC PyInit_cppneuron(void)
   __pyx_ptype_8spykfunc_6dataio_9cppneuron_NeuronData = &__pyx_type_8spykfunc_6dataio_9cppneuron_NeuronData;
   __pyx_ptype_8spykfunc_6dataio_6common_NeuronLoaderI = __Pyx_ImportType("spykfunc.dataio.common", "NeuronLoaderI", sizeof(struct __pyx_obj_8spykfunc_6dataio_6common_NeuronLoaderI), 1); if (unlikely(!__pyx_ptype_8spykfunc_6dataio_6common_NeuronLoaderI)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_type_8spykfunc_6dataio_9cppneuron_MVD_Morpho_Loader.tp_base = __pyx_ptype_8spykfunc_6dataio_6common_NeuronLoaderI;
-  if (PyType_Ready(&__pyx_type_8spykfunc_6dataio_9cppneuron_MVD_Morpho_Loader) < 0) __PYX_ERR(0, 124, __pyx_L1_error)
+  if (PyType_Ready(&__pyx_type_8spykfunc_6dataio_9cppneuron_MVD_Morpho_Loader) < 0) __PYX_ERR(0, 123, __pyx_L1_error)
   __pyx_type_8spykfunc_6dataio_9cppneuron_MVD_Morpho_Loader.tp_print = 0;
-  if (PyObject_SetAttrString(__pyx_m, "MVD_Morpho_Loader", (PyObject *)&__pyx_type_8spykfunc_6dataio_9cppneuron_MVD_Morpho_Loader) < 0) __PYX_ERR(0, 124, __pyx_L1_error)
+  if (PyObject_SetAttrString(__pyx_m, "MVD_Morpho_Loader", (PyObject *)&__pyx_type_8spykfunc_6dataio_9cppneuron_MVD_Morpho_Loader) < 0) __PYX_ERR(0, 123, __pyx_L1_error)
   __pyx_ptype_8spykfunc_6dataio_9cppneuron_MVD_Morpho_Loader = &__pyx_type_8spykfunc_6dataio_9cppneuron_MVD_Morpho_Loader;
   /*--- Type import code ---*/
   __pyx_ptype_8spykfunc_6dataio_9structbuf_Pointer = __Pyx_ImportType("spykfunc.dataio.structbuf", "Pointer", sizeof(struct __pyx_obj_8spykfunc_6dataio_9structbuf_Pointer), 1); if (unlikely(!__pyx_ptype_8spykfunc_6dataio_9structbuf_Pointer)) __PYX_ERR(2, 3, __pyx_L1_error)
@@ -5540,7 +5491,7 @@ PyMODINIT_FUNC PyInit_cppneuron(void)
   __Pyx_INCREF(__pyx_n_s_morphotool);
   __Pyx_GIVEREF(__pyx_n_s_morphotool);
   PyList_SET_ITEM(__pyx_t_1, 0, __pyx_n_s_morphotool);
-  __pyx_t_2 = __Pyx_Import(__pyx_n_s__2, __pyx_t_1, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 20, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_Import(__pyx_n_s__3, __pyx_t_1, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 20, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_morphotool); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 20, __pyx_L1_error)
@@ -5876,7 +5827,7 @@ PyMODINIT_FUNC PyInit_cppneuron(void)
   PyType_Modified(__pyx_ptype_8spykfunc_6dataio_9cppneuron_NeuronBuffer);
 
   /* "spykfunc/dataio/cppneuron.pyx":1
- * from __future__ import print_function, absolute_import             # <<<<<<<<<<<<<<
+ * from __future__ import absolute_import             # <<<<<<<<<<<<<<
  * 
  * from libcpp.string cimport string
  */
@@ -6387,72 +6338,6 @@ static CYTHON_INLINE PyObject* __Pyx_PyObject_CallNoArg(PyObject *func) {
     return __Pyx_PyObject_Call(func, __pyx_empty_tuple, NULL);
 }
 #endif
-
-/* PyErrFetchRestore */
-      #if CYTHON_FAST_THREAD_STATE
-static CYTHON_INLINE void __Pyx_ErrRestoreInState(PyThreadState *tstate, PyObject *type, PyObject *value, PyObject *tb) {
-    PyObject *tmp_type, *tmp_value, *tmp_tb;
-    tmp_type = tstate->curexc_type;
-    tmp_value = tstate->curexc_value;
-    tmp_tb = tstate->curexc_traceback;
-    tstate->curexc_type = type;
-    tstate->curexc_value = value;
-    tstate->curexc_traceback = tb;
-    Py_XDECREF(tmp_type);
-    Py_XDECREF(tmp_value);
-    Py_XDECREF(tmp_tb);
-}
-static CYTHON_INLINE void __Pyx_ErrFetchInState(PyThreadState *tstate, PyObject **type, PyObject **value, PyObject **tb) {
-    *type = tstate->curexc_type;
-    *value = tstate->curexc_value;
-    *tb = tstate->curexc_traceback;
-    tstate->curexc_type = 0;
-    tstate->curexc_value = 0;
-    tstate->curexc_traceback = 0;
-}
-#endif
-
-/* WriteUnraisableException */
-      static void __Pyx_WriteUnraisable(const char *name, CYTHON_UNUSED int clineno,
-                                  CYTHON_UNUSED int lineno, CYTHON_UNUSED const char *filename,
-                                  int full_traceback, CYTHON_UNUSED int nogil) {
-    PyObject *old_exc, *old_val, *old_tb;
-    PyObject *ctx;
-    __Pyx_PyThreadState_declare
-#ifdef WITH_THREAD
-    PyGILState_STATE state;
-    if (nogil)
-        state = PyGILState_Ensure();
-#ifdef _MSC_VER
-    else state = (PyGILState_STATE)-1;
-#endif
-#endif
-    __Pyx_PyThreadState_assign
-    __Pyx_ErrFetch(&old_exc, &old_val, &old_tb);
-    if (full_traceback) {
-        Py_XINCREF(old_exc);
-        Py_XINCREF(old_val);
-        Py_XINCREF(old_tb);
-        __Pyx_ErrRestore(old_exc, old_val, old_tb);
-        PyErr_PrintEx(1);
-    }
-    #if PY_MAJOR_VERSION < 3
-    ctx = PyString_FromString(name);
-    #else
-    ctx = PyUnicode_FromString(name);
-    #endif
-    __Pyx_ErrRestore(old_exc, old_val, old_tb);
-    if (!ctx) {
-        PyErr_WriteUnraisable(Py_None);
-    } else {
-        PyErr_WriteUnraisable(ctx);
-        Py_DECREF(ctx);
-    }
-#ifdef WITH_THREAD
-    if (nogil)
-        PyGILState_Release(state);
-#endif
-}
 
 /* RaiseTooManyValuesToUnpack */
       static CYTHON_INLINE void __Pyx_RaiseTooManyValuesError(Py_ssize_t expected) {

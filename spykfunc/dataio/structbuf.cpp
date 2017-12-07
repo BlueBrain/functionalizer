@@ -698,28 +698,28 @@ struct __pyx_obj_8spykfunc_6dataio_9structbuf_Struct {
  *     cdef int size
  * 
  * cdef class _TYPE(object):             # <<<<<<<<<<<<<<
- *     cdef string name
- *     cdef string  _dtype_repr
+ *     cdef str name
+ *     cdef str _dtype_repr
  */
 struct __pyx_obj_8spykfunc_6dataio_9structbuf__TYPE {
   PyObject_HEAD
-  std::string name;
-  std::string _dtype_repr;
-  std::string _pystruct_repr;
+  PyObject *name;
+  PyObject *_dtype_repr;
+  PyObject *_pystruct_repr;
 };
 
 
 /* "spykfunc/dataio/structbuf.pxd":16
- *     cdef string _pystruct_repr
+ *     cdef str _pystruct_repr
  * 
  * cdef class StructType(_TYPE):             # <<<<<<<<<<<<<<
- *     cdef string _dtype_spec
- *     cdef string _pystruct_spec
+ *     cdef str _dtype_spec
+ *     cdef str _pystruct_spec
  */
 struct __pyx_obj_8spykfunc_6dataio_9structbuf_StructType {
   struct __pyx_obj_8spykfunc_6dataio_9structbuf__TYPE __pyx_base;
-  std::string _dtype_spec;
-  std::string _pystruct_spec;
+  PyObject *_dtype_spec;
+  PyObject *_pystruct_spec;
   PyObject *_names_to_i;
   PyObject *_dtype;
 };
@@ -1150,11 +1150,6 @@ static PyTypeObject *__pyx_ptype_8spykfunc_6dataio_9structbuf__TYPE = 0;
 static PyTypeObject *__pyx_ptype_8spykfunc_6dataio_9structbuf_StructType = 0;
 static PyTypeObject *__pyx_ptype_8spykfunc_6dataio_9structbuf_StructBuffer = 0;
 static std::string __pyx_convert_string_from_py_std__in_string(PyObject *); /*proto*/
-static CYTHON_INLINE PyObject *__pyx_convert_PyObject_string_to_py_std__in_string(std::string const &); /*proto*/
-static CYTHON_INLINE PyObject *__pyx_convert_PyUnicode_string_to_py_std__in_string(std::string const &); /*proto*/
-static CYTHON_INLINE PyObject *__pyx_convert_PyStr_string_to_py_std__in_string(std::string const &); /*proto*/
-static CYTHON_INLINE PyObject *__pyx_convert_PyBytes_string_to_py_std__in_string(std::string const &); /*proto*/
-static CYTHON_INLINE PyObject *__pyx_convert_PyByteArray_string_to_py_std__in_string(std::string const &); /*proto*/
 #define __Pyx_MODULE_NAME "spykfunc.dataio.structbuf"
 int __pyx_module_is_main_spykfunc__dataio__structbuf = 0;
 
@@ -1175,7 +1170,7 @@ static const char __pyx_k_q[] = "q";
 static const char __pyx_k_t[] = "t";
 static const char __pyx_k_S1[] = "S1";
 static const char __pyx_k__2[] = "";
-static const char __pyx_k__3[] = "?";
+static const char __pyx_k__4[] = "?";
 static const char __pyx_k_ds[] = "%ds";
 static const char __pyx_k_f4[] = "f4";
 static const char __pyx_k_f8[] = "f8";
@@ -1201,6 +1196,7 @@ static const char __pyx_k_repr[] = "__repr__";
 static const char __pyx_k_self[] = "self";
 static const char __pyx_k_size[] = "size";
 static const char __pyx_k_test[] = "__test__";
+static const char __pyx_k_utf8[] = "utf8";
 static const char __pyx_k_Array[] = "Array";
 static const char __pyx_k_FLOAT[] = "FLOAT";
 static const char __pyx_k_TYPES[] = "TYPES";
@@ -1211,6 +1207,7 @@ static const char __pyx_k_numpy[] = "numpy";
 static const char __pyx_k_DOUBLE[] = "DOUBLE";
 static const char __pyx_k_String[] = "String";
 static const char __pyx_k_double[] = "double";
+static const char __pyx_k_encode[] = "encode";
 static const char __pyx_k_fields[] = "fields";
 static const char __pyx_k_import[] = "__import__";
 static const char __pyx_k_length[] = "length";
@@ -1281,7 +1278,7 @@ static PyObject *__pyx_n_s_TYPES_String_pystruct_t;
 static PyObject *__pyx_n_s_UNSIGNED_INT;
 static PyObject *__pyx_n_s_UNSIGNED_LONGLONG;
 static PyObject *__pyx_kp_s__2;
-static PyObject *__pyx_kp_s__3;
+static PyObject *__pyx_kp_s__4;
 static PyObject *__pyx_n_s_align;
 static PyObject *__pyx_n_s_asarray;
 static PyObject *__pyx_n_s_b;
@@ -1297,6 +1294,7 @@ static PyObject *__pyx_n_s_double;
 static PyObject *__pyx_kp_s_ds;
 static PyObject *__pyx_n_s_dtype;
 static PyObject *__pyx_n_s_dtype_repr;
+static PyObject *__pyx_n_s_encode;
 static PyObject *__pyx_n_s_enumerate;
 static PyObject *__pyx_n_s_f;
 static PyObject *__pyx_n_s_f4;
@@ -1342,6 +1340,7 @@ static PyObject *__pyx_n_s_u4;
 static PyObject *__pyx_n_s_u8;
 static PyObject *__pyx_kp_s_unsigned_int;
 static PyObject *__pyx_kp_s_unsigned_long;
+static PyObject *__pyx_n_s_utf8;
 static PyObject *__pyx_pf_8spykfunc_6dataio_9structbuf_7Pointer___repr__(struct __pyx_obj_8spykfunc_6dataio_9structbuf_Pointer *__pyx_v_self); /* proto */
 static int __pyx_pf_8spykfunc_6dataio_9structbuf_6Struct___init__(struct __pyx_obj_8spykfunc_6dataio_9structbuf_Struct *__pyx_v_self, struct __pyx_obj_8spykfunc_6dataio_9structbuf_StructType *__pyx_v_t, struct __pyx_obj_8spykfunc_6dataio_9structbuf_Pointer *__pyx_v_p); /* proto */
 static int __pyx_pf_8spykfunc_6dataio_9structbuf_5_TYPE___init__(struct __pyx_obj_8spykfunc_6dataio_9structbuf__TYPE *__pyx_v_self, PyObject *__pyx_v_name, PyObject *__pyx_v_dtype_repr, PyObject *__pyx_v_pystruct_repr); /* proto */
@@ -1372,7 +1371,7 @@ static PyObject *__pyx_tp_new_8spykfunc_6dataio_9structbuf_StructType(PyTypeObje
 static PyObject *__pyx_tp_new_8spykfunc_6dataio_9structbuf_StructBuffer(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 static PyObject *__pyx_int_0;
 static PyObject *__pyx_int_1;
-static PyObject *__pyx_tuple__4;
+static PyObject *__pyx_tuple__3;
 static PyObject *__pyx_tuple__5;
 static PyObject *__pyx_tuple__6;
 static PyObject *__pyx_tuple__7;
@@ -1381,21 +1380,22 @@ static PyObject *__pyx_tuple__9;
 static PyObject *__pyx_tuple__10;
 static PyObject *__pyx_tuple__11;
 static PyObject *__pyx_tuple__12;
-static PyObject *__pyx_tuple__14;
-static PyObject *__pyx_tuple__16;
-static PyObject *__pyx_tuple__18;
-static PyObject *__pyx_tuple__20;
-static PyObject *__pyx_tuple__22;
-static PyObject *__pyx_tuple__24;
-static PyObject *__pyx_tuple__26;
-static PyObject *__pyx_codeobj__13;
-static PyObject *__pyx_codeobj__15;
-static PyObject *__pyx_codeobj__17;
-static PyObject *__pyx_codeobj__19;
-static PyObject *__pyx_codeobj__21;
-static PyObject *__pyx_codeobj__23;
-static PyObject *__pyx_codeobj__25;
-static PyObject *__pyx_codeobj__27;
+static PyObject *__pyx_tuple__13;
+static PyObject *__pyx_tuple__15;
+static PyObject *__pyx_tuple__17;
+static PyObject *__pyx_tuple__19;
+static PyObject *__pyx_tuple__21;
+static PyObject *__pyx_tuple__23;
+static PyObject *__pyx_tuple__25;
+static PyObject *__pyx_tuple__27;
+static PyObject *__pyx_codeobj__14;
+static PyObject *__pyx_codeobj__16;
+static PyObject *__pyx_codeobj__18;
+static PyObject *__pyx_codeobj__20;
+static PyObject *__pyx_codeobj__22;
+static PyObject *__pyx_codeobj__24;
+static PyObject *__pyx_codeobj__26;
+static PyObject *__pyx_codeobj__28;
 
 /* "spykfunc/dataio/structbuf.pyx":7
  * 
@@ -1647,7 +1647,7 @@ static int __pyx_pf_8spykfunc_6dataio_9structbuf_6Struct___init__(struct __pyx_o
 /* "spykfunc/dataio/structbuf.pyx":24
  * 
  * cdef class _TYPE(object):
- *     def __init__(self, name, dtype_repr, pystruct_repr):             # <<<<<<<<<<<<<<
+ *     def __init__(self, str name, str dtype_repr, str pystruct_repr):             # <<<<<<<<<<<<<<
  *         self.name = name
  *         self._dtype_repr = dtype_repr
  */
@@ -1700,9 +1700,9 @@ static int __pyx_pw_8spykfunc_6dataio_9structbuf_5_TYPE_1__init__(PyObject *__py
       values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
       values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
     }
-    __pyx_v_name = values[0];
-    __pyx_v_dtype_repr = values[1];
-    __pyx_v_pystruct_repr = values[2];
+    __pyx_v_name = ((PyObject*)values[0]);
+    __pyx_v_dtype_repr = ((PyObject*)values[1]);
+    __pyx_v_pystruct_repr = ((PyObject*)values[2]);
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
@@ -1712,9 +1712,16 @@ static int __pyx_pw_8spykfunc_6dataio_9structbuf_5_TYPE_1__init__(PyObject *__py
   __Pyx_RefNannyFinishContext();
   return -1;
   __pyx_L4_argument_unpacking_done:;
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_name), (&PyString_Type), 1, "name", 1))) __PYX_ERR(0, 24, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_dtype_repr), (&PyString_Type), 1, "dtype_repr", 1))) __PYX_ERR(0, 24, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_pystruct_repr), (&PyString_Type), 1, "pystruct_repr", 1))) __PYX_ERR(0, 24, __pyx_L1_error)
   __pyx_r = __pyx_pf_8spykfunc_6dataio_9structbuf_5_TYPE___init__(((struct __pyx_obj_8spykfunc_6dataio_9structbuf__TYPE *)__pyx_v_self), __pyx_v_name, __pyx_v_dtype_repr, __pyx_v_pystruct_repr);
 
   /* function exit code */
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __pyx_r = -1;
+  __pyx_L0:;
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
@@ -1722,28 +1729,33 @@ static int __pyx_pw_8spykfunc_6dataio_9structbuf_5_TYPE_1__init__(PyObject *__py
 static int __pyx_pf_8spykfunc_6dataio_9structbuf_5_TYPE___init__(struct __pyx_obj_8spykfunc_6dataio_9structbuf__TYPE *__pyx_v_self, PyObject *__pyx_v_name, PyObject *__pyx_v_dtype_repr, PyObject *__pyx_v_pystruct_repr) {
   int __pyx_r;
   __Pyx_RefNannyDeclarations
-  std::string __pyx_t_1;
   __Pyx_RefNannySetupContext("__init__", 0);
 
   /* "spykfunc/dataio/structbuf.pyx":25
  * cdef class _TYPE(object):
- *     def __init__(self, name, dtype_repr, pystruct_repr):
+ *     def __init__(self, str name, str dtype_repr, str pystruct_repr):
  *         self.name = name             # <<<<<<<<<<<<<<
  *         self._dtype_repr = dtype_repr
  *         self._pystruct_repr = pystruct_repr
  */
-  __pyx_t_1 = __pyx_convert_string_from_py_std__in_string(__pyx_v_name); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 25, __pyx_L1_error)
-  __pyx_v_self->name = __pyx_t_1;
+  __Pyx_INCREF(__pyx_v_name);
+  __Pyx_GIVEREF(__pyx_v_name);
+  __Pyx_GOTREF(__pyx_v_self->name);
+  __Pyx_DECREF(__pyx_v_self->name);
+  __pyx_v_self->name = __pyx_v_name;
 
   /* "spykfunc/dataio/structbuf.pyx":26
- *     def __init__(self, name, dtype_repr, pystruct_repr):
+ *     def __init__(self, str name, str dtype_repr, str pystruct_repr):
  *         self.name = name
  *         self._dtype_repr = dtype_repr             # <<<<<<<<<<<<<<
  *         self._pystruct_repr = pystruct_repr
  * 
  */
-  __pyx_t_1 = __pyx_convert_string_from_py_std__in_string(__pyx_v_dtype_repr); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 26, __pyx_L1_error)
-  __pyx_v_self->_dtype_repr = __pyx_t_1;
+  __Pyx_INCREF(__pyx_v_dtype_repr);
+  __Pyx_GIVEREF(__pyx_v_dtype_repr);
+  __Pyx_GOTREF(__pyx_v_self->_dtype_repr);
+  __Pyx_DECREF(__pyx_v_self->_dtype_repr);
+  __pyx_v_self->_dtype_repr = __pyx_v_dtype_repr;
 
   /* "spykfunc/dataio/structbuf.pyx":27
  *         self.name = name
@@ -1752,24 +1764,22 @@ static int __pyx_pf_8spykfunc_6dataio_9structbuf_5_TYPE___init__(struct __pyx_ob
  * 
  *     def __repr__(self):
  */
-  __pyx_t_1 = __pyx_convert_string_from_py_std__in_string(__pyx_v_pystruct_repr); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 27, __pyx_L1_error)
-  __pyx_v_self->_pystruct_repr = __pyx_t_1;
+  __Pyx_INCREF(__pyx_v_pystruct_repr);
+  __Pyx_GIVEREF(__pyx_v_pystruct_repr);
+  __Pyx_GOTREF(__pyx_v_self->_pystruct_repr);
+  __Pyx_DECREF(__pyx_v_self->_pystruct_repr);
+  __pyx_v_self->_pystruct_repr = __pyx_v_pystruct_repr;
 
   /* "spykfunc/dataio/structbuf.pyx":24
  * 
  * cdef class _TYPE(object):
- *     def __init__(self, name, dtype_repr, pystruct_repr):             # <<<<<<<<<<<<<<
+ *     def __init__(self, str name, str dtype_repr, str pystruct_repr):             # <<<<<<<<<<<<<<
  *         self.name = name
  *         self._dtype_repr = dtype_repr
  */
 
   /* function exit code */
   __pyx_r = 0;
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __Pyx_AddTraceback("spykfunc.dataio.structbuf._TYPE.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = -1;
-  __pyx_L0:;
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
@@ -1810,18 +1820,16 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9structbuf_5_TYPE_2__repr__(struct _
  *     @property
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_convert_PyBytes_string_to_py_std__in_string(__pyx_v_self->name); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 30, __pyx_L1_error)
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 30, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 30, __pyx_L1_error)
+  __Pyx_INCREF(__pyx_v_self->name);
+  __Pyx_GIVEREF(__pyx_v_self->name);
+  PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_v_self->name);
+  __pyx_t_2 = __Pyx_PyString_Format(__pyx_kp_s_type_s, __pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 30, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_GIVEREF(__pyx_t_1);
-  PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_1);
-  __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyString_Format(__pyx_kp_s_type_s, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 30, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_r = __pyx_t_2;
+  __pyx_t_2 = 0;
   goto __pyx_L0;
 
   /* "spykfunc/dataio/structbuf.pyx":29
@@ -1868,7 +1876,6 @@ static PyObject *__pyx_pw_8spykfunc_6dataio_9structbuf_5_TYPE_5dtype_1__get__(Py
 static PyObject *__pyx_pf_8spykfunc_6dataio_9structbuf_5_TYPE_5dtype___get__(struct __pyx_obj_8spykfunc_6dataio_9structbuf__TYPE *__pyx_v_self) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("__get__", 0);
 
   /* "spykfunc/dataio/structbuf.pyx":34
@@ -1879,10 +1886,8 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9structbuf_5_TYPE_5dtype___get__(str
  *     @property
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_convert_PyBytes_string_to_py_std__in_string(__pyx_v_self->_dtype_repr); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 34, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
+  __Pyx_INCREF(__pyx_v_self->_dtype_repr);
+  __pyx_r = __pyx_v_self->_dtype_repr;
   goto __pyx_L0;
 
   /* "spykfunc/dataio/structbuf.pyx":33
@@ -1894,10 +1899,6 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9structbuf_5_TYPE_5dtype___get__(str
  */
 
   /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("spykfunc.dataio.structbuf._TYPE.dtype.__get__", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
@@ -1928,7 +1929,6 @@ static PyObject *__pyx_pw_8spykfunc_6dataio_9structbuf_5_TYPE_10pystruct_t_1__ge
 static PyObject *__pyx_pf_8spykfunc_6dataio_9structbuf_5_TYPE_10pystruct_t___get__(struct __pyx_obj_8spykfunc_6dataio_9structbuf__TYPE *__pyx_v_self) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("__get__", 0);
 
   /* "spykfunc/dataio/structbuf.pyx":38
@@ -1939,10 +1939,8 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9structbuf_5_TYPE_10pystruct_t___get
  * 
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_convert_PyBytes_string_to_py_std__in_string(__pyx_v_self->_pystruct_repr); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 38, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
+  __Pyx_INCREF(__pyx_v_self->_pystruct_repr);
+  __pyx_r = __pyx_v_self->_pystruct_repr;
   goto __pyx_L0;
 
   /* "spykfunc/dataio/structbuf.pyx":37
@@ -1954,10 +1952,6 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9structbuf_5_TYPE_10pystruct_t___get
  */
 
   /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("spykfunc.dataio.structbuf._TYPE.pystruct_t.__get__", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
@@ -2713,7 +2707,6 @@ static int __pyx_pf_8spykfunc_6dataio_9structbuf_10StructType___init__(struct __
   PyObject *__pyx_t_8 = NULL;
   PyObject *(*__pyx_t_9)(PyObject *);
   int __pyx_t_10;
-  std::string __pyx_t_11;
   __Pyx_RefNannySetupContext("__init__", 0);
 
   /* "spykfunc/dataio/structbuf.pyx":80
@@ -2968,9 +2961,12 @@ static int __pyx_pf_8spykfunc_6dataio_9structbuf_10StructType___init__(struct __
   __pyx_t_7 = __Pyx_PyString_Join(__pyx_kp_s_, __pyx_t_5); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 91, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_11 = __pyx_convert_string_from_py_std__in_string(__pyx_t_7); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 91, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-  __pyx_v_self->_dtype_spec = __pyx_t_11;
+  if (!(likely(PyString_CheckExact(__pyx_t_7))||((__pyx_t_7) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_7)->tp_name), 0))) __PYX_ERR(0, 91, __pyx_L1_error)
+  __Pyx_GIVEREF(__pyx_t_7);
+  __Pyx_GOTREF(__pyx_v_self->_dtype_spec);
+  __Pyx_DECREF(__pyx_v_self->_dtype_spec);
+  __pyx_v_self->_dtype_spec = ((PyObject*)__pyx_t_7);
+  __pyx_t_7 = 0;
 
   /* "spykfunc/dataio/structbuf.pyx":92
  * 
@@ -2981,9 +2977,12 @@ static int __pyx_pf_8spykfunc_6dataio_9structbuf_10StructType___init__(struct __
  */
   __pyx_t_7 = __Pyx_PyString_Join(__pyx_kp_s__2, __pyx_v_pystruct_spec); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 92, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
-  __pyx_t_11 = __pyx_convert_string_from_py_std__in_string(__pyx_t_7); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 92, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-  __pyx_v_self->_pystruct_spec = __pyx_t_11;
+  if (!(likely(PyString_CheckExact(__pyx_t_7))||((__pyx_t_7) == Py_None)||(PyErr_Format(PyExc_TypeError, "Expected %.16s, got %.200s", "str", Py_TYPE(__pyx_t_7)->tp_name), 0))) __PYX_ERR(0, 92, __pyx_L1_error)
+  __Pyx_GIVEREF(__pyx_t_7);
+  __Pyx_GOTREF(__pyx_v_self->_pystruct_spec);
+  __Pyx_DECREF(__pyx_v_self->_pystruct_spec);
+  __pyx_v_self->_pystruct_spec = ((PyObject*)__pyx_t_7);
+  __pyx_t_7 = 0;
 
   /* "spykfunc/dataio/structbuf.pyx":79
  * cdef class StructType(_TYPE):
@@ -3040,7 +3039,6 @@ static PyObject *__pyx_pw_8spykfunc_6dataio_9structbuf_10StructType_5dtype_1__ge
 static PyObject *__pyx_pf_8spykfunc_6dataio_9structbuf_10StructType_5dtype___get__(struct __pyx_obj_8spykfunc_6dataio_9structbuf_StructType *__pyx_v_self) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("__get__", 0);
 
   /* "spykfunc/dataio/structbuf.pyx":96
@@ -3051,10 +3049,8 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9structbuf_10StructType_5dtype___get
  *     @property
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_convert_PyBytes_string_to_py_std__in_string(__pyx_v_self->_dtype_spec); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 96, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
+  __Pyx_INCREF(__pyx_v_self->_dtype_spec);
+  __pyx_r = __pyx_v_self->_dtype_spec;
   goto __pyx_L0;
 
   /* "spykfunc/dataio/structbuf.pyx":95
@@ -3066,10 +3062,6 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9structbuf_10StructType_5dtype___get
  */
 
   /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("spykfunc.dataio.structbuf.StructType.dtype.__get__", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
@@ -3100,7 +3092,6 @@ static PyObject *__pyx_pw_8spykfunc_6dataio_9structbuf_10StructType_10pystruct_t
 static PyObject *__pyx_pf_8spykfunc_6dataio_9structbuf_10StructType_10pystruct_t___get__(struct __pyx_obj_8spykfunc_6dataio_9structbuf_StructType *__pyx_v_self) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("__get__", 0);
 
   /* "spykfunc/dataio/structbuf.pyx":100
@@ -3111,10 +3102,8 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9structbuf_10StructType_10pystruct_t
  *     @property
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_convert_PyBytes_string_to_py_std__in_string(__pyx_v_self->_pystruct_spec); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 100, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
+  __Pyx_INCREF(__pyx_v_self->_pystruct_spec);
+  __pyx_r = __pyx_v_self->_pystruct_spec;
   goto __pyx_L0;
 
   /* "spykfunc/dataio/structbuf.pyx":99
@@ -3126,10 +3115,6 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9structbuf_10StructType_10pystruct_t
  */
 
   /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("spykfunc.dataio.structbuf.StructType.pystruct_t.__get__", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
@@ -3268,8 +3253,9 @@ static int __pyx_pf_8spykfunc_6dataio_9structbuf_12StructBuffer___init__(struct 
   __Pyx_RefNannyDeclarations
   int __pyx_t_1;
   PyObject *__pyx_t_2 = NULL;
-  std::string __pyx_t_3;
-  int __pyx_t_4;
+  PyObject *__pyx_t_3 = NULL;
+  std::string __pyx_t_4;
+  int __pyx_t_5;
   __Pyx_RefNannySetupContext("__init__", 0);
 
   /* "spykfunc/dataio/structbuf.pyx":111
@@ -3277,7 +3263,7 @@ static int __pyx_pf_8spykfunc_6dataio_9structbuf_12StructBuffer___init__(struct 
  *     def __init__(self, StructType struct_type=None):
  *         if struct_type:             # <<<<<<<<<<<<<<
  *             self.struct_t = struct_type
- *             #print "Initting StructBuffer with stuct t: %s, size: %d" % ( struct_type.pystruct_t, struct_type.size_bytes)
+ *             self.init(struct_type.pystruct_t.encode("utf8"), struct_type.size_bytes)
  */
   __pyx_t_1 = __Pyx_PyObject_IsTrue(((PyObject *)__pyx_v_struct_type)); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 111, __pyx_L1_error)
   if (__pyx_t_1) {
@@ -3286,8 +3272,8 @@ static int __pyx_pf_8spykfunc_6dataio_9structbuf_12StructBuffer___init__(struct 
  *     def __init__(self, StructType struct_type=None):
  *         if struct_type:
  *             self.struct_t = struct_type             # <<<<<<<<<<<<<<
- *             #print "Initting StructBuffer with stuct t: %s, size: %d" % ( struct_type.pystruct_t, struct_type.size_bytes)
- *             self.init( struct_type.pystruct_t, struct_type.size_bytes)
+ *             self.init(struct_type.pystruct_t.encode("utf8"), struct_type.size_bytes)
+ *         else:
  */
     __Pyx_INCREF(((PyObject *)__pyx_v_struct_type));
     __Pyx_GIVEREF(((PyObject *)__pyx_v_struct_type));
@@ -3295,35 +3281,41 @@ static int __pyx_pf_8spykfunc_6dataio_9structbuf_12StructBuffer___init__(struct 
     __Pyx_DECREF(((PyObject *)__pyx_v_self->struct_t));
     __pyx_v_self->struct_t = __pyx_v_struct_type;
 
-    /* "spykfunc/dataio/structbuf.pyx":114
+    /* "spykfunc/dataio/structbuf.pyx":113
+ *         if struct_type:
  *             self.struct_t = struct_type
- *             #print "Initting StructBuffer with stuct t: %s, size: %d" % ( struct_type.pystruct_t, struct_type.size_bytes)
- *             self.init( struct_type.pystruct_t, struct_type.size_bytes)             # <<<<<<<<<<<<<<
+ *             self.init(struct_type.pystruct_t.encode("utf8"), struct_type.size_bytes)             # <<<<<<<<<<<<<<
  *         else:
  *             self.struct_t = None
  */
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_struct_type), __pyx_n_s_pystruct_t); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 114, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_struct_type), __pyx_n_s_pystruct_t); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 113, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_3 = __pyx_convert_string_from_py_std__in_string(__pyx_t_2); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 114, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_encode); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 113, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_struct_type), __pyx_n_s_size_bytes); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 114, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_tuple__3, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 113, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_4 = __Pyx_PyInt_As_int(__pyx_t_2); if (unlikely((__pyx_t_4 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 114, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __pyx_t_4 = __pyx_convert_string_from_py_std__in_string(__pyx_t_2); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 113, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    ((struct __pyx_vtabstruct_8spykfunc_6dataio_9structbuf_StructBuffer *)__pyx_v_self->__pyx_vtab)->init(__pyx_v_self, __pyx_t_3, __pyx_t_4);
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_struct_type), __pyx_n_s_size_bytes); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 113, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __pyx_t_5 = __Pyx_PyInt_As_int(__pyx_t_2); if (unlikely((__pyx_t_5 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 113, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    ((struct __pyx_vtabstruct_8spykfunc_6dataio_9structbuf_StructBuffer *)__pyx_v_self->__pyx_vtab)->init(__pyx_v_self, __pyx_t_4, __pyx_t_5);
 
     /* "spykfunc/dataio/structbuf.pyx":111
  * 
  *     def __init__(self, StructType struct_type=None):
  *         if struct_type:             # <<<<<<<<<<<<<<
  *             self.struct_t = struct_type
- *             #print "Initting StructBuffer with stuct t: %s, size: %d" % ( struct_type.pystruct_t, struct_type.size_bytes)
+ *             self.init(struct_type.pystruct_t.encode("utf8"), struct_type.size_bytes)
  */
     goto __pyx_L3;
   }
 
-  /* "spykfunc/dataio/structbuf.pyx":116
- *             self.init( struct_type.pystruct_t, struct_type.size_bytes)
+  /* "spykfunc/dataio/structbuf.pyx":115
+ *             self.init(struct_type.pystruct_t.encode("utf8"), struct_type.size_bytes)
  *         else:
  *             self.struct_t = None             # <<<<<<<<<<<<<<
  * 
@@ -3351,6 +3343,7 @@ static int __pyx_pf_8spykfunc_6dataio_9structbuf_12StructBuffer___init__(struct 
   goto __pyx_L0;
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_3);
   __Pyx_AddTraceback("spykfunc.dataio.structbuf.StructBuffer.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = -1;
   __pyx_L0:;
@@ -3358,7 +3351,7 @@ static int __pyx_pf_8spykfunc_6dataio_9structbuf_12StructBuffer___init__(struct 
   return __pyx_r;
 }
 
-/* "spykfunc/dataio/structbuf.pyx":118
+/* "spykfunc/dataio/structbuf.pyx":117
  *             self.struct_t = None
  * 
  *     cdef void init(self, string block_format, int block_size):             # <<<<<<<<<<<<<<
@@ -3370,7 +3363,7 @@ static void __pyx_f_8spykfunc_6dataio_9structbuf_12StructBuffer_init(struct __py
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("init", 0);
 
-  /* "spykfunc/dataio/structbuf.pyx":120
+  /* "spykfunc/dataio/structbuf.pyx":119
  *     cdef void init(self, string block_format, int block_size):
  *         # print "Backend initting"
  *         self.block_format = block_format             # <<<<<<<<<<<<<<
@@ -3379,7 +3372,7 @@ static void __pyx_f_8spykfunc_6dataio_9structbuf_12StructBuffer_init(struct __py
  */
   __pyx_v_self->block_format = __pyx_v_block_format;
 
-  /* "spykfunc/dataio/structbuf.pyx":121
+  /* "spykfunc/dataio/structbuf.pyx":120
  *         # print "Backend initting"
  *         self.block_format = block_format
  *         self._sformat = self.block_format.c_str()             # <<<<<<<<<<<<<<
@@ -3388,7 +3381,7 @@ static void __pyx_f_8spykfunc_6dataio_9structbuf_12StructBuffer_init(struct __py
  */
   __pyx_v_self->_sformat = __pyx_v_self->block_format.c_str();
 
-  /* "spykfunc/dataio/structbuf.pyx":122
+  /* "spykfunc/dataio/structbuf.pyx":121
  *         self.block_format = block_format
  *         self._sformat = self.block_format.c_str()
  *         self.block_size = block_size             # <<<<<<<<<<<<<<
@@ -3397,7 +3390,7 @@ static void __pyx_f_8spykfunc_6dataio_9structbuf_12StructBuffer_init(struct __py
  */
   __pyx_v_self->block_size = __pyx_v_block_size;
 
-  /* "spykfunc/dataio/structbuf.pyx":118
+  /* "spykfunc/dataio/structbuf.pyx":117
  *             self.struct_t = None
  * 
  *     cdef void init(self, string block_format, int block_size):             # <<<<<<<<<<<<<<
@@ -3409,7 +3402,7 @@ static void __pyx_f_8spykfunc_6dataio_9structbuf_12StructBuffer_init(struct __py
   __Pyx_RefNannyFinishContext();
 }
 
-/* "spykfunc/dataio/structbuf.pyx":124
+/* "spykfunc/dataio/structbuf.pyx":123
  *         self.block_size = block_size
  * 
  *     cdef void set_ptr( self, void* ptr, Py_ssize_t block_count):             # <<<<<<<<<<<<<<
@@ -3421,7 +3414,7 @@ static void __pyx_f_8spykfunc_6dataio_9structbuf_12StructBuffer_set_ptr(struct _
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("set_ptr", 0);
 
-  /* "spykfunc/dataio/structbuf.pyx":125
+  /* "spykfunc/dataio/structbuf.pyx":124
  * 
  *     cdef void set_ptr( self, void* ptr, Py_ssize_t block_count):
  *         self.buf_ptr = ptr             # <<<<<<<<<<<<<<
@@ -3430,7 +3423,7 @@ static void __pyx_f_8spykfunc_6dataio_9structbuf_12StructBuffer_set_ptr(struct _
  */
   __pyx_v_self->buf_ptr = __pyx_v_ptr;
 
-  /* "spykfunc/dataio/structbuf.pyx":126
+  /* "spykfunc/dataio/structbuf.pyx":125
  *     cdef void set_ptr( self, void* ptr, Py_ssize_t block_count):
  *         self.buf_ptr = ptr
  *         self.block_count = block_count             # <<<<<<<<<<<<<<
@@ -3439,7 +3432,7 @@ static void __pyx_f_8spykfunc_6dataio_9structbuf_12StructBuffer_set_ptr(struct _
  */
   __pyx_v_self->block_count = __pyx_v_block_count;
 
-  /* "spykfunc/dataio/structbuf.pyx":127
+  /* "spykfunc/dataio/structbuf.pyx":126
  *         self.buf_ptr = ptr
  *         self.block_count = block_count
  *         self.size_bytes = block_count * self.block_size             # <<<<<<<<<<<<<<
@@ -3448,7 +3441,7 @@ static void __pyx_f_8spykfunc_6dataio_9structbuf_12StructBuffer_set_ptr(struct _
  */
   __pyx_v_self->size_bytes = (__pyx_v_block_count * __pyx_v_self->block_size);
 
-  /* "spykfunc/dataio/structbuf.pyx":124
+  /* "spykfunc/dataio/structbuf.pyx":123
  *         self.block_size = block_size
  * 
  *     cdef void set_ptr( self, void* ptr, Py_ssize_t block_count):             # <<<<<<<<<<<<<<
@@ -3460,7 +3453,7 @@ static void __pyx_f_8spykfunc_6dataio_9structbuf_12StructBuffer_set_ptr(struct _
   __Pyx_RefNannyFinishContext();
 }
 
-/* "spykfunc/dataio/structbuf.pyx":129
+/* "spykfunc/dataio/structbuf.pyx":128
  *         self.size_bytes = block_count * self.block_size
  * 
  *     def __getbuffer__(self, Py_buffer *buffer, int flags):             # <<<<<<<<<<<<<<
@@ -3493,7 +3486,7 @@ static int __pyx_pf_8spykfunc_6dataio_9structbuf_12StructBuffer_2__getbuffer__(s
     __Pyx_GIVEREF(__pyx_v_buffer->obj);
   }
 
-  /* "spykfunc/dataio/structbuf.pyx":130
+  /* "spykfunc/dataio/structbuf.pyx":129
  * 
  *     def __getbuffer__(self, Py_buffer *buffer, int flags):
  *         cdef const char* f = self.block_format.c_str()             # <<<<<<<<<<<<<<
@@ -3502,7 +3495,7 @@ static int __pyx_pf_8spykfunc_6dataio_9structbuf_12StructBuffer_2__getbuffer__(s
  */
   __pyx_v_f = __pyx_v_self->block_format.c_str();
 
-  /* "spykfunc/dataio/structbuf.pyx":135
+  /* "spykfunc/dataio/structbuf.pyx":134
  *         # printf("Blocks: %d \n", self.block_count)
  *         # printf("bytes: %d \n", self.size_bytes)
  *         buffer.buf = self.buf_ptr             # <<<<<<<<<<<<<<
@@ -3512,7 +3505,7 @@ static int __pyx_pf_8spykfunc_6dataio_9structbuf_12StructBuffer_2__getbuffer__(s
   __pyx_t_1 = __pyx_v_self->buf_ptr;
   __pyx_v_buffer->buf = __pyx_t_1;
 
-  /* "spykfunc/dataio/structbuf.pyx":136
+  /* "spykfunc/dataio/structbuf.pyx":135
  *         # printf("bytes: %d \n", self.size_bytes)
  *         buffer.buf = self.buf_ptr
  *         buffer.format = <char*>self._sformat             # <<<<<<<<<<<<<<
@@ -3521,7 +3514,7 @@ static int __pyx_pf_8spykfunc_6dataio_9structbuf_12StructBuffer_2__getbuffer__(s
  */
   __pyx_v_buffer->format = ((char *)__pyx_v_self->_sformat);
 
-  /* "spykfunc/dataio/structbuf.pyx":137
+  /* "spykfunc/dataio/structbuf.pyx":136
  *         buffer.buf = self.buf_ptr
  *         buffer.format = <char*>self._sformat
  *         buffer.itemsize = self.block_size             # <<<<<<<<<<<<<<
@@ -3531,7 +3524,7 @@ static int __pyx_pf_8spykfunc_6dataio_9structbuf_12StructBuffer_2__getbuffer__(s
   __pyx_t_2 = __pyx_v_self->block_size;
   __pyx_v_buffer->itemsize = __pyx_t_2;
 
-  /* "spykfunc/dataio/structbuf.pyx":138
+  /* "spykfunc/dataio/structbuf.pyx":137
  *         buffer.format = <char*>self._sformat
  *         buffer.itemsize = self.block_size
  *         buffer.len = self.size_bytes             # <<<<<<<<<<<<<<
@@ -3541,7 +3534,7 @@ static int __pyx_pf_8spykfunc_6dataio_9structbuf_12StructBuffer_2__getbuffer__(s
   __pyx_t_2 = __pyx_v_self->size_bytes;
   __pyx_v_buffer->len = __pyx_t_2;
 
-  /* "spykfunc/dataio/structbuf.pyx":139
+  /* "spykfunc/dataio/structbuf.pyx":138
  *         buffer.itemsize = self.block_size
  *         buffer.len = self.size_bytes
  *         buffer.obj = self             # <<<<<<<<<<<<<<
@@ -3554,7 +3547,7 @@ static int __pyx_pf_8spykfunc_6dataio_9structbuf_12StructBuffer_2__getbuffer__(s
   __Pyx_DECREF(__pyx_v_buffer->obj);
   __pyx_v_buffer->obj = ((PyObject *)__pyx_v_self);
 
-  /* "spykfunc/dataio/structbuf.pyx":140
+  /* "spykfunc/dataio/structbuf.pyx":139
  *         buffer.len = self.size_bytes
  *         buffer.obj = self
  *         buffer.ndim = 1             # <<<<<<<<<<<<<<
@@ -3563,7 +3556,7 @@ static int __pyx_pf_8spykfunc_6dataio_9structbuf_12StructBuffer_2__getbuffer__(s
  */
   __pyx_v_buffer->ndim = 1;
 
-  /* "spykfunc/dataio/structbuf.pyx":141
+  /* "spykfunc/dataio/structbuf.pyx":140
  *         buffer.obj = self
  *         buffer.ndim = 1
  *         buffer.readonly = 1             # <<<<<<<<<<<<<<
@@ -3572,7 +3565,7 @@ static int __pyx_pf_8spykfunc_6dataio_9structbuf_12StructBuffer_2__getbuffer__(s
  */
   __pyx_v_buffer->readonly = 1;
 
-  /* "spykfunc/dataio/structbuf.pyx":142
+  /* "spykfunc/dataio/structbuf.pyx":141
  *         buffer.ndim = 1
  *         buffer.readonly = 1
  *         buffer.shape = NULL             # <<<<<<<<<<<<<<
@@ -3581,7 +3574,7 @@ static int __pyx_pf_8spykfunc_6dataio_9structbuf_12StructBuffer_2__getbuffer__(s
  */
   __pyx_v_buffer->shape = NULL;
 
-  /* "spykfunc/dataio/structbuf.pyx":143
+  /* "spykfunc/dataio/structbuf.pyx":142
  *         buffer.readonly = 1
  *         buffer.shape = NULL
  *         buffer.strides = NULL             # <<<<<<<<<<<<<<
@@ -3590,7 +3583,7 @@ static int __pyx_pf_8spykfunc_6dataio_9structbuf_12StructBuffer_2__getbuffer__(s
  */
   __pyx_v_buffer->strides = NULL;
 
-  /* "spykfunc/dataio/structbuf.pyx":144
+  /* "spykfunc/dataio/structbuf.pyx":143
  *         buffer.shape = NULL
  *         buffer.strides = NULL
  *         buffer.suboffsets = NULL             # <<<<<<<<<<<<<<
@@ -3599,7 +3592,7 @@ static int __pyx_pf_8spykfunc_6dataio_9structbuf_12StructBuffer_2__getbuffer__(s
  */
   __pyx_v_buffer->suboffsets = NULL;
 
-  /* "spykfunc/dataio/structbuf.pyx":145
+  /* "spykfunc/dataio/structbuf.pyx":144
  *         buffer.strides = NULL
  *         buffer.suboffsets = NULL
  *         buffer.internal = NULL             # <<<<<<<<<<<<<<
@@ -3608,7 +3601,7 @@ static int __pyx_pf_8spykfunc_6dataio_9structbuf_12StructBuffer_2__getbuffer__(s
  */
   __pyx_v_buffer->internal = NULL;
 
-  /* "spykfunc/dataio/structbuf.pyx":129
+  /* "spykfunc/dataio/structbuf.pyx":128
  *         self.size_bytes = block_count * self.block_size
  * 
  *     def __getbuffer__(self, Py_buffer *buffer, int flags):             # <<<<<<<<<<<<<<
@@ -3626,7 +3619,7 @@ static int __pyx_pf_8spykfunc_6dataio_9structbuf_12StructBuffer_2__getbuffer__(s
   return __pyx_r;
 }
 
-/* "spykfunc/dataio/structbuf.pyx":147
+/* "spykfunc/dataio/structbuf.pyx":146
  *         buffer.internal = NULL
  * 
  *     def asarray(self):             # <<<<<<<<<<<<<<
@@ -3656,7 +3649,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9structbuf_12StructBuffer_4asarray(s
   PyObject *__pyx_t_4 = NULL;
   __Pyx_RefNannySetupContext("asarray", 0);
 
-  /* "spykfunc/dataio/structbuf.pyx":148
+  /* "spykfunc/dataio/structbuf.pyx":147
  * 
  *     def asarray(self):
  *         return np.asarray(self)             # <<<<<<<<<<<<<<
@@ -3664,9 +3657,9 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9structbuf_12StructBuffer_4asarray(s
  *     def __getitem__(self, i):
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 148, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 147, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_asarray); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 148, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_asarray); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 147, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_t_2 = NULL;
@@ -3680,13 +3673,13 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9structbuf_12StructBuffer_4asarray(s
     }
   }
   if (!__pyx_t_2) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, ((PyObject *)__pyx_v_self)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 148, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, ((PyObject *)__pyx_v_self)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 147, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
   } else {
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_3)) {
       PyObject *__pyx_temp[2] = {__pyx_t_2, ((PyObject *)__pyx_v_self)};
-      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 148, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 147, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
       __Pyx_GOTREF(__pyx_t_1);
     } else
@@ -3694,19 +3687,19 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9structbuf_12StructBuffer_4asarray(s
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
       PyObject *__pyx_temp[2] = {__pyx_t_2, ((PyObject *)__pyx_v_self)};
-      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 148, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 147, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
       __Pyx_GOTREF(__pyx_t_1);
     } else
     #endif
     {
-      __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 148, __pyx_L1_error)
+      __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 147, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_2); __pyx_t_2 = NULL;
       __Pyx_INCREF(((PyObject *)__pyx_v_self));
       __Pyx_GIVEREF(((PyObject *)__pyx_v_self));
       PyTuple_SET_ITEM(__pyx_t_4, 0+1, ((PyObject *)__pyx_v_self));
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 148, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 147, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     }
@@ -3716,7 +3709,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9structbuf_12StructBuffer_4asarray(s
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "spykfunc/dataio/structbuf.pyx":147
+  /* "spykfunc/dataio/structbuf.pyx":146
  *         buffer.internal = NULL
  * 
  *     def asarray(self):             # <<<<<<<<<<<<<<
@@ -3738,7 +3731,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9structbuf_12StructBuffer_4asarray(s
   return __pyx_r;
 }
 
-/* "spykfunc/dataio/structbuf.pyx":150
+/* "spykfunc/dataio/structbuf.pyx":149
  *         return np.asarray(self)
  * 
  *     def __getitem__(self, i):             # <<<<<<<<<<<<<<
@@ -3767,7 +3760,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9structbuf_12StructBuffer_6__getitem
   PyObject *__pyx_t_3 = NULL;
   __Pyx_RefNannySetupContext("__getitem__", 0);
 
-  /* "spykfunc/dataio/structbuf.pyx":151
+  /* "spykfunc/dataio/structbuf.pyx":150
  * 
  *     def __getitem__(self, i):
  *         return self.asarray()[i]             # <<<<<<<<<<<<<<
@@ -3775,7 +3768,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9structbuf_12StructBuffer_6__getitem
  *     def __len__(self):
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_asarray); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 151, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_asarray); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 150, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_3 = NULL;
   if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
@@ -3788,21 +3781,21 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9structbuf_12StructBuffer_6__getitem
     }
   }
   if (__pyx_t_3) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 151, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 150, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   } else {
-    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 151, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 150, __pyx_L1_error)
   }
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = PyObject_GetItem(__pyx_t_1, __pyx_v_i); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 151, __pyx_L1_error)
+  __pyx_t_2 = PyObject_GetItem(__pyx_t_1, __pyx_v_i); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 150, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_r = __pyx_t_2;
   __pyx_t_2 = 0;
   goto __pyx_L0;
 
-  /* "spykfunc/dataio/structbuf.pyx":150
+  /* "spykfunc/dataio/structbuf.pyx":149
  *         return np.asarray(self)
  * 
  *     def __getitem__(self, i):             # <<<<<<<<<<<<<<
@@ -3823,7 +3816,7 @@ static PyObject *__pyx_pf_8spykfunc_6dataio_9structbuf_12StructBuffer_6__getitem
   return __pyx_r;
 }
 
-/* "spykfunc/dataio/structbuf.pyx":153
+/* "spykfunc/dataio/structbuf.pyx":152
  *         return self.asarray()[i]
  * 
  *     def __len__(self):             # <<<<<<<<<<<<<<
@@ -3848,7 +3841,7 @@ static Py_ssize_t __pyx_pf_8spykfunc_6dataio_9structbuf_12StructBuffer_8__len__(
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__len__", 0);
 
-  /* "spykfunc/dataio/structbuf.pyx":154
+  /* "spykfunc/dataio/structbuf.pyx":153
  * 
  *     def __len__(self):
  *         return self.block_count             # <<<<<<<<<<<<<<
@@ -3856,7 +3849,7 @@ static Py_ssize_t __pyx_pf_8spykfunc_6dataio_9structbuf_12StructBuffer_8__len__(
   __pyx_r = __pyx_v_self->block_count;
   goto __pyx_L0;
 
-  /* "spykfunc/dataio/structbuf.pyx":153
+  /* "spykfunc/dataio/structbuf.pyx":152
  *         return self.asarray()[i]
  * 
  *     def __len__(self):             # <<<<<<<<<<<<<<
@@ -3917,240 +3910,6 @@ static std::string __pyx_convert_string_from_py_std__in_string(PyObject *__pyx_v
   __pyx_L1_error:;
   __Pyx_AddTraceback("string.from_py.__pyx_convert_string_from_py_std__in_string", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_L0:;
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "string.to_py":31
- * 
- * @cname("__pyx_convert_PyObject_string_to_py_std__in_string")
- * cdef inline object __pyx_convert_PyObject_string_to_py_std__in_string(const string& s):             # <<<<<<<<<<<<<<
- *     return __Pyx_PyObject_FromStringAndSize(s.data(), s.size())
- * cdef extern from *:
- */
-
-static CYTHON_INLINE PyObject *__pyx_convert_PyObject_string_to_py_std__in_string(std::string const &__pyx_v_s) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  __Pyx_RefNannySetupContext("__pyx_convert_PyObject_string_to_py_std__in_string", 0);
-
-  /* "string.to_py":32
- * @cname("__pyx_convert_PyObject_string_to_py_std__in_string")
- * cdef inline object __pyx_convert_PyObject_string_to_py_std__in_string(const string& s):
- *     return __Pyx_PyObject_FromStringAndSize(s.data(), s.size())             # <<<<<<<<<<<<<<
- * cdef extern from *:
- *     cdef object __Pyx_PyUnicode_FromStringAndSize(char*, size_t)
- */
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_PyObject_FromStringAndSize(__pyx_v_s.data(), __pyx_v_s.size()); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 32, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
-  goto __pyx_L0;
-
-  /* "string.to_py":31
- * 
- * @cname("__pyx_convert_PyObject_string_to_py_std__in_string")
- * cdef inline object __pyx_convert_PyObject_string_to_py_std__in_string(const string& s):             # <<<<<<<<<<<<<<
- *     return __Pyx_PyObject_FromStringAndSize(s.data(), s.size())
- * cdef extern from *:
- */
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("string.to_py.__pyx_convert_PyObject_string_to_py_std__in_string", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = 0;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "string.to_py":37
- * 
- * @cname("__pyx_convert_PyUnicode_string_to_py_std__in_string")
- * cdef inline object __pyx_convert_PyUnicode_string_to_py_std__in_string(const string& s):             # <<<<<<<<<<<<<<
- *     return __Pyx_PyUnicode_FromStringAndSize(s.data(), s.size())
- * cdef extern from *:
- */
-
-static CYTHON_INLINE PyObject *__pyx_convert_PyUnicode_string_to_py_std__in_string(std::string const &__pyx_v_s) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  __Pyx_RefNannySetupContext("__pyx_convert_PyUnicode_string_to_py_std__in_string", 0);
-
-  /* "string.to_py":38
- * @cname("__pyx_convert_PyUnicode_string_to_py_std__in_string")
- * cdef inline object __pyx_convert_PyUnicode_string_to_py_std__in_string(const string& s):
- *     return __Pyx_PyUnicode_FromStringAndSize(s.data(), s.size())             # <<<<<<<<<<<<<<
- * cdef extern from *:
- *     cdef object __Pyx_PyStr_FromStringAndSize(char*, size_t)
- */
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_PyUnicode_FromStringAndSize(__pyx_v_s.data(), __pyx_v_s.size()); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 38, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
-  goto __pyx_L0;
-
-  /* "string.to_py":37
- * 
- * @cname("__pyx_convert_PyUnicode_string_to_py_std__in_string")
- * cdef inline object __pyx_convert_PyUnicode_string_to_py_std__in_string(const string& s):             # <<<<<<<<<<<<<<
- *     return __Pyx_PyUnicode_FromStringAndSize(s.data(), s.size())
- * cdef extern from *:
- */
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("string.to_py.__pyx_convert_PyUnicode_string_to_py_std__in_string", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = 0;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "string.to_py":43
- * 
- * @cname("__pyx_convert_PyStr_string_to_py_std__in_string")
- * cdef inline object __pyx_convert_PyStr_string_to_py_std__in_string(const string& s):             # <<<<<<<<<<<<<<
- *     return __Pyx_PyStr_FromStringAndSize(s.data(), s.size())
- * cdef extern from *:
- */
-
-static CYTHON_INLINE PyObject *__pyx_convert_PyStr_string_to_py_std__in_string(std::string const &__pyx_v_s) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  __Pyx_RefNannySetupContext("__pyx_convert_PyStr_string_to_py_std__in_string", 0);
-
-  /* "string.to_py":44
- * @cname("__pyx_convert_PyStr_string_to_py_std__in_string")
- * cdef inline object __pyx_convert_PyStr_string_to_py_std__in_string(const string& s):
- *     return __Pyx_PyStr_FromStringAndSize(s.data(), s.size())             # <<<<<<<<<<<<<<
- * cdef extern from *:
- *     cdef object __Pyx_PyBytes_FromStringAndSize(char*, size_t)
- */
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_PyStr_FromStringAndSize(__pyx_v_s.data(), __pyx_v_s.size()); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 44, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
-  goto __pyx_L0;
-
-  /* "string.to_py":43
- * 
- * @cname("__pyx_convert_PyStr_string_to_py_std__in_string")
- * cdef inline object __pyx_convert_PyStr_string_to_py_std__in_string(const string& s):             # <<<<<<<<<<<<<<
- *     return __Pyx_PyStr_FromStringAndSize(s.data(), s.size())
- * cdef extern from *:
- */
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("string.to_py.__pyx_convert_PyStr_string_to_py_std__in_string", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = 0;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "string.to_py":49
- * 
- * @cname("__pyx_convert_PyBytes_string_to_py_std__in_string")
- * cdef inline object __pyx_convert_PyBytes_string_to_py_std__in_string(const string& s):             # <<<<<<<<<<<<<<
- *     return __Pyx_PyBytes_FromStringAndSize(s.data(), s.size())
- * cdef extern from *:
- */
-
-static CYTHON_INLINE PyObject *__pyx_convert_PyBytes_string_to_py_std__in_string(std::string const &__pyx_v_s) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  __Pyx_RefNannySetupContext("__pyx_convert_PyBytes_string_to_py_std__in_string", 0);
-
-  /* "string.to_py":50
- * @cname("__pyx_convert_PyBytes_string_to_py_std__in_string")
- * cdef inline object __pyx_convert_PyBytes_string_to_py_std__in_string(const string& s):
- *     return __Pyx_PyBytes_FromStringAndSize(s.data(), s.size())             # <<<<<<<<<<<<<<
- * cdef extern from *:
- *     cdef object __Pyx_PyByteArray_FromStringAndSize(char*, size_t)
- */
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_PyBytes_FromStringAndSize(__pyx_v_s.data(), __pyx_v_s.size()); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 50, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
-  goto __pyx_L0;
-
-  /* "string.to_py":49
- * 
- * @cname("__pyx_convert_PyBytes_string_to_py_std__in_string")
- * cdef inline object __pyx_convert_PyBytes_string_to_py_std__in_string(const string& s):             # <<<<<<<<<<<<<<
- *     return __Pyx_PyBytes_FromStringAndSize(s.data(), s.size())
- * cdef extern from *:
- */
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("string.to_py.__pyx_convert_PyBytes_string_to_py_std__in_string", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = 0;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "string.to_py":55
- * 
- * @cname("__pyx_convert_PyByteArray_string_to_py_std__in_string")
- * cdef inline object __pyx_convert_PyByteArray_string_to_py_std__in_string(const string& s):             # <<<<<<<<<<<<<<
- *     return __Pyx_PyByteArray_FromStringAndSize(s.data(), s.size())
- * 
- */
-
-static CYTHON_INLINE PyObject *__pyx_convert_PyByteArray_string_to_py_std__in_string(std::string const &__pyx_v_s) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  __Pyx_RefNannySetupContext("__pyx_convert_PyByteArray_string_to_py_std__in_string", 0);
-
-  /* "string.to_py":56
- * @cname("__pyx_convert_PyByteArray_string_to_py_std__in_string")
- * cdef inline object __pyx_convert_PyByteArray_string_to_py_std__in_string(const string& s):
- *     return __Pyx_PyByteArray_FromStringAndSize(s.data(), s.size())             # <<<<<<<<<<<<<<
- * 
- */
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_PyByteArray_FromStringAndSize(__pyx_v_s.data(), __pyx_v_s.size()); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 56, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
-  goto __pyx_L0;
-
-  /* "string.to_py":55
- * 
- * @cname("__pyx_convert_PyByteArray_string_to_py_std__in_string")
- * cdef inline object __pyx_convert_PyByteArray_string_to_py_std__in_string(const string& s):             # <<<<<<<<<<<<<<
- *     return __Pyx_PyByteArray_FromStringAndSize(s.data(), s.size())
- * 
- */
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_AddTraceback("string.to_py.__pyx_convert_PyByteArray_string_to_py_std__in_string", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = 0;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
@@ -4353,9 +4112,9 @@ static PyObject *__pyx_tp_new_8spykfunc_6dataio_9structbuf__TYPE(PyTypeObject *t
   }
   if (unlikely(!o)) return 0;
   p = ((struct __pyx_obj_8spykfunc_6dataio_9structbuf__TYPE *)o);
-  new((void*)&(p->name)) std::string();
-  new((void*)&(p->_dtype_repr)) std::string();
-  new((void*)&(p->_pystruct_repr)) std::string();
+  p->name = ((PyObject*)Py_None); Py_INCREF(Py_None);
+  p->_dtype_repr = ((PyObject*)Py_None); Py_INCREF(Py_None);
+  p->_pystruct_repr = ((PyObject*)Py_None); Py_INCREF(Py_None);
   return o;
 }
 
@@ -4366,9 +4125,9 @@ static void __pyx_tp_dealloc_8spykfunc_6dataio_9structbuf__TYPE(PyObject *o) {
     if (PyObject_CallFinalizerFromDealloc(o)) return;
   }
   #endif
-  __Pyx_call_destructor(p->name);
-  __Pyx_call_destructor(p->_dtype_repr);
-  __Pyx_call_destructor(p->_pystruct_repr);
+  Py_CLEAR(p->name);
+  Py_CLEAR(p->_dtype_repr);
+  Py_CLEAR(p->_pystruct_repr);
   (*Py_TYPE(o)->tp_free)(o);
 }
 
@@ -4453,8 +4212,8 @@ static PyObject *__pyx_tp_new_8spykfunc_6dataio_9structbuf_StructType(PyTypeObje
   PyObject *o = __pyx_tp_new_8spykfunc_6dataio_9structbuf__TYPE(t, a, k);
   if (unlikely(!o)) return 0;
   p = ((struct __pyx_obj_8spykfunc_6dataio_9structbuf_StructType *)o);
-  new((void*)&(p->_dtype_spec)) std::string();
-  new((void*)&(p->_pystruct_spec)) std::string();
+  p->_dtype_spec = ((PyObject*)Py_None); Py_INCREF(Py_None);
+  p->_pystruct_spec = ((PyObject*)Py_None); Py_INCREF(Py_None);
   p->_names_to_i = ((PyObject*)Py_None); Py_INCREF(Py_None);
   p->_dtype = Py_None; Py_INCREF(Py_None);
   return o;
@@ -4468,8 +4227,8 @@ static void __pyx_tp_dealloc_8spykfunc_6dataio_9structbuf_StructType(PyObject *o
   }
   #endif
   PyObject_GC_UnTrack(o);
-  __Pyx_call_destructor(p->_dtype_spec);
-  __Pyx_call_destructor(p->_pystruct_spec);
+  Py_CLEAR(p->_dtype_spec);
+  Py_CLEAR(p->_pystruct_spec);
   Py_CLEAR(p->_names_to_i);
   Py_CLEAR(p->_dtype);
   #if CYTHON_USE_TYPE_SLOTS
@@ -4796,7 +4555,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_UNSIGNED_INT, __pyx_k_UNSIGNED_INT, sizeof(__pyx_k_UNSIGNED_INT), 0, 0, 1, 1},
   {&__pyx_n_s_UNSIGNED_LONGLONG, __pyx_k_UNSIGNED_LONGLONG, sizeof(__pyx_k_UNSIGNED_LONGLONG), 0, 0, 1, 1},
   {&__pyx_kp_s__2, __pyx_k__2, sizeof(__pyx_k__2), 0, 0, 1, 0},
-  {&__pyx_kp_s__3, __pyx_k__3, sizeof(__pyx_k__3), 0, 0, 1, 0},
+  {&__pyx_kp_s__4, __pyx_k__4, sizeof(__pyx_k__4), 0, 0, 1, 0},
   {&__pyx_n_s_align, __pyx_k_align, sizeof(__pyx_k_align), 0, 0, 1, 1},
   {&__pyx_n_s_asarray, __pyx_k_asarray, sizeof(__pyx_k_asarray), 0, 0, 1, 1},
   {&__pyx_n_s_b, __pyx_k_b, sizeof(__pyx_k_b), 0, 0, 1, 1},
@@ -4812,6 +4571,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_kp_s_ds, __pyx_k_ds, sizeof(__pyx_k_ds), 0, 0, 1, 0},
   {&__pyx_n_s_dtype, __pyx_k_dtype, sizeof(__pyx_k_dtype), 0, 0, 1, 1},
   {&__pyx_n_s_dtype_repr, __pyx_k_dtype_repr, sizeof(__pyx_k_dtype_repr), 0, 0, 1, 1},
+  {&__pyx_n_s_encode, __pyx_k_encode, sizeof(__pyx_k_encode), 0, 0, 1, 1},
   {&__pyx_n_s_enumerate, __pyx_k_enumerate, sizeof(__pyx_k_enumerate), 0, 0, 1, 1},
   {&__pyx_n_s_f, __pyx_k_f, sizeof(__pyx_k_f), 0, 0, 1, 1},
   {&__pyx_n_s_f4, __pyx_k_f4, sizeof(__pyx_k_f4), 0, 0, 1, 1},
@@ -4857,6 +4617,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_u8, __pyx_k_u8, sizeof(__pyx_k_u8), 0, 0, 1, 1},
   {&__pyx_kp_s_unsigned_int, __pyx_k_unsigned_int, sizeof(__pyx_k_unsigned_int), 0, 0, 1, 0},
   {&__pyx_kp_s_unsigned_long, __pyx_k_unsigned_long, sizeof(__pyx_k_unsigned_long), 0, 0, 1, 0},
+  {&__pyx_n_s_utf8, __pyx_k_utf8, sizeof(__pyx_k_utf8), 0, 0, 1, 1},
   {0, 0, 0, 0, 0, 0, 0}
 };
 static int __Pyx_InitCachedBuiltins(void) {
@@ -4872,6 +4633,17 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__Pyx_InitCachedConstants", 0);
 
+  /* "spykfunc/dataio/structbuf.pyx":113
+ *         if struct_type:
+ *             self.struct_t = struct_type
+ *             self.init(struct_type.pystruct_t.encode("utf8"), struct_type.size_bytes)             # <<<<<<<<<<<<<<
+ *         else:
+ *             self.struct_t = None
+ */
+  __pyx_tuple__3 = PyTuple_Pack(1, __pyx_n_s_utf8); if (unlikely(!__pyx_tuple__3)) __PYX_ERR(0, 113, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__3);
+  __Pyx_GIVEREF(__pyx_tuple__3);
+
   /* "spykfunc/dataio/structbuf.pyx":42
  * 
  * class TYPES(object):
@@ -4879,9 +4651,9 @@ static int __Pyx_InitCachedConstants(void) {
  *     INT  = _TYPE("int", "i4", "i")
  *     UNSIGNED_INT = _TYPE("unsigned int", "u4", "I")
  */
-  __pyx_tuple__4 = PyTuple_Pack(3, __pyx_n_s_bool, __pyx_n_s_b, __pyx_kp_s__3); if (unlikely(!__pyx_tuple__4)) __PYX_ERR(0, 42, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__4);
-  __Pyx_GIVEREF(__pyx_tuple__4);
+  __pyx_tuple__5 = PyTuple_Pack(3, __pyx_n_s_bool, __pyx_n_s_b, __pyx_kp_s__4); if (unlikely(!__pyx_tuple__5)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__5);
+  __Pyx_GIVEREF(__pyx_tuple__5);
 
   /* "spykfunc/dataio/structbuf.pyx":43
  * class TYPES(object):
@@ -4890,9 +4662,9 @@ static int __Pyx_InitCachedConstants(void) {
  *     UNSIGNED_INT = _TYPE("unsigned int", "u4", "I")
  *     LONGLONG = _TYPE("long int", "i8", "q")
  */
-  __pyx_tuple__5 = PyTuple_Pack(3, __pyx_n_s_int, __pyx_n_s_i4, __pyx_n_s_i); if (unlikely(!__pyx_tuple__5)) __PYX_ERR(0, 43, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__5);
-  __Pyx_GIVEREF(__pyx_tuple__5);
+  __pyx_tuple__6 = PyTuple_Pack(3, __pyx_n_s_int, __pyx_n_s_i4, __pyx_n_s_i); if (unlikely(!__pyx_tuple__6)) __PYX_ERR(0, 43, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__6);
+  __Pyx_GIVEREF(__pyx_tuple__6);
 
   /* "spykfunc/dataio/structbuf.pyx":44
  *     BOOL = _TYPE("bool", "b", "?")
@@ -4901,9 +4673,9 @@ static int __Pyx_InitCachedConstants(void) {
  *     LONGLONG = _TYPE("long int", "i8", "q")
  *     UNSIGNED_LONGLONG = _TYPE("unsigned long", "u8", "Q")
  */
-  __pyx_tuple__6 = PyTuple_Pack(3, __pyx_kp_s_unsigned_int, __pyx_n_s_u4, __pyx_n_s_I); if (unlikely(!__pyx_tuple__6)) __PYX_ERR(0, 44, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__6);
-  __Pyx_GIVEREF(__pyx_tuple__6);
+  __pyx_tuple__7 = PyTuple_Pack(3, __pyx_kp_s_unsigned_int, __pyx_n_s_u4, __pyx_n_s_I); if (unlikely(!__pyx_tuple__7)) __PYX_ERR(0, 44, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__7);
+  __Pyx_GIVEREF(__pyx_tuple__7);
 
   /* "spykfunc/dataio/structbuf.pyx":45
  *     INT  = _TYPE("int", "i4", "i")
@@ -4912,9 +4684,9 @@ static int __Pyx_InitCachedConstants(void) {
  *     UNSIGNED_LONGLONG = _TYPE("unsigned long", "u8", "Q")
  *     FLOAT = _TYPE("float", "f4", "f")
  */
-  __pyx_tuple__7 = PyTuple_Pack(3, __pyx_kp_s_long_int, __pyx_n_s_i8, __pyx_n_s_q); if (unlikely(!__pyx_tuple__7)) __PYX_ERR(0, 45, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__7);
-  __Pyx_GIVEREF(__pyx_tuple__7);
+  __pyx_tuple__8 = PyTuple_Pack(3, __pyx_kp_s_long_int, __pyx_n_s_i8, __pyx_n_s_q); if (unlikely(!__pyx_tuple__8)) __PYX_ERR(0, 45, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__8);
+  __Pyx_GIVEREF(__pyx_tuple__8);
 
   /* "spykfunc/dataio/structbuf.pyx":46
  *     UNSIGNED_INT = _TYPE("unsigned int", "u4", "I")
@@ -4923,9 +4695,9 @@ static int __Pyx_InitCachedConstants(void) {
  *     FLOAT = _TYPE("float", "f4", "f")
  *     DOUBLE = _TYPE("double", "f8", "d")
  */
-  __pyx_tuple__8 = PyTuple_Pack(3, __pyx_kp_s_unsigned_long, __pyx_n_s_u8, __pyx_n_s_Q); if (unlikely(!__pyx_tuple__8)) __PYX_ERR(0, 46, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__8);
-  __Pyx_GIVEREF(__pyx_tuple__8);
+  __pyx_tuple__9 = PyTuple_Pack(3, __pyx_kp_s_unsigned_long, __pyx_n_s_u8, __pyx_n_s_Q); if (unlikely(!__pyx_tuple__9)) __PYX_ERR(0, 46, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__9);
+  __Pyx_GIVEREF(__pyx_tuple__9);
 
   /* "spykfunc/dataio/structbuf.pyx":47
  *     LONGLONG = _TYPE("long int", "i8", "q")
@@ -4934,9 +4706,9 @@ static int __Pyx_InitCachedConstants(void) {
  *     DOUBLE = _TYPE("double", "f8", "d")
  *     CHAR   = _TYPE("char", "S1", "c")
  */
-  __pyx_tuple__9 = PyTuple_Pack(3, __pyx_n_s_float, __pyx_n_s_f4, __pyx_n_s_f); if (unlikely(!__pyx_tuple__9)) __PYX_ERR(0, 47, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__9);
-  __Pyx_GIVEREF(__pyx_tuple__9);
+  __pyx_tuple__10 = PyTuple_Pack(3, __pyx_n_s_float, __pyx_n_s_f4, __pyx_n_s_f); if (unlikely(!__pyx_tuple__10)) __PYX_ERR(0, 47, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__10);
+  __Pyx_GIVEREF(__pyx_tuple__10);
 
   /* "spykfunc/dataio/structbuf.pyx":48
  *     UNSIGNED_LONGLONG = _TYPE("unsigned long", "u8", "Q")
@@ -4945,9 +4717,9 @@ static int __Pyx_InitCachedConstants(void) {
  *     CHAR   = _TYPE("char", "S1", "c")
  * 
  */
-  __pyx_tuple__10 = PyTuple_Pack(3, __pyx_n_s_double, __pyx_n_s_f8, __pyx_n_s_d); if (unlikely(!__pyx_tuple__10)) __PYX_ERR(0, 48, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__10);
-  __Pyx_GIVEREF(__pyx_tuple__10);
+  __pyx_tuple__11 = PyTuple_Pack(3, __pyx_n_s_double, __pyx_n_s_f8, __pyx_n_s_d); if (unlikely(!__pyx_tuple__11)) __PYX_ERR(0, 48, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__11);
+  __Pyx_GIVEREF(__pyx_tuple__11);
 
   /* "spykfunc/dataio/structbuf.pyx":49
  *     FLOAT = _TYPE("float", "f4", "f")
@@ -4956,9 +4728,9 @@ static int __Pyx_InitCachedConstants(void) {
  * 
  *     class Array(_TYPE):
  */
-  __pyx_tuple__11 = PyTuple_Pack(3, __pyx_n_s_char, __pyx_n_s_S1, __pyx_n_s_c); if (unlikely(!__pyx_tuple__11)) __PYX_ERR(0, 49, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__11);
-  __Pyx_GIVEREF(__pyx_tuple__11);
+  __pyx_tuple__12 = PyTuple_Pack(3, __pyx_n_s_char, __pyx_n_s_S1, __pyx_n_s_c); if (unlikely(!__pyx_tuple__12)) __PYX_ERR(0, 49, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__12);
+  __Pyx_GIVEREF(__pyx_tuple__12);
 
   /* "spykfunc/dataio/structbuf.pyx":52
  * 
@@ -4967,10 +4739,10 @@ static int __Pyx_InitCachedConstants(void) {
  *             self._basetype = basetype
  *             self.length = length
  */
-  __pyx_tuple__12 = PyTuple_Pack(3, __pyx_n_s_self, __pyx_n_s_basetype, __pyx_n_s_length); if (unlikely(!__pyx_tuple__12)) __PYX_ERR(0, 52, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__12);
-  __Pyx_GIVEREF(__pyx_tuple__12);
-  __pyx_codeobj__13 = (PyObject*)__Pyx_PyCode_New(3, 0, 3, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__12, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_media_psf_Home_dev_Functionaliz, __pyx_n_s_init, 52, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__13)) __PYX_ERR(0, 52, __pyx_L1_error)
+  __pyx_tuple__13 = PyTuple_Pack(3, __pyx_n_s_self, __pyx_n_s_basetype, __pyx_n_s_length); if (unlikely(!__pyx_tuple__13)) __PYX_ERR(0, 52, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__13);
+  __Pyx_GIVEREF(__pyx_tuple__13);
+  __pyx_codeobj__14 = (PyObject*)__Pyx_PyCode_New(3, 0, 3, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__13, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_media_psf_Home_dev_Functionaliz, __pyx_n_s_init, 52, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__14)) __PYX_ERR(0, 52, __pyx_L1_error)
 
   /* "spykfunc/dataio/structbuf.pyx":55
  *             self._basetype = basetype
@@ -4979,10 +4751,10 @@ static int __Pyx_InitCachedConstants(void) {
  *             return "<ArrayType: %s[%d]>" % (self._basetype, self.length)
  *         @property
  */
-  __pyx_tuple__14 = PyTuple_Pack(1, __pyx_n_s_self); if (unlikely(!__pyx_tuple__14)) __PYX_ERR(0, 55, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__14);
-  __Pyx_GIVEREF(__pyx_tuple__14);
-  __pyx_codeobj__15 = (PyObject*)__Pyx_PyCode_New(1, 0, 1, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__14, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_media_psf_Home_dev_Functionaliz, __pyx_n_s_repr, 55, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__15)) __PYX_ERR(0, 55, __pyx_L1_error)
+  __pyx_tuple__15 = PyTuple_Pack(1, __pyx_n_s_self); if (unlikely(!__pyx_tuple__15)) __PYX_ERR(0, 55, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__15);
+  __Pyx_GIVEREF(__pyx_tuple__15);
+  __pyx_codeobj__16 = (PyObject*)__Pyx_PyCode_New(1, 0, 1, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__15, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_media_psf_Home_dev_Functionaliz, __pyx_n_s_repr, 55, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__16)) __PYX_ERR(0, 55, __pyx_L1_error)
 
   /* "spykfunc/dataio/structbuf.pyx":58
  *             return "<ArrayType: %s[%d]>" % (self._basetype, self.length)
@@ -4991,10 +4763,10 @@ static int __Pyx_InitCachedConstants(void) {
  *             return "%d%s" % (self.length, self._basetype.dtype)
  *         @property
  */
-  __pyx_tuple__16 = PyTuple_Pack(1, __pyx_n_s_self); if (unlikely(!__pyx_tuple__16)) __PYX_ERR(0, 58, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__16);
-  __Pyx_GIVEREF(__pyx_tuple__16);
-  __pyx_codeobj__17 = (PyObject*)__Pyx_PyCode_New(1, 0, 1, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__16, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_media_psf_Home_dev_Functionaliz, __pyx_n_s_dtype, 58, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__17)) __PYX_ERR(0, 58, __pyx_L1_error)
+  __pyx_tuple__17 = PyTuple_Pack(1, __pyx_n_s_self); if (unlikely(!__pyx_tuple__17)) __PYX_ERR(0, 58, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__17);
+  __Pyx_GIVEREF(__pyx_tuple__17);
+  __pyx_codeobj__18 = (PyObject*)__Pyx_PyCode_New(1, 0, 1, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__17, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_media_psf_Home_dev_Functionaliz, __pyx_n_s_dtype, 58, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__18)) __PYX_ERR(0, 58, __pyx_L1_error)
 
   /* "spykfunc/dataio/structbuf.pyx":61
  *             return "%d%s" % (self.length, self._basetype.dtype)
@@ -5003,10 +4775,10 @@ static int __Pyx_InitCachedConstants(void) {
  *             return "%d%s" % (self.length, self._basetype.pystruct_t)
  * 
  */
-  __pyx_tuple__18 = PyTuple_Pack(1, __pyx_n_s_self); if (unlikely(!__pyx_tuple__18)) __PYX_ERR(0, 61, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__18);
-  __Pyx_GIVEREF(__pyx_tuple__18);
-  __pyx_codeobj__19 = (PyObject*)__Pyx_PyCode_New(1, 0, 1, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__18, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_media_psf_Home_dev_Functionaliz, __pyx_n_s_pystruct_t, 61, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__19)) __PYX_ERR(0, 61, __pyx_L1_error)
+  __pyx_tuple__19 = PyTuple_Pack(1, __pyx_n_s_self); if (unlikely(!__pyx_tuple__19)) __PYX_ERR(0, 61, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__19);
+  __Pyx_GIVEREF(__pyx_tuple__19);
+  __pyx_codeobj__20 = (PyObject*)__Pyx_PyCode_New(1, 0, 1, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__19, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_media_psf_Home_dev_Functionaliz, __pyx_n_s_pystruct_t, 61, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__20)) __PYX_ERR(0, 61, __pyx_L1_error)
 
   /* "spykfunc/dataio/structbuf.pyx":65
  * 
@@ -5015,10 +4787,10 @@ static int __Pyx_InitCachedConstants(void) {
  *             self.length = length
  *         def __repr__(self):
  */
-  __pyx_tuple__20 = PyTuple_Pack(2, __pyx_n_s_self, __pyx_n_s_length); if (unlikely(!__pyx_tuple__20)) __PYX_ERR(0, 65, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__20);
-  __Pyx_GIVEREF(__pyx_tuple__20);
-  __pyx_codeobj__21 = (PyObject*)__Pyx_PyCode_New(2, 0, 2, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__20, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_media_psf_Home_dev_Functionaliz, __pyx_n_s_init, 65, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__21)) __PYX_ERR(0, 65, __pyx_L1_error)
+  __pyx_tuple__21 = PyTuple_Pack(2, __pyx_n_s_self, __pyx_n_s_length); if (unlikely(!__pyx_tuple__21)) __PYX_ERR(0, 65, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__21);
+  __Pyx_GIVEREF(__pyx_tuple__21);
+  __pyx_codeobj__22 = (PyObject*)__Pyx_PyCode_New(2, 0, 2, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__21, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_media_psf_Home_dev_Functionaliz, __pyx_n_s_init, 65, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__22)) __PYX_ERR(0, 65, __pyx_L1_error)
 
   /* "spykfunc/dataio/structbuf.pyx":67
  *         def __init__(self, length):
@@ -5027,10 +4799,10 @@ static int __Pyx_InitCachedConstants(void) {
  *             return "<StringType: char[%d]>" % (self.length,)
  *         @property
  */
-  __pyx_tuple__22 = PyTuple_Pack(1, __pyx_n_s_self); if (unlikely(!__pyx_tuple__22)) __PYX_ERR(0, 67, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__22);
-  __Pyx_GIVEREF(__pyx_tuple__22);
-  __pyx_codeobj__23 = (PyObject*)__Pyx_PyCode_New(1, 0, 1, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__22, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_media_psf_Home_dev_Functionaliz, __pyx_n_s_repr, 67, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__23)) __PYX_ERR(0, 67, __pyx_L1_error)
+  __pyx_tuple__23 = PyTuple_Pack(1, __pyx_n_s_self); if (unlikely(!__pyx_tuple__23)) __PYX_ERR(0, 67, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__23);
+  __Pyx_GIVEREF(__pyx_tuple__23);
+  __pyx_codeobj__24 = (PyObject*)__Pyx_PyCode_New(1, 0, 1, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__23, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_media_psf_Home_dev_Functionaliz, __pyx_n_s_repr, 67, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__24)) __PYX_ERR(0, 67, __pyx_L1_error)
 
   /* "spykfunc/dataio/structbuf.pyx":70
  *             return "<StringType: char[%d]>" % (self.length,)
@@ -5039,10 +4811,10 @@ static int __Pyx_InitCachedConstants(void) {
  *             return "S%d" % (self.length,)
  *         @property
  */
-  __pyx_tuple__24 = PyTuple_Pack(1, __pyx_n_s_self); if (unlikely(!__pyx_tuple__24)) __PYX_ERR(0, 70, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__24);
-  __Pyx_GIVEREF(__pyx_tuple__24);
-  __pyx_codeobj__25 = (PyObject*)__Pyx_PyCode_New(1, 0, 1, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__24, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_media_psf_Home_dev_Functionaliz, __pyx_n_s_dtype, 70, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__25)) __PYX_ERR(0, 70, __pyx_L1_error)
+  __pyx_tuple__25 = PyTuple_Pack(1, __pyx_n_s_self); if (unlikely(!__pyx_tuple__25)) __PYX_ERR(0, 70, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__25);
+  __Pyx_GIVEREF(__pyx_tuple__25);
+  __pyx_codeobj__26 = (PyObject*)__Pyx_PyCode_New(1, 0, 1, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__25, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_media_psf_Home_dev_Functionaliz, __pyx_n_s_dtype, 70, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__26)) __PYX_ERR(0, 70, __pyx_L1_error)
 
   /* "spykfunc/dataio/structbuf.pyx":73
  *             return "S%d" % (self.length,)
@@ -5051,10 +4823,10 @@ static int __Pyx_InitCachedConstants(void) {
  *             return "%ds" % (self.length,)
  * 
  */
-  __pyx_tuple__26 = PyTuple_Pack(1, __pyx_n_s_self); if (unlikely(!__pyx_tuple__26)) __PYX_ERR(0, 73, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__26);
-  __Pyx_GIVEREF(__pyx_tuple__26);
-  __pyx_codeobj__27 = (PyObject*)__Pyx_PyCode_New(1, 0, 1, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__26, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_media_psf_Home_dev_Functionaliz, __pyx_n_s_pystruct_t, 73, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__27)) __PYX_ERR(0, 73, __pyx_L1_error)
+  __pyx_tuple__27 = PyTuple_Pack(1, __pyx_n_s_self); if (unlikely(!__pyx_tuple__27)) __PYX_ERR(0, 73, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__27);
+  __Pyx_GIVEREF(__pyx_tuple__27);
+  __pyx_codeobj__28 = (PyObject*)__Pyx_PyCode_New(1, 0, 1, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__27, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_media_psf_Home_dev_Functionaliz, __pyx_n_s_pystruct_t, 73, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__28)) __PYX_ERR(0, 73, __pyx_L1_error)
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -5231,7 +5003,7 @@ PyMODINIT_FUNC PyInit_structbuf(void)
  *     INT  = _TYPE("int", "i4", "i")
  *     UNSIGNED_INT = _TYPE("unsigned int", "u4", "I")
  */
-  __pyx_t_4 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_8spykfunc_6dataio_9structbuf__TYPE), __pyx_tuple__4, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_8spykfunc_6dataio_9structbuf__TYPE), __pyx_tuple__5, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 42, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   if (PyObject_SetItem(__pyx_t_3, __pyx_n_s_BOOL, __pyx_t_4) < 0) __PYX_ERR(0, 42, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
@@ -5243,7 +5015,7 @@ PyMODINIT_FUNC PyInit_structbuf(void)
  *     UNSIGNED_INT = _TYPE("unsigned int", "u4", "I")
  *     LONGLONG = _TYPE("long int", "i8", "q")
  */
-  __pyx_t_4 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_8spykfunc_6dataio_9structbuf__TYPE), __pyx_tuple__5, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 43, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_8spykfunc_6dataio_9structbuf__TYPE), __pyx_tuple__6, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 43, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   if (PyObject_SetItem(__pyx_t_3, __pyx_n_s_INT, __pyx_t_4) < 0) __PYX_ERR(0, 43, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
@@ -5255,7 +5027,7 @@ PyMODINIT_FUNC PyInit_structbuf(void)
  *     LONGLONG = _TYPE("long int", "i8", "q")
  *     UNSIGNED_LONGLONG = _TYPE("unsigned long", "u8", "Q")
  */
-  __pyx_t_4 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_8spykfunc_6dataio_9structbuf__TYPE), __pyx_tuple__6, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 44, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_8spykfunc_6dataio_9structbuf__TYPE), __pyx_tuple__7, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 44, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   if (PyObject_SetItem(__pyx_t_3, __pyx_n_s_UNSIGNED_INT, __pyx_t_4) < 0) __PYX_ERR(0, 44, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
@@ -5267,7 +5039,7 @@ PyMODINIT_FUNC PyInit_structbuf(void)
  *     UNSIGNED_LONGLONG = _TYPE("unsigned long", "u8", "Q")
  *     FLOAT = _TYPE("float", "f4", "f")
  */
-  __pyx_t_4 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_8spykfunc_6dataio_9structbuf__TYPE), __pyx_tuple__7, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 45, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_8spykfunc_6dataio_9structbuf__TYPE), __pyx_tuple__8, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 45, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   if (PyObject_SetItem(__pyx_t_3, __pyx_n_s_LONGLONG, __pyx_t_4) < 0) __PYX_ERR(0, 45, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
@@ -5279,7 +5051,7 @@ PyMODINIT_FUNC PyInit_structbuf(void)
  *     FLOAT = _TYPE("float", "f4", "f")
  *     DOUBLE = _TYPE("double", "f8", "d")
  */
-  __pyx_t_4 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_8spykfunc_6dataio_9structbuf__TYPE), __pyx_tuple__8, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 46, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_8spykfunc_6dataio_9structbuf__TYPE), __pyx_tuple__9, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 46, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   if (PyObject_SetItem(__pyx_t_3, __pyx_n_s_UNSIGNED_LONGLONG, __pyx_t_4) < 0) __PYX_ERR(0, 46, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
@@ -5291,7 +5063,7 @@ PyMODINIT_FUNC PyInit_structbuf(void)
  *     DOUBLE = _TYPE("double", "f8", "d")
  *     CHAR   = _TYPE("char", "S1", "c")
  */
-  __pyx_t_4 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_8spykfunc_6dataio_9structbuf__TYPE), __pyx_tuple__9, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 47, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_8spykfunc_6dataio_9structbuf__TYPE), __pyx_tuple__10, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 47, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   if (PyObject_SetItem(__pyx_t_3, __pyx_n_s_FLOAT, __pyx_t_4) < 0) __PYX_ERR(0, 47, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
@@ -5303,7 +5075,7 @@ PyMODINIT_FUNC PyInit_structbuf(void)
  *     CHAR   = _TYPE("char", "S1", "c")
  * 
  */
-  __pyx_t_4 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_8spykfunc_6dataio_9structbuf__TYPE), __pyx_tuple__10, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 48, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_8spykfunc_6dataio_9structbuf__TYPE), __pyx_tuple__11, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 48, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   if (PyObject_SetItem(__pyx_t_3, __pyx_n_s_DOUBLE, __pyx_t_4) < 0) __PYX_ERR(0, 48, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
@@ -5315,7 +5087,7 @@ PyMODINIT_FUNC PyInit_structbuf(void)
  * 
  *     class Array(_TYPE):
  */
-  __pyx_t_4 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_8spykfunc_6dataio_9structbuf__TYPE), __pyx_tuple__11, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 49, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_8spykfunc_6dataio_9structbuf__TYPE), __pyx_tuple__12, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 49, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   if (PyObject_SetItem(__pyx_t_3, __pyx_n_s_CHAR, __pyx_t_4) < 0) __PYX_ERR(0, 49, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
@@ -5344,7 +5116,7 @@ PyMODINIT_FUNC PyInit_structbuf(void)
  *             self._basetype = basetype
  *             self.length = length
  */
-  __pyx_t_7 = __Pyx_CyFunction_NewEx(&__pyx_mdef_8spykfunc_6dataio_9structbuf_5Array_1__init__, 0, __pyx_n_s_TYPES_Array___init, NULL, __pyx_n_s_spykfunc_dataio_structbuf, __pyx_d, ((PyObject *)__pyx_codeobj__13)); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 52, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_CyFunction_NewEx(&__pyx_mdef_8spykfunc_6dataio_9structbuf_5Array_1__init__, 0, __pyx_n_s_TYPES_Array___init, NULL, __pyx_n_s_spykfunc_dataio_structbuf, __pyx_d, ((PyObject *)__pyx_codeobj__14)); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 52, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   if (PyObject_SetItem(__pyx_t_6, __pyx_n_s_init, __pyx_t_7) < 0) __PYX_ERR(0, 52, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
@@ -5356,7 +5128,7 @@ PyMODINIT_FUNC PyInit_structbuf(void)
  *             return "<ArrayType: %s[%d]>" % (self._basetype, self.length)
  *         @property
  */
-  __pyx_t_7 = __Pyx_CyFunction_NewEx(&__pyx_mdef_8spykfunc_6dataio_9structbuf_5Array_3__repr__, 0, __pyx_n_s_TYPES_Array___repr, NULL, __pyx_n_s_spykfunc_dataio_structbuf, __pyx_d, ((PyObject *)__pyx_codeobj__15)); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 55, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_CyFunction_NewEx(&__pyx_mdef_8spykfunc_6dataio_9structbuf_5Array_3__repr__, 0, __pyx_n_s_TYPES_Array___repr, NULL, __pyx_n_s_spykfunc_dataio_structbuf, __pyx_d, ((PyObject *)__pyx_codeobj__16)); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 55, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   if (PyObject_SetItem(__pyx_t_6, __pyx_n_s_repr, __pyx_t_7) < 0) __PYX_ERR(0, 55, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
@@ -5368,7 +5140,7 @@ PyMODINIT_FUNC PyInit_structbuf(void)
  *             return "%d%s" % (self.length, self._basetype.dtype)
  *         @property
  */
-  __pyx_t_7 = __Pyx_CyFunction_NewEx(&__pyx_mdef_8spykfunc_6dataio_9structbuf_5Array_5dtype, 0, __pyx_n_s_TYPES_Array_dtype, NULL, __pyx_n_s_spykfunc_dataio_structbuf, __pyx_d, ((PyObject *)__pyx_codeobj__17)); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 58, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_CyFunction_NewEx(&__pyx_mdef_8spykfunc_6dataio_9structbuf_5Array_5dtype, 0, __pyx_n_s_TYPES_Array_dtype, NULL, __pyx_n_s_spykfunc_dataio_structbuf, __pyx_d, ((PyObject *)__pyx_codeobj__18)); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 58, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
 
   /* "spykfunc/dataio/structbuf.pyx":57
@@ -5396,7 +5168,7 @@ PyMODINIT_FUNC PyInit_structbuf(void)
  *             return "%d%s" % (self.length, self._basetype.pystruct_t)
  * 
  */
-  __pyx_t_7 = __Pyx_CyFunction_NewEx(&__pyx_mdef_8spykfunc_6dataio_9structbuf_5Array_7pystruct_t, 0, __pyx_n_s_TYPES_Array_pystruct_t, NULL, __pyx_n_s_spykfunc_dataio_structbuf, __pyx_d, ((PyObject *)__pyx_codeobj__19)); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 61, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_CyFunction_NewEx(&__pyx_mdef_8spykfunc_6dataio_9structbuf_5Array_7pystruct_t, 0, __pyx_n_s_TYPES_Array_pystruct_t, NULL, __pyx_n_s_spykfunc_dataio_structbuf, __pyx_d, ((PyObject *)__pyx_codeobj__20)); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 61, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
 
   /* "spykfunc/dataio/structbuf.pyx":60
@@ -5456,7 +5228,7 @@ PyMODINIT_FUNC PyInit_structbuf(void)
  *             self.length = length
  *         def __repr__(self):
  */
-  __pyx_t_7 = __Pyx_CyFunction_NewEx(&__pyx_mdef_8spykfunc_6dataio_9structbuf_6String_1__init__, 0, __pyx_n_s_TYPES_String___init, NULL, __pyx_n_s_spykfunc_dataio_structbuf, __pyx_d, ((PyObject *)__pyx_codeobj__21)); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 65, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_CyFunction_NewEx(&__pyx_mdef_8spykfunc_6dataio_9structbuf_6String_1__init__, 0, __pyx_n_s_TYPES_String___init, NULL, __pyx_n_s_spykfunc_dataio_structbuf, __pyx_d, ((PyObject *)__pyx_codeobj__22)); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 65, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   if (PyObject_SetItem(__pyx_t_6, __pyx_n_s_init, __pyx_t_7) < 0) __PYX_ERR(0, 65, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
@@ -5468,7 +5240,7 @@ PyMODINIT_FUNC PyInit_structbuf(void)
  *             return "<StringType: char[%d]>" % (self.length,)
  *         @property
  */
-  __pyx_t_7 = __Pyx_CyFunction_NewEx(&__pyx_mdef_8spykfunc_6dataio_9structbuf_6String_3__repr__, 0, __pyx_n_s_TYPES_String___repr, NULL, __pyx_n_s_spykfunc_dataio_structbuf, __pyx_d, ((PyObject *)__pyx_codeobj__23)); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 67, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_CyFunction_NewEx(&__pyx_mdef_8spykfunc_6dataio_9structbuf_6String_3__repr__, 0, __pyx_n_s_TYPES_String___repr, NULL, __pyx_n_s_spykfunc_dataio_structbuf, __pyx_d, ((PyObject *)__pyx_codeobj__24)); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 67, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   if (PyObject_SetItem(__pyx_t_6, __pyx_n_s_repr, __pyx_t_7) < 0) __PYX_ERR(0, 67, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
@@ -5480,7 +5252,7 @@ PyMODINIT_FUNC PyInit_structbuf(void)
  *             return "S%d" % (self.length,)
  *         @property
  */
-  __pyx_t_7 = __Pyx_CyFunction_NewEx(&__pyx_mdef_8spykfunc_6dataio_9structbuf_6String_5dtype, 0, __pyx_n_s_TYPES_String_dtype, NULL, __pyx_n_s_spykfunc_dataio_structbuf, __pyx_d, ((PyObject *)__pyx_codeobj__25)); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 70, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_CyFunction_NewEx(&__pyx_mdef_8spykfunc_6dataio_9structbuf_6String_5dtype, 0, __pyx_n_s_TYPES_String_dtype, NULL, __pyx_n_s_spykfunc_dataio_structbuf, __pyx_d, ((PyObject *)__pyx_codeobj__26)); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 70, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
 
   /* "spykfunc/dataio/structbuf.pyx":69
@@ -5508,7 +5280,7 @@ PyMODINIT_FUNC PyInit_structbuf(void)
  *             return "%ds" % (self.length,)
  * 
  */
-  __pyx_t_7 = __Pyx_CyFunction_NewEx(&__pyx_mdef_8spykfunc_6dataio_9structbuf_6String_7pystruct_t, 0, __pyx_n_s_TYPES_String_pystruct_t, NULL, __pyx_n_s_spykfunc_dataio_structbuf, __pyx_d, ((PyObject *)__pyx_codeobj__27)); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 73, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_CyFunction_NewEx(&__pyx_mdef_8spykfunc_6dataio_9structbuf_6String_7pystruct_t, 0, __pyx_n_s_TYPES_String_pystruct_t, NULL, __pyx_n_s_spykfunc_dataio_structbuf, __pyx_d, ((PyObject *)__pyx_codeobj__28)); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 73, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
 
   /* "spykfunc/dataio/structbuf.pyx":72
@@ -5569,12 +5341,12 @@ PyMODINIT_FUNC PyInit_structbuf(void)
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_test, __pyx_t_1) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "string.to_py":55
+  /* "string.from_py":13
  * 
- * @cname("__pyx_convert_PyByteArray_string_to_py_std__in_string")
- * cdef inline object __pyx_convert_PyByteArray_string_to_py_std__in_string(const string& s):             # <<<<<<<<<<<<<<
- *     return __Pyx_PyByteArray_FromStringAndSize(s.data(), s.size())
- * 
+ * @cname("__pyx_convert_string_from_py_std__in_string")
+ * cdef string __pyx_convert_string_from_py_std__in_string(object o) except *:             # <<<<<<<<<<<<<<
+ *     cdef Py_ssize_t length
+ *     cdef char* data = __Pyx_PyObject_AsStringAndSize(o, &length)
  */
 
   /*--- Wrapped vars code ---*/
