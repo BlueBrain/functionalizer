@@ -92,7 +92,10 @@ def setup_package():
     setup(
         # name and other metadata are in setup.cfg
         version=SPYKFUNC_VERSION,
-        packages=['spykfunc'],
+        packages=['spykfunc',
+                  "spykfunc.dataio",
+                  "spykfunc.utils",
+                  "spykfunc.tools"] ,
         ext_modules=extensions,
         install_requires=[
             'pyspark',
