@@ -129,8 +129,6 @@ class _TouchInfo(TouchInfo_Interface):
 
     @LazyProperty
     def touches(self):
-        print("WARNING: TouchInfo.touches is lazily evaluated, returning an iterator.\n"
-              "         Please select a small region and/or avoid converting to a full array")
         _ = self.header  # NOQA - Init endianness if needed
         return CachedDataset(_Touches(self))
 

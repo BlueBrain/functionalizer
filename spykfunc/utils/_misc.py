@@ -7,6 +7,13 @@ import sys
 
 
 # -----------------------------------------------
+# string utils
+# -----------------------------------------------
+def to_native_str(text):
+    return text if isinstance(text, str) else str(text.decode())
+
+
+# -----------------------------------------------
 # dictionary/tuple utils
 # -----------------------------------------------
 def get_or_create(d, key, factory, factory_args):

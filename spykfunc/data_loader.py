@@ -12,7 +12,7 @@ from .dataio import touches
 from .dataio.common import Part
 from .definitions import MType
 from .utils.spark_udef import DictAccum
-from .utils import get_logger, make_slices
+from .utils import get_logger, make_slices, to_native_str
 from collections import defaultdict, OrderedDict
 import fnmatch
 
@@ -55,15 +55,20 @@ class NeuronDataSpark(NeuronData):
             logger.info("Loading global Neuron data...")
             self.load_globals()
 
-    @property
+    @LazyProperty
     def mTypes(self):
         self.require_mvd_globals()
-        return self.mtypeVec
+        return tuple(to_native_str(a) for a in self.mtypeVec)
 
-    @property
+    @LazyProperty
+    def eTypes(self):
+        self.require_mvd_globals()
+        return tuple(to_native_str(a) for a in self.etypeVec)
+
+    @LazyProperty
     def cellClasses(self):
         self.require_mvd_globals()
-        return self.synaClassVec
+        return tuple(to_native_str(a) for a in self.synaClassVec)
 
     # ---
     def load_mvd_neurons_morphologies(self, neuron_filter=None, **kwargs):
@@ -101,7 +106,7 @@ class NeuronDataSpark(NeuronData):
             neuronRDD = neuronRDD.flatMap(
                 neuron_loader_gen(NeuronData, self._loader.__class__,
                                   self._loader.get_params(),
-                                  n_neurons, total_parts, name_accu, self.mtypeVec))
+                                  n_neurons, total_parts, name_accu, self.mTypes))
 
             # Create DF
             logger.info("Creating data frame...")
@@ -160,7 +165,7 @@ class NeuronDataSpark(NeuronData):
     @LazyProperty
     def sclass_df(self):
         self.require_mvd_globals()
-        return F.broadcast(self._sc.parallelize(enumerate(self.synaClassVec))
+        return F.broadcast(self._sc.parallelize(enumerate(self.cellClasses))
                            .toDF(["sclass_i", "sclass_name"], schema.INT_STR_SCHEMA).cache())
 
     @LazyProperty
@@ -168,7 +173,7 @@ class NeuronDataSpark(NeuronData):
         self.require_mvd_globals()
         if not self.globals_loaded:
             raise RuntimeError("Global MVD info not loaded")
-        return F.broadcast(self._sc.parallelize(enumerate(self.mtypeVec))
+        return F.broadcast(self._sc.parallelize(enumerate(self.mTypes))
                            .toDF(["mtype_i", "mtype_name"], schema.INT_STR_SCHEMA).cache())
 
     @LazyProperty
@@ -176,7 +181,7 @@ class NeuronDataSpark(NeuronData):
         self.require_mvd_globals()
         if not self.globals_loaded:
             raise RuntimeError("Global MVD info not loaded")
-        return F.broadcast(self._sc.parallelize(enumerate(self.etypeVec))
+        return F.broadcast(self._sc.parallelize(enumerate(self.eTypes))
                            .toDF(["etype_i", "etype_name"], schema.INT_STR_SCHEMA).cache())
 
     # ----
@@ -221,10 +226,11 @@ class NeuronDataSpark(NeuronData):
     def load_synapse_prop_matrix(self, recipe):
         """Loader for SynapsesProperties
         """
+        self.require_mvd_globals()
         syn_class_rules = recipe.synapse_properties
-        syn_sclass_rev = {name: i for i, name in enumerate(self.synaClassVec)}
-        syn_mtype_rev = {name: i for i, name in enumerate(self.mtypeVec)}
-        syn_etype_rev = {name: i for i, name in enumerate(self.etypeVec)}
+        syn_mtype_rev = {name: i for i, name in enumerate(self.mTypes)}
+        syn_etype_rev = {name: i for i, name in enumerate(self.eTypes)}
+        syn_sclass_rev = {name: i for i, name in enumerate(self.cellClasses)}
 
         prop_rule_matrix = np.empty(
             # Our 6-dim matrix
@@ -234,9 +240,9 @@ class NeuronDataSpark(NeuronData):
         )
 
         expanded_names = defaultdict(dict)
-        field_to_values = OrderedDict((("MType", [str(x) for x in self.mtypeVec]),
-                                       ("EType", [str(x) for x in self.etypeVec]),
-                                       ("SClass", [str(x) for x in self.synaClassVec])))
+        field_to_values = OrderedDict((("MType", self.mTypes),
+                                       ("EType", self.eTypes),
+                                       ("SClass", self.cellClasses)))
         field_to_reverses = {"MType": syn_mtype_rev,
                              "EType": syn_etype_rev,
                              "SClass": syn_sclass_rev}

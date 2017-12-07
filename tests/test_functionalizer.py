@@ -13,7 +13,7 @@ args = (
 if __name__ == "__main__":
     opts = commands.arg_parser.parse_args(args)
     fuzer = fz.session(opts)
-    # res = fuzer.process_filters()
+    res = fuzer.process_filters()
     res = 0
     if res:
         sys.exit(res)

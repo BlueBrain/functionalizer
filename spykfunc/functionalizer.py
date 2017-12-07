@@ -323,7 +323,6 @@ class Functionalizer(object):
                         if (('*' in prev_rule.source and '*' not in rule.source) or
                                 ('*' in prev_rule.destination and '*' not in rule.destination)):
                             conn_rules[key] = rule
-                            # logger.debug(" -> Used instead")
                     else:
                         conn_rules[key] = rule
 
