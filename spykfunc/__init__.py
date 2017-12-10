@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (C) 2017 Fernando Pereira <fernando.pereira@epfl.ch>
+# Copyright (C) 2017 EPFL - Blue Brain Project
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public

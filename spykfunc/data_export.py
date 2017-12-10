@@ -7,6 +7,7 @@ from pyspark.sql import functions as F
 from pyspark.sql import types as T
 from pyspark.sql import SparkSession
 from . import utils
+from .utils import spark_udef as spark_udef_utils
 from . import tools
 
 logger = utils.get_logger(__name__)
@@ -25,7 +26,7 @@ class NeuronExporter(object):
         self.output_path = path.realpath(output_path)
         # Get the concat_bin agg function form the java world
         _j_conc_udaf = sc._jvm.spykfunc.udfs.BinaryConcat().apply
-        self.concat_bin = utils.wrap_java_udf(spark.sparkContext, _j_conc_udaf)
+        self.concat_bin = spark_udef_utils.wrap_java_udf(spark.sparkContext, _j_conc_udaf)
 
     def ensure_file_path(self, filename):
         if not os.path.exists(self.output_path):
@@ -77,7 +78,7 @@ class NeuronExporter(object):
                      )
 
         # Init a list accumulator to gather output filenames
-        nrn_filenames = sc.accumulator([], utils.ListAccum())
+        nrn_filenames = sc.accumulator([], spark_udef_utils.ListAccum())
 
         # Export nrn.h5 via partition mapping
         logger.debug("Ordering into {} partitions".format(n_partitions))

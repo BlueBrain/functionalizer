@@ -5,14 +5,17 @@
 """
 from setuptools import setup, Extension
 from setuptools.command.test import test as TestCommand
+from setuptools.command.install import install as InstallCommand
 import sys
 import os
 import os.path as osp
 import glob
 
-SPYKFUNC_VERSION = "0.5.0"
+SPYKFUNC_VERSION = "0.5.1"
 BUILD_TYPE = os.getenv('BUILD_TYPE', "RELEASE").upper()
 BASE_DIR = osp.dirname(__file__)
+EXAMPLES_DESTINATION = "share/spykfunc/examples"
+_TERMINAL_CTRL = "\033[{}m"
 
 assert BUILD_TYPE in ["RELEASE", "DEVEL"], "Build types allowed: DEVEL, RELEASE"
 
@@ -23,7 +26,7 @@ elif BUILD_TYPE == "DEVEL":
 
 
 # *******************************
-# Handle test
+# Customize commands
 # *******************************
 class PyTest(TestCommand):
     user_options = [('addopts=', None, 'Arguments to pass to pytest')]
@@ -37,6 +40,16 @@ class PyTest(TestCommand):
         import pytest
         errno = pytest.main(shlex.split(self.addopts))
         sys.exit(errno)
+
+
+class Install(InstallCommand):
+    """Post-installation for installation mode."""
+    def run(self):
+        InstallCommand.run(self)
+        print("{}Gonna install examples to INSTALL_PREFIX/{}{}"
+              .format(_TERMINAL_CTRL.format(32),    # Green
+                      EXAMPLES_DESTINATION,
+                      _TERMINAL_CTRL.format(0)))    # reset
 
 
 # *******************************
@@ -71,11 +84,14 @@ extensions = [
     for name, opts in ext_mods.items()
 ]
 
-if BUILD_TYPE == 'DEVEL':
+if "test" in sys.argv:
     extensions.append(
         Extension('tests.tst_neuron_memview',
                   ['tests/tst_neuron_memview' + _filename_ext],
                   language="c++"))
+
+
+if BUILD_TYPE == 'DEVEL':
     extensions = cythonize(extensions,
                            cplus=True,
                            build_dir="build",
@@ -87,16 +103,27 @@ if BUILD_TYPE == 'DEVEL':
 # *******************************
 def setup_package():
     needs_sphinx = {'build_sphinx', 'upload_docs'}.intersection(sys.argv)
-    sphinx = ['sphinx'] if needs_sphinx else []
+    maybe_sphinx = ['sphinx'] if needs_sphinx else []
+    maybe_cython = ["cython<0.26"] if BUILD_TYPE == "DEVEL" else []
 
     setup(
         # name and other metadata are in setup.cfg
         version=SPYKFUNC_VERSION,
-        packages=['spykfunc',
-                  "spykfunc.dataio",
-                  "spykfunc.utils",
-                  "spykfunc.tools"] ,
+        packages=[
+            'spykfunc',
+            'spykfunc.dataio',
+            'spykfunc.utils',
+            'spykfunc.tools'
+        ],
         ext_modules=extensions,
+        package_data={
+            'spykfunc': ['data/*']
+        },
+        data_files=[
+            (EXAMPLES_DESTINATION, glob.glob(osp.join(BASE_DIR, "examples", "*.py")) +
+             glob.glob(osp.join(BASE_DIR, "examples", "*.sh")))
+        ],
+        #  ----- Requirements -----
         install_requires=[
             'pyspark',
             'future',
@@ -108,18 +135,18 @@ def setup_package():
             'lxml',
             'progress'
         ],
-        # Setup and testing
-        setup_requires=['setuptools_scm'] + sphinx,
+        setup_requires=maybe_sphinx + maybe_cython,
         tests_require=['pytest', 'pytest-cov'],
         extras_require={
+            # Dependencies if the user wants a dev env
             'dev': ['cython<0.26', 'flake8']
         },
-        cmdclass={'test': PyTest},
+        cmdclass={'test': PyTest,
+                  'install': Install},
         entry_points={
             'console_scripts': [
                 'spykfunc = spykfunc.commands:spykfunc'],
         },
-        package_data={'spykfunc': ['data/*']},
     )
 
 
