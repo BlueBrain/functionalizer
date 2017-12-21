@@ -5,7 +5,7 @@ from pyspark.sql import functions as F
 # from pyspark.sql import types as T
 # from pyspark import StorageLevel
 from .definitions import CellClass
-from .schema import to_pathway_i, pathway_i_to_str
+from .schema import to_pathway_i, pathway_i_to_str, touches_with_pathway
 from ._filtering import DataSetOperation
 from .utils import get_logger
 from .filter_udfs import reduce_cut_parameter_udef
@@ -133,8 +133,7 @@ class ReduceAndCut(DataSetOperation):
     def apply(self, neuronG, *args, **kw):
         # Get and broadcast reduce and count
         logger.info("Computing Pathway stats...")
-        rc_params_df = self.compute_reduce_cut_params()
-
+        rc_params_df = self.compute_reduce_cut_params(full_touches)
         params_df = F.broadcast(rc_params_df.cache().checkpoint())
 
         # Debug params info ------------------------------------------------------------------------
@@ -146,12 +145,6 @@ class ReduceAndCut(DataSetOperation):
             debug_info.show()
             debug_info.write.csv("_debug/pathway_params.csv", header=True, mode="overwrite")
         # -----------------------------------------------------------------------------------------
-
-        # Flatten GraphFrame and include pathway (morpho>morpho) column
-        # apply_reduce and apply_cut require touches with the schema as created here
-        full_touches = (neuronG.find("(n1)-[t]->(n2)")
-                        .withColumn("pathway_i", to_pathway_i("n1.morphology_i", "n2.morphology_i"))
-                        .select("pathway_i", "t.*"))  # Only pathway and touch
 
         # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         # Reduce
@@ -218,20 +211,20 @@ class ReduceAndCut(DataSetOperation):
         return cut2AF_touches.select(neuronG.edges.schema.names)
 
     # ---
-    def compute_reduce_cut_params(self):
+    def compute_reduce_cut_params(self, full_touches):
         """
         Computes the pathway parameters, used by Reduce and Cut filters
         """
         # First obtain the pathway (morpho-morpho) stats dataframe
-        mtype_stats = self.stats.mtype_touch_stats.repartition("pathway_i")
+        pathway_stats = self.stats.get_pathway_touch_stats_from_touches_with_pathway(full_touches)
 
         # param create udf
         rc_param_maker = reduce_cut_parameter_udef(self.conn_rules)
 
         # Run UDF
-        params_df = mtype_stats.select(
+        params_df = pathway_stats.select(
             "*",
-            rc_param_maker(mtype_stats.pathway_i, mtype_stats.average_touches_conn).alias("rc_params")
+            rc_param_maker(pathway_stats.pathway_i, pathway_stats.average_touches_conn).alias("rc_params")
         )
 
         # Return the interesting params
@@ -298,10 +291,8 @@ class ReduceAndCut(DataSetOperation):
                        .join(shall_cut, ["pathway_i", "src", "dst"], how="left_anti"))
 
         # Calc cut_touch_counts_connection
-        cut_touch_counts_connection = (
-            reduced_touch_counts_connection
-            .join(shall_cut, ["pathway_i", "src", "dst"], how="left_anti")
-        )
+        cut_touch_counts_connection = (reduced_touch_counts_connection
+                                       .join(shall_cut, ["pathway_i", "src", "dst"], how="left_anti"))
 
         return cut_touches, cut_touch_counts_connection
 

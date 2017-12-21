@@ -15,7 +15,7 @@ class NeuronStats(object):
         self._touch_graph_frame = None
         self._prev_gf = None
         self._neurons_touch_counts = None
-        self._morpho_touches_conns = None
+        self._pathway_touches_conns = None
 
     @staticmethod
     def create_from_touch_info(touch_info):
@@ -34,20 +34,10 @@ class NeuronStats(object):
     def update_touch_graph_source(self, touch_GF, overwrite_previous_gf=True):
         self._touch_graph_frame = touch_GF
         self._neurons_touch_counts = None
-        self._morpho_touches_conns = None
+        self._pathway_touches_conns = None
         if overwrite_previous_gf:
             self._prev_gf = self._touch_graph_frame
             self.total_neurons = self._touch_graph_frame.vertices.count()
-
-    @property
-    def neurons_touch_counts(self):
-        """Lazily calculate neurons_touch_counts
-        """
-        if not self._neurons_touch_counts:
-            # Cache is not being used since it will just consume memory and potentially avoid optimizations
-            # User can still cache explicitly the returned ds
-            self._neurons_touch_counts = self.get_neurons_touch_counts(self._touch_graph_frame)
-        return self._neurons_touch_counts
 
     @property
     def total_touches(self):
@@ -66,24 +56,14 @@ class NeuronStats(object):
         return self._touch_graph_frame.inDegrees
 
     @property
-    def mtype_touch_stats(self):
-        """For every pair of mtype (src-dst) calc the number of touches, connections, and the mean (touches/connection)
+    def neurons_touch_counts(self):
+        """Lazily calculate neurons_touch_counts
         """
-        if self._morpho_touches_conns:
-            return self._morpho_touches_conns
-
-        # Group by pathway
-        morpho_touches_conns = self.neurons_touch_counts.groupBy("pathway_i").agg(
-            F.sum(col("count")).alias("total_touches"),
-            F.count(col("*")).alias("total_connections"))
-
-        morpho_touches_conns = morpho_touches_conns.withColumn(
-            "average_touches_conn",
-            morpho_touches_conns.total_touches / morpho_touches_conns.total_connections)
-
-        # We better not cache yet, as there may be further calculations/cache
-        self._morpho_touches_conns = morpho_touches_conns
-        return self._morpho_touches_conns
+        if not self._neurons_touch_counts:
+            # Cache is not being used since it will just consume memory and potentially avoid optimizations
+            # User can still cache explicitly the returned ds
+            self._neurons_touch_counts = self.get_neurons_touch_counts(self._touch_graph_frame)
+        return self._neurons_touch_counts
 
     @staticmethod
     def get_neurons_touch_counts(neuronG):
@@ -93,14 +73,47 @@ class NeuronStats(object):
             neuronG.find("(n1)-[t]->(n2)")
             .select(
                 to_pathway_i("n1.morphology_i", "n2.morphology_i"),
-                col("n1.id").alias("n1_id"),
-                col("n2.id").alias("n2_id"))
-            .sort("pathway_i")  # Force range partitioner
-            .groupBy("pathway_i", "n1_id", "n2_id")
+                col("t.src"),
+                col("t.dst")
+            )
+            .groupBy("pathway_i", "src", "dst")
             .count()
         )
 
+    @property
+    def pathway_touch_stats(self):
+        if self._pathway_touches_conns is None:
+            # We better not cache yet, as there may be further calculations/cache
+            self._pathway_touches_conns = self.get_pathway_touch_stats_from_touch_counts(self.neurons_touch_counts)
+        return self._pathway_touches_conns
+    
+    
+    @staticmethod
+    def get_pathway_touch_stats_from_touch_counts(neurons_touch_counts):
+        """For every pathway (src-dst mtype) calc the number of touches, connections, and the mean (touches/connection)
+        """
+        # Group by pathway
+        pathway_touches_conns = neurons_touch_counts.groupBy("pathway_i").agg(
+            F.sum("count").alias("total_touches"),
+            F.count("pathway_i").alias("total_connections")
+        )
 
+        return (
+            pathway_touches_conns.withColumn(
+                "average_touches_conn",
+                pathway_touches_conns.total_touches / pathway_touches_conns.total_connections
+            )
+            .coalesce(16)
+        )
+
+    @staticmethod
+    def get_pathway_touch_stats_from_touches_with_pathway(touches_with_pathway):
+        """For every pathway (src-dst mtype) calc the number of touches, connections, and the mean (touches/connection)    
+        """
+        neurons_touch_counts = touches_with_pathway.groupBy("pathway_i", "src", "dst").count()
+        return NeuronStats.get_pathway_touch_stats_from_touch_counts(neurons_touch_counts)
+
+    
 class MTYPE_STATS_FIELDS:
     PRE_MORPHOLOGY = 0
     POST_MORPHOLOGY = 1

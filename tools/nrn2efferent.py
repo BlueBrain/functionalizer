@@ -51,8 +51,8 @@ class NrnConverter(object):
                                                      input_filename[last_doth5_pos:]))
         id_limit = max_id + 1
 
-        print("[TRANSPOSING] %s in blocks of %dx%d" %
-              (input_filename, self._GROUP_SIZE, self._GROUP_SIZE))
+        self.logger.info("[TRANSPOSING] %s in blocks of %dx%d",
+                         input_filename, self._GROUP_SIZE, self._GROUP_SIZE)
 
         # For loop just to control the min-max outer gid
         for id_start in range(0, id_limit, self._GROUP_SIZE):

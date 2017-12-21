@@ -113,6 +113,33 @@ def pathway_i_to_str(df_pathway_i, mtypes):
         .drop("src_morpho_i", "src_morpho", "dst_morpho_i", "dst_morpho")
     )
 
+def touches_with_pathway(neuronG):
+    touches = neuronG.edges
+    nrns = neuronG.vertices
+    conn_touches = (
+        touches
+        .join(
+            (nrns
+             .select("id", "morphology_i")
+             .withColumnRenamed("id", "src")
+             .withColumnRenamed("morphology_i", "src_morphology_i")),
+            "src"
+        )
+        .join(
+            (nrns
+             .select("id", "morphology_i")
+             .withColumnRenamed("id", "dst")
+             .withColumnRenamed("morphology_i", "dst_morphology_i")),
+            "dst"
+        )
+    )
+
+    return conn_touches.withColumn(
+        "pathway_i", 
+        to_pathway_i("src_morphology_i", "dst_morphology_i")
+    )
+        
+
 
 # Fields as Enumerations
 _neuronFields = tuple(field.name for field in NEURON_SCHEMA)

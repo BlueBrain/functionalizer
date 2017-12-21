@@ -148,7 +148,7 @@ ContinueAbortErrorLogHandler = ErrorHandler()
 ContinueAbortErrorLogHandler.setLevel(_logging.ERROR)
 DefaultHandler = _logging.StreamHandler(sys.stdout)
 DefaultHandler.setLevel(_logging.DEBUG)
-DefaultHandler.setFormatter(ColoredFormatter('[%(levelname)s] %(name)s: %(message)s'))
+DefaultHandler.setFormatter(ColoredFormatter('[%(levelname)s] (%(asctime)s) %(message)s', '%I:%M:%S'))
 
 
 def get_logger(name):

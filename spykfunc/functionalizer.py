@@ -66,23 +66,25 @@ class Functionalizer(object):
         spark = (SparkSession.builder
                  .appName("Functionalizer")
                  .config("spark.checkpoint.compress", True)
+                 .config("spark.shuffle.file.buffer", 1024*1024)
                  .config("spark.jars", os.path.join(os.path.dirname(__file__), "data/spykfunc_udfs.jar"))
                  .config("spark.jars.packages", "graphframes:graphframes:0.5.0-spark2.1-s_2.11")
                  .getOrCreate())
 
         try:
             from graphframes import GraphFrame
-        except ImportError as e:
+        except ImportError:
             logger.error("Graphframes could not be imported\n"
                          "Please start a spark cluster with GraphFrames support."
                          " (e.g. pyspark --packages graphframes:graphframes:0.5.0-spark2.1-s_2.11)")
-            raise e
+            raise
 
         # Configuring Spark runtime
         sc = spark.sparkContext
         sc.setLogLevel("WARN")
         sc.setCheckpointDir("_checkpoints")
-        spark.conf.set("spark.sql.shuffle.partitions", min(sc.defaultParallelism * 4, 256))
+        # spark.conf.set("spark.sql.shuffle.partitions", 256)  # we set later when reading touches
+        spark.conf.set("spark.sql.autoBroadcastJoinThreshold", 1024**3)  # 1GB for auto broadcast
         sqlContext = SQLContext.getOrCreate(sc)
         sqlContext.registerJavaFunction("gauss_rand", "spykfunc.udfs.GaussRand")
         sqlContext.registerJavaFunction("float2binary", "spykfunc.udfs.FloatArraySerializer")
@@ -110,8 +112,8 @@ class Functionalizer(object):
         """
         # In "program" mode this dir wont change later, so we can check here
         # for its existence/permission to create
-        if not os.path.isdir(self.output_dir):
-            os.makedirs(self.output_dir)
+        os.path.isdir(self.output_dir) or os.makedirs(self.output_dir)
+        os.path.isdir("_tmp") or os.makedirs("_tmp")
 
         logger.debug("%s: Data loading...", time.ctime())
         # Load recipe
@@ -149,9 +151,14 @@ class Functionalizer(object):
             self._touchDF = self._initial_touchDF = fdata.load_touch_parquet(touches_parquet_files_expr) \
                 .withColumnRenamed("pre_neuron_id", "src") \
                 .withColumnRenamed("post_neuron_id", "dst")
+                
+            # I dont know whats up with Spark but sometimes when shuffle partitions is not 200
+            # we have problems. We try to mitigate using only multiples of 200
+            spark.conf.set("spark.sql.shuffle.partitions", 
+                           max(100, (self._touchDF.rdd.getNumPartitions()-1) // 200 * 200))
         else:
-            # Otherwise from the binary touches files
-            self._touchDF = fdata.load_touch_bin(touch_files)
+            # self._touchDF = fdata.load_touch_bin(touch_files)
+            raise ValueError("Invalid touch files. Please provide touches in parquet format.")
 
         # Create graphFrame and set it as stats source without recalculating
         self.neuronG = GraphFrame(self.neuronDF, self._touchDF)  # Rebuild graph
@@ -270,10 +277,7 @@ class Functionalizer(object):
         newtouchDF = touch_rules_filter.apply(self.neuronG)
 
         # So far there was quite some processing which would be recomputed
-        # self.touchDF = newtouchDF.checkpoint()  # checkpoint is still not working well
-        logger.debug(" -> Checkpointing...")
-        newtouchDF.write.parquet("_tmp/filtered_touches.parquet", mode="overwrite")
-        self.touchDF = spark.read.parquet("_tmp/filtered_touches.parquet")
+        self.apply_checkpoint_touches(newtouchDF)
 
     # ----
     def run_reduce_and_cut(self):
@@ -294,15 +298,27 @@ class Functionalizer(object):
     # Helper functions
     # -------------------------------------------------------------------------
 
+    def apply_checkpoint_touches(self, touchDF, checkpoint=True):
+        """ Takes a new set of touches, checkpointing by default
+        """
+        if checkpoint:
+            # self.touchDF = newtouchDF.checkpoint()  # checkpoint is still not working well
+            logger.debug(" -> Checkpointing...")
+            touchDF.write.parquet("_tmp/filtered_touches.parquet", mode="overwrite")
+            self.touchDF = spark.read.parquet("_tmp/filtered_touches.parquet")
+        else:
+            self.touchDF = touchDF
+        
+
     def _ensure_data_loaded(self):
-        """"""
+        """ Ensures required data is available
+        """
         if self.recipe is None or self.neuronG is None:
             raise RuntimeError("No touches available. Please load data first.")
 
     @staticmethod
     def _build_concrete_mtype_conn_rules(src_conn_rules, mTypes):
-        """ Transform conn rules into concrete rule instances (without wildcards) and indexed by mtype-mtype
-            Index is a string in the form "src>dst"
+        """ Transform conn rules into concrete rule instances (without wildcards) and indexed by pathway
         """
         mtypes_rev = {mtype: i for i, mtype in enumerate(mTypes)}
         conn_rules = {}

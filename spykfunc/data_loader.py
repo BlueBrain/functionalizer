@@ -89,7 +89,7 @@ class NeuronDataSpark(NeuronData):
         if os.path.exists(mvd_parquet):
             logger.info("Loading from MVD parquet")
             mvd = self._spark.read.parquet(mvd_parquet)
-            self.neuronDF = F.broadcast(mvd.cache())
+            self.neuronDF = F.broadcast(mvd).cache()
             n_neurons = self.neuronDF.count()  # Force broadcast to meterialize
             logger.info("Loaded {} neurons from MVD".format(n_neurons))
 
@@ -107,7 +107,6 @@ class NeuronDataSpark(NeuronData):
                 neuron_loader_gen(NeuronData, self._loader.__class__,
                                   self._loader.get_params(),
                                   n_neurons, total_parts, name_accu, self.mTypes))
-
             # Create DF
             logger.info("Creating data frame...")
             # Mark as "broadcastable" and cache

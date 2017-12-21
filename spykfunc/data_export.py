@@ -1,5 +1,7 @@
+from __future__ import print_function
 import h5py
 import os
+from sys import stderr
 from os import path
 import glob
 import numpy
@@ -81,15 +83,24 @@ class NeuronExporter(object):
         nrn_filenames = sc.accumulator([], spark_udef_utils.ListAccum())
 
         # Export nrn.h5 via partition mapping
-        logger.debug("Ordering into {} partitions".format(n_partitions))
+        logger.debug("Saving to NRN.h5 in parallel... ({} files)".format(n_partitions))
         write_hdf5 = get_export_hdf5_f(nrn_filepath, nrn_filenames)
         summary_rdd = arrays_df.rdd.mapPartitions(write_hdf5)
+        # Count to trigger saving, caching needed results.
+        # We need it since there's a coalesce after, for little parallelism later
+        summary_rdd = summary_rdd.cache()
+        summary_rdd.count()
 
         # Export the base for nrn_summary (only afferent counts)
+        n_parts = (n_gids-1) // 100000 + 1
+        logger.debug("Creating nrn_summary.h5 [{} parts]".format(n_parts))
+        summary_rdd = summary_rdd.coalesce(n_parts)
         summary_path = path.join(self.output_path, ".nrn_summary0.h5")
         summary_h5_store = h5py.File(summary_path, "w")
         for post_gid, summary_npa in summary_rdd.toLocalIterator():
             summary_h5_store.create_dataset("a{}".format(post_gid), data=summary_npa)
+            print(".", end="", file=stderr)
+        print("done", file=stderr)
         summary_h5_store.close()
 
         # Build merged nrn_summary
@@ -110,6 +121,7 @@ class NeuronExporter(object):
             new_names.append(new_name)
 
         if create_efferent:
+            logger.debug("Creating nrn_efferent files in parallel")
             # Process conversion in parallel
             nrn_files_rdd = sc.parallelize(new_names, len(new_names))
             nrn_files_rdd.map(create_other_files).count()
