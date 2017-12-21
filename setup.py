@@ -66,6 +66,7 @@ ext_mods = {
         include_dirs=[osp.join(BASE_DIR, '../deps/hadoken/include'),
                       osp.join(BASE_DIR, '../deps/mvd-tool/include'),
                       osp.join(BASE_DIR, '../deps/mvd-tool/deps/highfive/include')],
+        library_dirs=[],
         libraries=['hdf5']
     ),
 }
@@ -76,6 +77,10 @@ for lib in _libs_env:
     lib_ROOT = os.getenv(lib)
     if lib_ROOT is not None and lib_ROOT != '/usr':
         ext_mods['cppneuron']['include_dirs'].append(os.path.join(lib_ROOT, "include"))
+        for _libdir in ('lib64', 'lib'):
+            full_libdir = osp.join(lib_ROOT, _libdir)
+            if(os.path.isdir(full_libdir)):
+                ext_mods['cppneuron']['library_dirs'].append(full_libdir)
 
 extensions = [
     Extension(_ext_mod + name, [_ext_dir + name + _filename_ext],
@@ -126,6 +131,7 @@ def setup_package():
         #  ----- Requirements -----
         install_requires=[
             'pyspark',
+            'py4j',
             'future',
             'docopt',
             'enum34;python_version<"3.4"',
