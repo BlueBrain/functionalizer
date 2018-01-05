@@ -11,11 +11,14 @@
             "../deps/hadoken/include", 
             "../deps/mvd-tool/include", 
             "../deps/mvd-tool/deps/highfive/include", 
-            "/nix/store/4nyfdfa4yl2bfx77vvy76cgf8zkf592s-generated-env-module-hdf5/include"
+            "/nix/store/bini3qhfw6054gl8j34v28f3nr7gyyyd-generated-env-module-hdf5/include"
         ], 
         "language": "c++", 
         "libraries": [
             "hdf5"
+        ], 
+        "library_dirs": [
+            "/nix/store/bini3qhfw6054gl8j34v28f3nr7gyyyd-generated-env-module-hdf5/lib"
         ]
     }, 
     "module_name": "spykfunc.dataio.cppneuron"

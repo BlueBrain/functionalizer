@@ -52,7 +52,7 @@ class NeuronExporter(object):
     def export_hdf5(self, extended_touches_df, n_gids, create_efferent=False):
         # In the export a lot of shuffling happens, we must carefully control partitioning
         n_partitions = ((n_gids - 1) // N_NEURONS_FILE) + 1
-        spark.conf.set("spark.sql.shuffle.partitions", n_partitions)
+        spark.conf.set("spark.sql.shuffle.partitions", n_partitions*4)
 
         nrn_filepath = self.ensure_file_path("_nrn.h5")
         # Remove existing results
@@ -63,13 +63,14 @@ class NeuronExporter(object):
 
         # Massive conversion to binary using 'float2binary' java UDF and 'concat_bin' UDAF
         nrn_vals = df.select(df.pre_gid, df.post_gid, F.array(*self.nrn_fields_as_float(df)).alias("floatvec"))
+        
         arrays_df = (nrn_vals
                      .selectExpr("pre_gid", "post_gid", "float2binary(floatvec) as bin_arr")
                      .sort("post_gid")
-                     .sortWithinPartitions("post_gid", "pre_gid")
                      .groupBy("post_gid", "pre_gid")
                      .agg(self.concat_bin("bin_arr").alias("bin_matrix"),
                           F.count("*").cast("int").alias("conn_count"))
+                     .sort("post_gid", "pre_gid")
                      .groupBy("post_gid")
                      .agg(self.concat_bin("bin_matrix").alias("bin_matrix"),
                           F.collect_list("pre_gid").alias("pre_gids"),
@@ -77,6 +78,8 @@ class NeuronExporter(object):
                      .selectExpr("post_gid", "bin_matrix",
                                  "int2binary(pre_gids) as pre_gids_bin",
                                  "int2binary(conn_counts) as conn_counts_bin")
+                     # We dont care for perfect boundaries, just ~1000 nrn/file
+                     .coalesce(n_partitions)
                      )
 
         # Init a list accumulator to gather output filenames
@@ -97,10 +100,12 @@ class NeuronExporter(object):
         summary_rdd = summary_rdd.coalesce(n_parts)
         summary_path = path.join(self.output_path, ".nrn_summary0.h5")
         summary_h5_store = h5py.File(summary_path, "w")
+        n = 0
         for post_gid, summary_npa in summary_rdd.toLocalIterator():
+            n += 1
             summary_h5_store.create_dataset("a{}".format(post_gid), data=summary_npa)
-            print(".", end="", file=stderr)
-        print("done", file=stderr)
+            print("\rProgress: {} / {}".format(n, n_gids), end="", file=stderr)
+        print("done")
         summary_h5_store.close()
 
         # Build merged nrn_summary

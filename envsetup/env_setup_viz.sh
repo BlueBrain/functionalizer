@@ -6,11 +6,11 @@
 BASEDIR=$HOME/dev/Functionalizer/pyspark
 CURDIR=$BASEDIR/envsetup
 PYENV=$CURDIR/sparkenv
-
 module purge
+module load spark
+export MODULEPATH=/nix/var/nix/profiles/per-user/modules/lugano-viz-x86_64/archive-modules/2017-11-pre-upgrade/release/share/modulefiles/
 module load nix/gcc
 module load nix/hdf5
-module load spark
 
 
 if [ ! -d $PYENV ]; then

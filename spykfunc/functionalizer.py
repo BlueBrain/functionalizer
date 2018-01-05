@@ -275,7 +275,6 @@ class Functionalizer(object):
         logger.info("Filtering by touchRules...")
         touch_rules_filter = filters.TouchRulesFilter(self.recipe.touch_rules)
         newtouchDF = touch_rules_filter.apply(self.neuronG)
-
         # So far there was quite some processing which would be recomputed
         self.apply_checkpoint_touches(newtouchDF)
 
@@ -304,7 +303,7 @@ class Functionalizer(object):
         if checkpoint:
             # self.touchDF = newtouchDF.checkpoint()  # checkpoint is still not working well
             logger.debug(" -> Checkpointing...")
-            touchDF.write.parquet("_tmp/filtered_touches.parquet", mode="overwrite")
+            newtouchDF.write.parquet("_tmp/filtered_touches.parquet", mode="overwrite")
             self.touchDF = spark.read.parquet("_tmp/filtered_touches.parquet")
         else:
             self.touchDF = touchDF

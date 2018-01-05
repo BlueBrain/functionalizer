@@ -3,9 +3,9 @@
 /* BEGIN: Cython Metadata
 {
     "distutils": {
-        "depends": [],
+        "depends": [], 
         "language": "c++"
-    },
+    }, 
     "module_name": "spykfunc.dataio.common"
 }
 END: Cython Metadata */

@@ -131,6 +131,8 @@ class ReduceAndCut(DataSetOperation):
 
     # ---
     def apply(self, neuronG, *args, **kw):
+        full_touches = touches_with_pathway(neuronG)
+
         # Get and broadcast reduce and count
         logger.info("Computing Pathway stats...")
         rc_params_df = self.compute_reduce_cut_params(full_touches)
