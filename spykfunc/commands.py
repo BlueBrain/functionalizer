@@ -24,6 +24,11 @@ def _create_parser():
     parser.add_argument("--spark-opts",
                         help="All arguments to configure the spark session. Use with quotation marks. E.g. "
                              "--spark-opts \"--master spark://111.222.333.444:7077 --spark.conf.xx 123\"")
+    parser.add_argument("--overwrite",
+                        help="Overwrite the result of selected intermediate steps, forcing their recomputation"
+                             "Possible values: F (for filtered), E (for extended with synapse properties)"
+                             "or both: \"FE\"",
+                        default="")
     return parser
 
 
