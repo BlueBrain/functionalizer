@@ -22,7 +22,7 @@ _GROUP_SIZE = 8 * 1024
 class NrnCompleter(object):
     # Please use base2 vals
     _GROUP_SIZE = _GROUP_SIZE
-    _MAX_OUTBUFFER_LEN = 10 * 1024**2  # 1M entries ~ 8MB mem
+    _MAX_OUTBUFFER_LEN = 10 * 1024**2  # 10M entries ~ 80MB mem
     _OPTS_DEFAULT = dict(verbose=0)
 
     def __init__(self, input_filename, **opts):
@@ -122,13 +122,14 @@ class NrnCompleter(object):
                     cur_sel = selection[cur_offset: cur_offset+block_len]
                     ds.id.read(mspace, cur_sel.id, data)
                     max_row_i = numpy.searchsorted(data[:, 0], rec_stop_i)
-                    sub_offset[i] = cur_offset + max_row_i
+                    cur_offset += max_row_i
 
                     for row in data[:max_row_i]:
                         _array_dict[row[0]].extend([post_gid, row[1]])
 
                     # We can stop reading blocks if our max value is found in the middle of the buffer
                     if max_row_i < _BLOCK_SIZE:
+                        sub_offset[i] = cur_offset
                         break
 
         return _array_dict
