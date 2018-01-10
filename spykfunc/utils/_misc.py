@@ -139,8 +139,10 @@ class ColoredFormatter(_logging.Formatter):
     def format(self, record):
         levelname = record.levelname
         msg = super(ColoredFormatter, self).format(record)
+        if levelname == "WARNING":
+            msg = "[WARNING] " + msg
         if levelname in self.COLORS:
-            return ConsoleColors.format_text(msg, self.COLORS[levelname])
+            msg = ConsoleColors.format_text(msg, self.COLORS[levelname])
         return msg
 
 
@@ -148,7 +150,7 @@ ContinueAbortErrorLogHandler = ErrorHandler()
 ContinueAbortErrorLogHandler.setLevel(_logging.ERROR)
 DefaultHandler = _logging.StreamHandler(sys.stdout)
 DefaultHandler.setLevel(_logging.DEBUG)
-DefaultHandler.setFormatter(ColoredFormatter('[%(levelname)s] (%(asctime)s) %(message)s', '%I:%M:%S'))
+DefaultHandler.setFormatter(ColoredFormatter('(%(asctime)s) %(message)s', '%H:%M:%S'))
 
 
 def get_logger(name):
