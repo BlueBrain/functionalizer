@@ -112,7 +112,9 @@ class NeuronDataSpark(NeuronData):
             # Mark as "broadcastable" and cache
             self.neuronDF = F.broadcast(
                 self._spark.createDataFrame(neuronRDD, schema.NEURON_SCHEMA)
-            ).cache()
+                    .where(F.col("id").isNotNull())
+                    .cache()
+            )
 
             # Evaluate to build partial NameMaps
             self.neuronDF.write.mode('overwrite').parquet(mvd_parquet)
@@ -212,9 +214,12 @@ class NeuronDataSpark(NeuronData):
                 .join(etype_df.toDF("fromEType_i", "fromEType"), "fromEType", "left_outer")\
                 .join(etype_df.toDF("toEType_i", "toEType"), "toEType", "left_outer")
 
-        class_df = F.broadcast(class_df)
+        # These are small DF, we coalesce to 1 so the sort doesnt require shuffle
+        prop_df = prop_df.coalesce(1).sort("type")
+        class_df = class_df.coalesce(1).sort("id")
         merged_props = F.broadcast(
-            prop_df.join(class_df, prop_df.type == class_df.id, "left").cache())
+            prop_df.join(class_df, prop_df.type == class_df.id, "left").cache()
+        )
 
         n_syn_prop = merged_props.count()
         logger.info("Found {} synpse property entries".format(n_syn_prop))

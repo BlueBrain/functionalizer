@@ -1,9 +1,9 @@
 from __future__ import print_function
+import sys
 import logging as _logging
 from future.builtins import input
 from contextlib import contextmanager
 from .. import config
-import sys
 
 
 # -----------------------------------------------
@@ -38,7 +38,6 @@ def make_slices(length, total):
 # -----------------------------------------------
 # Class utils
 # -----------------------------------------------
-
 class classproperty(property):
     def __get__(self, obj, objtype=None):
         return super(classproperty, self).__get__(objtype)
@@ -50,6 +49,34 @@ class classproperty(property):
         super(classproperty, self).__delete__(type(obj))
 
 
+# -----------------------------------------------
+# Func utils
+# -----------------------------------------------
+def assign_to_property(prop_name):
+    def decorator(f):
+        "Convenience docorator to assign results to a property of the instance"
+        def newf(self, *args, **kw):
+            val = f(self, *args, **kw)
+            setattr(self, prop_name, val)
+            return val
+        return newf
+    return decorator
+    
+
+def cache_to_property(prop_name):
+    def decorator(f):
+        "Convenience docorator to assign results to a property of the instance"
+        def newf(self, *args, **kw):
+            val = getattr(self, prop_name)
+            if val is not None:
+                return val
+            val = f(self, *args, **kw)
+            setattr(self, prop_name, val)
+            return val
+        return newf
+    return decorator
+        
+    
 # -----------------------------------------------
 # UI utils
 # -----------------------------------------------

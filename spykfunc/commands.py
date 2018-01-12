@@ -2,6 +2,7 @@
 
 import sys
 import argparse
+from . import utils
 
 
 # ------------------------------------
@@ -51,16 +52,19 @@ def spykfunc():
     # Like this we can use the parser without starting with pyspark or spark-submit
     # NOTE: Scripts must be executed from pyspark or spark-submit to import pyspark
     from spykfunc.functionalizer import session
-    fuzer = session(options)
-    if fuzer is None:
+    logger = utils.get_logger(__name__)
+
+    try:
+        fuzer = session(options)
+        fuzer.process_filters(overwrite="F" in options.overwrite.upper())
+        fuzer.export_results(format_parquet=options.resultparquet,
+                             overwrite="E" in options.overwrite.upper())
+    except Exception:
+        logger.error(utils.format_cur_exception())
         return 1
 
-    status = fuzer.process_filters()
-    if status > 0:
-        return status
-
-    status = fuzer.export_results(format_parquet=options.resultparquet)
-    return status
+    logger.info("Functionalizer job complete.")
+    return 0
 
 
 # Defaults to execute run_functionalizer command

@@ -8,7 +8,8 @@ import time
 import os
 
 from pyspark.sql import SparkSession, SQLContext
-# from pyspark.sql import functions as F
+from pyspark.sql import functions as F
+from pyspark.sql import types as T
 
 from .recipe import Recipe
 from .data_loader import NeuronDataSpark
@@ -20,15 +21,18 @@ from . import _filtering
 from . import filters
 from . import schema
 from . import utils
+from .utils.spark import checkpoint_resume
 from . import synapse_properties
 
 __all__ = ["Functionalizer", "session"]
+
+logger = utils.get_logger(__name__)
 
 # Globals
 spark = None
 sc = None
 GraphFrame = None
-logger = utils.get_logger(__name__)
+
 
 
 class Functionalizer(object):
@@ -55,7 +59,10 @@ class Functionalizer(object):
 
     # TouchDF is volatile and we trigger events on update
     _touchDF = None
-
+    
+    _assign_to_touchDF = utils.assign_to_property('touchDF')
+    
+    # ==========
     def __init__(self, only_s2s=False, spark_opts=None):
         global spark, sc, GraphFrame
 
@@ -66,9 +73,10 @@ class Functionalizer(object):
         spark = (SparkSession.builder
                  .appName("Functionalizer")
                  .config("spark.checkpoint.compress", True)
-                 .config("spark.shuffle.file.buffer", 1024*1024)
                  .config("spark.jars", os.path.join(os.path.dirname(__file__), "data/spykfunc_udfs.jar"))
                  .config("spark.jars.packages", "graphframes:graphframes:0.5.0-spark2.1-s_2.11")
+                 .config("spark.sql.files.maxPartitionBytes", 64 * 1024*1024)
+                 # .config("spark.shuffle.file.buffer", 1024)
                  .getOrCreate())
 
         try:
@@ -83,6 +91,8 @@ class Functionalizer(object):
         sc = spark.sparkContext
         sc.setLogLevel("WARN")
         sc.setCheckpointDir("_checkpoints")
+        sc._jsc.hadoopConfiguration().setInt("parquet.block.size", 32*1024*1024)
+
         # spark.conf.set("spark.sql.shuffle.partitions", 256)  # we set later when reading touches
         spark.conf.set("spark.sql.autoBroadcastJoinThreshold", 1024**3)  # 1GB for auto broadcast
         sqlContext = SQLContext.getOrCreate(sc)
@@ -113,7 +123,7 @@ class Functionalizer(object):
         # In "program" mode this dir wont change later, so we can check here
         # for its existence/permission to create
         os.path.isdir(self.output_dir) or os.makedirs(self.output_dir)
-        os.path.isdir("_tmp") or os.makedirs("_tmp")
+        os.path.isdir("_checkpoints") or os.makedirs("_checkpoints")
 
         logger.debug("%s: Data loading...", time.ctime())
         # Load recipe
@@ -140,6 +150,7 @@ class Functionalizer(object):
 
         # Shortcuts
         self.fdata = fdata
+        self.neuron_count = int(fdata.nNeurons)
         self.neuronDF = fdata.neuronDF
         self.morphologies = fdata.morphologyRDD
 
@@ -153,16 +164,24 @@ class Functionalizer(object):
                 .withColumnRenamed("post_neuron_id", "dst")
                 
             # I dont know whats up with Spark but sometimes when shuffle partitions is not 200
-            # we have problems. We try to mitigate using only multiples of 200
-            spark.conf.set("spark.sql.shuffle.partitions", 
-                           max(100, (self._touchDF.rdd.getNumPartitions()-1) // 200 * 200))
+            # we have problems. We try to mitigate using multiples of 200
+            touch_partitions = self._touchDF.rdd.getNumPartitions()
+            if touch_partitions >= 400:
+                # Grow suffle partitions with size of touches DF
+                spark.conf.set("spark.sql.shuffle.partitions",
+                               touch_partitions // 200 * 200)
+            elif touch_partitions <= 16:
+                # Optimize execution of very small jobs
+                spark.conf.set("spark.sql.shuffle.partitions", 16)
+            
         else:
             # self._touchDF = fdata.load_touch_bin(touch_files)
             raise ValueError("Invalid touch files. Please provide touches in parquet format.")
 
         # Create graphFrame and set it as stats source without recalculating
         self.neuronG = GraphFrame(self.neuronDF, self._touchDF)  # Rebuild graph
-        self.neuron_stats.update_touch_graph_source(self.neuronG, overwrite_previous_gf=False)
+        self.neuron_stats.touch_graph = self.neuronG
+        self.neuron_stats._total_neurons = self.neuron_count
 
         # Data exporter
         self.exporter = NeuronExporter(output_path=self.output_dir)
@@ -179,8 +198,8 @@ class Functionalizer(object):
     @touchDF.setter
     def touchDF(self, new_touches):
         self._touchDF = new_touches
-        self.neuronG = GraphFrame(self.neuronDF, self._touchDF)    # Rebuild graph
-        self.neuron_stats.update_touch_graph_source(self.neuronG)  # Reset stats source
+        self.neuronG = GraphFrame(self.neuronDF, self._touchDF)   # Rebuild graph
+        self.neuron_stats.touch_graph = self.neuronG              # Reset stats source
 
     # ----
     @property
@@ -200,85 +219,102 @@ class Functionalizer(object):
     # -------------------------------------------------------------------------
     # Main entry point of Filter Execution
     # -------------------------------------------------------------------------
-    def process_filters(self):
+    @_assign_to_touchDF
+    @checkpoint_resume("filtered_touches.parquet", "ALL FILTERS", 
+                       before_load_handler=lambda:spark.conf.set("spark.sql.files.maxPartitionBytes", 32 * 1024*1024))
+    def process_filters(self, overwrite=False):
         """Runs all functionalizer filters in order, according to the classic functionalizer:
         (1) Soma-axon distance, (2) Touch rules, (3.1) Reduce and (3.2) Cut
         """
         self._ensure_data_loaded()
-        logger.info("%s: Starting Filtering...", time.ctime())
-        try:
-            self.filter_by_soma_axon_distance()
-            if self._run_s2f:
-                self.filter_by_touch_rules()
-                self.run_reduce_and_cut()
-        except Exception:
-            logger.error(utils.format_cur_exception())
-            return 1
+        logger.info("Starting Filtering...")
+        self.filter_by_soma_axon_distance()
+        if self._run_s2f:
+            self.filter_by_touch_rules()
+            self.run_reduce_and_cut()
 
-        # Force compute, saving to parquet - fast and space efficient
-        # We should be using checkpoint which is the standard way of doing it, but it still recomputes twice
-        logger.info("Cutting touches...")
-        self.touchDF = self.exporter.save_temp(self.touchDF)
-
-        return 0
+        # Filter helpers write result to self.touchDF
+        return self.touchDF
 
     # -------------------------------------------------------------------------
     # Exporting results
     # -------------------------------------------------------------------------
-    def export_results(self, format_parquet=False, output_path=None):
+    def export_results(self, format_parquet=False, output_path=None, overwrite=False, n_neurons_file=None):
         """ Exports the current touches to storage, appending the synapse property fields
 
         :param format_parquet: If True will export the touches in parquet format (rather than hdf5)
         :param output_path: Changes the default export directory
         """
-        self._ensure_data_loaded()
+        # Calc the number of neurons per NRN output file
+        if n_neurons_file is None:
+            from bisect import bisect_left
+            estimate =  self.neuron_count // self.touchDF.rdd.getNumPartitions()
+            possible_vals = [100, 250, 500, 1000]
+            n_neurons_file = possible_vals[bisect_left(possible_vals, estimate)]
+            logger.debug("Cur count neuron/touch_part = %d. n_neurons_file -> %d", estimate, n_neurons_file)
+            
         logger.info("Computing touch synaptical properties")
-        extended_touches = synapse_properties.compute_additional_h5_fields(
-            self.neuronG, self.synapse_class_matrix, self.synapse_class_prop_df)
-        extended_touches = self.exporter.save_temp(extended_touches, "extended_touches.parquet")
+        extended_touches = self._assign_synpse_properties(overwrite, n_neurons_file=n_neurons_file)        
 
+        # Export
         logger.info("Exporting touches...")
         exporter = self.exporter
         if output_path is not None:
             exporter.output_path = output_path
 
-        try:
-            if format_parquet:
-                exporter.export_parquet(extended_touches)
-            else:
-                exporter.export_hdf5(extended_touches, self.fdata.nNeurons, create_efferent=True)
-        except Exception:
-            logger.error(utils.format_cur_exception())
-            return 1
+        if format_parquet:
+            exporter.export_parquet(extended_touches)
+        else:
+            exporter.export_hdf5(extended_touches, self.neuron_count, 
+                                 create_efferent=True, 
+                                 n_neurons_file=n_neurons_file)
 
-        logger.info("Done exporting.")
-        logger.info("Finished")
-        return 0
+        logger.info("Data export complete")
+        
+    # --- 
+    @checkpoint_resume("extended_touches.parquet", "SYNAPSE_PROPS")
+    def _assign_synpse_properties(self, overwrite=False, n_neurons_file=1000):
+
+        # Calc syn props 
+        self._ensure_data_loaded()
+        extended_touches = synapse_properties.compute_additional_h5_fields(
+            self.neuronG, self.synapse_class_matrix, self.synapse_class_prop_df
+        )
+        return extended_touches
+            
+        # TODO: Eventually we could save by file group, but OutOfMem during sort
+        # extended_touches = extended_touches.withColumn(
+        #    "file_i", 
+        #    (F.col("post_gid") / n_neurons_file).cast(T.IntegerType())
+        # )
+        # # Previous way of saving. Remind that we might need to add such option to checkpoint_resume
+        # return self.exporter.save_temp(extended_touches, "extended_touches.parquet") #,
+        # #                               partition_col="file_i")
 
     # -------------------------------------------------------------------------
     # Functions to create/apply filters for the current session
     # -------------------------------------------------------------------------
-
+    @_assign_to_touchDF
     def filter_by_soma_axon_distance(self):
         """BLBLD-42: Creates a Soma-axon distance filter and applies it to the current touch set.
         """
         self._ensure_data_loaded()
-        logger.info("Filtering by soma-axon distance...")
         distance_filter = filters.BoutonDistanceFilter(self.recipe.synapses_distance)
-        self.touchDF = distance_filter.apply(self.neuronG)
+        return distance_filter.apply(self.neuronG)
 
     # ----
+    @_assign_to_touchDF
+    @checkpoint_resume("filtered_touch_rules.parquet", "TOUCH_RULES")
     def filter_by_touch_rules(self):
         """Creates a TouchRules filter according to recipe and applies it to the current touch set
         """
         self._ensure_data_loaded()
         logger.info("Filtering by touchRules...")
         touch_rules_filter = filters.TouchRulesFilter(self.recipe.touch_rules)
-        newtouchDF = touch_rules_filter.apply(self.neuronG)
-        # So far there was quite some processing which would be recomputed
-        self.apply_checkpoint_touches(newtouchDF)
+        return touch_rules_filter.apply(self.neuronG)
 
     # ----
+    @_assign_to_touchDF
     def run_reduce_and_cut(self):
         """Create and apply Reduce and Cut filter
         """
@@ -291,27 +327,14 @@ class Functionalizer(object):
 
         logger.info("Applying Reduce and Cut...")
         rc = filters.ReduceAndCut(mtype_conn_rules, self.neuron_stats, spark, )
-        self.touchDF = rc.apply(self.neuronG, mtypes=self.mtypes_df)
+        return rc.apply(self.neuronG, mtypes=self.mtypes_df)
 
     # -------------------------------------------------------------------------
     # Helper functions
     # -------------------------------------------------------------------------
 
-    def apply_checkpoint_touches(self, touchDF, checkpoint=True):
-        """ Takes a new set of touches, checkpointing by default
-        """
-        if checkpoint:
-            # self.touchDF = newtouchDF.checkpoint()  # checkpoint is still not working well
-            logger.debug(" -> Checkpointing...")
-            newtouchDF.write.parquet("_tmp/filtered_touches.parquet", mode="overwrite")
-            self.touchDF = spark.read.parquet("_tmp/filtered_touches.parquet")
-        else:
-            self.touchDF = touchDF
-        
-
     def _ensure_data_loaded(self):
-        """ Ensures required data is available
-        """
+        """ Ensures required data is available"""
         if self.recipe is None or self.neuronG is None:
             raise RuntimeError("No touches available. Please load data first.")
 
@@ -349,19 +372,13 @@ class Functionalizer(object):
 # -------------------------------------------
 def session(options):
     """
-    Main execution function to work similarly to functionalizer app
+    Helper function to create a functionalizer session given an options object
 
     :param options: An object containing the required option attributes, as built \
     by the arg parser: :py:data:`commands.arg_parser`.
     """
-    assert "NeuronDataSpark" in globals(), "Use spark-submit to run your job"
-
     fzer = Functionalizer(options.s2s, options.spark_opts)
     if options.output_dir:
         fzer.output_dir = options.output_dir
-    try:
-        fzer.init_data(options.recipe_file, options.mvd_file, options.morpho_dir, options.touch_files)
-    except Exception:
-        logger.error(utils.format_cur_exception())
-        return None
+    fzer.init_data(options.recipe_file, options.mvd_file, options.morpho_dir, options.touch_files)
     return fzer

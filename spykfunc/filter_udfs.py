@@ -176,20 +176,3 @@ def pprime_approximation(r, cv, p):
 
     return pprime, f1, mu2, r_actual
 
-
-# *********************************************************
-# Synapse classification
-# *********************************************************
-
-def get_synapse_property_udf(syn_class_matrix, sc=None):
-    if sc is None:
-        sc = SparkContext.getOrCreate()
-
-    # We need the matrix in all nodes, flattened
-    syn_class_matrix_flat = sc.broadcast(syn_class_matrix.flatten())
-
-    def syn_prop_udf(syn_prop_index):
-        # Leaves are still tuple size2
-        return syn_class_matrix_flat.value[syn_prop_index].tolist()
-
-    return F.udf(syn_prop_udf, T.ShortType())

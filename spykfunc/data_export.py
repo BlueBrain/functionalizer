@@ -5,6 +5,7 @@ from sys import stderr
 from os import path
 import glob
 import numpy
+from pyspark import StorageLevel
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
 from pyspark.sql import SparkSession
@@ -13,7 +14,9 @@ from .utils import spark_udef as spark_udef_utils
 from . import tools
 
 logger = utils.get_logger(__name__)
+
 N_NEURONS_FILE = 1000
+PARQUET_BLOCK_SIZE = 32 * 1024*1024
 
 # Globals
 spark = None
@@ -37,22 +40,31 @@ class NeuronExporter(object):
         return path.join(self.output_path, filename)
 
     # ---
-    def save_temp(self, touches, filename="filtered_touches.tmp.parquet"):
+    def save_temp(self, touches, filename="filtered_touches.tmp.parquet", partition_col=None):
         output_path = self.ensure_file_path(filename)
-        touches.write.parquet(output_path, mode="overwrite")
+        if partition_col is not None:
+            touches.write.partitionBy(partition_col).parquet(output_path, mode="overwrite")
+        else:
+            touches.write.parquet(output_path, mode="overwrite")
         logger.info("Filtered touches temporarily saved to %s", output_path)
         return spark.read.parquet(output_path)  # break execution plan
 
+    def get_temp_result(self, filename="filtered_touches.tmp.parquet"):
+        filepath = path.join(self.output_path, filename)
+        if os.path.exists(filepath):
+            return spark.read.parquet(filepath)
+        return None
+        
     # ---
     def export_parquet(self, extended_touches_df, filename="nrn.parquet"):
         output_path = self.ensure_file_path(filename)
         return extended_touches_df.write.partitionBy("post_gid").parquet(output_path, mode="overwrite")
 
     # ---
-    def export_hdf5(self, extended_touches_df, n_gids, create_efferent=False):
+    def export_hdf5(self, extended_touches_df, n_gids, create_efferent=False, n_neurons_file=N_NEURONS_FILE):
         # In the export a lot of shuffling happens, we must carefully control partitioning
-        n_partitions = ((n_gids - 1) // N_NEURONS_FILE) + 1
-        spark.conf.set("spark.sql.shuffle.partitions", n_partitions*4)
+        n_partitions = ((n_gids - 1) // n_neurons_file) + 1
+        # spark.conf.set("spark.sql.shuffle.partitions", n_partitions_work)
 
         nrn_filepath = self.ensure_file_path("_nrn.h5")
         # Remove existing results
@@ -62,41 +74,43 @@ class NeuronExporter(object):
         df = extended_touches_df
 
         # Massive conversion to binary using 'float2binary' java UDF and 'concat_bin' UDAF
-        nrn_vals = df.select(df.pre_gid, df.post_gid, F.array(*self.nrn_fields_as_float(df)).alias("floatvec"))
+        arrays_df = (
+            df
+            .select(df.pre_gid, df.post_gid, F.array(*self.nrn_fields_as_float(df)).alias("floatvec"))
+            .sort("post_gid")
+            .selectExpr("pre_gid", "post_gid", "float2binary(floatvec) as bin_arr")
+            .groupBy("post_gid", "pre_gid")
+            .agg(self.concat_bin("bin_arr").alias("bin_matrix"),
+                 F.count("*").cast("int").alias("conn_count"))
+            .sort("post_gid", "pre_gid")
+            .groupBy("post_gid")
+            .agg(self.concat_bin("bin_matrix").alias("bin_matrix"),
+                 F.collect_list("pre_gid").alias("pre_gids"),
+                 F.collect_list("conn_count").alias("conn_counts"))
+            .selectExpr("post_gid",
+                        "bin_matrix",
+                        "int2binary(pre_gids) as pre_gids_bin",
+                        "int2binary(conn_counts) as conn_counts_bin")
+            .coalesce(n_partitions)
+        )
         
-        arrays_df = (nrn_vals
-                     .selectExpr("pre_gid", "post_gid", "float2binary(floatvec) as bin_arr")
-                     .sort("post_gid")
-                     .groupBy("post_gid", "pre_gid")
-                     .agg(self.concat_bin("bin_arr").alias("bin_matrix"),
-                          F.count("*").cast("int").alias("conn_count"))
-                     .sort("post_gid", "pre_gid")
-                     .groupBy("post_gid")
-                     .agg(self.concat_bin("bin_matrix").alias("bin_matrix"),
-                          F.collect_list("pre_gid").alias("pre_gids"),
-                          F.collect_list("conn_count").alias("conn_counts"))
-                     .selectExpr("post_gid", "bin_matrix",
-                                 "int2binary(pre_gids) as pre_gids_bin",
-                                 "int2binary(conn_counts) as conn_counts_bin")
-                     # We dont care for perfect boundaries, just ~1000 nrn/file
-                     .coalesce(n_partitions)
-                     )
+        #arrays_df = self.save_temp(arrays_df, "aggregated_touches.parquet", partition_col="file_nr")
 
         # Init a list accumulator to gather output filenames
         nrn_filenames = sc.accumulator([], spark_udef_utils.ListAccum())
 
         # Export nrn.h5 via partition mapping
-        logger.debug("Saving to NRN.h5 in parallel... ({} files)".format(n_partitions))
+        logger.info("Saving to NRN.h5 in parallel... ({} files) [3 stages]".format(n_partitions))
         write_hdf5 = get_export_hdf5_f(nrn_filepath, nrn_filenames)
         summary_rdd = arrays_df.rdd.mapPartitions(write_hdf5)
         # Count to trigger saving, caching needed results.
         # We need it since there's a coalesce after, for little parallelism later
-        summary_rdd = summary_rdd.cache()
+        summary_rdd = summary_rdd.persist(StorageLevel.MEMORY_AND_DISK)
         summary_rdd.count()
 
         # Export the base for nrn_summary (only afferent counts)
-        n_parts = (n_gids-1) // 100000 + 1
-        logger.debug("Creating nrn_summary.h5 [{} parts]".format(n_parts))
+        n_parts = (n_gids-1) // 100000 + 1  # Each 100K NRNs is roughly 500MB serialized data
+        logger.info("Creating nrn_summary.h5 [{} parts]".format(n_parts))
         summary_rdd = summary_rdd.coalesce(n_parts)
         summary_path = path.join(self.output_path, ".nrn_summary0.h5")
         summary_h5_store = h5py.File(summary_path, "w")
@@ -105,13 +119,15 @@ class NeuronExporter(object):
             n += 1
             summary_h5_store.create_dataset("a{}".format(post_gid), data=summary_npa)
             print("\rProgress: {} / {}".format(n, n_gids), end="", file=stderr)
-        print("done")
         summary_h5_store.close()
+        print("Complete.", file=stderr)
 
         # Build merged nrn_summary
+        logger.debug("Transposing nrn_summary")
         final_nrn_summary = path.join(self.output_path, "nrn_summary.h5")
         nrn_completer = tools.NrnCompleter(summary_path, logger=logger)
         nrn_completer.create_transposed()
+        logger.debug("Merging into final nrn_summary")
         nrn_completer.merge(merged_filename=final_nrn_summary)
         nrn_completer.add_meta(final_nrn_summary, dict(
             version=3,
@@ -126,7 +142,7 @@ class NeuronExporter(object):
             new_names.append(new_name)
 
         if create_efferent:
-            logger.debug("Creating nrn_efferent files in parallel")
+            logger.info("Creating nrn_efferent files in parallel")
             # Process conversion in parallel
             nrn_files_rdd = sc.parallelize(new_names, len(new_names))
             nrn_files_rdd.map(create_other_files).count()

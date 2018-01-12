@@ -1,12 +1,10 @@
 """
 Additional "Synapse property fields
-Shall replace compute_additional_h5_fields in data_export
 """
 from __future__ import absolute_import
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
-from . import filter_udfs
-
+from pyspark import SparkContext
 
 # -----
 def compute_additional_h5_fields(neuronG, syn_class_matrix, syn_props_df):
@@ -26,11 +24,11 @@ def compute_additional_h5_fields(neuronG, syn_class_matrix, syn_props_df):
                                  touches.n2.electrophysiology * index_length[5] +
                                  touches.n2.syn_class_index)
 
-    to_syn_prop_i = filter_udfs.get_synapse_property_udf(syn_class_matrix)
-    touches = touches.withColumn("syn_prop_i", to_syn_prop_i(touches.syn_prop_index))
-
+    # Get the rule index from the numpy matrix
     # According to benchmarks in pyspark, applying to_syn_prop_i (py) with 1000 N (2M touches) split by three cores
     # takes 5 more seconds. That means that in average there's 5min overhead per 20k neurons per core
+    to_syn_prop_i = get_synapse_property_udf(syn_class_matrix)
+    touches = touches.withColumn("syn_prop_i", to_syn_prop_i(touches.syn_prop_index))
 
     touches = touches.drop("syn_prop_index")
     syn_props_df = syn_props_df.select(F.struct("*").alias("prop"))
@@ -101,3 +99,20 @@ def compute_additional_h5_fields(neuronG, syn_class_matrix, syn_props_df):
         t.prop.ase.alias("ase"),
         F.lit(0).alias("branch_type"),  # TBD (0 soma, 1 axon, 2 basel dendrite, 3 apical dendrite)
     )
+    
+    
+# *********************************************************
+# Synapse classification UDF
+# *********************************************************
+def get_synapse_property_udf(syn_class_matrix, sc=None):
+    if sc is None:
+        sc = SparkContext.getOrCreate()
+
+    # We need the matrix in all nodes, flattened
+    syn_class_matrix_flat = sc.broadcast(syn_class_matrix.flatten())
+
+    def syn_prop_udf(syn_prop_index):
+        # Leaves are still tuple size2
+        return syn_class_matrix_flat.value[syn_prop_index].tolist()
+
+    return F.udf(syn_prop_udf, T.ShortType())

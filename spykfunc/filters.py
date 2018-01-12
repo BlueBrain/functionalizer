@@ -8,6 +8,7 @@ from .definitions import CellClass
 from .schema import to_pathway_i, pathway_i_to_str, touches_with_pathway
 from ._filtering import DataSetOperation
 from .utils import get_logger
+from .utils.spark import checkpoint_resume
 from .filter_udfs import reduce_cut_parameter_udef
 
 logger = get_logger(__name__)
@@ -131,13 +132,16 @@ class ReduceAndCut(DataSetOperation):
 
     # ---
     def apply(self, neuronG, *args, **kw):
+        # TODO: Mayber we can drop some fields, e.g.: src/dst_morphology_i
         full_touches = touches_with_pathway(neuronG)
 
         # Get and broadcast reduce and count
         logger.info("Computing Pathway stats...")
-        rc_params_df = self.compute_reduce_cut_params(full_touches)
-        params_df = F.broadcast(rc_params_df.cache().checkpoint())
-
+        _params = self.compute_reduce_cut_params(full_touches).cache()
+        _params.count()
+        params_df = F.broadcast(_params.coalesce(1).sort("pathway_i").checkpoint())
+        _params.unpersist()
+        
         # Debug params info ------------------------------------------------------------------------
         if _DEBUG and "mtypes" not in kw:
             logger.warning("Cant debug without mtypes df. Please provide as kw arg to apply()")
@@ -154,41 +158,53 @@ class ReduceAndCut(DataSetOperation):
         logger.info("Applying Reduce step...")
         reduced_touches = self.apply_reduce(full_touches, params_df)
 
-        # PERSIST RESULTS (to parquet while checkpoint() is not an option)
-        logger.debug(" -> Checkpointing...")
-        reduced_touches.write.parquet("_tmp/cut_touches.parquet", mode="overwrite")
-        reduced_touches = self.spark.read.parquet("_tmp/cut_touches.parquet")
-
         if _DEBUG and _DEBUG_REDUCE:
             (reduced_touches
-                .groupBy("pathway_i").count()
-                .coalesce(1)
-                .write.csv("_debug/reduce_counts.csv", header=True, mode="overwrite"))
+             .groupBy("pathway_i").count()
+             .coalesce(1)
+             .write.csv("_debug/reduce_counts.csv", header=True, mode="overwrite"))
 
-        logger.debug(" -> Computing reduced touch counts")
-        reduced_touch_counts_connection = (
-            reduced_touches
-            .groupBy(F.col("pathway_i"),
-                     F.col("src"),  # Pre Neuron id
-                     F.col("dst"),  # Post Neuron id
-                     )
-            .count()
-            .withColumnRenamed("count", "reduced_touch_counts_connection")
-            .checkpoint()
-        )
+
+        logger.info("Computing reduced touch counts")       
+        # Make this computation resumable.
+        # If loaded from parquet we repartition it to help the subsequent steps
+        #@checkpoint_resume("reduced_conn_counts.parquet", "REDUCED_CONN_COUNTS", 
+        #                   break_exec_plan=False,
+        #                   post_resume_handler=lambda x: x.sort("pathway_i", "src", "dst"))
+        def compute_conn_counts():
+            return (reduced_touches
+                    .groupBy("pathway_i", "src", "dst")
+                    .count()
+                    .withColumnRenamed("count", "reduced_touch_counts_connection"))
+        
+        logger.debug(" -> Calculating connection counts after cut")
+        reduced_touch_counts_connection = compute_conn_counts().checkpoint()
 
         # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         # Cut
         # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         logger.info("Applying Cut step...")
-        cut_touches, cut_touch_counts_connection = self.apply_cut(reduced_touches, params_df,
-                                                                  reduced_touch_counts_connection,
-                                                                  mtypes=kw["mtypes"])
+        cut_touches, cut_touch_counts_connection = self.apply_cut(
+            reduced_touches, params_df, reduced_touch_counts_connection, mtypes=kw["mtypes"]
+        )
+        # cut_touch_counts_connection is only an exec plan (no actions within)
+        # We can use checkpoint_resume on it
+        logger.debug(" -> Calculating cut touches and resulting connection counts...")
+        f = checkpoint_resume(
+            "cut_conn_counts.parquet", "CUT_CONN_COUNTS", 
+            break_exec_plan=False,
+            post_resume_handler=lambda x: x.sort("pathway_i", "src", "dst")
+        )(lambda: cut_touch_counts_connection)
+        #cut_touch_counts_connection = f().checkpoint()
+        # It is used in more than one place in cut2AF
+        cut_touch_counts_connection = cut_touch_counts_connection.checkpoint()
+                                                                  
         if _DEBUG and _DEBUG_CUT:
             cut_touch_counts_pathway = (
                 cut_touch_counts_connection
                 .groupBy("pathway_i")
-                .agg(F.sum("reduced_touch_counts_connection").alias("cut_touch_counts_pathway")))
+                .agg(F.sum("reduced_touch_counts_connection").alias("cut_touch_counts_pathway"))
+            )
             pathway_i_to_str(cut_touch_counts_pathway, kw["mtypes"])\
                 .coalesce(1)\
                 .write.csv("_debug/cut_counts.csv", header=True, mode="overwrite")
@@ -213,6 +229,9 @@ class ReduceAndCut(DataSetOperation):
         return cut2AF_touches.select(neuronG.edges.schema.names)
 
     # ---
+    #@checkpoint_resume("pathway_stats.parquet", "PATHWAY_STATS",
+    #                   break_exec_plan=False,
+    #                   post_resume_handler=lambda x: x.sort("pathway_i"))
     def compute_reduce_cut_params(self, full_touches):
         """
         Computes the pathway parameters, used by Reduce and Cut filters
@@ -230,13 +249,16 @@ class ReduceAndCut(DataSetOperation):
         )
 
         # Return the interesting params
-        return params_df.select("pathway_i",
-                                "total_touches",
-                                F.col("average_touches_conn").alias("structural_mean"),
-                                "rc_params.*")
+        params_df = (params_df
+                     .select("pathway_i",
+                             "total_touches",
+                             F.col("average_touches_conn").alias("structural_mean"),
+                             "rc_params.*"))
+        return params_df
 
     # ---
     @staticmethod
+    @checkpoint_resume("reduced_touches.parquet", "REDUCE")
     def apply_reduce(all_touches, params_df):
         """Applying reduce as a sampling
         """
@@ -249,6 +271,8 @@ class ReduceAndCut(DataSetOperation):
         return all_touches.sampleBy("pathway_i", fractions)
 
     # ---
+    # Note: apply_cut is not checkpointed since it 
+    #       builds up with apply_cut_active_fraction filter
     @staticmethod
     def apply_cut(reduced_touches, params_df, reduced_touch_counts_connection, **kw):
         """
@@ -256,10 +280,12 @@ class ReduceAndCut(DataSetOperation):
         Cut computes a survivalRate and activeFraction for each post neuron
         And filters out those not passing the random test
         """
-        params_df_sigma = (params_df
+        params_df_sigma = (
+            params_df
             .where(F.col("pMu_A").isNotNull())
             .select("pathway_i", "pMu_A")
-            .withColumn("sigma", params_df.pMu_A / 4))
+            .withColumn("sigma", params_df.pMu_A / 4)
+        )
 
         connection_survival_rate = (
             reduced_touch_counts_connection
@@ -288,7 +314,9 @@ class ReduceAndCut(DataSetOperation):
             .select("pathway_i", "src", "dst")
             .cache()  # This DF is used in two different calculations
         )
-
+        cut_conn_1_count = shall_cut.count()  # Materialize
+        logger.debug("CUT P1: Connections to Cut: %d", cut_conn_1_count)
+        
         cut_touches = (reduced_touches
                        .join(shall_cut, ["pathway_i", "src", "dst"], how="left_anti"))
 
@@ -300,6 +328,8 @@ class ReduceAndCut(DataSetOperation):
 
     # ----
     @staticmethod
+    # Note: Filter not checkpointed since it's the last stage 
+    #       of global filtering (which is checkpointed)
     def apply_cut_active_fraction(cut_touches, params_df, cut_touch_counts_connection, **kw):
         """
         Performs the second part of the cut algorithm according to the active_fractions
@@ -309,9 +339,6 @@ class ReduceAndCut(DataSetOperation):
                (built previously in an optimized way)
         :return: The final cut touches
         """
-        logger.debug(" -> Calculating connection counts after cut")
-        cut_touch_counts_connection = cut_touch_counts_connection.checkpoint()
-
         active_fractions = (
             cut_touch_counts_connection
             .groupBy("pathway_i")

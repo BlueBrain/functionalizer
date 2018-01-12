@@ -47,7 +47,7 @@ def functionalizer_new():
     return Functionalizer()
 
 
-def session(recipe, mvd_file, first_touch, s2s=False, **kw):
+def session(recipe, mvd_file, first_touch, s2s=False, **opts):
     """ Creates and Initializes a Functionalizer session
 
     :returns: A :py:class:`~spykfunc.Functionalizer` instance
@@ -58,6 +58,6 @@ def session(recipe, mvd_file, first_touch, s2s=False, **kw):
     if s2s:
         args += ("--s2s",)
     for opt, opt_val in opts.items():
-        args += (opt, opt_val)
+        args += ("--" + opt.replace("_", "-"), opt_val)
     opts = arg_parser.parse_args(args)
     return session(opts)
