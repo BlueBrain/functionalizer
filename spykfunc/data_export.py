@@ -32,7 +32,7 @@ class NeuronExporter(object):
         self.concat_bin = spark_udef_utils.wrap_java_udf(spark.sparkContext, _j_conc_udaf)
 
     def ensure_file_path(self, filename):
-        if not os.path.exists(self.output_path):
+        if not path.exists(self.output_path):
             os.makedirs(self.output_path)
 
         return path.join(self.output_path, filename)
@@ -50,7 +50,7 @@ class NeuronExporter(object):
 
     def get_temp_result(self, filename="filtered_touches.tmp.parquet"):
         filepath = path.join(self.output_path, filename)
-        if os.path.exists(filepath):
+        if path.exists(filepath):
             return spark.read.parquet(filepath)
         return None
         
@@ -131,9 +131,12 @@ class NeuronExporter(object):
         for post_gid, summary_npa in summary_rdd.toLocalIterator():
             n += 1
             summary_h5_store.create_dataset("a{}".format(post_gid), data=summary_npa)
-            print("\rProgress: {} / {}".format(n, n_gids), end="", file=stderr)
+            if os.isatty(stderr):
+                # Show progress directy on stderr if attached to terminal
+                print("\rProgress: {} / {}".format(n, n_gids), end="", file=stderr)
         summary_h5_store.close()
-        print("Complete.", file=stderr)
+        if os.isatty(stderr):
+            print("Complete.", file=stderr)
 
         # Build merged nrn_summary
         # TODO: Have this processing done in spark since now the summary is cached

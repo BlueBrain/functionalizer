@@ -59,7 +59,7 @@ def spykfunc():
         try:
             fuzer.process_filters(overwrite="F" in options.overwrite.upper())
         except ExtendedCheckpointAvail:
-            # A ExtendedCheckpoint is available and we don't want to overwrite
+            # If a ExtendedCheckpoint is available and we don't want to overwrite
             pass
         fuzer.export_results(format_parquet=options.resultparquet,
                              overwrite="E" in options.overwrite.upper())

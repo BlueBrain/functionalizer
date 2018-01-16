@@ -292,7 +292,7 @@ class Functionalizer(object):
         if n_parts <=32:
             # Small circuit. We directly count and target 1M touches per output file
             total_t = extended_touches.count()
-            n_parts = total_t // (1024 * 1024)
+            n_parts = (total_t // (1024 * 1024)) or 1
         else:
             # Main settings define large parquet to be read in partitions of 32 or 64MB.
             # However, in s2s that might still be too much.
