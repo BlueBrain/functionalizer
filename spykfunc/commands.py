@@ -51,12 +51,16 @@ def spykfunc():
     # If everything seems ok, import functionalizer.
     # Like this we can use the parser without starting with pyspark or spark-submit
     # NOTE: Scripts must be executed from pyspark or spark-submit to import pyspark
-    from spykfunc.functionalizer import session
+    from spykfunc.functionalizer import session, ExtendedCheckpointAvail
     logger = utils.get_logger(__name__)
 
     try:
         fuzer = session(options)
-        fuzer.process_filters(overwrite="F" in options.overwrite.upper())
+        try:
+            fuzer.process_filters(overwrite="F" in options.overwrite.upper())
+        except ExtendedCheckpointAvail:
+            # A ExtendedCheckpoint is available and we don't want to overwrite
+            pass
         fuzer.export_results(format_parquet=options.resultparquet,
                              overwrite="E" in options.overwrite.upper())
     except Exception:

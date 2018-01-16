@@ -13,12 +13,10 @@ from . import utils
 from .utils import spark_udef as spark_udef_utils
 from . import tools
 
+DEFAULT_N_NEURONS_FILE = 200
+
 logger = utils.get_logger(__name__)
 
-N_NEURONS_FILE = 1000
-PARQUET_BLOCK_SIZE = 32 * 1024*1024
-
-# Globals
 spark = None
 sc = None
 
@@ -40,6 +38,7 @@ class NeuronExporter(object):
         return path.join(self.output_path, filename)
 
     # ---
+    # [DEPRECATED]
     def save_temp(self, touches, filename="filtered_touches.tmp.parquet", partition_col=None):
         output_path = self.ensure_file_path(filename)
         if partition_col is not None:
@@ -61,13 +60,15 @@ class NeuronExporter(object):
         return extended_touches_df.write.partitionBy("post_gid").parquet(output_path, mode="overwrite")
 
     # ---
-    def export_hdf5(self, extended_touches_df, n_gids, create_efferent=False, n_neurons_file=N_NEURONS_FILE):
+    def export_hdf5(self, extended_touches_df, n_gids, create_efferent=False, n_partitions=None):
         # In the export a lot of shuffling happens, we must carefully control partitioning
-        n_partitions = ((n_gids - 1) // n_neurons_file) + 1
-        # spark.conf.set("spark.sql.shuffle.partitions", n_partitions_work)
+        if n_partitions is None:
+            n_partitions = ((n_gids - 1) // DEFAULT_N_NEURONS_FILE) + 1
+        # We use shuffle.partitions to define the nr of partitions since coalesce is innefective 
+        # with larger number of partitions (and repartition is not an option!)
+        spark.conf.set("spark.sql.shuffle.partitions", n_partitions)
 
         nrn_filepath = self.ensure_file_path("_nrn.h5")
-        # Remove existing results
         for fn in glob.glob1(self.output_path, "*nrn*.h5*"):
             os.remove(path.join(self.output_path, fn))
 
@@ -91,7 +92,6 @@ class NeuronExporter(object):
                         "bin_matrix",
                         "int2binary(pre_gids) as pre_gids_bin",
                         "int2binary(conn_counts) as conn_counts_bin")
-            .coalesce(n_partitions)
         )
         
         #arrays_df = self.save_temp(arrays_df, "aggregated_touches.parquet", partition_col="file_nr")
@@ -107,6 +107,19 @@ class NeuronExporter(object):
         # We need it since there's a coalesce after, for little parallelism later
         summary_rdd = summary_rdd.persist(StorageLevel.MEMORY_AND_DISK)
         summary_rdd.count()
+        
+        # Mass rename
+        new_names = []
+        for i, fn in enumerate(nrn_filenames.value):
+            new_name = path.join(self.output_path, "nrn.h5.{}".format(i))
+            os.rename(fn, new_name)
+            new_names.append(new_name)
+
+        if create_efferent:
+            logger.info("Creating nrn_efferent files in parallel")
+            # Process conversion in parallel
+            nrn_files_rdd = sc.parallelize(new_names, len(new_names))
+            nrn_files_rdd.map(create_other_files).count()
 
         # Export the base for nrn_summary (only afferent counts)
         n_parts = (n_gids-1) // 100000 + 1  # Each 100K NRNs is roughly 500MB serialized data
@@ -123,6 +136,7 @@ class NeuronExporter(object):
         print("Complete.", file=stderr)
 
         # Build merged nrn_summary
+        # TODO: Have this processing done in spark since now the summary is cached
         logger.debug("Transposing nrn_summary")
         final_nrn_summary = path.join(self.output_path, "nrn_summary.h5")
         nrn_completer = tools.NrnCompleter(summary_path, logger=logger)
@@ -133,19 +147,6 @@ class NeuronExporter(object):
             version=3,
             numberOfFiles=len(nrn_filenames.value)
         ))
-
-        # Mass rename
-        new_names = []
-        for i, fn in enumerate(nrn_filenames.value):
-            new_name = path.join(self.output_path, "nrn.h5.{}".format(i))
-            os.rename(fn, new_name)
-            new_names.append(new_name)
-
-        if create_efferent:
-            logger.info("Creating nrn_efferent files in parallel")
-            # Process conversion in parallel
-            nrn_files_rdd = sc.parallelize(new_names, len(new_names))
-            nrn_files_rdd.map(create_other_files).count()
 
     # ---
     @staticmethod

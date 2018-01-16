@@ -24,7 +24,7 @@ from . import utils
 from .utils.spark import checkpoint_resume
 from . import synapse_properties
 
-__all__ = ["Functionalizer", "session"]
+__all__ = ["Functionalizer", "session", "CheckpointPhases", "ExtendedCheckpointAvail"]
 
 logger = utils.get_logger(__name__)
 
@@ -33,6 +33,24 @@ spark = None
 sc = None
 GraphFrame = None
 
+
+class CheckpointPhases:
+    FILTER_TOUCH_RULES = 0
+    FILTER_ALL = 1
+    SYNAPSE_PROPS = 2
+    _cp_names = ["filtered_touch_rules.parquet", "filtered_touches.parquet", "extended_touches.parquet"]
+
+    @classmethod
+    def cp_name(cls, phase):
+        if phase > len(cls._cp_names):
+            raise ValueError("Phase {} doesnt exist".format(phase))
+        return cls._cp_names[phase]
+        
+
+class ExtendedCheckpointAvail(Exception):
+    """An exception signalling that process_filters can be skipped
+    """
+    pass
 
 
 class Functionalizer(object):
@@ -60,7 +78,12 @@ class Functionalizer(object):
     # TouchDF is volatile and we trigger events on update
     _touchDF = None
     
+    # handler functions used in decorators
     _assign_to_touchDF = utils.assign_to_property('touchDF')
+    _change_maxPartitionMB = lambda size: lambda: spark.conf.set(
+        "spark.sql.files.maxPartitionBytes", 
+        size * 1024*1024
+    )
     
     # ==========
     def __init__(self, only_s2s=False, spark_opts=None):
@@ -72,11 +95,11 @@ class Functionalizer(object):
         # Create Spark session with the static config
         spark = (SparkSession.builder
                  .appName("Functionalizer")
+                 .config("spark.shuffle.compress", False)
                  .config("spark.checkpoint.compress", True)
                  .config("spark.jars", os.path.join(os.path.dirname(__file__), "data/spykfunc_udfs.jar"))
                  .config("spark.jars.packages", "graphframes:graphframes:0.5.0-spark2.1-s_2.11")
                  .config("spark.sql.files.maxPartitionBytes", 64 * 1024*1024)
-                 # .config("spark.shuffle.file.buffer", 1024)
                  .getOrCreate())
 
         try:
@@ -168,6 +191,9 @@ class Functionalizer(object):
             touch_partitions = self._touchDF.rdd.getNumPartitions()
             if touch_partitions >= 400:
                 # Grow suffle partitions with size of touches DF
+                # TODO: In generic cases we dont shuffle all the fields, so we could reduce this by a factor of 2
+                #       However we need to make sure that operations that keep or grow the partition size must be 
+                #       explicitly controlled and the easiest way is still coalesce
                 spark.conf.set("spark.sql.shuffle.partitions",
                                touch_partitions // 200 * 200)
             elif touch_partitions <= 16:
@@ -221,40 +247,57 @@ class Functionalizer(object):
     # -------------------------------------------------------------------------
     @_assign_to_touchDF
     @checkpoint_resume("filtered_touches.parquet", "ALL FILTERS", 
-                       before_load_handler=lambda:spark.conf.set("spark.sql.files.maxPartitionBytes", 32 * 1024*1024))
+                       before_load_handler=_change_maxPartitionMB(32))
     def process_filters(self, overwrite=False):
         """Runs all functionalizer filters in order, according to the classic functionalizer:
         (1) Soma-axon distance, (2) Touch rules, (3.1) Reduce and (3.2) Cut
         """
+        # Avoid recomputing filters unless overwrite=True
+        skip_touch_rules = False
+        if not overwrite:
+            if self.checkpoint_exists(CheckpointPhases.SYNAPSE_PROPS):
+                # We need to raise an exception, otherwise decorators expect a generated dataframe
+                logger.warning("Extended Touches Checkpoint avail. Skipping filtering...")
+                raise ExtendedCheckpointAvail("Extended Touches Checkpoint avail. Skip process_filters or set overwrite to True")
+            if self.checkpoint_exists(CheckpointPhases.FILTER_TOUCH_RULES):
+                skip_touch_rules = True
+        
         self._ensure_data_loaded()
         logger.info("Starting Filtering...")
-        self.filter_by_soma_axon_distance()
+
+        if not skip_touch_rules:
+            self.filter_by_soma_axon_distance()
         if self._run_s2f:
-            self.filter_by_touch_rules()
+            if not skip_touch_rules:
+                self.filter_by_touch_rules()
             self.run_reduce_and_cut()
 
-        # Filter helpers write result to self.touchDF
+        # Filter helpers write result to self.touchDF (@_assign_to_touchDF)
         return self.touchDF
 
     # -------------------------------------------------------------------------
     # Exporting results
     # -------------------------------------------------------------------------
-    def export_results(self, format_parquet=False, output_path=None, overwrite=False, n_neurons_file=None):
+    def export_results(self, format_parquet=False, output_path=None, overwrite=False):
         """ Exports the current touches to storage, appending the synapse property fields
 
         :param format_parquet: If True will export the touches in parquet format (rather than hdf5)
         :param output_path: Changes the default export directory
         """
-        # Calc the number of neurons per NRN output file
-        if n_neurons_file is None:
-            from bisect import bisect_left
-            estimate =  self.neuron_count // self.touchDF.rdd.getNumPartitions()
-            possible_vals = [100, 250, 500, 1000]
-            n_neurons_file = possible_vals[bisect_left(possible_vals, estimate)]
-            logger.debug("Cur count neuron/touch_part = %d. n_neurons_file -> %d", estimate, n_neurons_file)
-            
         logger.info("Computing touch synaptical properties")
-        extended_touches = self._assign_synpse_properties(overwrite, n_neurons_file=n_neurons_file)        
+        extended_touches = self._assign_synpse_properties(overwrite)        
+
+        # Calc the number of NRN output files to target ~32 MB part ~1M touches
+        n_parts = extended_touches.rdd.getNumPartitions()
+        if n_parts <=32:
+            # Small circuit. We directly count and target 1M touches per output file
+            total_t = extended_touches.count()
+            n_parts = total_t // (1024 * 1024)
+        else:
+            # Main settings define large parquet to be read in partitions of 32 or 64MB.
+            # However, in s2s that might still be too much.
+            if not self._run_s2f:
+                n_parts = n_parts * 2
 
         # Export
         logger.info("Exporting touches...")
@@ -267,13 +310,13 @@ class Functionalizer(object):
         else:
             exporter.export_hdf5(extended_touches, self.neuron_count, 
                                  create_efferent=True, 
-                                 n_neurons_file=n_neurons_file)
+                                 n_partitions=n_parts)
 
         logger.info("Data export complete")
         
     # --- 
     @checkpoint_resume("extended_touches.parquet", "SYNAPSE_PROPS")
-    def _assign_synpse_properties(self, overwrite=False, n_neurons_file=1000):
+    def _assign_synpse_properties(self, overwrite=False):
 
         # Calc syn props 
         self._ensure_data_loaded()
@@ -304,7 +347,8 @@ class Functionalizer(object):
 
     # ----
     @_assign_to_touchDF
-    @checkpoint_resume("filtered_touch_rules.parquet", "TOUCH_RULES")
+    @checkpoint_resume("filtered_touch_rules.parquet", "TOUCH_RULES",
+                       before_load_handler=_change_maxPartitionMB(32))
     def filter_by_touch_rules(self):
         """Creates a TouchRules filter according to recipe and applies it to the current touch set
         """
@@ -332,12 +376,25 @@ class Functionalizer(object):
     # -------------------------------------------------------------------------
     # Helper functions
     # -------------------------------------------------------------------------
-
     def _ensure_data_loaded(self):
         """ Ensures required data is available"""
         if self.recipe is None or self.neuronG is None:
             raise RuntimeError("No touches available. Please load data first.")
-
+    
+    # ---
+    @staticmethod
+    def checkpoint_exists(phase):
+        cp_file = os.path.join("_checkpoints", CheckpointPhases.cp_name(phase))
+        if os.path.exists(cp_file):
+            try:
+                df = spark.read.parquet(cp_file)
+                del df
+                return True
+            except Exception as e:
+                logger.warning("Checkpoint %s can't be loaded, probably result of failed action.", str(e))
+        return False
+    
+    # ---
     @staticmethod
     def _build_concrete_mtype_conn_rules(src_conn_rules, mTypes):
         """ Transform conn rules into concrete rule instances (without wildcards) and indexed by pathway

@@ -24,12 +24,12 @@ if _DEBUG:
     os.path.isdir("_debug") or os.makedirs("_debug")
 
 
-# --------------------------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------
 class BoutonDistanceFilter(DataSetOperation):
     """
     Class implementing filtering by Bouton Distance (min. distance to soma)
     """
-# --------------------------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------
     def __init__(self, bouton_distance_obj):
         self._bouton_distance_obj = bouton_distance_obj
 
@@ -51,12 +51,12 @@ class BoutonDistanceFilter(DataSetOperation):
         return newTouches
 
 
-# --------------------------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------
 class BoutonDistanceReverseFilter(BoutonDistanceFilter):
     """
     Reverse version of Bouton Distance filter, only keeping outliers.
     """
-# --------------------------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------
 
     def apply(self, neuronG, *args, **kw):
         neuronDF = neuronG.vertices
@@ -74,12 +74,12 @@ class BoutonDistanceReverseFilter(BoutonDistanceFilter):
         return new_touches
 
 
-# --------------------------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------
 class TouchRulesFilter(DataSetOperation):
     """
     Class implementing TouchRules filter.
     """
-# --------------------------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------
 
     def __init__(self, recipe_touch_rules):
         self._rules = recipe_touch_rules
@@ -117,12 +117,12 @@ class TouchRulesFilter(DataSetOperation):
         return new_touches
 
 
-# --------------------------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------
 class ReduceAndCut(DataSetOperation):
     """
     Class implementing ReduceAndCut
     """
-# --------------------------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------
 
     def __init__(self, conn_rules, stats, spark):
         self.spark = spark
@@ -135,14 +135,15 @@ class ReduceAndCut(DataSetOperation):
         # TODO: Mayber we can drop some fields, e.g.: src/dst_morphology_i
         full_touches = touches_with_pathway(neuronG)
 
-        # Get and broadcast reduce and count
+        # Get and broadcast Pathway stats
+        # NOTE we cache and count to force evaluation in N tasks, while sorting in a single task
         logger.info("Computing Pathway stats...")
         _params = self.compute_reduce_cut_params(full_touches).cache()
         _params.count()
         params_df = F.broadcast(_params.coalesce(1).sort("pathway_i").checkpoint())
         _params.unpersist()
         
-        # Debug params info ------------------------------------------------------------------------
+        # Debug params info -----------------------------------------------------------------------
         if _DEBUG and "mtypes" not in kw:
             logger.warning("Cant debug without mtypes df. Please provide as kw arg to apply()")
         if _DEBUG and _DEBUG_REDUCE:
@@ -158,26 +159,24 @@ class ReduceAndCut(DataSetOperation):
         logger.info("Applying Reduce step...")
         reduced_touches = self.apply_reduce(full_touches, params_df)
 
-        if _DEBUG and _DEBUG_REDUCE:
+        if _DEBUG and _DEBUG_REDUCE:  # -----------------------------------------------------------
             (reduced_touches
              .groupBy("pathway_i").count()
              .coalesce(1)
              .write.csv("_debug/reduce_counts.csv", header=True, mode="overwrite"))
-
+        # -----------------------------------------------------------------------------------------
 
         logger.info("Computing reduced touch counts")       
         # Make this computation resumable.
-        # If loaded from parquet we repartition it to help the subsequent steps
-        #@checkpoint_resume("reduced_conn_counts.parquet", "REDUCED_CONN_COUNTS", 
-        #                   break_exec_plan=False,
-        #                   post_resume_handler=lambda x: x.sort("pathway_i", "src", "dst"))
+        # When resuming we repartition it to help the subsequent steps
+        @checkpoint_resume("reduced_conn_counts.parquet", "REDUCED_CONN_COUNTS", 
+                           post_resume_handler=lambda x: x.repartition("pathway_i", "src", "dst"))
         def compute_conn_counts():
             return (reduced_touches
                     .groupBy("pathway_i", "src", "dst")
                     .count()
                     .withColumnRenamed("count", "reduced_touch_counts_connection"))
-        
-        logger.debug(" -> Calculating connection counts after cut")
+        # Compute/Resume and Checkpoint (which preserves partitioning)
         reduced_touch_counts_connection = compute_conn_counts().checkpoint()
 
         # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -193,13 +192,12 @@ class ReduceAndCut(DataSetOperation):
         f = checkpoint_resume(
             "cut_conn_counts.parquet", "CUT_CONN_COUNTS", 
             break_exec_plan=False,
-            post_resume_handler=lambda x: x.sort("pathway_i", "src", "dst")
+            post_resume_handler=lambda x: x.repartition("pathway_i", "src", "dst")
         )(lambda: cut_touch_counts_connection)
-        #cut_touch_counts_connection = f().checkpoint()
         # It is used in more than one place in cut2AF
-        cut_touch_counts_connection = cut_touch_counts_connection.checkpoint()
+        cut_touch_counts_connection = f().checkpoint()
                                                                   
-        if _DEBUG and _DEBUG_CUT:
+        if _DEBUG and _DEBUG_CUT:  # --------------------------------------------------------------
             cut_touch_counts_pathway = (
                 cut_touch_counts_connection
                 .groupBy("pathway_i")
@@ -209,6 +207,7 @@ class ReduceAndCut(DataSetOperation):
                 .coalesce(1)\
                 .write.csv("_debug/cut_counts.csv", header=True, mode="overwrite")
             logger.warning("Debugging: Execution terminated for debugging Cut")
+        # -----------------------------------------------------------------------------------------
 
         # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         # Cut 2: by Active Fraction
@@ -217,24 +216,21 @@ class ReduceAndCut(DataSetOperation):
         cut2AF_touches = self.apply_cut_active_fraction(cut_touches, params_df,
                                                         cut_touch_counts_connection,
                                                         mtypes=kw["mtypes"])
-        if _DEBUG and _DEBUG_CUT2AF:
-            # We only checkpoint here if debugging, otherwise processing goes on until saved as extended touches
+        if _DEBUG and _DEBUG_CUT2AF:  # -----------------------------------------------------------
             cut2AF_touches = cut2AF_touches.checkpoint(False)
             (cut2AF_touches
                 .groupBy("pathway_i").count()
                 .coalesce(1)
                 .write.csv("_debug/cut2af_counts.csv", header=True, mode="overwrite"))
+        # -----------------------------------------------------------------------------------------
 
         # Only the touch fields
         return cut2AF_touches.select(neuronG.edges.schema.names)
 
     # ---
-    #@checkpoint_resume("pathway_stats.parquet", "PATHWAY_STATS",
-    #                   break_exec_plan=False,
-    #                   post_resume_handler=lambda x: x.sort("pathway_i"))
+    @checkpoint_resume("pathway_stats.parquet", "PATHWAY_STATS")
     def compute_reduce_cut_params(self, full_touches):
-        """
-        Computes the pathway parameters, used by Reduce and Cut filters
+        """ Computes the pathway parameters, used by Reduce and Cut filters
         """
         # First obtain the pathway (morpho-morpho) stats dataframe
         pathway_stats = self.stats.get_pathway_touch_stats_from_touches_with_pathway(full_touches)
@@ -260,7 +256,7 @@ class ReduceAndCut(DataSetOperation):
     @staticmethod
     @checkpoint_resume("reduced_touches.parquet", "REDUCE")
     def apply_reduce(all_touches, params_df):
-        """Applying reduce as a sampling
+        """ Applying reduce as a sampling
         """
         # Reducing touches on a single neuron is equivalent as reducing on
         # the global set of touches within a pathway (morpho-morpho association)
@@ -385,12 +381,12 @@ class ReduceAndCut(DataSetOperation):
         return cut2AF_touches
 
 
-# --------------------------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------
 class CumulativeDistanceFilter(DataSetOperation):
     """
     Filtering based on cumulative distances (By D. Keller - BLBLD-29)
     """
-# --------------------------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------
 
     def __init__(self, recipe, stats):
         self.recipe = recipe
