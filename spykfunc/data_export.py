@@ -131,11 +131,11 @@ class NeuronExporter(object):
         for post_gid, summary_npa in summary_rdd.toLocalIterator():
             n += 1
             summary_h5_store.create_dataset("a{}".format(post_gid), data=summary_npa)
-            if os.isatty(stderr):
+            if stderr.isatty():
                 # Show progress directy on stderr if attached to terminal
                 print("\rProgress: {} / {}".format(n, n_gids), end="", file=stderr)
         summary_h5_store.close()
-        if os.isatty(stderr):
+        if stderr.isatty():
             print("Complete.", file=stderr)
 
         # Build merged nrn_summary
