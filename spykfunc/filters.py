@@ -18,6 +18,7 @@ _DEBUG = False
 _DEBUG_REDUCE = False
 _DEBUG_CUT = False
 _DEBUG_CUT2AF = False
+_MB = 1024*1024
 
 
 if _DEBUG:
@@ -139,7 +140,7 @@ class ReduceAndCut(DataSetOperation):
         # NOTE we cache and count to force evaluation in N tasks, while sorting in a single task
         logger.info("Computing Pathway stats...")
         _params = self.compute_reduce_cut_params(full_touches)
-        params_df = F.broadcast(_params.coalesce(1).sort("pathway_i").checkpoint())
+        params_df = F.broadcast(_params)
 
         # Debug params info -----------------------------------------------------------------------
         if _DEBUG and "mtypes" not in kw:
@@ -231,7 +232,7 @@ class ReduceAndCut(DataSetOperation):
 
     # ---
     @checkpoint_resume("pathway_stats",
-                       break_exec_plan=False)
+                       bucket_cols="pathway_i", n_buckets=1)
     def compute_reduce_cut_params(self, full_touches):
         """ Computes the pathway parameters, used by Reduce and Cut filters
         """

@@ -27,6 +27,7 @@ from . import synapse_properties
 __all__ = ["Functionalizer", "session", "CheckpointPhases", "ExtendedCheckpointAvail"]
 
 logger = utils.get_logger(__name__)
+_MB = 1024*1024
 
 # Globals
 spark = None
@@ -69,7 +70,7 @@ class Functionalizer(object):
     _assign_to_touchDF = utils.assign_to_property('touchDF')
     _change_maxPartitionMB = lambda size: lambda: spark.conf.set(
         "spark.sql.files.maxPartitionBytes", 
-        size * 1024*1024
+        size * _MB
     )
     
     # ==========
@@ -87,7 +88,8 @@ class Functionalizer(object):
                  .config("spark.checkpoint.compress", True)
                  .config("spark.jars", os.path.join(os.path.dirname(__file__), "data/spykfunc_udfs.jar"))
                  .config("spark.jars.packages", "graphframes:graphframes:0.5.0-spark2.1-s_2.11")
-                 .config("spark.sql.files.maxPartitionBytes", 64 * 1024*1024)
+                 .config("spark.sql.files.maxPartitionBytes", 64*_MB)
+                 .config("spark.sql.autoBroadcastJoinThreshold", 512*_MB)
                  .getOrCreate())
 
         try:
@@ -102,10 +104,7 @@ class Functionalizer(object):
         sc = spark.sparkContext
         sc.setLogLevel("WARN")
         sc.setCheckpointDir("_checkpoints/tmp")
-        sc._jsc.hadoopConfiguration().setInt("parquet.block.size", 32*1024*1024)
-
-        # spark.conf.set("spark.sql.shuffle.partitions", 256)  # we set later when reading touches
-        spark.conf.set("spark.sql.autoBroadcastJoinThreshold", 1024**3)  # 1GB for auto broadcast
+        sc._jsc.hadoopConfiguration().setInt("parquet.block.size", 32*_MB)
         sqlContext = SQLContext.getOrCreate(sc)
         sqlContext.registerJavaFunction("gauss_rand", "spykfunc.udfs.GaussRand")
         sqlContext.registerJavaFunction("float2binary", "spykfunc.udfs.FloatArraySerializer")
