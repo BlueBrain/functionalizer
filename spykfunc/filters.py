@@ -4,7 +4,7 @@ import sys
 from pyspark.sql import functions as F
 # from pyspark.sql import types as T
 # from pyspark import StorageLevel
-from .definitions import CellClass
+from .definitions import CellClass, CheckpointPhases
 from .schema import to_pathway_i, pathway_i_to_str, touches_with_pathway
 from ._filtering import DataSetOperation
 from .utils import get_logger
@@ -138,11 +138,9 @@ class ReduceAndCut(DataSetOperation):
         # Get and broadcast Pathway stats
         # NOTE we cache and count to force evaluation in N tasks, while sorting in a single task
         logger.info("Computing Pathway stats...")
-        _params = self.compute_reduce_cut_params(full_touches).cache()
-        _params.count()
+        _params = self.compute_reduce_cut_params(full_touches)
         params_df = F.broadcast(_params.coalesce(1).sort("pathway_i").checkpoint())
-        _params.unpersist()
-        
+
         # Debug params info -----------------------------------------------------------------------
         if _DEBUG and "mtypes" not in kw:
             logger.warning("Cant debug without mtypes df. Please provide as kw arg to apply()")
@@ -166,36 +164,40 @@ class ReduceAndCut(DataSetOperation):
              .write.csv("_debug/reduce_counts.csv", header=True, mode="overwrite"))
         # -----------------------------------------------------------------------------------------
 
-        logger.info("Computing reduced touch counts")       
+        logger.info("Computing reduced touch counts")
+        reduced_touch_counts_connection = (
+            reduced_touches
+            .groupBy("src", "dst")
+            .agg(F.first("pathway_i").alias("pathway_i"),
+                 F.count("src").alias("reduced_touch_counts_connection"))
+        )
+
         # Make this computation resumable.
-        # When resuming we repartition it to help the subsequent steps
-        @checkpoint_resume("reduced_conn_counts.parquet", "REDUCED_CONN_COUNTS", 
-                           post_resume_handler=lambda x: x.repartition("pathway_i", "src", "dst"))
-        def compute_conn_counts():
-            return (reduced_touches
-                    .groupBy("pathway_i", "src", "dst")
-                    .count()
-                    .withColumnRenamed("count", "reduced_touch_counts_connection"))
-        # Compute/Resume and Checkpoint (which preserves partitioning)
-        reduced_touch_counts_connection = compute_conn_counts().checkpoint()
+        # Compute/Resume and Checkpoint from TABLE (which preserves partitioning)
+        f = checkpoint_resume("reduced_conn_counts", bucket_cols=("src", "dst"))(
+            lambda: reduced_touch_counts_connection
+        )
+        reduced_touch_counts_connection = f()
 
         # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         # Cut
         # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         logger.info("Applying Cut step...")
-        cut_touches, cut_touch_counts_connection = self.apply_cut(
-            reduced_touches, params_df, reduced_touch_counts_connection, mtypes=kw["mtypes"]
+
+        logger.debug(" -> Calculating cut touches and resulting connection counts...")
+        cut_touches, cut_touch_counts_connection = (
+            self.apply_cut(reduced_touches,
+                           params_df,
+                           reduced_touch_counts_connection,
+                           mtypes=kw["mtypes"])
         )
+
         # cut_touch_counts_connection is only an exec plan (no actions within)
         # We can use checkpoint_resume on it
-        logger.debug(" -> Calculating cut touches and resulting connection counts...")
-        f = checkpoint_resume(
-            "cut_conn_counts.parquet", "CUT_CONN_COUNTS", 
-            break_exec_plan=False,
-            post_resume_handler=lambda x: x.repartition("pathway_i", "src", "dst")
-        )(lambda: cut_touch_counts_connection)
-        # It is used in more than one place in cut2AF
-        cut_touch_counts_connection = f().checkpoint()
+        f = checkpoint_resume("cut_conn_counts", bucket_cols=("src", "dst")) (
+            lambda: cut_touch_counts_connection
+        )
+        cut_touch_counts_connection = f()
                                                                   
         if _DEBUG and _DEBUG_CUT:  # --------------------------------------------------------------
             cut_touch_counts_pathway = (
@@ -228,7 +230,8 @@ class ReduceAndCut(DataSetOperation):
         return cut2AF_touches.select(neuronG.edges.schema.names)
 
     # ---
-    @checkpoint_resume("pathway_stats.parquet", "PATHWAY_STATS")
+    @checkpoint_resume("pathway_stats",
+                       break_exec_plan=False)
     def compute_reduce_cut_params(self, full_touches):
         """ Computes the pathway parameters, used by Reduce and Cut filters
         """
@@ -249,12 +252,16 @@ class ReduceAndCut(DataSetOperation):
                      .select("pathway_i",
                              "total_touches",
                              F.col("average_touches_conn").alias("structural_mean"),
-                             "rc_params.*"))
-        return params_df
+                             "rc_params.*")
+                     .cache())
+        # materialize in parallel
+        params_df.count()
+        # Save in single partition
+        return params_df.coalesce(1)
 
     # ---
     @staticmethod
-    @checkpoint_resume("reduced_touches.parquet", "REDUCE")
+    @checkpoint_resume(CheckpointPhases.FILTER_REDUCED_TOUCHES.name)
     def apply_reduce(all_touches, params_df):
         """ Applying reduce as a sampling
         """
@@ -303,22 +310,21 @@ class ReduceAndCut(DataSetOperation):
         # We later reuse this to recompute the updated touch count
         # It should be also quite fast to drop connections given both DFs are partitioned by pathway_i
 
-        logger.debug(" -> Connections to cut according to survival_rate")
+        logger.debug(" -> Computing connections to cut according to survival_rate")
         shall_cut = (
             connection_survival_rate
             .where(F.rand() >= F.col("survival_rate"))
-            .select("pathway_i", "src", "dst")
-            .cache()  # This DF is used in two different calculations
+            .select("src", "dst")
         )
-        cut_conn_1_count = shall_cut.count()  # Materialize
-        logger.debug("CUT P1: Connections to Cut: %d", cut_conn_1_count)
-        
+        # Checkpoint resume this
+        shall_cut = checkpoint_resume("shall_cut", bucket_cols=("src", "dst"))(lambda: shall_cut)()
+
         cut_touches = (reduced_touches
-                       .join(shall_cut, ["pathway_i", "src", "dst"], how="left_anti"))
+                       .join(shall_cut, ["src", "dst"], how="left_anti"))
 
         # Calc cut_touch_counts_connection
         cut_touch_counts_connection = (reduced_touch_counts_connection
-                                       .join(shall_cut, ["pathway_i", "src", "dst"], how="left_anti"))
+                                       .join(shall_cut, ["src", "dst"], how="left_anti"))
 
         return cut_touches, cut_touch_counts_connection
 
@@ -364,7 +370,7 @@ class ReduceAndCut(DataSetOperation):
             .join(F.broadcast(active_fractions), "pathway_i")
             .where(F.rand() >= F.col("active_fraction"))
             # Pathway_i is kept in order to make a join with the same keys as the partitioning
-            .select("pathway_i", "src", "dst")
+            .select("src", "dst")
         )
 
         if _DEBUG and _DEBUG_CUT2AF:
@@ -375,7 +381,7 @@ class ReduceAndCut(DataSetOperation):
 
         cut2AF_touches = (
             cut_touches
-            .join(shall_cut2, ["pathway_i", "src", "dst"], how="left_anti")
+            .join(shall_cut2, ["src", "dst"], how="left_anti")
         )
 
         return cut2AF_touches

@@ -68,3 +68,10 @@ class MType(object):
 
     def __repr__(self):
         return "<MType: %s>" % (self.name,)
+
+
+class CheckpointPhases(Enum):
+    FILTER_TOUCH_RULES = 0
+    FILTER_REDUCED_TOUCHES = 1
+    ALL_FILTERS = 2
+    SYNAPSE_PROPS = 3
