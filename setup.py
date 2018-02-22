@@ -108,7 +108,7 @@ if BUILD_TYPE == 'DEVEL':
 # *******************************
 def setup_package():
     needs_sphinx = {'build_sphinx', 'upload_docs'}.intersection(sys.argv)
-    maybe_sphinx = ['sphinx'] if needs_sphinx else []
+    maybe_sphinx = ['sphinx', 'sphinx_rtd_theme'] if needs_sphinx else []
     maybe_cython = ["cython<0.26"] if BUILD_TYPE == "DEVEL" else []
 
     setup(
