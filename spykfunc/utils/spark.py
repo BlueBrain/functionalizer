@@ -1,10 +1,9 @@
 from os import path as osp
 from functools import update_wrapper
-from pyspark.sql import SparkSession
 from pyspark.sql.column import _to_seq
 from . import get_logger
 
-spark = None
+import sparksetup
 
 
 # -----------------------------------------------
@@ -25,16 +24,12 @@ def checkpoint_resume(name,
 
     def decorator(f):
         def new_f(*args, **kw):
-            global spark
-            if spark is None:
-                spark = SparkSession.builder.getOrCreate()
-
             if not kw.pop("overwrite", False):
                 if osp.exists(parquet_file_path):
                     logger.info("[SKIP %s] Checkpoint found. Restoring state...", name)
                     try:
                         if before_load_handler: before_load_handler()
-                        df = spark.read.parquet(parquet_file_path)
+                        df = sparksetup.session.read.parquet(parquet_file_path)
                         if post_resume_handler:
                             return post_resume_handler(df)
                         return df
@@ -44,7 +39,7 @@ def checkpoint_resume(name,
                 # Attepting from table
                 if bucket_cols and osp.isdir(table_path):
                     try:
-                        df = spark.read.table(table_name)
+                        df = sparksetup.session.read.table(table_name)
                         if post_resume_handler:
                             return post_resume_handler(df)
                         return df
@@ -71,8 +66,8 @@ def checkpoint_resume(name,
 
                 (df
                  .write.mode("overwrite").option("path", table_path)._jwrite
-                 .bucketBy(num_buckets, col1, _to_seq(spark._sc, other_cols))
-                 .sortBy(col1, _to_seq(spark._sc, other_cols))
+                 .bucketBy(num_buckets, col1, _to_seq(sparksetup.context, other_cols))
+                 .sortBy(col1, _to_seq(sparksetup.context, other_cols))
                  .saveAsTable(table_name))
             else:
                 logger.debug("Checkpointing to PARQUET %s...", name.lower())
@@ -83,9 +78,9 @@ def checkpoint_resume(name,
             if break_exec_plan:
                 if before_load_handler: before_load_handler()
                 if bucket_cols:
-                    df = spark.read.table(table_name)
+                    df = sparksetup.session.read.table(table_name)
                 else:
-                    df = spark.read.parquet(parquet_file_path)
+                    df = sparksetup.session.read.parquet(parquet_file_path)
                 
             if post_compute_handler:
                 return post_compute_handler(df)

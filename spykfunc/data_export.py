@@ -5,10 +5,11 @@ from sys import stderr
 from os import path
 import glob
 import numpy
+import sparksetup
+
 from pyspark import StorageLevel
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
-from pyspark.sql import SparkSession
 from . import utils
 from .utils import spark_udef as spark_udef_utils
 from . import tools
@@ -17,19 +18,13 @@ DEFAULT_N_NEURONS_FILE = 200
 
 logger = utils.get_logger(__name__)
 
-spark = None
-sc = None
-
 
 class NeuronExporter(object):
     def __init__(self, output_path):
-        global spark, sc
-        spark = SparkSession.builder.getOrCreate()
-        sc = spark.sparkContext
         self.output_path = path.realpath(output_path)
         # Get the concat_bin agg function form the java world
-        _j_conc_udaf = sc._jvm.spykfunc.udfs.BinaryConcat().apply
-        self.concat_bin = spark_udef_utils.wrap_java_udf(spark.sparkContext, _j_conc_udaf)
+        _j_conc_udaf = sparksetup.context._jvm.spykfunc.udfs.BinaryConcat().apply
+        self.concat_bin = spark_udef_utils.wrap_java_udf(sparksetup.context, _j_conc_udaf)
 
     def ensure_file_path(self, filename):
         if not path.exists(self.output_path):
@@ -46,12 +41,12 @@ class NeuronExporter(object):
         else:
             touches.write.parquet(output_path, mode="overwrite")
         logger.info("Filtered touches temporarily saved to %s", output_path)
-        return spark.read.parquet(output_path)  # break execution plan
+        return sparksetup.session.read.parquet(output_path)  # break execution plan
 
     def get_temp_result(self, filename="filtered_touches.tmp.parquet"):
         filepath = path.join(self.output_path, filename)
         if path.exists(filepath):
-            return spark.read.parquet(filepath)
+            return sparksetup.session.read.parquet(filepath)
         return None
         
     # ---
@@ -66,7 +61,7 @@ class NeuronExporter(object):
             n_partitions = ((n_gids - 1) // DEFAULT_N_NEURONS_FILE) + 1
         # We use shuffle.partitions to define the nr of partitions since coalesce is innefective 
         # with larger number of partitions (and repartition is not an option!)
-        spark.conf.set("spark.sql.shuffle.partitions", n_partitions)
+        sparksetup.session.conf.set("spark.sql.shuffle.partitions", n_partitions)
 
         nrn_filepath = self.ensure_file_path("_nrn.h5")
         for fn in glob.glob1(self.output_path, "*nrn*.h5*"):
@@ -97,7 +92,7 @@ class NeuronExporter(object):
         #arrays_df = self.save_temp(arrays_df, "aggregated_touches.parquet", partition_col="file_nr")
 
         # Init a list accumulator to gather output filenames
-        nrn_filenames = sc.accumulator([], spark_udef_utils.ListAccum())
+        nrn_filenames = sparksetup.context.accumulator([], spark_udef_utils.ListAccum())
 
         # Export nrn.h5 via partition mapping
         logger.info("Saving to NRN.h5 in parallel... ({} files) [3 stages]".format(n_partitions))
@@ -118,7 +113,7 @@ class NeuronExporter(object):
         if create_efferent:
             logger.info("Creating nrn_efferent files in parallel")
             # Process conversion in parallel
-            nrn_files_rdd = sc.parallelize(new_names, len(new_names))
+            nrn_files_rdd = sparksetup.context.parallelize(new_names, len(new_names))
             nrn_files_rdd.map(create_other_files).count()
 
         # Export the base for nrn_summary (only afferent counts)

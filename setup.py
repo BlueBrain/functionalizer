@@ -130,7 +130,7 @@ def setup_package():
         ],
         #  ----- Requirements -----
         install_requires=[
-            'pyspark',
+            'sparksetup',
             'py4j',
             'future',
             'docopt',
@@ -142,6 +142,9 @@ def setup_package():
             'progress'
         ],
         setup_requires=maybe_sphinx + maybe_cython,
+        dependency_links=[
+            'https://github.com/matz-e/sparksetup/tarball/master#egg=sparksetup-0.0.1'
+        ],
         tests_require=['pytest', 'pytest-cov'],
         extras_require={
             # Dependencies if the user wants a dev env

@@ -2,6 +2,7 @@ from __future__ import division
 import os
 import sys
 from pyspark.sql import functions as F
+import sparksetup
 # from pyspark.sql import types as T
 # from pyspark import StorageLevel
 from .definitions import CellClass, CheckpointPhases
@@ -14,10 +15,10 @@ from .filter_udfs import reduce_cut_parameter_udef
 logger = get_logger(__name__)
 
 # Control variable that outputs intermediate calculations, and makes processing slower
-_DEBUG = False
-_DEBUG_REDUCE = False
-_DEBUG_CUT = False
-_DEBUG_CUT2AF = False
+_DEBUG = True
+_DEBUG_REDUCE = True
+_DEBUG_CUT = True
+_DEBUG_CUT2AF = True
 _MB = 1024*1024
 
 
@@ -166,25 +167,25 @@ class ReduceAndCut(DataSetOperation):
         # -----------------------------------------------------------------------------------------
 
         logger.info("Computing reduced touch counts")
-        reduced_touch_counts_connection = (
-            reduced_touches
-            .groupBy("src", "dst")
-            .agg(F.first("pathway_i").alias("pathway_i"),
-                 F.count("src").alias("reduced_touch_counts_connection"))
-        )
+        with sparksetup.jobgroup("Computing reduced touch counts", ""):
+            reduced_touch_counts_connection = (
+                reduced_touches
+                .groupBy("src", "dst")
+                .agg(F.first("pathway_i").alias("pathway_i"),
+                     F.count("src").alias("reduced_touch_counts_connection"))
+            )
 
-        # Make this computation resumable.
-        # Compute/Resume and Checkpoint from TABLE (which preserves partitioning)
-        f = checkpoint_resume("reduced_conn_counts", bucket_cols=("src", "dst"))(
-            lambda: reduced_touch_counts_connection
-        )
-        reduced_touch_counts_connection = f()
+            # Make this computation resumable.
+            # Compute/Resume and Checkpoint from TABLE (which preserves partitioning)
+            f = checkpoint_resume("reduced_conn_counts", bucket_cols=("src", "dst"))(
+                lambda: reduced_touch_counts_connection
+            )
+            reduced_touch_counts_connection = f()
 
         # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         # Cut
         # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         logger.info("Applying Cut step...")
-
         logger.debug(" -> Calculating cut touches and resulting connection counts...")
         cut_touches, cut_touch_counts_connection = (
             self.apply_cut(reduced_touches,
@@ -262,6 +263,7 @@ class ReduceAndCut(DataSetOperation):
 
     # ---
     @staticmethod
+    @sparksetup.assign_to_jobgroup
     @checkpoint_resume(CheckpointPhases.FILTER_REDUCED_TOUCHES.name)
     def apply_reduce(all_touches, params_df):
         """ Applying reduce as a sampling
@@ -278,6 +280,7 @@ class ReduceAndCut(DataSetOperation):
     # Note: apply_cut is not checkpointed since it 
     #       builds up with apply_cut_active_fraction filter
     @staticmethod
+    @sparksetup.assign_to_jobgroup
     def apply_cut(reduced_touches, params_df, reduced_touch_counts_connection, **kw):
         """
         Apply cut filter
@@ -331,6 +334,7 @@ class ReduceAndCut(DataSetOperation):
 
     # ----
     @staticmethod
+    @sparksetup.assign_to_jobgroup
     # Note: Filter not checkpointed since it's the last stage 
     #       of global filtering (which is checkpointed)
     def apply_cut_active_fraction(cut_touches, params_df, cut_touch_counts_connection, **kw):

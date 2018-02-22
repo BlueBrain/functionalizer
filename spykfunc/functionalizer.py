@@ -7,9 +7,11 @@ from glob import glob
 import time
 import os
 
-from pyspark.sql import SparkSession, SQLContext
+from pyspark.sql import SQLContext
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
+
+import sparksetup
 
 from .recipe import Recipe
 from .data_loader import NeuronDataSpark
@@ -27,11 +29,18 @@ from . import synapse_properties
 __all__ = ["Functionalizer", "session", "CheckpointPhases", "ExtendedCheckpointAvail"]
 
 logger = utils.get_logger(__name__)
-_MB = 1024*1024
+_MB = 1024**2
 
-# Globals
-spark = None
-sc = None
+spark_config = {
+    "spark.shuffle.compress": False,
+    "spark.checkpoint.compress": True,
+    "spark.jars": os.path.join(os.path.dirname(__file__), "data/spykfunc_udfs.jar"),
+    "spark.jars.packages": "graphframes:graphframes:0.5.0-spark2.1-s_2.11",
+    "spark.sql.files.maxPartitionBytes": 64 * _MB,
+    "spark.sql.autoBroadcastJoinThreshold": 512 * _MB,
+    "spark.sql.catalogImplementation": "hive"
+}
+
 GraphFrame = None
 
 
@@ -65,32 +74,20 @@ class Functionalizer(object):
 
     # TouchDF is volatile and we trigger events on update
     _touchDF = None
-    
+
     # handler functions used in decorators
     _assign_to_touchDF = utils.assign_to_property('touchDF')
-    _change_maxPartitionMB = lambda size: lambda: spark.conf.set(
-        "spark.sql.files.maxPartitionBytes", 
+    _change_maxPartitionMB = lambda size: lambda: sparksetup.session.conf.set(
+        "spark.sql.files.maxPartitionBytes",
         size * _MB
     )
-    
+
     # ==========
     def __init__(self, only_s2s=False, spark_opts=None):
-        global spark, sc, GraphFrame
-
-        if spark_opts:
-            os.environ['PYSPARK_SUBMIT_ARGS'] = spark_opts + " pyspark-shell"
+        global GraphFrame
 
         # Create Spark session with the static config
-        spark = (SparkSession.builder
-                 .appName("Functionalizer")
-                 .enableHiveSupport()
-                 .config("spark.shuffle.compress", False)
-                 .config("spark.checkpoint.compress", True)
-                 .config("spark.jars", os.path.join(os.path.dirname(__file__), "data/spykfunc_udfs.jar"))
-                 .config("spark.jars.packages", "graphframes:graphframes:0.5.0-spark2.1-s_2.11")
-                 .config("spark.sql.files.maxPartitionBytes", 64*_MB)
-                 .config("spark.sql.autoBroadcastJoinThreshold", 512*_MB)
-                 .getOrCreate())
+        sparksetup.create("Functionalizer", spark_config, spark_opts)
 
         try:
             from graphframes import GraphFrame
@@ -101,11 +98,10 @@ class Functionalizer(object):
             raise
 
         # Configuring Spark runtime
-        sc = spark.sparkContext
-        sc.setLogLevel("WARN")
-        sc.setCheckpointDir("_checkpoints/tmp")
-        sc._jsc.hadoopConfiguration().setInt("parquet.block.size", 32*_MB)
-        sqlContext = SQLContext.getOrCreate(sc)
+        sparksetup.context.setLogLevel("WARN")
+        sparksetup.context.setCheckpointDir("_checkpoints/tmp")
+        sparksetup.context._jsc.hadoopConfiguration().setInt("parquet.block.size", 32 * _MB)
+        sqlContext = SQLContext.getOrCreate(sparksetup.context)
         sqlContext.registerJavaFunction("gauss_rand", "spykfunc.udfs.GaussRand")
         sqlContext.registerJavaFunction("float2binary", "spykfunc.udfs.FloatArraySerializer")
         sqlContext.registerJavaFunction("int2binary", "spykfunc.udfs.IntArraySerializer")
@@ -145,11 +141,11 @@ class Functionalizer(object):
             logger.critical("Invalid touch file path")
 
         # Load Neurons data
-        fdata = NeuronDataSpark(MVD_Morpho_Loader(mvd_file, morpho_dir), spark)
+        fdata = NeuronDataSpark(MVD_Morpho_Loader(mvd_file, morpho_dir), sparksetup.session)
         fdata.load_mvd_neurons_morphologies()
 
         # Reverse DF name vectors
-        self.mtypes_df = spark.createDataFrame(enumerate(fdata.mTypes), schema.INT_STR_SCHEMA)
+        self.mtypes_df = sparksetup.session.createDataFrame(enumerate(fdata.mTypes), schema.INT_STR_SCHEMA)
 
         # Init the Enumeration to contain fzer CellClass index
         CellClass.init_fzer_indexes(fdata.cellClasses)
@@ -181,11 +177,11 @@ class Functionalizer(object):
                 # TODO: In generic cases we dont shuffle all the fields, so we could reduce this by a factor of 2
                 #       However we need to make sure that operations that keep or grow the partition size must be 
                 #       explicitly controlled and the easiest way is still coalesce
-                spark.conf.set("spark.sql.shuffle.partitions",
+                sparksetup.session.conf.set("spark.sql.shuffle.partitions",
                                touch_partitions // 200 * 200)
             elif touch_partitions <= 16:
                 # Optimize execution of very small jobs
-                spark.conf.set("spark.sql.shuffle.partitions", 16)
+                sparksetup.session.conf.set("spark.sql.shuffle.partitions", 16)
             
         else:
             # self._touchDF = fdata.load_touch_bin(touch_files)
@@ -331,6 +327,7 @@ class Functionalizer(object):
     # -------------------------------------------------------------------------
     # Functions to create/apply filters for the current session
     # -------------------------------------------------------------------------
+    @sparksetup.assign_to_jobgroup
     @_assign_to_touchDF
     def filter_by_soma_axon_distance(self):
         """BLBLD-42: Creates a Soma-axon distance filter and applies it to the current touch set.
@@ -340,6 +337,7 @@ class Functionalizer(object):
         return distance_filter.apply(self.neuronG)
 
     # ----
+    @sparksetup.assign_to_jobgroup
     @_assign_to_touchDF
     @checkpoint_resume(CheckpointPhases.FILTER_TOUCH_RULES.name,
                        before_load_handler=_change_maxPartitionMB(32))
@@ -364,7 +362,7 @@ class Functionalizer(object):
         # self.touchDF = cumulative_distance_f.apply(self.neuronG)
 
         logger.info("Applying Reduce and Cut...")
-        rc = filters.ReduceAndCut(mtype_conn_rules, self.neuron_stats, spark, )
+        rc = filters.ReduceAndCut(mtype_conn_rules, self.neuron_stats, sparksetup.session, )
         return rc.apply(self.neuronG, mtypes=self.mtypes_df)
 
     # -------------------------------------------------------------------------
@@ -381,7 +379,7 @@ class Functionalizer(object):
         cp_file = os.path.join("_checkpoints", phase.name.lower()) + ".parquet"
         if os.path.exists(cp_file):
             try:
-                df = spark.read.parquet(cp_file)
+                df = sparksetup.session.read.parquet(cp_file)
                 del df
                 return True
             except Exception as e:

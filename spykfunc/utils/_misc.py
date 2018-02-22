@@ -2,6 +2,7 @@ from __future__ import print_function
 import sys
 import logging as _logging
 from future.builtins import input
+from functools import update_wrapper
 from contextlib import contextmanager
 from .. import config
 
@@ -59,7 +60,7 @@ def assign_to_property(prop_name):
             val = f(self, *args, **kw)
             setattr(self, prop_name, val)
             return val
-        return newf
+        return update_wrapper(newf, f)
     return decorator
     
 
