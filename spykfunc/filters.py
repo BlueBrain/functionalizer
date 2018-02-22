@@ -15,10 +15,10 @@ from .filter_udfs import reduce_cut_parameter_udef
 logger = get_logger(__name__)
 
 # Control variable that outputs intermediate calculations, and makes processing slower
-_DEBUG = True
-_DEBUG_REDUCE = True
-_DEBUG_CUT = True
-_DEBUG_CUT2AF = True
+_DEBUG = False
+_DEBUG_REDUCE = False
+_DEBUG_CUT = False
+_DEBUG_CUT2AF = False
 _MB = 1024*1024
 
 
