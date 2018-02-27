@@ -71,16 +71,18 @@ def checkpoint_resume(name,
                  .saveAsTable(table_name))
             else:
                 logger.debug("Checkpointing to PARQUET %s...", name.lower())
-                df.write.parquet(parquet_file_path, mode="overwrite")
+                with sparksetup.jobgroup("checkpointing " + name.lower()):
+                    df.write.parquet(parquet_file_path, mode="overwrite")
 
             logger.debug("Checkpoint Finished")
 
             if break_exec_plan:
                 if before_load_handler: before_load_handler()
-                if bucket_cols:
-                    df = sparksetup.session.read.table(table_name)
-                else:
-                    df = sparksetup.session.read.parquet(parquet_file_path)
+                with sparksetup.jobgroup("restoring checkpoint " + name.lower()):
+                    if bucket_cols:
+                        df = sparksetup.session.read.table(table_name)
+                    else:
+                        df = sparksetup.session.read.parquet(parquet_file_path)
                 
             if post_compute_handler:
                 return post_compute_handler(df)

@@ -350,6 +350,7 @@ class Functionalizer(object):
         return touch_rules_filter.apply(self.neuronG)
 
     # ----
+    @sparksetup.assign_to_jobgroup
     @_assign_to_touchDF
     def run_reduce_and_cut(self):
         """Create and apply Reduce and Cut filter
