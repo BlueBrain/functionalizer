@@ -7,8 +7,20 @@ from pyspark.sql import types as T
 from pyspark import SparkContext
 
 # -----
-def compute_additional_h5_fields(neuronG, syn_class_matrix, syn_props_df):
-    touches = neuronG.find("(n1)-[t]->(n2)")
+def compute_additional_h5_fields(circuit, syn_class_matrix, syn_props_df):
+    neurons = circuit.neurons
+    touches = circuit.touches
+
+    def prefixed(pre):
+        tmp = neurons
+        for col in tmp.schema.names:
+            tmp = tmp.withColumnRenamed(col, pre if col == "id" else "{}_{}".format(pre, col))
+        return tmp
+
+    touches = touches.alias("t") \
+        .join(prefixed("src"), "src") \
+        .join(prefixed("dst"), "dst")
+
     syn_class_dims = syn_class_matrix.shape  # tuple of len 6
 
     index_length = list(syn_class_dims)
@@ -17,12 +29,12 @@ def compute_additional_h5_fields(neuronG, syn_class_matrix, syn_props_df):
 
     # Compute the index for the matrix as in a flat array
     touches = touches.withColumn("syn_prop_index",
-                                 touches.n1.morphology_i * index_length[1] +
-                                 touches.n1.electrophysiology * index_length[2] +
-                                 touches.n1.syn_class_index * index_length[3] +
-                                 touches.n2.morphology_i * index_length[4] +
-                                 touches.n2.electrophysiology * index_length[5] +
-                                 touches.n2.syn_class_index)
+                                 touches.src_morphology_i * index_length[1] +
+                                 touches.src_electrophysiology * index_length[2] +
+                                 touches.src_syn_class_index * index_length[3] +
+                                 touches.dst_morphology_i * index_length[4] +
+                                 touches.dst_electrophysiology * index_length[5] +
+                                 touches.dst_syn_class_index)
 
     # Get the rule index from the numpy matrix
     # According to benchmarks in pyspark, applying to_syn_prop_i (py) with 1000 N (2M touches) split by three cores
@@ -59,7 +71,7 @@ def compute_additional_h5_fields(neuronG, syn_class_matrix, syn_props_df):
     touches = touches.withColumn("axional_delay",
         (
             touches.prop.neuralTransmitterReleaseDelay +
-            touches.t.distance_soma / touches.prop.axonalConductionVelocity
+            touches.distance_soma / touches.prop.axonalConductionVelocity
         ).cast(T.FloatType())
     )
 
@@ -82,20 +94,20 @@ def compute_additional_h5_fields(neuronG, syn_class_matrix, syn_props_df):
     # Select fields
     return t.select(
         # Exported touch gids are 1-base, not 0
-        (t.t.src + 1).alias("pre_gid"),
-        (t.t.dst + 1).alias("post_gid"),
+        (t.src + 1).alias("pre_gid"),
+        (t.dst + 1).alias("post_gid"),
         t.axional_delay,
-        t.t.post_section.alias("post_section"),
-        t.t.post_segment.alias("post_segment"),
-        t.t.post_offset.alias("post_offset"),
-        t.t.pre_section.alias("pre_section"),
-        t.t.pre_segment.alias("pre_segment"),
-        t.t.pre_offset.alias("pre_offset"),
+        t.post_section.alias("post_section"),
+        t.post_segment.alias("post_segment"),
+        t.post_offset.alias("post_offset"),
+        t.pre_section.alias("pre_section"),
+        t.pre_segment.alias("pre_segment"),
+        t.pre_offset.alias("pre_offset"),
         "gsyn", "u", "d", "f", "dtc",
         t.synapseType.alias("synapseType"),
-        t.n1.morphology_i.alias("morphology"),
+        t.src_morphology_i.alias("morphology"),
         F.lit(0).alias("branch_order_dend"),  # TBD
-        t.t.branch_order.alias("branch_order_axon"),
+        t.branch_order.alias("branch_order_axon"),
         t.prop.ase.alias("ase"),
         F.lit(0).alias("branch_type"),  # TBD (0 soma, 1 axon, 2 basel dendrite, 3 apical dendrite)
     )

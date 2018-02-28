@@ -35,13 +35,14 @@ class BoutonDistanceFilter(DataSetOperation):
     def __init__(self, bouton_distance_obj):
         self._bouton_distance_obj = bouton_distance_obj
 
-    def apply(self, neuronG, *args, **kw):
-        # neuronDF = F.broadcast(neuronG.vertices)
-        neuronDF = neuronG.vertices
-        touchDF = neuronG.edges
+    def apply(self, circuit, *args, **kw):
+        """Apply filter
+        """
+        neurons = circuit.neurons
+        touches = circuit.touches
 
         # Use broadcast of Neuron version
-        newTouches = touchDF.alias("t").join(neuronDF.alias("n"), neuronDF.id == touchDF.dst) \
+        newTouches = touches.alias("t").join(neurons.alias("n"), neurons.id == touches.dst) \
             .where("(t.distance_soma >= %f AND n.syn_class_index = %d) OR "
                    "(t.distance_soma >= %f AND n.syn_class_index = %d)" % (
                        self._bouton_distance_obj.inhibitorySynapsesDistance,
@@ -60,9 +61,9 @@ class BoutonDistanceReverseFilter(BoutonDistanceFilter):
     """
 # -------------------------------------------------------------------------------------------------
 
-    def apply(self, neuronG, *args, **kw):
-        neuronDF = neuronG.vertices
-        touchDF = neuronG.edges
+    def apply(self, circuit, *args, **kw):
+        neuronDF = circuit.neurons
+        touchDF = circuit.touches
 
         new_touches = touchDF.alias("t").join(neuronDF.alias("n"), neuronDF.id == touchDF.dst) \
             .where("(t.distance_soma < %f AND n.syn_class_index = %d) OR "
@@ -86,7 +87,7 @@ class TouchRulesFilter(DataSetOperation):
     def __init__(self, recipe_touch_rules):
         self._rules = recipe_touch_rules
 
-    def apply(self, neuronG, *args, **kw):
+    def apply(self, circuit, *args, **kw):
         """ .apply() method (runner) of the filter
         """
         # For each neuron we require: preLayer, preMType, postLayer, postMType, postBranchIsSoma
@@ -97,22 +98,31 @@ class TouchRulesFilter(DataSetOperation):
         for rule in self._rules:
             rule_sqls = []
             if rule.fromLayer:
-                rule_sqls.append("n1.layer={}".format(rule.fromLayer))
+                rule_sqls.append("src_layer={}".format(rule.fromLayer))
             if rule.toLayer:
-                rule_sqls.append("n2.layer={}".format(rule.toLayer))
+                rule_sqls.append("dst_layer={}".format(rule.toLayer))
             if rule.fromMType:
-                rule_sqls.append("n1.morphology LIKE '{}'".format(rule.fromMType.replace("*", "%")))
+                rule_sqls.append("src_morphology LIKE '{}'".format(rule.fromMType.replace("*", "%")))
             if rule.toMType:
-                rule_sqls.append("n2.morphology LIKE '{}'".format(rule.toMType.replace("*", "%")))
+                rule_sqls.append("dst_morphology LIKE '{}'".format(rule.toMType.replace("*", "%")))
             if rule.type:
-                rule_sqls.append("t.post_section {sign} 0".format(sign="=" if (rule.type == "soma") else ">"))
+                rule_sqls.append("post_section {sign} 0".format(sign="=" if (rule.type == "soma") else ">"))
 
             if rule_sqls:
                 sql_queries.append("(" + " AND ".join(rule_sqls) + ")")
 
         master_filter_sql = " OR ".join(sql_queries)
 
-        new_touches = neuronG.find("(n1)-[t]->(n2)") \
+        neurons = circuit.neurons
+        touches = circuit.touches
+
+        new_touches = touches.alias("t") \
+            .join(neurons.select("id", "morphology")
+                         .withColumnRenamed("id", "src")
+                         .withColumnRenamed("morphology", "src_morphology"), "src") \
+            .join(neurons.select("id", "morphology")
+                         .withColumnRenamed("id", "dst")
+                         .withColumnRenamed("morphology", "dst_morphology"), "dst") \
             .where(master_filter_sql) \
             .select("t.*")
 
@@ -133,9 +143,9 @@ class ReduceAndCut(DataSetOperation):
         self.stats = stats
 
     # ---
-    def apply(self, neuronG, *args, **kw):
+    def apply(self, circuit, *args, **kw):
         # TODO: Mayber we can drop some fields, e.g.: src/dst_morphology_i
-        full_touches = touches_with_pathway(neuronG)
+        full_touches = touches_with_pathway(circuit)
 
         # Get and broadcast Pathway stats
         # NOTE we cache and count to force evaluation in N tasks, while sorting in a single task
@@ -200,7 +210,7 @@ class ReduceAndCut(DataSetOperation):
             lambda: cut_touch_counts_connection
         )
         cut_touch_counts_connection = f()
-                                                                  
+
         if _DEBUG and _DEBUG_CUT:  # --------------------------------------------------------------
             cut_touch_counts_pathway = (
                 cut_touch_counts_connection
@@ -229,7 +239,7 @@ class ReduceAndCut(DataSetOperation):
         # -----------------------------------------------------------------------------------------
 
         # Only the touch fields
-        return cut2AF_touches.select(neuronG.edges.schema.names)
+        return cut2AF_touches.select(circuit.touches.schema.names)
 
     # ---
     @checkpoint_resume("pathway_stats",
@@ -403,9 +413,10 @@ class CumulativeDistanceFilter(DataSetOperation):
         self.recipe = recipe
         self.stats = stats
 
-    def apply(self, neuronG, *args, **kw):
-        touches = neuronG.edges
-        return touches  # no-op
+    def apply(self, circuit, *args, **kw):
+        """Returns the touches of the circuit: NOOP
+        """
+        return circuit.touches
 
     def filterInhSynapsesBasedOnThresholdInPreSynapticData(self):
         pass

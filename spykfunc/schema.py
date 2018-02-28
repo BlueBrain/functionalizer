@@ -113,9 +113,9 @@ def pathway_i_to_str(df_pathway_i, mtypes):
         .drop("src_morpho_i", "src_morpho", "dst_morpho_i", "dst_morpho")
     )
 
-def touches_with_pathway(neuronG):
-    touches = neuronG.edges
-    nrns = neuronG.vertices
+def touches_with_pathway(circuit):
+    touches = circuit.touches
+    nrns = circuit.neurons
     conn_touches = (
         touches
         .join(

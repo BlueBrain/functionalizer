@@ -9,8 +9,11 @@ class NeuronStats(object):
     including statistics and MVD properties
     """
 
-    def __init__(self, touch_GF=None):
-        self._touch_graph_frame = touch_GF
+    _circuit = None
+    """:property: circuit data, neurons and touches"""
+
+    def __init__(self, circuit=None):
+        self._circuit = circuit
         self._total_neurons = 0
         self._total_touches = 0
         self._neurons_touch_counts = None
@@ -30,15 +33,16 @@ class NeuronStats(object):
         return obj
 
     @property
-    def touch_graph(self):
-        return self._touch_graph_frame
-    
-    @touch_graph.setter
-    def touch_graph(self, touch_GF):
-        if self._touch_graph_frame == touch_GF:
+    def circuit(self):
+        """The circuit data"""
+        return self._circuit
+
+    @circuit.setter
+    def circuit(self, new_circuit):
+        if self._circuit == new_circuit:
             return
-        self._touch_graph_frame = touch_GF
-        self._total_neurons = None
+        self._circuit = new_circuit
+        self._total_neurons = new_circuit.neuron_count
         self._total_touches = None
         self._neurons_touch_counts = None
         self._pathway_touches_conns = None
@@ -46,20 +50,14 @@ class NeuronStats(object):
     @property
     @cache_to_property("_total_neurons")
     def total_neurons(self):
-        return self._touch_graph_frame.vertices.count()
-    
+        """The total neuron count in the circuit"""
+        return self._circuit.neurons.count()
+
     @property
     @cache_to_property("_total_touches")
     def total_touches(self):
-        return self._touch_graph_frame.edges.count()
-
-    @property
-    def pre_touch_counts(self):
-        return self._touch_graph_frame.outDegrees
-
-    @property
-    def post_touch_counts(self):
-        return self._touch_graph_frame.inDegrees
+        """The total touch count in the circuit"""
+        return self._circuit.touches.count()
 
     @property
     @cache_to_property("_neurons_touch_counts")
@@ -68,20 +66,25 @@ class NeuronStats(object):
         """
         # Cache is not being used since it will just consume memory and potentially avoid optimizations
         # User can still cache explicitly the returned ds
-        return self.get_neurons_touch_counts(self._touch_graph_frame)
+        return self.get_neurons_touch_counts(self._circuit)
 
     @property
     @cache_to_property("_pathway_touches_conns")
     def pathway_touch_stats(self):
         # We better not cache yet, as there may be further calculations/cache
-        return self.get_pathway_touch_stats_from_touch_counts(self.neurons_touch_counts)    
-    
+        return self.get_pathway_touch_stats_from_touch_counts(self.neurons_touch_counts)
+
     @staticmethod
-    def get_neurons_touch_counts(neuronG):
+    def get_neurons_touch_counts(circuit):
         """ Counts the total touches between morphologies and neurons.
         """
+        neurons = circuit.neurons
+        touches = circuit.touches
+
         return (
-            neuronG.find("(n1)-[t]->(n2)")
+            touches.alias("t")
+            .join(neurons.alias("n1"), neurons.id == touches.src)
+            .join(neurons.alias("n2"), neurons.id == touches.dst)
             .select(
                 to_pathway_i("n1.morphology_i", "n2.morphology_i"),
                 col("t.src"),

@@ -13,6 +13,7 @@ from pyspark.sql import types as T
 
 import sparksetup
 
+from .circuit import Circuit
 from .recipe import Recipe
 from .data_loader import NeuronDataSpark
 from .data_export import NeuronExporter
@@ -37,7 +38,7 @@ spark_config = {
     "spark.jars": os.path.join(os.path.dirname(__file__), "data/spykfunc_udfs.jar"),
     "spark.jars.packages": "graphframes:graphframes:0.5.0-spark2.1-s_2.11",
     "spark.sql.files.maxPartitionBytes": 64 * _MB,
-    "spark.sql.autoBroadcastJoinThreshold": 512 * _MB,
+    "spark.sql.autoBroadcastJoinThreshold": -1,
     "spark.sql.catalogImplementation": "hive"
 }
 
@@ -53,27 +54,15 @@ class ExtendedCheckpointAvail(Exception):
 class Functionalizer(object):
     """ Functionalizer Session class
     """
-    # Defaults for instance vars
-    fdata = None
-    """:property: Functionalizer low-level data"""
+
+    circuit = None
+    """:property: ciruit containing neuron and touch data"""
 
     recipe = None
     """:property: The parsed recipe"""
 
     neuron_stats = None
     """:property: The :py:class:`~spykfunc.stats.NeuronStats` object for the current touch set"""
-
-    morphologies = None
-    """:property: The morphology RDD"""
-
-    neuronDF = None
-    """:property: The Neurons info (from MVD) as a Dataframe"""
-
-    neuronG = None
-    """:property: The Graph representation of the touches (GraphFrame)"""
-
-    # TouchDF is volatile and we trigger events on update
-    _touchDF = None
 
     # handler functions used in decorators
     _assign_to_touchDF = utils.assign_to_property('touchDF')
@@ -84,18 +73,8 @@ class Functionalizer(object):
 
     # ==========
     def __init__(self, only_s2s=False, spark_opts=None):
-        global GraphFrame
-
         # Create Spark session with the static config
         sparksetup.create("Functionalizer", spark_config, spark_opts)
-
-        try:
-            from graphframes import GraphFrame
-        except ImportError:
-            logger.error("Graphframes could not be imported\n"
-                         "Please start a spark cluster with GraphFrames support."
-                         " (e.g. pyspark --packages graphframes:graphframes:0.5.0-spark2.1-s_2.11)")
-            raise
 
         # Configuring Spark runtime
         sparksetup.context.setLogLevel("WARN")
@@ -109,7 +88,6 @@ class Functionalizer(object):
         self._run_s2f = not only_s2s
         self.output_dir = "spykfunc_output"
         self.neuron_stats = NeuronStats()
-        self._initial_touchDF = None
 
         if only_s2s:
             logger.info("Running S2S only")
@@ -154,24 +132,18 @@ class Functionalizer(object):
         self.synapse_class_matrix = fdata.load_synapse_prop_matrix(self.recipe)
         self.synapse_class_prop_df = fdata.load_synapse_properties_and_classification(self.recipe)
 
-        # Shortcuts
-        self.fdata = fdata
-        self.neuron_count = int(fdata.nNeurons)
-        self.neuronDF = fdata.neuronDF
-        self.morphologies = fdata.morphologyRDD
-
         # 'Load' touches, from parquet if possible
         _file0 = all_touch_files[0]
         touches_parquet_files_expr = _file0[:_file0.rfind(".")] + "Data.*.parquet"
         touch_files_parquet = glob(touches_parquet_files_expr)
         if touch_files_parquet:
-            self._touchDF = self._initial_touchDF = fdata.load_touch_parquet(touches_parquet_files_expr) \
+            touches = self._initial_touchDF = fdata.load_touch_parquet(touches_parquet_files_expr) \
                 .withColumnRenamed("pre_neuron_id", "src") \
                 .withColumnRenamed("post_neuron_id", "dst")
-                
+
             # I dont know whats up with Spark but sometimes when shuffle partitions is not 200
             # we have problems. We try to mitigate using multiples of 200
-            touch_partitions = self._touchDF.rdd.getNumPartitions()
+            touch_partitions = touches.rdd.getNumPartitions()
             if touch_partitions >= 400:
                 # Grow suffle partitions with size of touches DF
                 # TODO: In generic cases we dont shuffle all the fields, so we could reduce this by a factor of 2
@@ -182,15 +154,15 @@ class Functionalizer(object):
             elif touch_partitions <= 16:
                 # Optimize execution of very small jobs
                 sparksetup.session.conf.set("spark.sql.shuffle.partitions", 16)
-            
+
         else:
             # self._touchDF = fdata.load_touch_bin(touch_files)
             raise ValueError("Invalid touch files. Please provide touches in parquet format.")
 
         # Create graphFrame and set it as stats source without recalculating
-        self.neuronG = GraphFrame(self.neuronDF, self._touchDF)  # Rebuild graph
-        self.neuron_stats.touch_graph = self.neuronG
-        self.neuron_stats._total_neurons = self.neuron_count
+
+        self.circuit = Circuit(fdata, touches, self.recipe)
+        self.neuron_stats.circuit = self.circuit
 
         # Data exporter
         self.exporter = NeuronExporter(output_path=self.output_dir)
@@ -202,13 +174,11 @@ class Functionalizer(object):
         :property: The current touch set Dataframe.
         NOTE that setting to this attribute will trigger updating the graph
         """
-        return self._touchDF
+        return self.circuit.touches
 
     @touchDF.setter
-    def touchDF(self, new_touches):
-        self._touchDF = new_touches
-        self.neuronG = GraphFrame(self.neuronDF, self._touchDF)   # Rebuild graph
-        self.neuron_stats.touch_graph = self.neuronG              # Reset stats source
+    def touchDF(self, touches):
+        self.circuit.touches = touches
 
     # ----
     @property
@@ -217,13 +187,18 @@ class Functionalizer(object):
         :property: A :py:class:`~spykfunc._filtering.DataSetQ` object, offering a high-level query API on
         the current Neuron-Touch Graph
         """
-        return _filtering.DataSetQ(self.neuronG.find("(n1)-[t]->(n2)"))
+        neurons = self.circuit.neurons
+        touches = self.circuit.touches
+        def prefixed(pre):
+            tmp = neurons
+            for col in tmp.schema.names:
+                tmp = tmp.withColumnRenamed(col, pre if col == "id" else "{}_{}".format(pre, col))
+            return tmp
 
-    # ----
-    def reset(self):
-        """Discards any filtering and reverts the touches to the original state.
-        """
-        self.touchDF = self._initial_touchDF
+        touches = touches.alias("t") \
+            .join(prefixed("src"), "src") \
+            .join(prefixed("dst"), "dst")
+        return _filtering.DataSetQ(touches)
 
     # -------------------------------------------------------------------------
     # Main entry point of Filter Execution
@@ -309,7 +284,7 @@ class Functionalizer(object):
         # Calc syn props 
         self._ensure_data_loaded()
         extended_touches = synapse_properties.compute_additional_h5_fields(
-            self.neuronG,
+            self.circuit,
             self.synapse_class_matrix,
             self.synapse_class_prop_df
         )
@@ -334,7 +309,7 @@ class Functionalizer(object):
         """
         self._ensure_data_loaded()
         distance_filter = filters.BoutonDistanceFilter(self.recipe.synapses_distance)
-        return distance_filter.apply(self.neuronG)
+        return distance_filter.apply(self.circuit)
 
     # ----
     @sparksetup.assign_to_jobgroup
@@ -347,7 +322,7 @@ class Functionalizer(object):
         self._ensure_data_loaded()
         logger.info("Filtering by touchRules...")
         touch_rules_filter = filters.TouchRulesFilter(self.recipe.touch_rules)
-        return touch_rules_filter.apply(self.neuronG)
+        return touch_rules_filter.apply(self.circuit)
 
     # ----
     @sparksetup.assign_to_jobgroup
@@ -357,21 +332,21 @@ class Functionalizer(object):
         """
         self._ensure_data_loaded()
         # Index and distribute mtype rules across the cluster
-        mtype_conn_rules = self._build_concrete_mtype_conn_rules(self.recipe.conn_rules, self.fdata.mTypes)
+        mtype_conn_rules = self._build_concrete_mtype_conn_rules(self.recipe.conn_rules, self.circuit.morphology_types)
 
         # cumulative_distance_f = filters.CumulativeDistanceFilter(distributed_conn_rules, self.neuron_stats)
-        # self.touchDF = cumulative_distance_f.apply(self.neuronG)
+        # self.touchDF = cumulative_distance_f.apply(self.circuit)
 
         logger.info("Applying Reduce and Cut...")
         rc = filters.ReduceAndCut(mtype_conn_rules, self.neuron_stats, sparksetup.session, )
-        return rc.apply(self.neuronG, mtypes=self.mtypes_df)
+        return rc.apply(self.circuit, mtypes=self.mtypes_df)
 
     # -------------------------------------------------------------------------
     # Helper functions
     # -------------------------------------------------------------------------
     def _ensure_data_loaded(self):
         """ Ensures required data is available"""
-        if self.recipe is None or self.neuronG is None:
+        if self.recipe is None or self.circuit is None:
             raise RuntimeError("No touches available. Please load data first.")
     
     # ---

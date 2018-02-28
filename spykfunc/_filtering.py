@@ -16,7 +16,7 @@ class DataSetOperation(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def apply(self, df, *args, **kw):
+    def apply(self, circuit, *args, **kw):
         pass
 
 
