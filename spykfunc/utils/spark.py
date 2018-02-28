@@ -3,7 +3,7 @@ from functools import update_wrapper
 from pyspark.sql.column import _to_seq
 from . import get_logger
 
-import sparksetup
+import sparkmanager as sm
 
 
 # -----------------------------------------------
@@ -29,7 +29,7 @@ def checkpoint_resume(name,
                     logger.info("[SKIP %s] Checkpoint found. Restoring state...", name)
                     try:
                         if before_load_handler: before_load_handler()
-                        df = sparksetup.session.read.parquet(parquet_file_path)
+                        df = sm.read.parquet(parquet_file_path)
                         if post_resume_handler:
                             return post_resume_handler(df)
                         return df
@@ -39,7 +39,7 @@ def checkpoint_resume(name,
                 # Attepting from table
                 if bucket_cols and osp.isdir(table_path):
                     try:
-                        df = sparksetup.session.read.table(table_name)
+                        df = sm.read.table(table_name)
                         if post_resume_handler:
                             return post_resume_handler(df)
                         return df
@@ -66,23 +66,23 @@ def checkpoint_resume(name,
 
                 (df
                  .write.mode("overwrite").option("path", table_path)._jwrite
-                 .bucketBy(num_buckets, col1, _to_seq(sparksetup.context, other_cols))
-                 .sortBy(col1, _to_seq(sparksetup.context, other_cols))
+                 .bucketBy(num_buckets, col1, _to_seq(sm.sc, other_cols))
+                 .sortBy(col1, _to_seq(sm.sc, other_cols))
                  .saveAsTable(table_name))
             else:
                 logger.debug("Checkpointing to PARQUET %s...", name.lower())
-                with sparksetup.jobgroup("checkpointing " + name.lower()):
+                with sm.jobgroup("checkpointing {} to PARQUET".format(name.lower())):
                     df.write.parquet(parquet_file_path, mode="overwrite")
 
             logger.debug("Checkpoint Finished")
 
             if break_exec_plan:
                 if before_load_handler: before_load_handler()
-                with sparksetup.jobgroup("restoring checkpoint " + name.lower()):
+                with sm.jobgroup("restoring checkpoint " + name.lower()):
                     if bucket_cols:
-                        df = sparksetup.session.read.table(table_name)
+                        df = sm.read.table(table_name)
                     else:
-                        df = sparksetup.session.read.parquet(parquet_file_path)
+                        df = sm.read.parquet(parquet_file_path)
                 
             if post_compute_handler:
                 return post_compute_handler(df)

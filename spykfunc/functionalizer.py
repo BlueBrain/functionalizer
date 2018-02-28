@@ -11,7 +11,7 @@ from pyspark.sql import SQLContext
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
 
-import sparksetup
+import sparkmanager as sm
 
 from .circuit import Circuit
 from .recipe import Recipe
@@ -63,7 +63,7 @@ class Functionalizer(object):
 
     # handler functions used in decorators
     _assign_to_touchDF = utils.assign_to_property('touchDF')
-    _change_maxPartitionMB = lambda size: lambda: sparksetup.session.conf.set(
+    _change_maxPartitionMB = lambda size: lambda: sm.conf.set(
         "spark.sql.files.maxPartitionBytes",
         size * _MB
     )
@@ -71,13 +71,13 @@ class Functionalizer(object):
     # ==========
     def __init__(self, only_s2s=False, spark_opts=None):
         # Create Spark session with the static config
-        sparksetup.create("Functionalizer", spark_config, spark_opts)
+        sm.create("Functionalizer", spark_config, spark_opts)
 
         # Configuring Spark runtime
-        sparksetup.context.setLogLevel("WARN")
-        sparksetup.context.setCheckpointDir("_checkpoints/tmp")
-        sparksetup.context._jsc.hadoopConfiguration().setInt("parquet.block.size", 32 * _MB)
-        sqlContext = SQLContext.getOrCreate(sparksetup.context)
+        sm.setLogLevel("WARN")
+        sm.setCheckpointDir("_checkpoints/tmp")
+        sm._jsc.hadoopConfiguration().setInt("parquet.block.size", 32 * _MB)
+        sqlContext = SQLContext.getOrCreate(sm.sc)
         sqlContext.registerJavaFunction("gauss_rand", "spykfunc.udfs.GaussRand")
         sqlContext.registerJavaFunction("float2binary", "spykfunc.udfs.FloatArraySerializer")
         sqlContext.registerJavaFunction("int2binary", "spykfunc.udfs.IntArraySerializer")
@@ -116,11 +116,11 @@ class Functionalizer(object):
             logger.critical("Invalid touch file path")
 
         # Load Neurons data
-        fdata = NeuronDataSpark(MVD_Morpho_Loader(mvd_file, morpho_dir), sparksetup.session)
+        fdata = NeuronDataSpark(MVD_Morpho_Loader(mvd_file, morpho_dir), sm.spark)
         fdata.load_mvd_neurons_morphologies()
 
         # Reverse DF name vectors
-        self.mtypes_df = sparksetup.session.createDataFrame(enumerate(fdata.mTypes), schema.INT_STR_SCHEMA)
+        self.mtypes_df = sm.createDataFrame(enumerate(fdata.mTypes), schema.INT_STR_SCHEMA)
 
         # Init the Enumeration to contain fzer CellClass index
         CellClass.init_fzer_indexes(fdata.cellClasses)
@@ -146,11 +146,11 @@ class Functionalizer(object):
                 # TODO: In generic cases we dont shuffle all the fields, so we could reduce this by a factor of 2
                 #       However we need to make sure that operations that keep or grow the partition size must be 
                 #       explicitly controlled and the easiest way is still coalesce
-                sparksetup.session.conf.set("spark.sql.shuffle.partitions",
+                sm.conf.set("spark.sql.shuffle.partitions",
                                touch_partitions // 200 * 200)
             elif touch_partitions <= 16:
                 # Optimize execution of very small jobs
-                sparksetup.session.conf.set("spark.sql.shuffle.partitions", 16)
+                sm.conf.set("spark.sql.shuffle.partitions", 16)
 
         else:
             # self._touchDF = fdata.load_touch_bin(touch_files)
@@ -297,7 +297,7 @@ class Functionalizer(object):
     # -------------------------------------------------------------------------
     # Functions to create/apply filters for the current session
     # -------------------------------------------------------------------------
-    @sparksetup.assign_to_jobgroup
+    @sm.assign_to_jobgroup
     @_assign_to_touchDF
     def filter_by_soma_axon_distance(self):
         """BLBLD-42: Creates a Soma-axon distance filter and applies it to the current touch set.
@@ -307,7 +307,7 @@ class Functionalizer(object):
         return distance_filter.apply(self.circuit)
 
     # ----
-    @sparksetup.assign_to_jobgroup
+    @sm.assign_to_jobgroup
     @_assign_to_touchDF
     @checkpoint_resume(CheckpointPhases.FILTER_TOUCH_RULES.name,
                        before_load_handler=_change_maxPartitionMB(32))
@@ -320,7 +320,7 @@ class Functionalizer(object):
         return touch_rules_filter.apply(self.circuit)
 
     # ----
-    @sparksetup.assign_to_jobgroup
+    @sm.assign_to_jobgroup
     @_assign_to_touchDF
     def run_reduce_and_cut(self):
         """Create and apply Reduce and Cut filter
@@ -333,7 +333,7 @@ class Functionalizer(object):
         # self.touchDF = cumulative_distance_f.apply(self.circuit)
 
         logger.info("Applying Reduce and Cut...")
-        rc = filters.ReduceAndCut(mtype_conn_rules, self.neuron_stats, sparksetup.session, )
+        rc = filters.ReduceAndCut(mtype_conn_rules, self.neuron_stats, sm.spark, )
         return rc.apply(self.circuit, mtypes=self.mtypes_df)
 
     # -------------------------------------------------------------------------
@@ -350,7 +350,7 @@ class Functionalizer(object):
         cp_file = os.path.join("_checkpoints", phase.name.lower()) + ".parquet"
         if os.path.exists(cp_file):
             try:
-                df = sparksetup.session.read.parquet(cp_file)
+                df = sm.read.parquet(cp_file)
                 del df
                 return True
             except Exception as e:

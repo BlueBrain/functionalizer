@@ -1,8 +1,6 @@
 """Module for circuit related classes, functions
 """
 
-import sparksetup
-
 
 class Circuit(object):
     """Reprensentation of a circuit
@@ -38,8 +36,6 @@ class Circuit(object):
 
         self._touches = touches
         self._initial_touches = touches
-
-        sparksetup.context.broadcast(self.neurons.collect())
 
     @property
     def neurons(self):

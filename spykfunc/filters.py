@@ -2,7 +2,7 @@ from __future__ import division
 import os
 import sys
 from pyspark.sql import functions as F
-import sparksetup
+import sparkmanager as sm
 # from pyspark.sql import types as T
 # from pyspark import StorageLevel
 from .definitions import CellClass, CheckpointPhases
@@ -177,7 +177,7 @@ class ReduceAndCut(DataSetOperation):
         # -----------------------------------------------------------------------------------------
 
         logger.info("Computing reduced touch counts")
-        with sparksetup.jobgroup("Computing reduced touch counts", ""):
+        with sm.jobgroup("Computing reduced touch counts", ""):
             reduced_touch_counts_connection = (
                 reduced_touches
                 .groupBy("src", "dst")
@@ -273,7 +273,7 @@ class ReduceAndCut(DataSetOperation):
 
     # ---
     @staticmethod
-    @sparksetup.assign_to_jobgroup
+    @sm.assign_to_jobgroup
     @checkpoint_resume(CheckpointPhases.FILTER_REDUCED_TOUCHES.name)
     def apply_reduce(all_touches, params_df):
         """ Applying reduce as a sampling
@@ -290,7 +290,7 @@ class ReduceAndCut(DataSetOperation):
     # Note: apply_cut is not checkpointed since it 
     #       builds up with apply_cut_active_fraction filter
     @staticmethod
-    @sparksetup.assign_to_jobgroup
+    @sm.assign_to_jobgroup
     def apply_cut(reduced_touches, params_df, reduced_touch_counts_connection, **kw):
         """
         Apply cut filter
@@ -344,7 +344,7 @@ class ReduceAndCut(DataSetOperation):
 
     # ----
     @staticmethod
-    @sparksetup.assign_to_jobgroup
+    @sm.assign_to_jobgroup
     # Note: Filter not checkpointed since it's the last stage 
     #       of global filtering (which is checkpointed)
     def apply_cut_active_fraction(cut_touches, params_df, cut_touch_counts_connection, **kw):
