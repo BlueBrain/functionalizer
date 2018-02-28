@@ -32,7 +32,7 @@ module load hdf5
 # Avoid add things to PYTHONPATH. Use setup.py develop (pip install -e .)
 # PYTHONPATH = $CURDIR
 
-#export PYSPARK_ARGS="--packages graphframes:graphframes:0.2.0-spark2.0-s_2.11"
+#export PYSPARK_ARGS=""
 #export PYSPARK_DRIVER_PYTHON_OPTS="-i tests/test_functionalizer.py"
 #export SPARK_WORKER_DIR=/gpfs/bbp.cscs.ch/scratch/gss/spark/leite
 #export SPARK_LOG_DIR=/gpfs/bbp.cscs.ch/scratch/gss/spark/leite

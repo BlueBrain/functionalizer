@@ -36,13 +36,10 @@ spark_config = {
     "spark.shuffle.compress": False,
     "spark.checkpoint.compress": True,
     "spark.jars": os.path.join(os.path.dirname(__file__), "data/spykfunc_udfs.jar"),
-    "spark.jars.packages": "graphframes:graphframes:0.5.0-spark2.1-s_2.11",
     "spark.sql.files.maxPartitionBytes": 64 * _MB,
     "spark.sql.autoBroadcastJoinThreshold": -1,
     "spark.sql.catalogImplementation": "hive"
 }
-
-GraphFrame = None
 
 
 class ExtendedCheckpointAvail(Exception):
@@ -158,8 +155,6 @@ class Functionalizer(object):
         else:
             # self._touchDF = fdata.load_touch_bin(touch_files)
             raise ValueError("Invalid touch files. Please provide touches in parquet format.")
-
-        # Create graphFrame and set it as stats source without recalculating
 
         self.circuit = Circuit(fdata, touches, self.recipe)
         self.neuron_stats.circuit = self.circuit

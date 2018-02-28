@@ -5,7 +5,7 @@ mvd_file="$BASE_DIR/circuits/circuit.mvd3"
 morpho_dir="$BASE_DIR/morphologies/h5"
 touch_files="$BASE_DIR/BlueDetector_output/touches.0"
 
-spark-submit --packages graphframes:graphframes:0.5.0-spark2.1-s_2.11 \
+spark-submit \
     spykfunc/commands.py -- \
     $recipe_file \
     $mvd_file \
