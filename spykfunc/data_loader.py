@@ -113,8 +113,7 @@ class NeuronDataSpark(NeuronData):
             self.neuronDF = F.broadcast(
                 self._spark.createDataFrame(neuronRDD, schema.NEURON_SCHEMA)
                     .where(F.col("id").isNotNull())
-                    .cache()
-            )
+            ).cache()
 
             # Evaluate to build partial NameMaps
             self.neuronDF.write.mode('overwrite').parquet(mvd_parquet)
