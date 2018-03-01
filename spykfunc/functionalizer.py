@@ -37,7 +37,6 @@ spark_config = {
     "spark.checkpoint.compress": True,
     "spark.jars": os.path.join(os.path.dirname(__file__), "data/spykfunc_udfs.jar"),
     "spark.sql.files.maxPartitionBytes": 64 * _MB,
-    "spark.sql.autoBroadcastJoinThreshold": -1,
     "spark.sql.catalogImplementation": "hive"
 }
 
