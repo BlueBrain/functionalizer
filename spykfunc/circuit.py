@@ -8,21 +8,6 @@ class Circuit(object):
     Simple data container to simplify and future-proof the API.
     """
 
-    __neuron_data = None
-    """:property: neuron data"""
-
-    _touches = None
-    """:property: touches as a spark dataframe"""
-
-    _initial_touches = None
-    """:property: the original touch dataframe"""
-
-    synapse_class_matrix = None
-    """:property: synapse class matrix"""
-
-    synapse_class_properties = None
-    """:property: synapse properties"""
-
     def __init__(self, neurons, touches, recipe):
         """Construct a new circuit
 
@@ -31,11 +16,26 @@ class Circuit(object):
         :param recipe: a :py:class:`~spykfunc.recipe.Recipe` object
         """
         self.__neuron_data = neurons
-        self.synapse_class_matrix = neurons.load_synapse_prop_matrix(recipe)
-        self.synapse_class_properties = neurons.load_synapse_properties_and_classification(recipe)
+        self.__synapse_class_matrix = neurons.load_synapse_prop_matrix(recipe)
+        self.__synapse_class_properties = neurons.load_synapse_properties_and_classification(recipe)
 
         self._touches = touches
         self._initial_touches = touches
+
+        # The circuit will be constructed 
+        self.__circuit = None
+
+    @property
+    def synapse_class_matrix(self):
+        """:property: synapse class matrix
+        """
+        return self.__synapse_class_matrix
+
+    @property
+    def synapse_class_properties(self):
+        """:property: synapse class properties
+        """
+        return self.__synapse_class_properties
 
     @property
     def neurons(self):
@@ -62,12 +62,44 @@ class Circuit(object):
         return self.__neuron_data.mTypes
 
     @property
-    def touches(self):
-        """:property: touch data as a Spark dataframe"""
-        return self._touches
+    def dataframe(self):
+        """:property: return a dataframe representing the circuit
+        """
+        if self.__circuit:
+            return self.__circuit
 
-    @touches.setter
-    def touches(self, new_touches):
+        def prefixed(pre):
+            tmp = self.neurons
+            for col in tmp.schema.names:
+                tmp = tmp.withColumnRenamed(col, pre if col == "id" else "{}_{}".format(pre, col))
+            return tmp
+        self.__circuit = self._touches.alias("t") \
+                                      .join(prefixed("src"), "src") \
+                                      .join(prefixed("dst"), "dst")
+        return self.__circuit
+
+    @dataframe.setter
+    def dataframe(self, dataframe):
         if self._initial_touches is None:
             raise ValueError("Circuit was not properly initialized!")
-        self._touches = new_touches
+        self._touches = self.only_touch_columns(dataframe)
+        if any(n.startswith('src_') or n.startswith('dst_') for n in dataframe.schema.names):
+            self.__circuit = dataframe
+        else:
+            self.__circuit = None
+
+    @property
+    def touches(self):
+        """:property: touch data as a Spark dataframe
+        """
+        return self._touches
+
+    @staticmethod
+    def only_touch_columns(df):
+        """Remove neuron columns from a dataframe
+
+        :param df: a dataframe to trim
+        """
+        def belongs_to_neuron(col):
+            return col.startswith("src_") or col.startswith("dst_")
+        return df.select([col for col in df.schema.names if not belongs_to_neuron(col)])

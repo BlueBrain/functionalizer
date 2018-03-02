@@ -5,6 +5,7 @@ from pyspark.sql import functions as F
 import sparkmanager as sm
 # from pyspark.sql import types as T
 # from pyspark import StorageLevel
+from .circuit import Circuit
 from .definitions import CellClass, CheckpointPhases
 from .schema import to_pathway_i, pathway_i_to_str, touches_with_pathway
 from ._filtering import DataSetOperation
@@ -38,20 +39,15 @@ class BoutonDistanceFilter(DataSetOperation):
     def apply(self, circuit, *args, **kw):
         """Apply filter
         """
-        neurons = circuit.neurons
-        touches = circuit.touches
-
         # Use broadcast of Neuron version
-        newTouches = touches.alias("t").join(neurons.alias("n"), neurons.id == touches.dst) \
-            .where("(t.distance_soma >= %f AND n.syn_class_index = %d) OR "
-                   "(t.distance_soma >= %f AND n.syn_class_index = %d)" % (
-                       self._bouton_distance_obj.inhibitorySynapsesDistance,
-                       CellClass.INH.fzer_index,
-                       self._bouton_distance_obj.excitatorySynapsesDistance,
-                       CellClass.EXC.fzer_index)
-                   ) \
-            .select("t.*")
-        return newTouches
+        new_circuit = circuit.where("(distance_soma >= %f AND dst_syn_class_index = %d) OR "
+                                    "(distance_soma >= %f AND dst_syn_class_index = %d)" % (
+                                        self._bouton_distance_obj.inhibitorySynapsesDistance,
+                                        CellClass.INH.fzer_index,
+                                        self._bouton_distance_obj.excitatorySynapsesDistance,
+                                        CellClass.EXC.fzer_index)
+                                    )
+        return new_circuit
 
 
 # -------------------------------------------------------------------------------------------------
@@ -62,19 +58,14 @@ class BoutonDistanceReverseFilter(BoutonDistanceFilter):
 # -------------------------------------------------------------------------------------------------
 
     def apply(self, circuit, *args, **kw):
-        neuronDF = circuit.neurons
-        touchDF = circuit.touches
-
-        new_touches = touchDF.alias("t").join(neuronDF.alias("n"), neuronDF.id == touchDF.dst) \
-            .where("(t.distance_soma < %f AND n.syn_class_index = %d) OR "
-                   "(t.distance_soma < %f AND n.syn_class_index = %d)" % (
-                       self._bouton_distance_obj.inhibitorySynapsesDistance,
-                       self.synapse_classes_indexes[CellClass.CLASS_INH],
-                       self._bouton_distance_obj.excitatorySynapsesDistance,
-                       self.synapse_classes_indexes[CellClass.CLASS_EXC])
-                   ) \
-            .select("t.*")
-        return new_touches
+        new_circuit = circuit.where("(distance_soma < %f AND dst_syn_class_index = %d) OR "
+                                    "(distance_soma < %f AND dst_syn_class_index = %d)" % (
+                                        self._bouton_distance_obj.inhibitorySynapsesDistance,
+                                        self.synapse_classes_indexes[CellClass.CLASS_INH],
+                                        self._bouton_distance_obj.excitatorySynapsesDistance,
+                                        self.synapse_classes_indexes[CellClass.CLASS_EXC])
+                                    )
+        return new_circuit
 
 
 # -------------------------------------------------------------------------------------------------
@@ -112,21 +103,9 @@ class TouchRulesFilter(DataSetOperation):
                 sql_queries.append("(" + " AND ".join(rule_sqls) + ")")
 
         master_filter_sql = " OR ".join(sql_queries)
+        new_circuit = circuit.where(master_filter_sql)
 
-        neurons = circuit.neurons
-        touches = circuit.touches
-
-        new_touches = touches.alias("t") \
-            .join(neurons.select("id", "morphology")
-                         .withColumnRenamed("id", "src")
-                         .withColumnRenamed("morphology", "src_morphology"), "src") \
-            .join(neurons.select("id", "morphology")
-                         .withColumnRenamed("id", "dst")
-                         .withColumnRenamed("morphology", "dst_morphology"), "dst") \
-            .where(master_filter_sql) \
-            .select("t.*")
-
-        return new_touches
+        return new_circuit
 
 
 # -------------------------------------------------------------------------------------------------
@@ -239,7 +218,7 @@ class ReduceAndCut(DataSetOperation):
         # -----------------------------------------------------------------------------------------
 
         # Only the touch fields
-        return cut2AF_touches.select(circuit.touches.schema.names)
+        return Circuit.only_touch_columns(cut2AF_touches)
 
     # ---
     @checkpoint_resume("pathway_stats",
@@ -274,7 +253,8 @@ class ReduceAndCut(DataSetOperation):
     # ---
     @staticmethod
     @sm.assign_to_jobgroup
-    @checkpoint_resume(CheckpointPhases.FILTER_REDUCED_TOUCHES.name)
+    @checkpoint_resume(CheckpointPhases.FILTER_REDUCED_TOUCHES.name,
+                       before_save_handler=Circuit.only_touch_columns)
     def apply_reduce(all_touches, params_df):
         """ Applying reduce as a sampling
         """
