@@ -36,8 +36,10 @@ spark_config = {
     "spark.shuffle.compress": False,
     "spark.checkpoint.compress": True,
     "spark.jars": os.path.join(os.path.dirname(__file__), "data/spykfunc_udfs.jar"),
-    "spark.sql.files.maxPartitionBytes": 64 * _MB,
-    "spark.sql.catalogImplementation": "hive"
+    "spark.sql.autoBroadcastJoinThreshold": 0,
+    "spark.sql.broadcastTimeout": 30 * 60,  # 30 minutes to do calculations that will be broadcasted
+    "spark.sql.catalogImplementation": "hive",
+    "spark.sql.files.maxPartitionBytes": 128 * _MB
 }
 
 
@@ -51,7 +53,7 @@ class Functionalizer(object):
     """ Functionalizer Session class
     """
 
-    circuit = None
+    _circuit = None
     """:property: ciruit containing neuron and touch data"""
 
     recipe = None
@@ -61,7 +63,7 @@ class Functionalizer(object):
     """:property: The :py:class:`~spykfunc.stats.NeuronStats` object for the current touch set"""
 
     # handler functions used in decorators
-    _assign_to_touchDF = utils.assign_to_property('touchDF')
+    _assign_to_circuit = utils.assign_to_property('circuit')
     _change_maxPartitionMB = lambda size: lambda: sm.conf.set(
         "spark.sql.files.maxPartitionBytes",
         size * _MB
@@ -133,7 +135,7 @@ class Functionalizer(object):
         touches_parquet_files_expr = _file0[:_file0.rfind(".")] + "Data.*.parquet"
         touch_files_parquet = glob(touches_parquet_files_expr)
         if touch_files_parquet:
-            touches = self._initial_touchDF = fdata.load_touch_parquet(touches_parquet_files_expr) \
+            touches = fdata.load_touch_parquet(touches_parquet_files_expr) \
                 .withColumnRenamed("pre_neuron_id", "src") \
                 .withColumnRenamed("post_neuron_id", "dst")
 
@@ -155,24 +157,24 @@ class Functionalizer(object):
             # self._touchDF = fdata.load_touch_bin(touch_files)
             raise ValueError("Invalid touch files. Please provide touches in parquet format.")
 
-        self.circuit = Circuit(fdata, touches, self.recipe)
-        self.neuron_stats.circuit = self.circuit
+        self._circuit = Circuit(fdata, touches, self.recipe)
+        self.neuron_stats.circuit = self._circuit
 
         # Data exporter
         self.exporter = NeuronExporter(output_path=self.output_dir)
 
     # ----
     @property
-    def touchDF(self):
+    def circuit(self):
         """
         :property: The current touch set Dataframe.
         NOTE that setting to this attribute will trigger updating the graph
         """
-        return self.circuit.touches
+        return self._circuit.dataframe
 
-    @touchDF.setter
-    def touchDF(self, touches):
-        self.circuit.touches = touches
+    @circuit.setter
+    def circuit(self, circuit):
+        self._circuit.dataframe = circuit
 
     # ----
     @property
@@ -181,24 +183,14 @@ class Functionalizer(object):
         :property: A :py:class:`~spykfunc._filtering.DataSetQ` object, offering a high-level query API on
         the current Neuron-Touch Graph
         """
-        neurons = self.circuit.neurons
-        touches = self.circuit.touches
-        def prefixed(pre):
-            tmp = neurons
-            for col in tmp.schema.names:
-                tmp = tmp.withColumnRenamed(col, pre if col == "id" else "{}_{}".format(pre, col))
-            return tmp
-
-        touches = touches.alias("t") \
-            .join(prefixed("src"), "src") \
-            .join(prefixed("dst"), "dst")
-        return _filtering.DataSetQ(touches)
+        return _filtering.DataSetQ(self._circuit.dataframe)
 
     # -------------------------------------------------------------------------
     # Main entry point of Filter Execution
     # -------------------------------------------------------------------------
-    @_assign_to_touchDF
+    @_assign_to_circuit
     @checkpoint_resume(CheckpointPhases.ALL_FILTERS.name,
+                       before_save_handler=Circuit.only_touch_columns,
                        before_load_handler=_change_maxPartitionMB(32))
     def process_filters(self, overwrite=False):
         """Runs all functionalizer filters in order, according to the classic functionalizer:
@@ -229,8 +221,8 @@ class Functionalizer(object):
                 self.filter_by_touch_rules()
             self.run_reduce_and_cut()
 
-        # Filter helpers write result to self.touchDF (@_assign_to_touchDF)
-        return self.touchDF
+        # Filter helpers write result to self._circuit (@_assign_to_circuit)
+        return self.circuit
 
     # -------------------------------------------------------------------------
     # Exporting results
@@ -272,13 +264,14 @@ class Functionalizer(object):
         logger.info("Data export complete")
         
     # --- 
-    @checkpoint_resume(CheckpointPhases.SYNAPSE_PROPS.name)
+    @checkpoint_resume(CheckpointPhases.SYNAPSE_PROPS.name,
+                       before_save_handler=Circuit.only_touch_columns)
     def _assign_synpse_properties(self, overwrite=False):
 
         # Calc syn props 
         self._ensure_data_loaded()
         extended_touches = synapse_properties.compute_additional_h5_fields(
-            self.circuit,
+            self._circuit,
             self.synapse_class_matrix,
             self.synapse_class_prop_df
         )
@@ -297,7 +290,7 @@ class Functionalizer(object):
     # Functions to create/apply filters for the current session
     # -------------------------------------------------------------------------
     @sm.assign_to_jobgroup
-    @_assign_to_touchDF
+    @_assign_to_circuit
     def filter_by_soma_axon_distance(self):
         """BLBLD-42: Creates a Soma-axon distance filter and applies it to the current touch set.
         """
@@ -307,8 +300,9 @@ class Functionalizer(object):
 
     # ----
     @sm.assign_to_jobgroup
-    @_assign_to_touchDF
-    @checkpoint_resume(CheckpointPhases.FILTER_TOUCH_RULES.name)
+    @_assign_to_circuit
+    @checkpoint_resume(CheckpointPhases.FILTER_TOUCH_RULES.name,
+                       before_save_handler=Circuit.only_touch_columns)
     def filter_by_touch_rules(self):
         """Creates a TouchRules filter according to recipe and applies it to the current touch set
         """
@@ -319,13 +313,13 @@ class Functionalizer(object):
 
     # ----
     @sm.assign_to_jobgroup
-    @_assign_to_touchDF
+    @_assign_to_circuit
     def run_reduce_and_cut(self):
         """Create and apply Reduce and Cut filter
         """
         self._ensure_data_loaded()
         # Index and distribute mtype rules across the cluster
-        mtype_conn_rules = self._build_concrete_mtype_conn_rules(self.recipe.conn_rules, self.circuit.morphology_types)
+        mtype_conn_rules = self._build_concrete_mtype_conn_rules(self.recipe.conn_rules, self._circuit.morphology_types)
 
         # cumulative_distance_f = filters.CumulativeDistanceFilter(distributed_conn_rules, self.neuron_stats)
         # self.touchDF = cumulative_distance_f.apply(self.circuit)
@@ -339,7 +333,7 @@ class Functionalizer(object):
     # -------------------------------------------------------------------------
     def _ensure_data_loaded(self):
         """ Ensures required data is available"""
-        if self.recipe is None or self.circuit is None:
+        if self.recipe is None or self._circuit is None:
             raise RuntimeError("No touches available. Please load data first.")
     
     # ---

@@ -11,14 +11,19 @@ import sparkmanager as sm
 # -----------------------------------------------
 def checkpoint_resume(name,
                       dest="_checkpoints",
-                      break_exec_plan=True, 
+                      break_exec_plan=True,
                       logger=get_logger("spykfunc.checkpoint"),
                       before_load_handler=None,
+                      before_save_handler=None,
                       post_resume_handler=None,
                       post_compute_handler=None,
                       bucket_cols=False,
-                      n_buckets=True,
-                      bucket_sorting=True):
+                      n_buckets=True):
+    """Checkpoint a table in the execution flow
+
+    :param before_save_handler: transformation to be applied to the
+                                dataframe before saving to disk
+    """
     table_path = osp.join(dest, name.lower())
     parquet_file_path = table_path + ".parquet"
     table_name = name.lower()
@@ -46,10 +51,11 @@ def checkpoint_resume(name,
                         return df
                     except Exception as e:
                         logger.warning("Could not load checkpoint from table. Reason: %s", str(e))
-            
+
             # Apply Tranformations
             df = f(*args, **kw)
-            
+            df_to_save = before_save_handler(df) if before_save_handler else df
+
             if bucket_cols:
                 logger.debug("Checkpointing to TABLE %s...", table_name)
                 # For the moment limited support exists, we need intermediate Hive tables
@@ -65,7 +71,7 @@ def checkpoint_resume(name,
                 else:
                     num_buckets = n_buckets
 
-                bucketed_jdf = (df
+                (df_to_save
                  .write.mode("overwrite").option("path", table_path)._jwrite
                  .bucketBy(num_buckets, col1, _to_seq(sm.sc, other_cols))
                  .sortBy(col1, _to_seq(sm.sc, other_cols))
@@ -73,7 +79,7 @@ def checkpoint_resume(name,
             else:
                 logger.debug("Checkpointing to PARQUET %s...", name.lower())
                 with sm.jobgroup("checkpointing {} to PARQUET".format(name.lower())):
-                    df.write.parquet(parquet_file_path, mode="overwrite")
+                    df_to_save.write.parquet(parquet_file_path, mode="overwrite")
 
             logger.debug("Checkpoint Finished")
 

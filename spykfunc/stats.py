@@ -82,13 +82,8 @@ class NeuronStats(object):
     def get_neurons_touch_counts(circuit):
         """ Counts the total touches between morphologies and neurons.
         """
-        neurons = circuit.neurons
-        touches = circuit.touches
-
         touches_with_pathway = (
-            touches.alias("t")
-            .join(neurons.alias("n1"), neurons.id == touches.src)
-            .join(neurons.alias("n2"), neurons.id == touches.dst)
+            circuit.dataframe
             .select(to_pathway_i("n1.morphology_i", "n2.morphology_i"),
                     col("t.src"),
                     col("t.dst"))
@@ -104,7 +99,7 @@ class NeuronStats(object):
             .agg(F.count("*").cast(IntegerType()).alias("count"))
         )
         return connections_counts
-        
+
 
     @staticmethod
     def get_pathway_touch_stats_from_touch_counts(neurons_touch_counts):
