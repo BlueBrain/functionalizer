@@ -1,6 +1,8 @@
 """Module for circuit related classes, functions
 """
 
+from pyspark.sql import functions as F
+
 
 class Circuit(object):
     """Reprensentation of a circuit
@@ -74,8 +76,8 @@ class Circuit(object):
                 tmp = tmp.withColumnRenamed(col, pre if col == "id" else "{}_{}".format(pre, col))
             return tmp
         self.__circuit = self._touches.alias("t") \
-                                      .join(prefixed("src"), "src") \
-                                      .join(prefixed("dst"), "dst")
+                                      .join(F.broadcast(prefixed("src")), "src") \
+                                      .join(F.broadcast(prefixed("dst")), "dst")
         return self.__circuit
 
     @dataframe.setter
