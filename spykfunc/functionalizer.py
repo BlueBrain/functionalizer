@@ -36,9 +36,10 @@ spark_config = {
     "spark.shuffle.compress": False,
     "spark.checkpoint.compress": True,
     "spark.jars": os.path.join(os.path.dirname(__file__), "data/spykfunc_udfs.jar"),
-    "spark.sql.files.maxPartitionBytes": 64 * _MB,
     "spark.sql.autoBroadcastJoinThreshold": 0,
-    "spark.sql.catalogImplementation": "hive"
+    "spark.sql.broadcastTimeout": 30 * 60,  # 30 minutes to do calculations that will be broadcasted
+    "spark.sql.catalogImplementation": "hive",
+    "spark.sql.files.maxPartitionBytes": 64 * _MB
 }
 
 
