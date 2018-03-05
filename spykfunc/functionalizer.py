@@ -88,8 +88,10 @@ class Functionalizer(object):
                  .config("spark.checkpoint.compress", True)
                  .config("spark.jars", os.path.join(os.path.dirname(__file__), "data/spykfunc_udfs.jar"))
                  .config("spark.jars.packages", "graphframes:graphframes:0.5.0-spark2.1-s_2.11")
-                 .config("spark.sql.files.maxPartitionBytes", 64*_MB)
-                 .config("spark.sql.autoBroadcastJoinThreshold", 512*_MB)
+                 .config("spark.sql.files.maxPartitionBytes", 128*_MB)
+                 .config("spark.sql.autoBroadcastJoinThreshold", 1024*_MB)
+                 .config("spark.sql.broadcastTimeout", 1200) # 20min
+                 .config("spark.driver.maxResultSize", "2G")
                  .getOrCreate())
 
         try:
@@ -341,8 +343,7 @@ class Functionalizer(object):
 
     # ----
     @_assign_to_touchDF
-    @checkpoint_resume(CheckpointPhases.FILTER_TOUCH_RULES.name,
-                       before_load_handler=_change_maxPartitionMB(32))
+    @checkpoint_resume(CheckpointPhases.FILTER_TOUCH_RULES.name)
     def filter_by_touch_rules(self):
         """Creates a TouchRules filter according to recipe and applies it to the current touch set
         """
@@ -426,7 +427,7 @@ def session(options):
     Helper function to create a functionalizer session given an options object
 
     :param options: An object containing the required option attributes, as built \
-    by the arg parser: :py:data:`commands.arg_parser`.
+                    by the arg parser: :py:data:`commands.arg_parser`.
     """
     fzer = Functionalizer(options.s2s, options.spark_opts)
     if options.output_dir:

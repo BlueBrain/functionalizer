@@ -17,8 +17,9 @@ def checkpoint_resume(name,
                       before_load_handler=None,
                       post_resume_handler=None,
                       post_compute_handler=None,
+                      bucket_cols=False,
                       n_buckets=True,
-                      bucket_cols=False):
+                      bucket_sorting=True):
     table_path = osp.join(dest, name.lower())
     parquet_file_path = table_path + ".parquet"
     table_name = name.lower()
@@ -29,6 +30,7 @@ def checkpoint_resume(name,
             if spark is None:
                 spark = SparkSession.builder.getOrCreate()
 
+            # Attempt loading from checkpoint
             if not kw.pop("overwrite", False):
                 if osp.exists(parquet_file_path):
                     logger.info("[SKIP %s] Checkpoint found. Restoring state...", name)
@@ -41,7 +43,7 @@ def checkpoint_resume(name,
                     except Exception as e:
                         logger.warning("Could not load checkpoint. Reason: %s", str(e))
 
-                # Attepting from table
+                # Attempting from table
                 if bucket_cols and osp.isdir(table_path):
                     try:
                         df = spark.read.table(table_name)
@@ -69,11 +71,14 @@ def checkpoint_resume(name,
                 else:
                     num_buckets = n_buckets
 
-                (df
+                bucketed_jdf = (df
                  .write.mode("overwrite").option("path", table_path)._jwrite
                  .bucketBy(num_buckets, col1, _to_seq(spark._sc, other_cols))
-                 .sortBy(col1, _to_seq(spark._sc, other_cols))
-                 .saveAsTable(table_name))
+                )
+                if bucket_sorting:
+                    bucketed_jdf.sortBy(col1, _to_seq(spark._sc, other_cols)).saveAsTable(table_name)
+                else:
+                    bucketed_jdf.saveAsTable(table_name)
             else:
                 logger.debug("Checkpointing to PARQUET %s...", name.lower())
                 df.write.parquet(parquet_file_path, mode="overwrite")
@@ -94,3 +99,10 @@ def checkpoint_resume(name,
 
         return update_wrapper(new_f, f)
     return decorator
+
+
+def reduce_number_shuffle_partitions(df, factor, min_=100, max_=1000):
+    cur_n_parts = df.rdd.getNumPartitions()
+    cur_n_parts = ((cur_n_parts-1) // 100 + 1) * 100  # Avoid strange numbers
+    return df.coalesce(max(min_, min(max_, cur_n_parts//factor)))
+

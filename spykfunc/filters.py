@@ -2,7 +2,7 @@ from __future__ import division
 import os
 import sys
 from pyspark.sql import functions as F
-# from pyspark.sql import types as T
+from pyspark.sql import types as T
 # from pyspark import StorageLevel
 from .definitions import CellClass, CheckpointPhases
 from .schema import to_pathway_i, pathway_i_to_str, touches_with_pathway
@@ -170,7 +170,7 @@ class ReduceAndCut(DataSetOperation):
             reduced_touches
             .groupBy("src", "dst")
             .agg(F.first("pathway_i").alias("pathway_i"),
-                 F.count("src").alias("reduced_touch_counts_connection"))
+                 F.count("src").cast(T.IntegerType()).alias("reduced_touch_counts_connection"))
         )
 
         # Make this computation resumable.
@@ -195,6 +195,8 @@ class ReduceAndCut(DataSetOperation):
 
         # cut_touch_counts_connection is only an exec plan (no actions within)
         # We can use checkpoint_resume on it
+        # Bucketing is to be done by pathway, to optimize subsequent queries. Bucket count should
+        # still be optimal since pathway is directly dependent on src-dst ids
         f = checkpoint_resume("cut_conn_counts", bucket_cols=("src", "dst")) (
             lambda: cut_touch_counts_connection
         )
@@ -262,7 +264,8 @@ class ReduceAndCut(DataSetOperation):
 
     # ---
     @staticmethod
-    @checkpoint_resume(CheckpointPhases.FILTER_REDUCED_TOUCHES.name)
+    @checkpoint_resume(CheckpointPhases.FILTER_REDUCED_TOUCHES.name,
+                       bucket_cols=("src", "dst"))
     def apply_reduce(all_touches, params_df):
         """ Applying reduce as a sampling
         """
@@ -272,7 +275,7 @@ class ReduceAndCut(DataSetOperation):
         fractions = params_df.select("pathway_i", "pP_A").rdd.collectAsMap()
 
         logger.debug(" -> Cutting touches")
-        return all_touches.sampleBy("pathway_i", fractions)
+        return all_touches.sampleBy("pathway_i", fractions).repartition("src", "dst")
 
     # ---
     # Note: apply_cut is not checkpointed since it 
@@ -324,6 +327,8 @@ class ReduceAndCut(DataSetOperation):
                        .join(shall_cut, ["src", "dst"], how="left_anti"))
 
         # Calc cut_touch_counts_connection
+        # Since we cut full connections, it is enough to exclude them from the counts
+        # This shall not shuffle since both DF are bucketed&sorted by src-dst
         cut_touch_counts_connection = (reduced_touch_counts_connection
                                        .join(shall_cut, ["src", "dst"], how="left_anti"))
 
@@ -364,11 +369,17 @@ class ReduceAndCut(DataSetOperation):
                 )
             )
             .select("pathway_i", "active_fraction")
+            .coalesce(cut_touch_counts_connection.rdd.getNumPartitions()//4 or 1)
+            .cache()
         )
+        
+        # This is a minimal DS so we cache and broadcast in single partition
+        active_fractions.count()
+        active_fractions = F.broadcast(active_fractions.coalesce(1))
 
         shall_cut2 = (
             cut_touch_counts_connection
-            .join(F.broadcast(active_fractions), "pathway_i")
+            .join(active_fractions, "pathway_i")
             .where(F.rand() >= F.col("active_fraction"))
             # Pathway_i is kept in order to make a join with the same keys as the partitioning
             .select("src", "dst")
