@@ -53,30 +53,20 @@ class classproperty(property):
 # -----------------------------------------------
 # Func utils
 # -----------------------------------------------
-def assign_to_property(prop_name):
+def assign_to_property(prop_name, use_as_cache=False):
     def decorator(f):
         "Convenience docorator to assign results to a property of the instance"
         def newf(self, *args, **kw):
+            if use_as_cache:
+                val = getattr(self, prop_name)
+                if val is not None:
+                    return val
             val = f(self, *args, **kw)
             setattr(self, prop_name, val)
             return val
         return update_wrapper(newf, f)
     return decorator
     
-
-def cache_to_property(prop_name):
-    def decorator(f):
-        "Convenience docorator to assign results to a property of the instance"
-        def newf(self, *args, **kw):
-            val = getattr(self, prop_name)
-            if val is not None:
-                return val
-            val = f(self, *args, **kw)
-            setattr(self, prop_name, val)
-            return val
-        return newf
-    return decorator
-        
     
 # -----------------------------------------------
 # UI utils

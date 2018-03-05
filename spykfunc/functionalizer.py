@@ -308,8 +308,7 @@ class Functionalizer(object):
     # ----
     @sm.assign_to_jobgroup
     @_assign_to_touchDF
-    @checkpoint_resume(CheckpointPhases.FILTER_TOUCH_RULES.name,
-                       before_load_handler=_change_maxPartitionMB(32))
+    @checkpoint_resume(CheckpointPhases.FILTER_TOUCH_RULES.name)
     def filter_by_touch_rules(self):
         """Creates a TouchRules filter according to recipe and applies it to the current touch set
         """
@@ -394,7 +393,7 @@ def session(options):
     Helper function to create a functionalizer session given an options object
 
     :param options: An object containing the required option attributes, as built \
-    by the arg parser: :py:data:`commands.arg_parser`.
+                    by the arg parser: :py:data:`commands.arg_parser`.
     """
     fzer = Functionalizer(options.s2s, options.spark_opts)
     if options.output_dir:

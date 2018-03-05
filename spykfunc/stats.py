@@ -1,7 +1,9 @@
 from pyspark.sql import functions as F
+from pyspark.sql.types import IntegerType
 from pyspark.sql.functions import col
 from .schema import to_pathway_i
-from .utils import cache_to_property
+from .utils import assign_to_property
+from .utils.spark import reduce_number_shuffle_partitions
 
 class NeuronStats(object):
     """
@@ -47,20 +49,23 @@ class NeuronStats(object):
         self._neurons_touch_counts = None
         self._pathway_touches_conns = None
 
+    # Some of the following properties/methods assign the QueryPlan (DF not cached) to a property
+    # so that further calls to the same query may reuse shuffles
+    # ---
     @property
-    @cache_to_property("_total_neurons")
+    @assign_to_property("_total_neurons", use_as_cache=True)
     def total_neurons(self):
         """The total neuron count in the circuit"""
         return self._circuit.neurons.count()
 
     @property
-    @cache_to_property("_total_touches")
+    @assign_to_property("_total_touches", True)
     def total_touches(self):
         """The total touch count in the circuit"""
         return self._circuit.touches.count()
 
     @property
-    @cache_to_property("_neurons_touch_counts")
+    @assign_to_property("_neurons_touch_counts", True)
     def neurons_touch_counts(self):
         """Lazily calculate neurons_touch_counts
         """
@@ -69,10 +74,9 @@ class NeuronStats(object):
         return self.get_neurons_touch_counts(self._circuit)
 
     @property
-    @cache_to_property("_pathway_touches_conns")
+    @assign_to_property("_pathway_touches_conns", True)
     def pathway_touch_stats(self):
-        # We better not cache yet, as there may be further calculations/cache
-        return self.get_pathway_touch_stats_from_touch_counts(self.neurons_touch_counts)
+        return self.get_pathway_touch_stats_from_touch_counts(self.neurons_touch_counts)    
 
     @staticmethod
     def get_neurons_touch_counts(circuit):
@@ -81,18 +85,26 @@ class NeuronStats(object):
         neurons = circuit.neurons
         touches = circuit.touches
 
-        return (
+        touches_with_pathway = (
             touches.alias("t")
             .join(neurons.alias("n1"), neurons.id == touches.src)
             .join(neurons.alias("n2"), neurons.id == touches.dst)
-            .select(
-                to_pathway_i("n1.morphology_i", "n2.morphology_i"),
-                col("t.src"),
-                col("t.dst")
-            )
-            .groupBy("pathway_i", "src", "dst")
-            .count()
+            .select(to_pathway_i("n1.morphology_i", "n2.morphology_i"),
+                    col("t.src"),
+                    col("t.dst"))
         )
+        return NeuronStats.get_connections_counts_from_touches_with_pathway(touches_with_pathway)
+
+
+    @staticmethod
+    def get_connections_counts_from_touches_with_pathway(touches):
+        connections_counts = (
+            touches
+            .groupBy("pathway_i", "src", "dst")
+            .agg(F.count("*").cast(IntegerType()).alias("count"))
+        )
+        return connections_counts
+        
 
     @staticmethod
     def get_pathway_touch_stats_from_touch_counts(neurons_touch_counts):
@@ -105,23 +117,20 @@ class NeuronStats(object):
                 F.sum("count").alias("total_touches"),
                 F.count("pathway_i").alias("total_connections")
             )
+            .withColumn(
+                "average_touches_conn",
+                F.col("total_touches") / "total_connections"
+            )
         )
 
-        return (
-            pathway_touches_conns.withColumn(
-                "average_touches_conn",
-                pathway_touches_conns.total_touches / pathway_touches_conns.total_connections
-            )
-            # The resulting DF is very small (pathway^2~> 10K to 1M)
-            # Anyway the suffle read can be ~ 1/10 size of touches
-            .coalesce(pathway_touches_conns.rdd.getNumPartitions()//4)
-        )
+        return reduce_number_shuffle_partitions(pathway_touches_conns, 16, 4, 128)
+
 
     @staticmethod
-    def get_pathway_touch_stats_from_touches_with_pathway(touches_with_pathway):
+    def get_pathway_touch_stats_from_touches_with_pathway(touches):
         """For every pathway (src-dst mtype) calc the number of touches, connections, and the mean (touches/connection)    
         """
-        neurons_touch_counts = touches_with_pathway.groupBy("pathway_i", "src", "dst").count()
+        neurons_touch_counts = NeuronStats.get_connections_counts_from_touches_with_pathway(touches)
         return NeuronStats.get_pathway_touch_stats_from_touch_counts(neurons_touch_counts)
 
     
