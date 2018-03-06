@@ -166,15 +166,24 @@ class Functionalizer(object):
     # ----
     @property
     def circuit(self):
-        """
-        :property: The current touch set Dataframe.
-        NOTE that setting to this attribute will trigger updating the graph
+        """:property: The current touch set with neuron data as Dataframe.
+
+        .. note::
+
+           Setting the circuit with touch-data only will trigger a join the
+           next time the circuit is accessed.
         """
         return self._circuit.dataframe
 
     @circuit.setter
     def circuit(self, circuit):
         self._circuit.dataframe = circuit
+
+    @property
+    def touches(self):
+        """:property: The current touch set without additional neuron data as Dataframe.
+        """
+        return self._circuit.touches
 
     # ----
     @property
@@ -222,7 +231,7 @@ class Functionalizer(object):
             self.run_reduce_and_cut()
 
         # Filter helpers write result to self._circuit (@_assign_to_circuit)
-        return self.circuit
+        return self.touches
 
     # -------------------------------------------------------------------------
     # Exporting results
