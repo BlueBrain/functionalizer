@@ -1,4 +1,5 @@
 from os import path as osp
+from contextlib import contextmanager
 from functools import update_wrapper
 from pyspark.sql import SparkSession
 from pyspark.sql.column import _to_seq
@@ -101,8 +102,11 @@ def checkpoint_resume(name,
     return decorator
 
 
-def reduce_number_shuffle_partitions(df, factor, min_=100, max_=1000):
-    cur_n_parts = df.rdd.getNumPartitions()
-    cur_n_parts = ((cur_n_parts-1) // 100 + 1) * 100  # Avoid strange numbers
-    return df.coalesce(max(min_, min(max_, cur_n_parts//factor)))
+@contextmanager
+def number_shuffle_partitions(np):
+    spark = SparkSession.builder.getOrCreate()
+    previous_np = int(spark.conf.get("spark.sql.shuffle.partitions"))
+    spark.conf.set("spark.sql.shuffle.partitions", np)
+    yield
+    spark.conf.set("spark.sql.shuffle.partitions", previous_np)
 

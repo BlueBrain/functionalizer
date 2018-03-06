@@ -3,7 +3,7 @@ from pyspark.sql.types import IntegerType
 from pyspark.sql.functions import col
 from .schema import to_pathway_i
 from .utils import assign_to_property
-from .utils.spark import reduce_number_shuffle_partitions
+
 
 class NeuronStats(object):
     """
@@ -109,19 +109,17 @@ class NeuronStats(object):
         """For every pathway (src-dst mtype) calc the number of touches, connections, and the mean (touches/connection)
         """
         # Group by pathway
-        pathway_touches_conns = (
+        return (
             neurons_touch_counts
             .groupBy("pathway_i").agg(
                 F.sum("count").alias("total_touches"),
-                F.count("pathway_i").alias("total_connections")
+                F.count("*").alias("total_connections")
             )
             .withColumn(
                 "average_touches_conn",
-                F.col("total_touches") / "total_connections"
+                F.col("total_touches") / F.col("total_connections")
             )
         )
-
-        return reduce_number_shuffle_partitions(pathway_touches_conns, 16, 4, 128)
 
 
     @staticmethod

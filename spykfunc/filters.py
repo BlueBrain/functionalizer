@@ -8,7 +8,7 @@ from .definitions import CellClass, CheckpointPhases
 from .schema import to_pathway_i, pathway_i_to_str, touches_with_pathway
 from ._filtering import DataSetOperation
 from .utils import get_logger
-from .utils.spark import checkpoint_resume
+from .utils.spark import checkpoint_resume, number_shuffle_partitions
 from .filter_udfs import reduce_cut_parameter_udef
 
 logger = get_logger(__name__)
@@ -347,31 +347,31 @@ class ReduceAndCut(DataSetOperation):
                (built previously in an optimized way)
         :return: The final cut touches
         """
-        active_fractions = (
-            cut_touch_counts_connection
-            .groupBy("pathway_i")
-            .agg(F.sum("reduced_touch_counts_connection").alias("cut_touch_counts_pathway"))
-            .join(params_df, "pathway_i")
-            .withColumn("actual_reduction_factor",
-                F.col("cut_touch_counts_pathway") / F.col("total_touches")
-            )
-            .withColumn("active_fraction",
-                F.when(F.col("bouton_reduction_factor").isNull(),
-                       F.col("active_fraction_legacy")
-                       )
-                .otherwise(
-                    F.when(F.col("bouton_reduction_factor") > F.col("actual_reduction_factor"),
-                           F.lit(1.0)
+        with number_shuffle_partitions(max(active_fractions.rdd.getNumberPartitions() // 10, 100)):
+            active_fractions = (
+                cut_touch_counts_connection
+                .groupBy("pathway_i")
+                .agg(F.sum("reduced_touch_counts_connection").alias("cut_touch_counts_pathway"))
+                .join(params_df, "pathway_i")
+                .withColumn("actual_reduction_factor",
+                    F.col("cut_touch_counts_pathway") / F.col("total_touches")
+                )
+                .withColumn("active_fraction",
+                    F.when(F.col("bouton_reduction_factor").isNull(),
+                           F.col("active_fraction_legacy")
                            )
                     .otherwise(
-                        F.col("bouton_reduction_factor") / F.col("actual_reduction_factor")
+                        F.when(F.col("bouton_reduction_factor") > F.col("actual_reduction_factor"),
+                               F.lit(1.0)
+                               )
+                        .otherwise(
+                            F.col("bouton_reduction_factor") / F.col("actual_reduction_factor")
+                        )
                     )
                 )
+                .select("pathway_i", "active_fraction")
+                .cache()
             )
-            .select("pathway_i", "active_fraction")
-            .coalesce(cut_touch_counts_connection.rdd.getNumPartitions()//4 or 1)
-            .cache()
-        )
         
         # This is a minimal DS so we cache and broadcast in single partition
         active_fractions.count()
