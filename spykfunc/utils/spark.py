@@ -59,24 +59,25 @@ def checkpoint_resume(name,
 
             if bucket_cols:
                 logger.debug("Checkpointing to TABLE %s...", table_name)
-                # For the moment limited support exists, we need intermediate Hive tables
-                if isinstance(bucket_cols, (tuple, list)):
-                    col1 = bucket_cols[0]
-                    other_cols = bucket_cols[1:]
-                else:
-                    col1 = bucket_cols
-                    other_cols = []
+                with sm.jobgroup("checkpointing {} to TABLE".format(table_name)):
+                    # For the moment limited support exists, we need intermediate Hive tables
+                    if isinstance(bucket_cols, (tuple, list)):
+                        col1 = bucket_cols[0]
+                        other_cols = bucket_cols[1:]
+                    else:
+                        col1 = bucket_cols
+                        other_cols = []
 
-                if n_buckets is True:
-                    num_buckets = df.rdd.getNumPartitions()
-                else:
-                    num_buckets = n_buckets
+                    if n_buckets is True:
+                        num_buckets = df.rdd.getNumPartitions()
+                    else:
+                        num_buckets = n_buckets
 
-                (df_to_save
-                 .write.mode("overwrite").option("path", table_path)._jwrite
-                 .bucketBy(num_buckets, col1, _to_seq(sm.sc, other_cols))
-                 .sortBy(col1, _to_seq(sm.sc, other_cols))
-                 .saveAsTable(table_name))
+                    (df_to_save
+                     .write.mode("overwrite").option("path", table_path)._jwrite
+                     .bucketBy(num_buckets, col1, _to_seq(sm.sc, other_cols))
+                     .sortBy(col1, _to_seq(sm.sc, other_cols))
+                     .saveAsTable(table_name))
             else:
                 logger.debug("Checkpointing to PARQUET %s...", name.lower())
                 with sm.jobgroup("checkpointing {} to PARQUET".format(name.lower())):
