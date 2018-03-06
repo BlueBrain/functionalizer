@@ -145,6 +145,19 @@ class Functionalizer(object):
         all_touch_files = glob(touch_files)
         if not all_touch_files:
             logger.critical("Invalid touch file path")
+            
+        touches_parquet_files_expr = touch_files
+        
+        if len(all_touch_files) == 1:
+            # Most probably the user gave the first, we will find the others
+            _file0 = all_touch_files[0]
+            basename = _file0[:-len(".parquet")]
+            index_pos = basename.rfind(".") + 1
+            if index_pos > 0:
+                touches_parquet_files_expr = basename[:index_pos] + "*.parquet"
+                all_touch_files = glob(touches_parquet_files_expr)
+                if not all_touch_files:
+                    raise ValueError("Invalid touch files. Please provide touches in parquet format.")
 
         # Load Neurons data
         fdata = NeuronDataSpark(MVD_Morpho_Loader(mvd_file, morpho_dir), spark)
@@ -166,33 +179,27 @@ class Functionalizer(object):
         self.neuronDF = fdata.neuronDF
         self.morphologies = fdata.morphologyRDD
 
-        # 'Load' touches, from parquet if possible
-        _file0 = all_touch_files[0]
-        touches_parquet_files_expr = _file0[:_file0.rfind(".")] + "Data.*.parquet"
-        touch_files_parquet = glob(touches_parquet_files_expr)
-        if touch_files_parquet:
-            self._touchDF = self._initial_touchDF = fdata.load_touch_parquet(touches_parquet_files_expr) \
-                .withColumnRenamed("pre_neuron_id", "src") \
-                .withColumnRenamed("post_neuron_id", "dst")
+        # 'Load' touches
+        self._touchDF = self._initial_touchDF = fdata.load_touch_parquet(touches_parquet_files_expr) \
+            .withColumnRenamed("pre_neuron_id", "src") \
+            .withColumnRenamed("post_neuron_id", "dst")
                 
-            # I dont know whats up with Spark but sometimes when shuffle partitions is not 200
-            # we have problems. We try to mitigate using multiples of 200
-            touch_partitions = self._touchDF.rdd.getNumPartitions()
-            if touch_partitions >= 400:
-                # Grow suffle partitions with size of touches DF
-                # TODO: In generic cases we dont shuffle all the fields, so we could reduce this by a factor of 2
-                #       However we need to make sure that operations that keep or grow the partition size must be 
-                #       explicitly controlled and the easiest way is still coalesce
-                spark.conf.set("spark.sql.shuffle.partitions",
-                               touch_partitions // 200 * 200)
-            elif touch_partitions <= 16:
-                # Optimize execution of very small jobs
-                spark.conf.set("spark.sql.shuffle.partitions", 16)
-            
-        else:
-            # self._touchDF = fdata.load_touch_bin(touch_files)
-            raise ValueError("Invalid touch files. Please provide touches in parquet format.")
+        # Grow suffle partitions with size of touches DF
+        # In generic cases we dont shuffle all the fields, so we reduce this by a factor of 2
+        # Min: 100 reducers
+        # NOTE: According to some tests we need to cap the amount of reducers to 4000 per node
+        #       otherwise performance is really bad. However it is difficult to create a generic 
+        #       rule that translates this and an optimal number of reducers really depends on the 
+        #       reduction being done. We leave this tunning to each reducing operation using coalesce
+        #       So here we define the highest default, which is the same number of partitions rounded
+        # NOTE: Some problems during shuffle happen with many partitions if shuffle compression is enabled!
 
+        touch_partitions = self._touchDF.rdd.getNumPartitions()
+        shuffle_partitions = ((touch_partitions-1) // 100 + 1) * 100
+        if touch_partitions <= 100:
+            shuffle_partitions = 100
+        spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions)
+        
         # Create graphFrame and set it as stats source without recalculating
         self.neuronG = GraphFrame(self.neuronDF, self._touchDF)  # Rebuild graph
         self.neuron_stats.touch_graph = self.neuronG
