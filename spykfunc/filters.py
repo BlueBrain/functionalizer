@@ -341,7 +341,7 @@ class ReduceAndCut(DataSetOperation):
                (built previously in an optimized way)
         :return: The final cut touches
         """
-        with number_shuffle_partitions(max(active_fractions.rdd.getNumberPartitions() // 10, 100)):
+        with number_shuffle_partitions(max(cut_touch_counts_connection.rdd.getNumPartitions() // 10, 100)):
             active_fractions = (
                 cut_touch_counts_connection
                 .groupBy("pathway_i")
