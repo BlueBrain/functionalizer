@@ -123,8 +123,7 @@ class ReduceAndCut(DataSetOperation):
 
     # ---
     def apply(self, circuit, *args, **kw):
-        # TODO: Mayber we can drop some fields, e.g.: src/dst_morphology_i
-        full_touches = touches_with_pathway(circuit)
+        full_touches = Circuit.only_touch_columns(touches_with_pathway(circuit))
 
         # Get and broadcast Pathway stats
         # NOTE we cache and count to force evaluation in N tasks, while sorting in a single task
@@ -379,6 +378,11 @@ class ReduceAndCut(DataSetOperation):
             # Pathway_i is kept in order to make a join with the same keys as the partitioning
             .select("src", "dst")
         )
+
+        f = checkpoint_resume("shall_cut2", bucket_cols=("src", "dst"))(
+            lambda: shall_cut2
+        )
+        shall_cut2 = f()
 
         if _DEBUG and _DEBUG_CUT2AF:
             active_fractions = pathway_i_to_str(active_fractions, kw["mtypes"])
