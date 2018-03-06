@@ -33,7 +33,7 @@ def reduce_cut_parameter_udef(conn_rules_map, debug=False):
         nil = (1.0, None, None, None, _debug)  # On error don't cut
 
         # If there are no connections for a pathway (mean=0), cannot compute valid numbers
-        if not structuralMean:
+        if structuralMean == 0:
             return nil
 
         # conn_rules_map is optimized as a Broadcast variable
