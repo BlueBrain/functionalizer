@@ -104,9 +104,7 @@ def checkpoint_resume(name,
 
 @contextmanager
 def number_shuffle_partitions(np):
-    spark = SparkSession.builder.getOrCreate()
-    previous_np = int(spark.conf.get("spark.sql.shuffle.partitions"))
-    spark.conf.set("spark.sql.shuffle.partitions", np)
+    previous_np = int(sm.conf.get("spark.sql.shuffle.partitions"))
+    sm.conf.set("spark.sql.shuffle.partitions", np)
     yield
-    spark.conf.set("spark.sql.shuffle.partitions", previous_np)
-
+    sm.conf.set("spark.sql.shuffle.partitions", previous_np)
