@@ -216,13 +216,11 @@ class NeuronDataSpark(NeuronData):
         # These are small DF, we coalesce to 1 so the sort doesnt require shuffle
         prop_df = prop_df.coalesce(1).sort("type")
         class_df = class_df.coalesce(1).sort("id")
-        merged_props = F.broadcast(
-            prop_df.join(class_df, prop_df.type == class_df.id, "left").cache()
-        )
-
+        merged_props = prop_df.join(class_df, prop_df.type == class_df.id, "left").cache()
         n_syn_prop = merged_props.count()
         logger.info("Found {} synpse property entries".format(n_syn_prop))
 
+        merged_props = F.broadcast(merged_props.checkpoint())
         return merged_props
 
     # ---
