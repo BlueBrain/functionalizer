@@ -8,19 +8,6 @@ from pyspark import SparkContext
 
 # -----
 def compute_additional_h5_fields(circuit, syn_class_matrix, syn_props_df):
-    neurons = circuit.neurons
-    touches = circuit.touches
-
-    def prefixed(pre):
-        tmp = neurons
-        for col in tmp.schema.names:
-            tmp = tmp.withColumnRenamed(col, pre if col == "id" else "{}_{}".format(pre, col))
-        return tmp
-
-    touches = touches.alias("t") \
-        .join(prefixed("src"), "src") \
-        .join(prefixed("dst"), "dst")
-
     syn_class_dims = syn_class_matrix.shape  # tuple of len 6
 
     index_length = list(syn_class_dims)
@@ -28,13 +15,13 @@ def compute_additional_h5_fields(circuit, syn_class_matrix, syn_props_df):
         index_length[i] *= index_length[i + 1]
 
     # Compute the index for the matrix as in a flat array
-    touches = touches.withColumn("syn_prop_index",
-                                 touches.src_morphology_i * index_length[1] +
-                                 touches.src_electrophysiology * index_length[2] +
-                                 touches.src_syn_class_index * index_length[3] +
-                                 touches.dst_morphology_i * index_length[4] +
-                                 touches.dst_electrophysiology * index_length[5] +
-                                 touches.dst_syn_class_index)
+    touches = circuit.withColumn("syn_prop_index",
+                                 circuit.src_morphology_i * index_length[1] +
+                                 circuit.src_electrophysiology * index_length[2] +
+                                 circuit.src_syn_class_index * index_length[3] +
+                                 circuit.dst_morphology_i * index_length[4] +
+                                 circuit.dst_electrophysiology * index_length[5] +
+                                 circuit.dst_syn_class_index)
 
     # Get the rule index from the numpy matrix
     # According to benchmarks in pyspark, applying to_syn_prop_i (py) with 1000 N (2M touches) split by three cores

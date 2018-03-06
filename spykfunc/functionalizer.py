@@ -271,7 +271,7 @@ class Functionalizer(object):
         # Calc syn props 
         self._ensure_data_loaded()
         extended_touches = synapse_properties.compute_additional_h5_fields(
-            self._circuit,
+            self.circuit,
             self.synapse_class_matrix,
             self.synapse_class_prop_df
         )
