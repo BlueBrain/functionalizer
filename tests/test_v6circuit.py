@@ -6,7 +6,7 @@ args = (
     path.join(BASE_DIR, "builderRecipeAllPathways.xml"),  # recipe_file
     path.join(BASE_DIR, "circuit.mvd3"),                         # mvd_file
     BASE_DIR,                                                    # morpho_dir
-    path.join(BASE_DIR, "touches/touches.0")                     # first touch files
+    path.join(BASE_DIR, "touches/touchesData.*.parquet")         # touch files
 )
 
 if __name__ == "__main__":

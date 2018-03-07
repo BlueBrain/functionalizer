@@ -8,7 +8,7 @@ CIRCUIT_DIR = path.join(path.dirname(__file__), "../tests/circuit_1000n")
 args = (
     path.join(CIRCUIT_DIR, "builderRecipeAllPathways.xml"),  # recipe_file
     path.join(CIRCUIT_DIR, "circuit.mvd3"),                  # mvd_file
-    path.join(CIRCUIT_DIR, "touches/touches.0"),             # first touch
+    path.join(CIRCUIT_DIR, "touches/touchesData.*.parquet"), # touch files
     "--master spark://localhost:7077 --executor-memory 2G"
 )
 
