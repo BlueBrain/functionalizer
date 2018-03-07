@@ -40,7 +40,7 @@ Start by initializing a functionalizer session. This helper creates the Function
    >>> fz = spykfunc.session(
    ...    "tests/circuit_1000n/builderRecipeAllPathways.xml",
    ...    "tests/circuit_1000n/circuit.mvd3",
-   ...    "tests/circuit_1000n/touches/touches.0")
+   ...    "tests/circuit_1000n/touches/touchesData.*.parquet")
    [INFO] spykfunc.data_loader: Loading global Neuron data...
    [INFO] spykfunc.data_loader: Loading parquets...
 
@@ -66,11 +66,8 @@ To check the current filtered touches:
 .. code-block:: python
 
    >>> # Inspect the touches, or the graph
-   >>> fz.touchDF
+   >>> fz.circuit
    DataFrame[src: int, dst: int, pre_section: smallint, pre_segment: smallint, post_section: ...]
-
-   >>> fz.neuronG
-   GraphFrame(v:[id: int, morphology_i: int ... 7 more fields], e:[src: int, dst: int ... 8 more fields])
 
    >>> fz.neuron_stats
    <spykfunc.stats.NeuronStats at 0x451d890>

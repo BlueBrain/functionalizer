@@ -38,3 +38,22 @@ Procedure for building:
    virtualenv testenv
    . testenv/bin/activate
    pip install --process-dependency-links .
+
+
+Usage
+-----
+
+To run the functionalizer over all touches in a directory, use one of the
+two forms below:
+
+.. code:: shell
+
+   spykfunc --no-hdf5 builderRecipeAllPathways.xml circuit.mvd3 morphologies touches/*.parquet
+   spykfunc --no-hdf5 builderRecipeAllPathways.xml circuit.mvd3 morphologies "touches/*.parquet"
+
+Or run on only one or several files with:
+
+.. code:: shell
+
+   spykfunc --no-hdf5 builderRecipeAllPathways.xml circuit.mvd3 morphologies touches/touchesData.0.parquet
+   spykfunc --no-hdf5 builderRecipeAllPathways.xml circuit.mvd3 morphologies touches/touchesData.{0,1,2}.parquet
