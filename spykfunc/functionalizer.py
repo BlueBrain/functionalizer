@@ -24,7 +24,7 @@ from . import _filtering
 from . import filters
 from . import schema
 from . import utils
-from .utils.spark import checkpoint_resume
+from .utils.spark import defaults as checkpoint_defaults, checkpoint_resume
 from . import synapse_properties
 
 __all__ = ["Functionalizer", "session", "CheckpointPhases", "ExtendedCheckpointAvail"]
@@ -70,13 +70,18 @@ class Functionalizer(object):
     )
 
     # ==========
-    def __init__(self, only_s2s=False, format_hdf5=False, spark_opts=None):
+    def __init__(self, only_s2s=False, format_hdf5=False, spark_opts=None, checkpoints="_checkpoints", output="spykfunc_output"):
         # Create Spark session with the static config
         sm.create("Functionalizer", spark_config, spark_opts)
 
+        self.__checkpoints = checkpoints
+        self.__output = output
+
+        checkpoint_defaults.directory = self.__checkpoints
+
         # Configuring Spark runtime
         sm.setLogLevel("WARN")
-        sm.setCheckpointDir("_checkpoints/tmp")
+        sm.setCheckpointDir(os.path.join(self.__checkpoints, "tmp"))
         sm._jsc.hadoopConfiguration().setInt("parquet.block.size", 32 * _MB)
         sqlContext = SQLContext.getOrCreate(sm.sc)
         sqlContext.registerJavaFunction("gauss_rand", "spykfunc.udfs.GaussRand")
@@ -85,7 +90,6 @@ class Functionalizer(object):
 
         self._run_s2f = not only_s2s
         self._format_hdf5 = format_hdf5
-        self.output_dir = "spykfunc_output"
         self.neuron_stats = NeuronStats()
 
         if only_s2s:
@@ -105,8 +109,8 @@ class Functionalizer(object):
         """
         # In "program" mode this dir wont change later, so we can check here
         # for its existence/permission to create
-        os.path.isdir(self.output_dir) or os.makedirs(self.output_dir)
-        os.path.isdir("_checkpoints") or os.makedirs("_checkpoints")
+        os.path.isdir(self.__output) or os.makedirs(self.__output)
+        os.path.isdir(self.__checkpoints) or os.makedirs(self.__checkpoints)
 
         logger.debug("%s: Data loading...", time.ctime())
         # Load recipe
@@ -125,7 +129,6 @@ class Functionalizer(object):
         # Load synapse properties
         self.synapse_class_matrix = fdata.load_synapse_prop_matrix(self.recipe)
         self.synapse_class_prop_df = fdata.load_synapse_properties_and_classification(self.recipe)
-
 
         # 'Load' touches
         touches = fdata.load_touch_parquet(*touch_files) \
@@ -148,7 +151,7 @@ class Functionalizer(object):
         sm.conf.set("spark.sql.shuffle.partitions", shuffle_partitions)
 
         # Data exporter
-        self.exporter = NeuronExporter(output_path=self.output_dir)
+        self.exporter = NeuronExporter(output_path=self.__output)
 
     # ----
     @property
@@ -329,9 +332,8 @@ class Functionalizer(object):
             raise RuntimeError("No touches available. Please load data first.")
     
     # ---
-    @staticmethod
-    def checkpoint_exists(phase):
-        cp_file = os.path.join("_checkpoints", phase.name.lower()) + ".parquet"
+    def checkpoint_exists(self, phase):
+        cp_file = os.path.join(self.__checkpoints, phase.name.lower()) + ".parquet"
         if os.path.exists(cp_file):
             try:
                 df = sm.read.parquet(cp_file)
@@ -381,8 +383,15 @@ def session(options):
     :param options: An object containing the required option attributes, as built \
                     by the arg parser: :py:data:`commands.arg_parser`.
     """
-    fzer = Functionalizer(options.s2s, options.format_hdf5, options.spark_opts)
+    args = {
+        'format_hdfs': options.format_hdfs,
+        'only_s2s': options.s2s,
+        'spark_opts': options.spark_opts
+    }
     if options.output_dir:
-        fzer.output_dir = options.output_dir
+        args['output'] = options.output_dir
+    if options.checkpoint_dir:
+        args['checkpoints'] = options.checkpoint_dir
+    fzer = Functionalizer(**args)
     fzer.init_data(options.recipe_file, options.mvd_file, options.morpho_dir, options.touch_files)
     return fzer

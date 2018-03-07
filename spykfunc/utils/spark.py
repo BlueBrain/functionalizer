@@ -1,4 +1,5 @@
 from os import path as osp
+from collections import namedtuple
 from contextlib import contextmanager
 from functools import update_wrapper
 from pyspark.sql.column import _to_seq
@@ -6,12 +7,16 @@ from . import get_logger
 
 import sparkmanager as sm
 
+class defaults(object):
+    directory = None
+    """:property: to be set by the main executing branch"""
+
 
 # -----------------------------------------------
 # Conditional execution decorator
 # -----------------------------------------------
 def checkpoint_resume(name,
-                      dest="_checkpoints",
+                      dest=None,
                       break_exec_plan=True,
                       logger=get_logger("spykfunc.checkpoint"),
                       before_load_handler=None,
@@ -25,12 +30,12 @@ def checkpoint_resume(name,
     :param before_save_handler: transformation to be applied to the
                                 dataframe before saving to disk
     """
-    table_path = osp.join(dest, name.lower())
-    parquet_file_path = table_path + ".parquet"
-    table_name = name.lower()
-
     def decorator(f):
         def new_f(*args, **kw):
+            table_path = osp.join(dest or defaults.directory, name.lower())
+            parquet_file_path = table_path + ".parquet"
+            table_name = name.lower()
+
             # Attempt to load, unless overwrite is set to True
             if not kw.pop("overwrite", False):
                 if osp.exists(parquet_file_path):
