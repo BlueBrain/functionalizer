@@ -228,7 +228,10 @@ class ReduceAndCut(DataSetOperation):
         """ Computes the pathway parameters, used by Reduce and Cut filters
         """
         # First obtain the pathway (morpho-morpho) stats dataframe
-        pathway_stats = self.stats.get_pathway_touch_stats_from_touches_with_pathway(full_touches)
+        n_parts_shuffle = max(full_touches.rdd.getNumPartitions() // 20, 100)
+        pathway_stats = (self.stats
+                         .get_pathway_touch_stats_from_touches_with_pathway(full_touches)
+                         .coalesce(n_parts_shuffle))
 
         # param create udf
         rc_param_maker = reduce_cut_parameter_udef(self.conn_rules)
@@ -341,31 +344,36 @@ class ReduceAndCut(DataSetOperation):
                (built previously in an optimized way)
         :return: The final cut touches
         """
-        with number_shuffle_partitions(max(cut_touch_counts_connection.rdd.getNumPartitions() // 10, 100)):
-            active_fractions = (
+        _n_parts = max(cut_touch_counts_connection.rdd.getNumPartitions() // 10, 100)
+        with number_shuffle_partitions(_n_parts):
+            cut_touch_counts_pathway = (
                 cut_touch_counts_connection
                 .groupBy("pathway_i")
                 .agg(F.sum("reduced_touch_counts_connection").alias("cut_touch_counts_pathway"))
-                .join(params_df, "pathway_i")
-                .withColumn("actual_reduction_factor",
-                    F.col("cut_touch_counts_pathway") / F.col("total_touches")
+            )
+        
+        active_fractions = (
+            cut_touch_counts_pathway
+            .join(params_df, "pathway_i")
+            .withColumn("actual_reduction_factor",
+                F.col("cut_touch_counts_pathway") / F.col("total_touches")
+            )
+            .withColumn("active_fraction",
+                F.when(F.col("bouton_reduction_factor").isNull(),
+                    F.col("active_fraction_legacy")
                 )
-                .withColumn("active_fraction",
-                    F.when(F.col("bouton_reduction_factor").isNull(),
-                           F.col("active_fraction_legacy")
-                           )
+                .otherwise(
+                    F.when(F.col("bouton_reduction_factor") > F.col("actual_reduction_factor"),
+                        F.lit(1.0)
+                    )
                     .otherwise(
-                        F.when(F.col("bouton_reduction_factor") > F.col("actual_reduction_factor"),
-                               F.lit(1.0)
-                               )
-                        .otherwise(
-                            F.col("bouton_reduction_factor") / F.col("actual_reduction_factor")
-                        )
+                        F.col("bouton_reduction_factor") / F.col("actual_reduction_factor")
                     )
                 )
-                .select("pathway_i", "active_fraction")
-                .cache()
             )
+            .select("pathway_i", "active_fraction")
+            .cache()
+        )
         
         # This is a minimal DS so we cache and broadcast in single partition
         active_fractions.count()
@@ -375,7 +383,6 @@ class ReduceAndCut(DataSetOperation):
             cut_touch_counts_connection
             .join(active_fractions, "pathway_i")
             .where(F.rand() >= F.col("active_fraction"))
-            # Pathway_i is kept in order to make a join with the same keys as the partitioning
             .select("src", "dst")
         )
 

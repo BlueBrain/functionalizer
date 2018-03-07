@@ -213,7 +213,8 @@ class Functionalizer(object):
             if self.checkpoint_exists(CheckpointPhases.SYNAPSE_PROPS):
                 # We need to raise an exception, otherwise decorators expect a generated dataframe
                 logger.warning("Extended Touches Checkpoint avail. Skipping filtering...")
-                raise ExtendedCheckpointAvail("Extended Touches Checkpoint avail. Skip process_filters or set overwrite to True")
+                raise ExtendedCheckpointAvail("Extended Touches Checkpoint avail."
+                                              "Skip process_filters or set overwrite to True")
             if self.checkpoint_exists(CheckpointPhases.FILTER_TOUCH_RULES):
                 skip_soma_axon = True
             if self.checkpoint_exists(CheckpointPhases.FILTER_REDUCED_TOUCHES):
@@ -225,6 +226,7 @@ class Functionalizer(object):
 
         if not skip_soma_axon:
             self.filter_by_soma_axon_distance()
+
         if self._run_s2f:
             if not skip_touch_rules:
                 self.filter_by_touch_rules()

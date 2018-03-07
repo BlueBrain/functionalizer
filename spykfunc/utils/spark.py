@@ -31,6 +31,7 @@ def checkpoint_resume(name,
 
     def decorator(f):
         def new_f(*args, **kw):
+            # Attempt to load, unless overwrite is set to True
             if not kw.pop("overwrite", False):
                 if osp.exists(parquet_file_path):
                     logger.info("[SKIP %s] Checkpoint found. Restoring state...", name)
