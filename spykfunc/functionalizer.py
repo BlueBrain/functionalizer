@@ -70,7 +70,7 @@ class Functionalizer(object):
     )
 
     # ==========
-    def __init__(self, only_s2s=False, spark_opts=None):
+    def __init__(self, only_s2s=False, format_hdf5=False, spark_opts=None):
         # Create Spark session with the static config
         sm.create("Functionalizer", spark_config, spark_opts)
 
@@ -84,6 +84,7 @@ class Functionalizer(object):
         sqlContext.registerJavaFunction("int2binary", "spykfunc.udfs.IntArraySerializer")
 
         self._run_s2f = not only_s2s
+        self._format_hdf5 = format_hdf5
         self.output_dir = "spykfunc_output"
         self.neuron_stats = NeuronStats()
 
@@ -145,7 +146,6 @@ class Functionalizer(object):
             shuffle_partitions = 100
         logger.info("Processing %d touch partitions (shuffle counts: %d)", touch_partitions, shuffle_partitions)
         sm.conf.set("spark.sql.shuffle.partitions", shuffle_partitions)
-
 
         # Data exporter
         self.exporter = NeuronExporter(output_path=self.output_dir)
@@ -225,7 +225,7 @@ class Functionalizer(object):
     # -------------------------------------------------------------------------
     # Exporting results
     # -------------------------------------------------------------------------
-    def export_results(self, format_parquet=False, output_path=None, overwrite=False):
+    def export_results(self, format_hdf5=None, output_path=None, overwrite=False):
         """ Exports the current touches to storage, appending the synapse property fields
 
         :param format_parquet: If True will export the touches in parquet format (rather than hdf5)
@@ -234,31 +234,34 @@ class Functionalizer(object):
         logger.info("Computing touch synaptical properties")
         extended_touches = self._assign_synpse_properties(overwrite)
 
-        # Calc the number of NRN output files to target ~32 MB part ~1M touches
-        n_parts = extended_touches.rdd.getNumPartitions()
-        if n_parts <=32:
-            # Small circuit. We directly count and target 1M touches per output file
-            total_t = extended_touches.count()
-            n_parts = (total_t // (1024 * 1024)) or 1
-        else:
-            # Main settings define large parquet to be read in partitions of 32 or 64MB.
-            # However, in s2s that might still be too much.
-            if not self._run_s2f:
-                n_parts = n_parts * 2
-
-        # Export
         logger.info("Exporting touches...")
         exporter = self.exporter
         if output_path is not None:
             exporter.output_path = output_path
+            
+        if format_hdf5 is None:
+            format_hdf5 = self._format_hdf5
 
-        if format_parquet:
-            exporter.export_parquet(extended_touches)
-        else:
+        if format_hdf5:
+            # Calc the number of NRN output files to target ~32 MB part ~1M touches
+            n_parts = extended_touches.rdd.getNumPartitions()
+            if n_parts <=32:
+                # Small circuit. We directly count and target 1M touches per output file
+                total_t = extended_touches.count()
+                n_parts = (total_t // (1024 * 1024)) or 1
+            else:
+                # Main settings define large parquet to be read in partitions of 32 or 64MB.
+                # However, in s2s that might still be too much.
+                if not self._run_s2f:
+                    n_parts = n_parts * 2
+                    
             exporter.export_hdf5(extended_touches, 
                                  self._circuit.neuron_count, 
-                                 create_efferent=True,
+                                 create_efferent=False,
                                  n_partitions=n_parts)
+        else:
+            exporter.export_parquet(extended_touches)
+
 
         logger.info("Data export complete")
         
@@ -266,7 +269,6 @@ class Functionalizer(object):
     @checkpoint_resume(CheckpointPhases.SYNAPSE_PROPS.name,
                        before_save_handler=Circuit.only_touch_columns)
     def _assign_synpse_properties(self, overwrite=False):
-
         # Calc syn props 
         self._ensure_data_loaded()
         extended_touches = synapse_properties.compute_additional_h5_fields(
@@ -275,15 +277,6 @@ class Functionalizer(object):
             self.synapse_class_prop_df
         )
         return extended_touches
-            
-        # TODO: Eventually we could save by file group, but OutOfMem during sort
-        # extended_touches = extended_touches.withColumn(
-        #    "file_i", 
-        #    (F.col("post_gid") / n_neurons_file).cast(T.IntegerType())
-        # )
-        # # Previous way of saving. Remind that we might need to add such option to checkpoint_resume
-        # return self.exporter.save_temp(extended_touches, "extended_touches.parquet") #,
-        # #                               partition_col="file_i")
 
     # -------------------------------------------------------------------------
     # Functions to create/apply filters for the current session
@@ -388,7 +381,7 @@ def session(options):
     :param options: An object containing the required option attributes, as built \
                     by the arg parser: :py:data:`commands.arg_parser`.
     """
-    fzer = Functionalizer(options.s2s, options.spark_opts)
+    fzer = Functionalizer(options.s2s, options.format_hdf5, options.spark_opts)
     if options.output_dir:
         fzer.output_dir = options.output_dir
     fzer.init_data(options.recipe_file, options.mvd_file, options.morpho_dir, options.touch_files)

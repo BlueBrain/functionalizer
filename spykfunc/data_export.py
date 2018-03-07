@@ -27,9 +27,7 @@ class NeuronExporter(object):
         self.concat_bin = spark_udef_utils.wrap_java_udf(sm.sc, _j_conc_udaf)
 
     def ensure_file_path(self, filename):
-        if not path.exists(self.output_path):
-            os.makedirs(self.output_path)
-
+        path.exists(self.output_path) or os.makedirs(self.output_path)
         return path.join(self.output_path, filename)
 
     # ---

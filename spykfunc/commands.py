@@ -18,10 +18,10 @@ def _create_parser():
                         nargs="+")
     parser.add_argument("--s2s",
                         help="s2s pruning only. If omitted s2f will be run",
-                        action="store_true", dest="s2s", default=False)
+                        action="store_true", default=False)
     parser.add_argument("--format-hdf5",
                         help="Dont create result to HDF5, write out in parquet",
-                        action="store_true", dest="resultparquet", default=False)
+                        action="store_true", default=False)
     parser.add_argument("--output-dir",
                         help="Specify output directory. Defaults to ./spykfunc_output")
     parser.add_argument("--spark-opts",
@@ -63,8 +63,7 @@ def spykfunc():
         except ExtendedCheckpointAvail:
             # If a ExtendedCheckpoint is available and we don't want to overwrite
             pass
-        fuzer.export_results(format_parquet=options.resultparquet,
-                             overwrite="E" in options.overwrite.upper())
+        fuzer.export_results(overwrite="E" in options.overwrite.upper())
     except Exception:
         logger.error(utils.format_cur_exception())
         return 1
