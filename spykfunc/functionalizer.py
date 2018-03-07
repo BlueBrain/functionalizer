@@ -130,7 +130,7 @@ class Functionalizer(object):
         :param recipe_file: The recipe file (XML)
         :param mvd_file: The mvd file
         :param morpho_dir: The dir containing all required morphologies
-        :param touch_file: The first touch file, given all others can be found followig the naming convention"
+        :param touch_files: A list of touch files. A single globbing expression can be specified as well"
         """
         # In "program" mode this dir wont change later, so we can check here
         # for its existence/permission to create
@@ -140,24 +140,6 @@ class Functionalizer(object):
         logger.debug("%s: Data loading...", time.ctime())
         # Load recipe
         self.recipe = Recipe(recipe_file)
-
-        # Check touches files
-        all_touch_files = glob(touch_files)
-        if not all_touch_files:
-            logger.critical("Invalid touch file path")
-            
-        touches_parquet_files_expr = touch_files
-        
-        if len(all_touch_files) == 1:
-            # Most probably the user gave the first, we will find the others
-            _file0 = all_touch_files[0]
-            basename = _file0[:-len(".parquet")]
-            index_pos = basename.rfind(".") + 1
-            if index_pos > 0:
-                touches_parquet_files_expr = basename[:index_pos] + "*.parquet"
-                all_touch_files = glob(touches_parquet_files_expr)
-                if not all_touch_files:
-                    raise ValueError("Invalid touch files. Please provide touches in parquet format.")
 
         # Load Neurons data
         fdata = NeuronDataSpark(MVD_Morpho_Loader(mvd_file, morpho_dir), spark)
@@ -180,7 +162,7 @@ class Functionalizer(object):
         self.morphologies = fdata.morphologyRDD
 
         # 'Load' touches
-        self._touchDF = self._initial_touchDF = fdata.load_touch_parquet(touches_parquet_files_expr) \
+        self._touchDF = self._initial_touchDF = fdata.load_touch_parquet(*touch_files) \
             .withColumnRenamed("pre_neuron_id", "src") \
             .withColumnRenamed("post_neuron_id", "dst")
                 
