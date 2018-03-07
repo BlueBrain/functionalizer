@@ -134,24 +134,8 @@ class NeuronDataSpark(NeuronData):
         )
 
     # ---
-    def load_touch_parquet(self, files):
-        logger.info("Loading parquets...")
-        if isinstance(files, str):
-            # file string accepts wildcards
-            self.touchDF = self._load_touch_parquet(files)
-        else:
-            if not files:
-                raise Exception("Please provide a non-empty file list")
-
-            self.touchDF = self._load_touch_parquet(files[0])
-            for f in files[1:]:
-                self.touchDF.union(self.load_touch_parquet(f))
-
-        return self.touchDF
-
-    # ---
-    def _load_touch_parquet(self, f):
-        return self._spark.read.schema(schema.TOUCH_SCHEMA).parquet(f)
+    def load_touch_parquet(self, *files):
+        return self._spark.read.schema(schema.TOUCH_SCHEMA).parquet(*files)
 
     # ---
     def load_touch_bin(self, touch_file):
@@ -396,18 +380,3 @@ def morphology_loader_gen(data_class, loader_class, loader_params):
         ]
 
     return load_morphology_par
-
-
-# Touches loader
-def touches_loader_gen(data_class, loader_class, loader_params):
-    """
-    Generates a function loading touches, possibly depending on a range/other constrains (e.g. for single neuron).
-    :return: Touch loader function for RDDs
-    """
-    # I guess this generator is gonna be called every time the RDD is to be constructed (unless cached)
-    # TODO: Are we ever supporting this?
-    def load_touches_par(neuron_id):
-        logging.debug("Gonna read touches belonging to neuron %d", neuron_id)
-        raise NotImplementedError()
-
-    return load_touches_par

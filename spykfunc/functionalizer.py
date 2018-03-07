@@ -100,7 +100,7 @@ class Functionalizer(object):
         :param recipe_file: The recipe file (XML)
         :param mvd_file: The mvd file
         :param morpho_dir: The dir containing all required morphologies
-        :param touch_file: The first touch file, given all others can be found followig the naming convention"
+        :param touch_files: A list of touch files. A single globbing expression can be specified as well"
         """
         # In "program" mode this dir wont change later, so we can check here
         # for its existence/permission to create
@@ -110,11 +110,6 @@ class Functionalizer(object):
         logger.debug("%s: Data loading...", time.ctime())
         # Load recipe
         self.recipe = Recipe(recipe_file)
-
-        # Check touches files
-        all_touch_files = glob(touch_files)
-        if not all_touch_files:
-            logger.critical("Invalid touch file path")
 
         # Load Neurons data
         fdata = NeuronDataSpark(MVD_Morpho_Loader(mvd_file, morpho_dir), sm.spark)
@@ -130,35 +125,25 @@ class Functionalizer(object):
         self.synapse_class_matrix = fdata.load_synapse_prop_matrix(self.recipe)
         self.synapse_class_prop_df = fdata.load_synapse_properties_and_classification(self.recipe)
 
-        # 'Load' touches, from parquet if possible
-        _file0 = all_touch_files[0]
-        touches_parquet_files_expr = _file0[:_file0.rfind(".")] + "Data.*.parquet"
-        touch_files_parquet = glob(touches_parquet_files_expr)
-        if touch_files_parquet:
-            touches = fdata.load_touch_parquet(touches_parquet_files_expr) \
-                .withColumnRenamed("pre_neuron_id", "src") \
-                .withColumnRenamed("post_neuron_id", "dst")
 
-            # I dont know whats up with Spark but sometimes when shuffle partitions is not 200
-            # we have problems. We try to mitigate using multiples of 200
-            touch_partitions = touches.rdd.getNumPartitions()
-            if touch_partitions >= 400:
-                # Grow suffle partitions with size of touches DF
-                # TODO: In generic cases we dont shuffle all the fields, so we could reduce this by a factor of 2
-                #       However we need to make sure that operations that keep or grow the partition size must be 
-                #       explicitly controlled and the easiest way is still coalesce
-                sm.conf.set("spark.sql.shuffle.partitions",
-                               touch_partitions // 200 * 200)
-            elif touch_partitions <= 16:
-                # Optimize execution of very small jobs
-                sm.conf.set("spark.sql.shuffle.partitions", 16)
-
-        else:
-            # self._touchDF = fdata.load_touch_bin(touch_files)
-            raise ValueError("Invalid touch files. Please provide touches in parquet format.")
+        # 'Load' touches
+        touches = fdata.load_touch_parquet(*touch_files) \
+            .withColumnRenamed("pre_neuron_id", "src") \
+            .withColumnRenamed("post_neuron_id", "dst")
 
         self._circuit = Circuit(fdata, touches, self.recipe)
         self.neuron_stats.circuit = self._circuit
+        
+        # Grow suffle partitions with size of touches DF
+        # In generic cases we dont shuffle all the fields, so we reduce this by a factor of 2
+        # Min: 100 reducers
+        # NOTE: According to some tests we need to cap the amount of reducers to 4000 per node
+        # NOTE: Some problems during shuffle happen with many partitions if shuffle compression is enabled!
+        touch_partitions = self._touchDF.rdd.getNumPartitions()
+        shuffle_partitions = ((touch_partitions-1) // 100 + 1) * 100
+        if touch_partitions <= 100:
+            shuffle_partitions = 100
+        spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions)
 
         # Data exporter
         self.exporter = NeuronExporter(output_path=self.output_dir)
