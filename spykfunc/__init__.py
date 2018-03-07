@@ -47,16 +47,25 @@ def functionalizer_new():
     return Functionalizer()
 
 
-def session(recipe, mvd_file, first_touch, s2s=False, **opts):
+def session(recipe, mvd_file, touch_files, **opts):
     """ Creates and Initializes a Functionalizer session
 
     :returns: A :py:class:`~spykfunc.Functionalizer` instance
     """
     from .commands import arg_parser
     from .functionalizer import session
-    args = (recipe, mvd_file, ".", first_touch)
-    if s2s:
+    args = (recipe, mvd_file, ".")
+    if isinstance(touch_files, str):
+        args = args + (touch_files,)
+    else:
+        args += tuple(touch_files)
+    
+    # Extract options that dont take arguments
+    if opts.pop("s2s", False):
         args += ("--s2s",)
+    if opts.pop("format-hdf5", False):
+        args += ("--format-hdf5",)
+
     for opt, opt_val in opts.items():
         args += ("--" + opt.replace("_", "-"), opt_val)
     opts = arg_parser.parse_args(args)

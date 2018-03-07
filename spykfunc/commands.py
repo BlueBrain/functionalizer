@@ -13,11 +13,13 @@ def _create_parser():
     parser.add_argument("recipe_file", help="the XML recipe file")
     parser.add_argument("mvd_file",    help="the input mvd file")
     parser.add_argument("morpho_dir",  help="the H5 morphology database directory")
-    parser.add_argument("touch_files", help="The first binary touch file (touches.0)")
+    parser.add_argument("touch_files", 
+                        help="The touch files (parquets). A litertal blob expression is also accepted.",
+                        nargs="+")
     parser.add_argument("--s2s",
                         help="s2s pruning only. If omitted s2f will be run",
                         action="store_true", dest="s2s", default=False)
-    parser.add_argument("--no-hdf5",
+    parser.add_argument("--format-hdf5",
                         help="Dont create result to HDF5, write out in parquet",
                         action="store_true", dest="resultparquet", default=False)
     parser.add_argument("--output-dir",

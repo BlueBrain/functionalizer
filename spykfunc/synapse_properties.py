@@ -53,9 +53,6 @@ def compute_additional_h5_fields(circuit, syn_class_matrix, syn_props_df):
     # 17: ASE Absolute Synaptic Efficacy (Millivolts) (int)
     # 18: Branch Type from the post neuron(0 for soma,
     
-    syn_props_df.printSchema()
-    touches.printSchema()
-
     # Compute #1: delaySomaDistance
     touches = touches.withColumn(
         "axional_delay",

@@ -139,11 +139,13 @@ class Functionalizer(object):
         # Min: 100 reducers
         # NOTE: According to some tests we need to cap the amount of reducers to 4000 per node
         # NOTE: Some problems during shuffle happen with many partitions if shuffle compression is enabled!
-        touch_partitions = self._touchDF.rdd.getNumPartitions()
+        touch_partitions = touches.rdd.getNumPartitions()
         shuffle_partitions = ((touch_partitions-1) // 100 + 1) * 100
         if touch_partitions <= 100:
             shuffle_partitions = 100
-        spark.conf.set("spark.sql.shuffle.partitions", shuffle_partitions)
+        logger.info("Processing %d touch partitions (shuffle counts: %d)", touch_partitions, shuffle_partitions)
+        sm.conf.set("spark.sql.shuffle.partitions", shuffle_partitions)
+
 
         # Data exporter
         self.exporter = NeuronExporter(output_path=self.output_dir)
