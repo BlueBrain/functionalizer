@@ -29,16 +29,28 @@ elif BUILD_TYPE == "DEVEL":
 # Customize commands
 # *******************************
 class PyTest(TestCommand):
-    user_options = [('addopts=', None, 'Arguments to pass to pytest')]
+    user_options = [
+        ('addopts=', None, 'Arguments to pass to pytest'),
+        ('fast', None, 'Skip slow tests')
+    ]
 
     def initialize_options(self):
         TestCommand.initialize_options(self)
-        self.addopts = ""
+        self.addopts = None
+        self.fast = False
+        self.test_args = []
+
+    def finalize_options(self):
+        TestCommand.finalize_options(self)
+        if not self.fast:
+            self.test_args.append('--run-slow')
+        if self.addopts:
+            import shlex
+            self.test_args.extend(shlex.split(self.addopts))
 
     def run_tests(self):
-        import shlex
         import pytest
-        errno = pytest.main(shlex.split(self.addopts))
+        errno = pytest.main(self.test_args)
         sys.exit(errno)
 
 
