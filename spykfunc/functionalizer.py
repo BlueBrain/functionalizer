@@ -266,8 +266,9 @@ class Functionalizer(object):
         if format_parquet:
             exporter.export_parquet(extended_touches)
         else:
-            exporter.export_hdf5(extended_touches, self.neuron_count, 
-                                 create_efferent=True, 
+            exporter.export_hdf5(extended_touches, 
+                                 self._circuit.neuron_count, 
+                                 create_efferent=True,
                                  n_partitions=n_parts)
 
         logger.info("Data export complete")

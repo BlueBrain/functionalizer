@@ -28,12 +28,11 @@ def compute_additional_h5_fields(circuit, syn_class_matrix, syn_props_df):
     # takes 5 more seconds. That means that in average there's 5min overhead per 20k neurons per core
     to_syn_prop_i = get_synapse_property_udf(syn_class_matrix)
     touches = touches.withColumn("syn_prop_i", to_syn_prop_i(touches.syn_prop_index))
-
     touches = touches.drop("syn_prop_index")
-    syn_props_df = syn_props_df.select(F.struct("*").alias("prop"))
 
     # Join with Syn Prop Class
-    touches = touches.join(syn_props_df, touches.syn_prop_i == syn_props_df.prop._prop_i)
+    syn_props_df = syn_props_df.alias("synprop")  # Synprops is globally cached and broadcasted
+    touches = touches.join(syn_props_df, touches.syn_prop_i == syn_props_df._prop_i)
 
     # 0: Connecting gid: presynaptic for nrn.h5, postsynaptic for nrn_efferent.h5
     # 1: Axonal delay: computed using the distance of the presynaptic axon to the post synaptic terminal (milliseconds)
@@ -53,30 +52,32 @@ def compute_additional_h5_fields(circuit, syn_class_matrix, syn_props_df):
     # 15-16: BranchOrder of the dendrite, BranchOrder of the axon (int,int)
     # 17: ASE Absolute Synaptic Efficacy (Millivolts) (int)
     # 18: Branch Type from the post neuron(0 for soma,
+    
+    syn_props_df.printSchema()
+    touches.printSchema()
 
     # Compute #1: delaySomaDistance
-    touches = touches.withColumn("axional_delay",
-        (
-            touches.prop.neuralTransmitterReleaseDelay +
-            touches.distance_soma / touches.prop.axonalConductionVelocity
-        ).cast(T.FloatType())
+    touches = touches.withColumn(
+        "axional_delay",
+        F.expr("synprop.neuralTransmitterReleaseDelay + distance_soma  / synprop.axonalConductionVelocity")
+            .cast(T.FloatType())
     )
-
+    
     # Compute #8-12: g, u, d, f, dtc
     touches = touches.selectExpr(
         "*",
-        "gauss_rand(0) * prop.gsynVar + prop.gsyn as gsyn",
-        "gauss_rand(0) * prop.uVar + prop.u as u",
-        "gauss_rand(0) * prop.dVar + prop.d as d",
-        "gauss_rand(0) * prop.fVar + prop.f as f",
-        "gauss_rand(0) * prop.dtcVar + prop.dtc as dtc"
+        "gauss_rand(0) * synprop.gsynVar + synprop.gsyn as gsyn",
+        "gauss_rand(0) * synprop.uVar + synprop.u as u",
+        "gauss_rand(0) * synprop.dVar + synprop.d as d",
+        "gauss_rand(0) * synprop.fVar + synprop.f as f",
+        "gauss_rand(0) * synprop.dtcVar + synprop.dtc as dtc"
     )
 
     # Compute #13: synapseType:  Inhibitory < 100 or  Excitatory >= 100
     t = touches.withColumn("synapseType",
-                           (F.when(touches.prop.type.substr(0, 1) == F.lit('E'), 100)
-                            .otherwise(0)
-                            ) + touches.prop._class_i)
+                           (F.when(F.col("synprop.type").substr(0, 1) == F.lit('E'), 100)
+                            .otherwise(0)) 
+                           + F.col("synprop._class_i"))
 
     # Select fields
     return t.select(
@@ -90,12 +91,12 @@ def compute_additional_h5_fields(circuit, syn_class_matrix, syn_props_df):
         t.pre_section.alias("pre_section"),
         t.pre_segment.alias("pre_segment"),
         t.pre_offset.alias("pre_offset"),
-        "gsyn", "u", "d", "f", "dtc",
+        "synprop.gsyn", "synprop.u", "synprop.d", "synprop.f", "synprop.dtc",
         t.synapseType.alias("synapseType"),
         t.src_morphology_i.alias("morphology"),
         F.lit(0).alias("branch_order_dend"),  # TBD
         t.branch_order.alias("branch_order_axon"),
-        t.prop.ase.alias("ase"),
+        t.ase.alias("ase"),
         F.lit(0).alias("branch_type"),  # TBD (0 soma, 1 axon, 2 basel dendrite, 3 apical dendrite)
     )
     
