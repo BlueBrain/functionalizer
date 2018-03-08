@@ -16,6 +16,8 @@ from .utils import get_logger, make_slices, to_native_str
 from collections import defaultdict, OrderedDict
 import fnmatch
 
+import sparkmanager as sm
+
 import logging
 
 # Globals
@@ -41,9 +43,7 @@ class NeuronDataSpark(NeuronData):
      - object nameMap
     """
 
-    def __init__(self, loader, spark_session):
-        self._spark = spark_session
-        self._sc = self._spark.sparkContext
+    def __init__(self, loader):
         self.neuronDF = None
         self.set_loader(loader)
 
@@ -88,21 +88,21 @@ class NeuronDataSpark(NeuronData):
 
         if os.path.exists(mvd_parquet):
             logger.info("Loading from MVD parquet")
-            mvd = self._spark.read.parquet(mvd_parquet)
+            mvd = sm.read.parquet(mvd_parquet)
             self.neuronDF = F.broadcast(mvd).cache()
             n_neurons = self.neuronDF.count()  # Force broadcast to meterialize
             logger.info("Loaded {} neurons from MVD".format(n_neurons))
 
         else:
             logger.info("Building MVD from raw mvd files")
-            total_parts = max(self._sc.defaultParallelism * 4, n_neurons // 10000 + 1)
+            total_parts = max(sm.defaultParallelism * 4, n_neurons // 10000 + 1)
             logger.debug("Partitions: %d", total_parts)
 
             # Initial RDD has only the range objects
-            neuronRDD = self._sc.parallelize(range(total_parts), total_parts)
+            neuronRDD = sm.parallelize(range(total_parts), total_parts)
 
             # LOAD neurons in parallel
-            name_accu = self._sc.accumulator({}, DictAccum())
+            name_accu = sm.accumulator({}, DictAccum())
             neuronRDD = neuronRDD.flatMap(
                 neuron_loader_gen(NeuronData, self._loader.__class__,
                                   self._loader.get_params(),
@@ -111,7 +111,7 @@ class NeuronDataSpark(NeuronData):
             logger.info("Creating data frame...")
             # Mark as "broadcastable" and cache
             self.neuronDF = F.broadcast(
-                self._spark.createDataFrame(neuronRDD, schema.NEURON_SCHEMA)
+                sm.createDataFrame(neuronRDD, schema.NEURON_SCHEMA)
                     .where(F.col("id").isNotNull())
             ).cache()
 
@@ -126,7 +126,7 @@ class NeuronDataSpark(NeuronData):
         """ Load morphologies into a spark RDD
         """
         # Initial with the morpho names
-        neuronRDD = self._sc.parallelize((names[s] for s in make_slices(len(names), total_parts)), total_parts)
+        neuronRDD = sm.parallelize((names[s] for s in make_slices(len(names), total_parts)), total_parts)
 
         # LOAD morphologies in parallel
         self.morphologyRDD = neuronRDD.flatMap(
@@ -135,7 +135,7 @@ class NeuronDataSpark(NeuronData):
 
     # ---
     def load_touch_parquet(self, *files):
-        return self._spark.read.schema(schema.TOUCH_SCHEMA).parquet(*files)
+        return sm.read.schema(schema.TOUCH_SCHEMA).parquet(*files)
 
     # ---
     def load_touch_bin(self, touch_file):
@@ -149,7 +149,7 @@ class NeuronDataSpark(NeuronData):
     @LazyProperty
     def sclass_df(self):
         self.require_mvd_globals()
-        return F.broadcast(self._sc.parallelize(enumerate(self.cellClasses))
+        return F.broadcast(sm.parallelize(enumerate(self.cellClasses))
                            .toDF(["sclass_i", "sclass_name"], schema.INT_STR_SCHEMA).cache())
 
     @LazyProperty
@@ -157,7 +157,7 @@ class NeuronDataSpark(NeuronData):
         self.require_mvd_globals()
         if not self.globals_loaded:
             raise RuntimeError("Global MVD info not loaded")
-        return F.broadcast(self._sc.parallelize(enumerate(self.mTypes))
+        return F.broadcast(sm.parallelize(enumerate(self.mTypes))
                            .toDF(["mtype_i", "mtype_name"], schema.INT_STR_SCHEMA).cache())
 
     @LazyProperty
@@ -165,16 +165,16 @@ class NeuronDataSpark(NeuronData):
         self.require_mvd_globals()
         if not self.globals_loaded:
             raise RuntimeError("Global MVD info not loaded")
-        return F.broadcast(self._sc.parallelize(enumerate(self.eTypes))
+        return F.broadcast(sm.parallelize(enumerate(self.eTypes))
                            .toDF(["etype_i", "etype_name"], schema.INT_STR_SCHEMA).cache())
 
     # ----
     def load_synapse_properties_and_classification(self, recipe, map_ids=False):
         """Loader for SynapsesProperties
         """
-        prop_df = _load_from_recipe_ds(recipe.synapse_properties, schema.SYNAPSE_PROPERTY_SCHEMA, self._sc)\
+        prop_df = _load_from_recipe_ds(recipe.synapse_properties, schema.SYNAPSE_PROPERTY_SCHEMA) \
             .withColumnRenamed("_i", "_prop_i")
-        class_df = _load_from_recipe_ds(recipe.synapse_classification, schema.SYNAPSE_CLASS_SCHEMA, self._sc)\
+        class_df = _load_from_recipe_ds(recipe.synapse_classification, schema.SYNAPSE_CLASS_SCHEMA) \
             .withColumnRenamed("_i", "_class_i")
 
         if map_ids:
@@ -274,9 +274,8 @@ class NeuronDataSpark(NeuronData):
 # Generic loader
 #######################
 
-def _load_from_recipe_ds(recipe_group, group_schema, spark_context=None):
-    sc = spark_context or SparkContext.getOrCreate()
-    rdd = sc.parallelize(_load_from_recipe(recipe_group, group_schema))
+def _load_from_recipe_ds(recipe_group, group_schema):
+    rdd = sm.parallelize(_load_from_recipe(recipe_group, group_schema))
     return rdd.toDF(group_schema)
 
 
@@ -325,8 +324,7 @@ def neuron_loader_gen(data_class, loader_class, loader_params, n_neurons,
     """
 
     # Every loader builds the list of MTypes - avoid serialize/deserialize of the more complex struct
-    sc = SparkContext.getOrCreate()
-    mtype_bc = sc.broadcast([MType(mt) for mt in mtypes])
+    mtype_bc = sm.broadcast([MType(mt) for mt in mtypes])
 
     def _convert_entry(nrn, name, mtype_name, layer):
         return (int(nrn[0]),                    # id  (0==schema.NeuronFields["id"], but lets avoid all those lookups

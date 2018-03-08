@@ -117,7 +117,7 @@ class Functionalizer(object):
         self.recipe = Recipe(recipe_file)
 
         # Load Neurons data
-        fdata = NeuronDataSpark(MVD_Morpho_Loader(mvd_file, morpho_dir), sm.spark)
+        fdata = NeuronDataSpark(MVD_Morpho_Loader(mvd_file, morpho_dir))
         fdata.load_mvd_neurons_morphologies()
 
         # Reverse DF name vectors

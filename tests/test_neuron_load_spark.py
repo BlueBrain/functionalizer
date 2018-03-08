@@ -10,7 +10,7 @@ morpho_dir = os.path.join(BASE_DIR, "circuit_1000n/morphologies/h5")
 
 def test_load_neuron_morpos():
     assert os.path.isfile(mvd_file)
-    sf = NeuronDataSpark(MVD_Morpho_Loader(mvd_file, morpho_dir), SparkSession.builder.getOrCreate(), )
+    sf = NeuronDataSpark(MVD_Morpho_Loader(mvd_file, morpho_dir))
     sf.load_mvd_neurons_morphologies()
     sf.neuronDF.show()
 
