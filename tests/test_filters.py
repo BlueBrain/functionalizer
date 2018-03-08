@@ -15,6 +15,10 @@ ARGS = (
 
 NUM_AFTER_DISTANCE = 2264809
 NUM_AFTER_TOUCH = 2218004
+NUM_AFTER_FILTER = 169000  # To be used with tolerance defined below
+
+TOLERANCE = 0.02  # Statistical tolerance in %
+
 
 @pytest.fixture(scope='session')
 def fz(tmpdir_factory):
@@ -47,5 +51,35 @@ class TestFilters(object):
         """Test the bouton touch filter: deterministic
         """
         fz.run_reduce_and_cut()
-        assert fz.circuit.count() < NUM_AFTER_TOUCH * 0.1
-        assert fz.circuit.count() > 0
+        count = fz.circuit.count()
+        assert abs(count - NUM_AFTER_FILTER) < TOLERANCE * NUM_AFTER_FILTER
+
+    def test_resume(self, fz, tmpdir_factory):
+        tmpdir = tmpdir_factory.mktemp('filters')
+        cdir = tmpdir.join('check')
+        odir = tmpdir.join('out')
+        kwargs = {
+            'checkpoint-dir': str(cdir),
+            'output-dir': str(odir)
+        }
+        fz2 = spykfunc.session(*ARGS, **kwargs)
+        fz2.process_filters()
+        original = fz.circuit.count()
+        count = fz2.circuit.count()
+        assert count != original
+        assert abs(count - NUM_AFTER_FILTER) < TOLERANCE * NUM_AFTER_FILTER
+
+    def test_overwrite(self, fz, tmpdir_factory):
+        tmpdir = tmpdir_factory.mktemp('filters')
+        cdir = tmpdir.join('check')
+        odir = tmpdir.join('out')
+        kwargs = {
+            'checkpoint-dir': str(cdir),
+            'output-dir': str(odir)
+        }
+        fz2 = spykfunc.session(*ARGS, **kwargs)
+        fz2.process_filters(overwrite=True)
+        original = fz.circuit.count()
+        count = fz2.circuit.count()
+        assert count != original
+        assert abs(count - NUM_AFTER_FILTER) < TOLERANCE * NUM_AFTER_FILTER
