@@ -384,7 +384,7 @@ def session(options):
                     by the arg parser: :py:data:`commands.arg_parser`.
     """
     args = {
-        'format_hdfs': options.format_hdfs,
+        'format_hdf5': options.format_hdf5,
         'only_s2s': options.s2s,
         'spark_opts': options.spark_opts
     }

@@ -14,10 +14,11 @@ ARGS = (
 )
 
 NUM_AFTER_DISTANCE = 2264809
-NUM_AFTER_TOUCH = 2232395
+NUM_AFTER_TOUCH = 2218004
 
-@pytest.fixture
-def fz(tmpdir):
+@pytest.fixture(scope='session')
+def fz(tmpdir_factory):
+    tmpdir = tmpdir_factory.mktemp('filters')
     cdir = tmpdir.join('check')
     odir = tmpdir.join('out')
     kwargs = {
@@ -28,6 +29,7 @@ def fz(tmpdir):
 
 
 @pytest.mark.slow
+@pytest.mark.incremental
 class TestFilters(object):
     def test_distance(self, fz):
         """Test the distance rules: deterministic
