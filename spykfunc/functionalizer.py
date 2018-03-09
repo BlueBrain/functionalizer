@@ -145,8 +145,11 @@ class Functionalizer(object):
         # NOTE: Some problems during shuffle happen with many partitions if shuffle compression is enabled!
         touch_partitions = touches.rdd.getNumPartitions()
         shuffle_partitions = ((touch_partitions-1) // 100 + 1) * 100
-        if touch_partitions <= 100:
+        if touch_partitions == 0:
+            raise ValueError("No partitions found in touch data")
+        elif touch_partitions <= 100:
             shuffle_partitions = 100
+
         logger.info("Processing %d touch partitions (shuffle counts: %d)", touch_partitions, shuffle_partitions)
         sm.conf.set("spark.sql.shuffle.partitions", shuffle_partitions)
 
