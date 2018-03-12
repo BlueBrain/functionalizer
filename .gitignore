@@ -29,6 +29,9 @@ var
 .installed.cfg
 *.egg-info
 
+# Java files
+*.class
+
 # Unittest and coverage
 htmlcov/*
 .coverage

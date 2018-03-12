@@ -1,9 +1,15 @@
+space :=
+space +=
 
-SPARK_JARS := /home/leite/usr/spark-2.2.0/jars
+DEPENDENCIES := spark-catalyst spark-sql scala-library
+
+SPARK_JARS := $(SPARK_ROOT)/jars
+JAR_FILES = $(foreach lib,$(DEPENDENCIES),$(wildcard $(SPARK_JARS)/$(lib)*.jar))
+CLASSPATH := $(subst $(space),:,$(strip $(JAR_FILES)))
 
 
 random.jar: spykfunc/udfs/*.java spykfunc/udfs/Float2Bin.class
-	javac random/*.java spykfunc/udfs/*.java -cp $(SPARK_JARS)/spark-sql_2.11-2.2.0.jar:$(SPARK_JARS)/scala-library-2.11.8.jar:$(SPARK_JARS)/spark-catalyst_2.11-2.2.0.jar
+	javac random/*.java spykfunc/udfs/*.java -cp $(CLASSPATH)
 	jar cf spykfunc_udfs.jar random/*.class spykfunc/udfs/*.class
 
 spykfunc/udfs/Float2Bin.class: spykfunc/udfs/Float2Bin.scala
