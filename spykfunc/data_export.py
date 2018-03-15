@@ -72,7 +72,7 @@ class NeuronExporter(object):
             df
             .select(df.pre_gid, df.post_gid, F.array(*self.nrn_fields_as_float(df)).alias("floatvec"))
             .sort("post_gid")
-            .selectExpr("pre_gid", "post_gid", "float2binary(floatvec) as bin_arr")
+            .selectExpr("(pre_gid + 1) as pre_gid", "(post_gid + 1) as post_gid", "float2binary(floatvec) as bin_arr")
             .groupBy("post_gid", "pre_gid")
             .agg(self.concat_bin("bin_arr").alias("bin_matrix"),
                  F.count("*").cast("int").alias("conn_count"))

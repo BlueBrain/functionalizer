@@ -79,8 +79,8 @@ def compute_additional_h5_fields(circuit, syn_class_matrix, syn_props_df):
     # Select fields
     return t.select(
         # Exported touch gids are 1-base, not 0
-        (t.src + 1).alias("pre_gid"),
-        (t.dst + 1).alias("post_gid"),
+        t.src.alias("pre_gid"),
+        t.dst.alias("post_gid"),
         t.axional_delay,
         t.post_section.alias("post_section"),
         t.post_segment.alias("post_segment"),
