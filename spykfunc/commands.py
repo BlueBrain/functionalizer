@@ -27,7 +27,7 @@ def _create_parser():
                         help="Write result to HDF5 rather than parquet",
                         action="store_true", default=False)
     parser.add_argument("--checkpoint-dir",
-                        help="Specify directory to store checkpoints. Defaults to ./_checkpoints")
+                        help="Specify directory to store checkpoints. Defaults to OUTPUT_DIR/_checkpoints")
     parser.add_argument("--output-dir",
                         help="Specify output directory. Defaults to ./spykfunc_output")
     parser.add_argument("--spark-opts",

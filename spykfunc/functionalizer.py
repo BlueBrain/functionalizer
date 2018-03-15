@@ -70,11 +70,14 @@ class Functionalizer(object):
     )
 
     # ==========
-    def __init__(self, only_s2s=False, format_hdf5=False, spark_opts=None, checkpoints="_checkpoints", output="spykfunc_output"):
+    def __init__(self, only_s2s=False, format_hdf5=False, spark_opts=None, checkpoints=None, output="spykfunc_output"):
         # Create Spark session with the static config
         sm.create("Functionalizer", spark_config, spark_opts)
 
-        self.__checkpoints = checkpoints
+        if checkpoints:
+            self.__checkpoints = checkpoints
+        else:
+            self.__checkpoints = os.path.join(output, "_checkpoints")
         self.__output = output
 
         checkpoint_defaults.directory = self.__checkpoints
