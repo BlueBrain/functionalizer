@@ -45,7 +45,8 @@ def checkpoint_resume(name,
 
             # Attempt to load, unless overwrite is set to True
             if defaults.overwrite or kw.pop('overwrite', False):
-                logger.info("[OVERWRITE %s] Checkpoint found. Overwriting...", name)
+                if osp.exists(parquet_file_path) or osp.exists(table_path):
+                    logger.info("[OVERWRITE %s] Checkpoint found. Overwriting...", name)
             else:
                 if osp.exists(parquet_file_path):
                     try:
