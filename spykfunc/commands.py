@@ -16,9 +16,13 @@ def _create_parser():
     parser.add_argument("touch_files", 
                         help="The touch files (parquets). A litertal blob expression is also accepted.",
                         nargs="+")
-    parser.add_argument("--s2s",
-                        help="s2s pruning only. If omitted s2f will be run",
-                        action="store_true", default=False)
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("--s2s",
+                       help="s2s pruning only. If omitted s2f will be run",
+                       action="store_true", default=False)
+    group.add_argument("--s2f",
+                       help="Run s2f. The default action",
+                       action="store_true", default=True)
     parser.add_argument("--format-hdf5",
                         help="Write result to HDF5 rather than parquet",
                         action="store_true", default=False)
