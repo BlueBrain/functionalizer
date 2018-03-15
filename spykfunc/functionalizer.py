@@ -194,7 +194,7 @@ class Functionalizer(object):
     # Main entry point of Filter Execution
     # -------------------------------------------------------------------------
     @_assign_to_circuit
-    def process_filters(self, overwrite):
+    def process_filters(self, overwrite=False):
         """Runs all functionalizer filters in order, according to the classic functionalizer:
         (1) Soma-axon distance, (2) Touch rules, (3.1) Reduce and (3.2) Cut
         """
