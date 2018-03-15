@@ -191,38 +191,20 @@ class Functionalizer(object):
     # Main entry point of Filter Execution
     # -------------------------------------------------------------------------
     @_assign_to_circuit
-    @checkpoint_resume(CheckpointPhases.ALL_FILTERS.name,
-                       before_save_handler=Circuit.only_touch_columns,
-                       before_load_handler=_change_maxPartitionMB(32))
-    def process_filters(self, overwrite=False):
+    def process_filters(self, overwrite):
         """Runs all functionalizer filters in order, according to the classic functionalizer:
         (1) Soma-axon distance, (2) Touch rules, (3.1) Reduce and (3.2) Cut
         """
-        # Avoid recomputing filters unless overwrite=True
-        skip_soma_axon = False
-        skip_touch_rules = False
+        if overwrite:
+            checkpoint_defaults.overwrite = True
 
-        if not overwrite:
-            if self.checkpoint_exists(CheckpointPhases.SYNAPSE_PROPS):
-                # We need to raise an exception, otherwise decorators expect a generated dataframe
-                logger.warning("Extended Touches Checkpoint avail. Skipping filtering...")
-                raise ExtendedCheckpointAvail("Extended Touches Checkpoint avail."
-                                              "Skip process_filters or set overwrite to True")
-            if self.checkpoint_exists(CheckpointPhases.FILTER_TOUCH_RULES):
-                skip_soma_axon = True
-            if self.checkpoint_exists(CheckpointPhases.FILTER_REDUCED_TOUCHES):
-                skip_soma_axon = True
-                skip_touch_rules = True
-        
         self._ensure_data_loaded()
         logger.info("Starting Filtering...")
 
-        if not skip_soma_axon:
-            self.filter_by_soma_axon_distance()
+        self.filter_by_soma_axon_distance()
 
         if self._run_s2f:
-            if not skip_touch_rules:
-                self.filter_by_touch_rules()
+            self.filter_by_touch_rules()
             self.run_reduce_and_cut()
 
         # Filter helpers write result to self._circuit (@_assign_to_circuit)
@@ -238,7 +220,7 @@ class Functionalizer(object):
         :param output_path: Changes the default export directory
         """
         logger.info("Computing touch synaptical properties")
-        extended_touches = self._assign_synpse_properties(overwrite)
+        extended_touches = self._assign_synpse_properties(overwrite, mode="s2f" if self._run_s2f else "s2s")
 
         logger.info("Exporting touches...")
         exporter = self.exporter
@@ -274,7 +256,7 @@ class Functionalizer(object):
     # --- 
     @checkpoint_resume(CheckpointPhases.SYNAPSE_PROPS.name,
                        before_save_handler=Circuit.only_touch_columns)
-    def _assign_synpse_properties(self, overwrite=False):
+    def _assign_synpse_properties(self, overwrite=False, mode=None):
         # Calc syn props 
         self._ensure_data_loaded()
         extended_touches = synapse_properties.compute_additional_h5_fields(
@@ -289,6 +271,7 @@ class Functionalizer(object):
     # -------------------------------------------------------------------------
     @sm.assign_to_jobgroup
     @_assign_to_circuit
+    @checkpoint_resume(CheckpointPhases.FILTER_SOMA_AXON_DISTANCE.name)
     def filter_by_soma_axon_distance(self):
         """BLBLD-42: Creates a Soma-axon distance filter and applies it to the current touch set.
         """
@@ -312,6 +295,9 @@ class Functionalizer(object):
     # ----
     @sm.assign_to_jobgroup
     @_assign_to_circuit
+    @checkpoint_resume(CheckpointPhases.REDUCE_AND_CUT.name,
+                       before_save_handler=Circuit.only_touch_columns,
+                       before_load_handler=_change_maxPartitionMB(32))
     def run_reduce_and_cut(self):
         """Create and apply Reduce and Cut filter
         """
@@ -333,18 +319,6 @@ class Functionalizer(object):
         """ Ensures required data is available"""
         if self.recipe is None or self._circuit is None:
             raise RuntimeError("No touches available. Please load data first.")
-    
-    # ---
-    def checkpoint_exists(self, phase):
-        cp_file = os.path.join(self.__checkpoints, phase.name.lower()) + ".parquet"
-        if os.path.exists(cp_file):
-            try:
-                df = sm.read.parquet(cp_file)
-                del df
-                return True
-            except Exception as e:
-                logger.warning("Checkpoint %s can't be loaded, probably result of failed action.", str(e))
-        return False
     
     # ---
     @staticmethod

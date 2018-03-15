@@ -73,5 +73,6 @@ class MType(object):
 class CheckpointPhases(Enum):
     FILTER_TOUCH_RULES = 0
     FILTER_REDUCED_TOUCHES = 1
-    ALL_FILTERS = 2
-    SYNAPSE_PROPS = 3
+    FILTER_SOMA_AXON_DISTANCE = 2
+    REDUCE_AND_CUT = 3
+    SYNAPSE_PROPS = 4

@@ -11,6 +11,9 @@ class defaults(object):
     directory = None
     """:property: to be set by the main executing branch"""
 
+    overwrite = False
+    """:property: do not restore from checkpoints"""
+
 
 # -----------------------------------------------
 # Conditional execution decorator
@@ -32,17 +35,24 @@ def checkpoint_resume(name,
     """
     def decorator(f):
         def new_f(*args, **kw):
+            mode = kw.pop("mode", None)
             table_path = osp.join(dest or defaults.directory, name.lower())
+            if mode:
+                table_path += '_' + mode
             parquet_file_path = table_path + ".parquet"
             table_name = name.lower()
 
+
             # Attempt to load, unless overwrite is set to True
-            if not kw.pop("overwrite", False):
+            if defaults.overwrite or kw.pop('overwrite', False):
+                logger.info("[OVERWRITE %s] Checkpoint found. Overwriting...", name)
+            else:
                 if osp.exists(parquet_file_path):
-                    logger.info("[SKIP %s] Checkpoint found. Restoring state...", name)
                     try:
-                        if before_load_handler: before_load_handler()
+                        if before_load_handler:
+                            before_load_handler()
                         df = sm.read.parquet(parquet_file_path)
+                        logger.info("[SKIP %s] Checkpoint found. Restoring state...", name)
                         if post_resume_handler:
                             return post_resume_handler(df)
                         return df
@@ -53,6 +63,7 @@ def checkpoint_resume(name,
                 if bucket_cols and osp.isdir(table_path):
                     try:
                         df = sm.read.table(table_name)
+                        logger.info("[SKIP %s] Checkpoint found. Restoring state...", name)
                         if post_resume_handler:
                             return post_resume_handler(df)
                         return df
@@ -62,6 +73,10 @@ def checkpoint_resume(name,
             # Apply Tranformations
             df = f(*args, **kw)
             df_to_save = before_save_handler(df) if before_save_handler else df
+
+            # We changed data, the rest of the pipeline should overwrite
+            # any other saved checkpoints!
+            defaults.overwrite = True
 
             if bucket_cols:
                 logger.debug("Checkpointing to TABLE %s...", table_name)

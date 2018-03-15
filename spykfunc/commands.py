@@ -35,9 +35,8 @@ def _create_parser():
                              "--spark-opts \"--master spark://111.222.333.444:7077 --spark.conf.xx 123\"")
     parser.add_argument("--overwrite",
                         help="Overwrite the result of selected intermediate steps, forcing their recomputation"
-                             "Possible values: F (for filtered), E (for extended with synapse properties)"
-                             "or both: \"FE\"",
-                        default="")
+                             "Possible values: F (for filtered, implies E) or E (for extended with synapse properties)",
+                        choices=("F", "E"), const="F", nargs="?", default="")
     return parser
 
 
@@ -64,11 +63,7 @@ def spykfunc():
 
     try:
         fuzer = session(options)
-        try:
-            fuzer.process_filters(overwrite="F" in options.overwrite.upper())
-        except ExtendedCheckpointAvail:
-            # If a ExtendedCheckpoint is available and we don't want to overwrite
-            pass
+        fuzer.process_filters(overwrite="F" in options.overwrite.upper())
         fuzer.export_results(overwrite="E" in options.overwrite.upper())
     except Exception:
         logger.error(utils.format_cur_exception())
