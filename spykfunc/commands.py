@@ -20,7 +20,7 @@ def _create_parser():
                         help="s2s pruning only. If omitted s2f will be run",
                         action="store_true", default=False)
     parser.add_argument("--format-hdf5",
-                        help="Dont create result to HDF5, write out in parquet",
+                        help="Write result to HDF5 rather than parquet",
                         action="store_true", default=False)
     parser.add_argument("--checkpoint-dir",
                         help="Specify directory to store checkpoints. Defaults to ./_checkpoints")
