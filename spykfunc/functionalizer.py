@@ -72,7 +72,8 @@ class Functionalizer(object):
     # ==========
     def __init__(self, only_s2s=False, format_hdf5=False, spark_opts=None, checkpoints=None, output="spykfunc_output"):
         # Create Spark session with the static config
-        sm.create("Functionalizer", spark_config, spark_opts)
+        filename = os.path.join(output, 'report.json')
+        sm.create("Functionalizer", spark_config, spark_opts, report=filename)
 
         if checkpoints:
             self.__checkpoints = checkpoints

@@ -142,7 +142,7 @@ def setup_package():
         ],
         #  ----- Requirements -----
         install_requires=[
-            'sparkmanager',
+            'sparkmanager>=0.0.3',
             'py4j',
             'future',
             'docopt',
@@ -155,7 +155,7 @@ def setup_package():
         ],
         setup_requires=maybe_sphinx + maybe_cython,
         dependency_links=[
-            'https://github.com/matz-e/sparkmanager/tarball/master#egg=sparkmanager-0.0.1'
+            'https://github.com/matz-e/sparkmanager/tarball/master#egg=sparkmanager-0.0.3'
         ],
         tests_require=['pytest', 'pytest-cov'],
         extras_require={
