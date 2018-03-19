@@ -101,6 +101,7 @@ class Functionalizer(object):
     # -------------------------------------------------------------------------
     # Data loading and Init
     # -------------------------------------------------------------------------
+    @sm.assign_to_jobgroup
     def init_data(self, recipe_file, mvd_file, morpho_dir, touch_files):
         """ Initializes all data for a Functionalizer session, reading MVDs, morphologies, recipe,
         and making all conversions
@@ -216,6 +217,7 @@ class Functionalizer(object):
     # -------------------------------------------------------------------------
     # Exporting results
     # -------------------------------------------------------------------------
+    @sm.assign_to_jobgroup
     def export_results(self, format_hdf5=None, output_path=None, overwrite=False):
         """ Exports the current touches to storage, appending the synapse property fields
 
