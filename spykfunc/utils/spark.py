@@ -38,7 +38,7 @@ def checkpoint_resume(name,
             mode = kw.pop("mode", None)
             table_path = osp.join(dest or defaults.directory, name.lower())
             if mode:
-                table_path += '_' + mode
+                table_path += '_' + str(mode)
             parquet_file_path = table_path + ".parquet"
             table_name = name.lower()
 

@@ -1,6 +1,13 @@
 from enum import Enum
 
 
+class RunningMode(Enum):
+    """Enumeration for running modes
+    """
+    S2S = 's2s'
+    S2F = 's2f'
+
+
 class CellClass(Enum):
     """
     Enumeration of Cell Classes, typically Inhibitory or Excitatory.
@@ -71,8 +78,7 @@ class MType(object):
 
 
 class CheckpointPhases(Enum):
-    FILTER_TOUCH_RULES = 0
+    FILTER_RULES = 0
     FILTER_REDUCED_TOUCHES = 1
-    FILTER_SOMA_AXON_DISTANCE = 2
-    REDUCE_AND_CUT = 3
-    SYNAPSE_PROPS = 4
+    REDUCE_AND_CUT = 2
+    SYNAPSE_PROPS = 3

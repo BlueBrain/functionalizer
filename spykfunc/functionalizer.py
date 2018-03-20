@@ -19,7 +19,7 @@ from .data_loader import NeuronDataSpark
 from .data_export import NeuronExporter
 from .dataio.cppneuron import MVD_Morpho_Loader
 from .stats import NeuronStats
-from .definitions import CellClass, CheckpointPhases
+from .definitions import CellClass, CheckpointPhases, RunningMode
 from . import _filtering
 from . import filters
 from . import schema
@@ -92,7 +92,7 @@ class Functionalizer(object):
         sqlContext.registerJavaFunction("float2binary", "spykfunc.udfs.FloatArraySerializer")
         sqlContext.registerJavaFunction("int2binary", "spykfunc.udfs.IntArraySerializer")
 
-        self._run_s2f = not only_s2s
+        self._mode = RunningMode.S2S if only_s2s else RunningMode.S2F
         self._format_hdf5 = format_hdf5
         self.neuron_stats = NeuronStats()
 
@@ -198,7 +198,10 @@ class Functionalizer(object):
     @_assign_to_circuit
     def process_filters(self, overwrite=False):
         """Runs all functionalizer filters in order, according to the classic functionalizer:
-        (1) Soma-axon distance, (2) Touch rules, (3.1) Reduce and (3.2) Cut
+           (1.1) Soma-axon distance
+           (1.2) Touch rules (s2f only)
+           (2.1) Reduce (s2f only)
+           (2.2) Cut (s2f only)
         """
         if overwrite:
             checkpoint_defaults.overwrite = True
@@ -206,10 +209,9 @@ class Functionalizer(object):
         self._ensure_data_loaded()
         logger.info("Starting Filtering...")
 
-        self.filter_by_soma_axon_distance()
+        self.filter_by_rules(mode=self._mode)
 
-        if self._run_s2f:
-            self.filter_by_touch_rules()
+        if self._mode == RunningMode.S2F:
             self.run_reduce_and_cut()
 
         # Filter helpers write result to self._circuit (@_assign_to_circuit)
@@ -226,39 +228,35 @@ class Functionalizer(object):
         :param output_path: Changes the default export directory
         """
         logger.info("Computing touch synaptical properties")
-        extended_touches = self._assign_synpse_properties(overwrite, mode="s2f" if self._run_s2f else "s2s")
+        extended_touches = self._assign_synpse_properties(overwrite, mode=self._mode)
 
         logger.info("Exporting touches...")
         exporter = self.exporter
         if output_path is not None:
             exporter.output_path = output_path
-            
         if format_hdf5 is None:
             format_hdf5 = self._format_hdf5
 
         if format_hdf5:
             # Calc the number of NRN output files to target ~32 MB part ~1M touches
             n_parts = extended_touches.rdd.getNumPartitions()
-            if n_parts <=32:
+            if n_parts <= 32:
                 # Small circuit. We directly count and target 1M touches per output file
                 total_t = extended_touches.count()
                 n_parts = (total_t // (1024 * 1024)) or 1
             else:
                 # Main settings define large parquet to be read in partitions of 32 or 64MB.
                 # However, in s2s that might still be too much.
-                if not self._run_s2f:
+                if self._mode == RunningMode.S2S:
                     n_parts = n_parts * 2
-                    
             exporter.export_hdf5(extended_touches, 
                                  self._circuit.neuron_count, 
                                  create_efferent=False,
                                  n_partitions=n_parts)
         else:
             exporter.export_parquet(extended_touches)
-
-
         logger.info("Data export complete")
-        
+
     # --- 
     @checkpoint_resume(CheckpointPhases.SYNAPSE_PROPS.name,
                        before_save_handler=Circuit.only_touch_columns)
@@ -273,30 +271,24 @@ class Functionalizer(object):
         return extended_touches
 
     # -------------------------------------------------------------------------
-    # Functions to create/apply filters for the current session
-    # -------------------------------------------------------------------------
-    @sm.assign_to_jobgroup
-    @_assign_to_circuit
-    @checkpoint_resume(CheckpointPhases.FILTER_SOMA_AXON_DISTANCE.name)
-    def filter_by_soma_axon_distance(self):
-        """BLBLD-42: Creates a Soma-axon distance filter and applies it to the current touch set.
-        """
-        self._ensure_data_loaded()
-        distance_filter = filters.BoutonDistanceFilter(self.recipe.synapses_distance)
-        return distance_filter.apply(self.circuit)
 
     # ----
     @sm.assign_to_jobgroup
     @_assign_to_circuit
-    @checkpoint_resume(CheckpointPhases.FILTER_TOUCH_RULES.name,
+    @checkpoint_resume(CheckpointPhases.FILTER_RULES.name,
                        before_save_handler=Circuit.only_touch_columns)
-    def filter_by_touch_rules(self):
+    def filter_by_rules(self):
         """Creates a TouchRules filter according to recipe and applies it to the current touch set
         """
+        logger.info("Filtering by boutonDistance...")
         self._ensure_data_loaded()
-        logger.info("Filtering by touchRules...")
-        touch_rules_filter = filters.TouchRulesFilter(self.recipe.touch_rules)
-        return touch_rules_filter.apply(self.circuit)
+        distance_filter = filters.BoutonDistanceFilter(self.recipe.synapses_distance)
+        result = distance_filter.apply(self.circuit)
+        if self._mode == RunningMode.S2F:
+            logger.info("Filtering by touchRules...")
+            touch_rules_filter = filters.TouchRulesFilter(self.recipe.touch_rules)
+            touch_rules_filter.apply(result)
+        return result
 
     # ----
     @sm.assign_to_jobgroup
