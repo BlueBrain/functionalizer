@@ -56,6 +56,8 @@ class TestFilters(object):
         assert abs(count - NUM_AFTER_FILTER) < TOLERANCE * NUM_AFTER_FILTER
 
     def test_resume(self, fz, tmpdir_factory):
+        """Make sure that resuming "works"
+        """
         tmpdir = tmpdir_factory.mktemp('filters')
         cdir = tmpdir.join('check')
         odir = tmpdir.join('out')
@@ -71,6 +73,8 @@ class TestFilters(object):
         assert abs(count - NUM_AFTER_FILTER) < TOLERANCE * NUM_AFTER_FILTER
 
     def test_overwrite(self, fz, tmpdir_factory):
+        """Test that overwriting checkpointed data works
+        """
         tmpdir = tmpdir_factory.mktemp('filters')
         cdir = tmpdir.join('check')
         odir = tmpdir.join('out')
@@ -84,3 +88,8 @@ class TestFilters(object):
         count = fz2.circuit.count()
         assert count != original
         assert abs(count - NUM_AFTER_FILTER) < TOLERANCE * NUM_AFTER_FILTER
+
+    def test_writeout(self, fz):
+        """Simple test that saving results works.
+        """
+        fz.export_results()

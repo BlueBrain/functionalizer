@@ -262,8 +262,8 @@ class Functionalizer(object):
         self._ensure_data_loaded()
         extended_touches = synapse_properties.compute_additional_h5_fields(
             self.circuit,
-            self.circuit.synapse_class_matrix,
-            self.circuit.synapse_class_properties
+            self._circuit.synapse_class_matrix,
+            self._circuit.synapse_class_properties
         )
         return extended_touches
 
