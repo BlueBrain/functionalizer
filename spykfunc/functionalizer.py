@@ -278,17 +278,17 @@ class Functionalizer(object):
     @_assign_to_circuit
     @checkpoint_resume(CheckpointPhases.FILTER_RULES.name,
                        before_save_handler=Circuit.only_touch_columns)
-    def filter_by_rules(self):
+    def filter_by_rules(self, mode):
         """Creates a TouchRules filter according to recipe and applies it to the current touch set
         """
         logger.info("Filtering by boutonDistance...")
         self._ensure_data_loaded()
         distance_filter = filters.BoutonDistanceFilter(self.recipe.synapses_distance)
         result = distance_filter.apply(self.circuit)
-        if self._mode == RunningMode.S2F:
+        if mode == RunningMode.S2F:
             logger.info("Filtering by touchRules...")
             touch_rules_filter = filters.TouchRulesFilter(self.recipe.touch_rules)
-            touch_rules_filter.apply(result)
+            result = touch_rules_filter.apply(result)
         return result
 
     # ----

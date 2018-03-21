@@ -4,6 +4,7 @@
 import os
 import pytest
 import spykfunc
+from spykfunc.definitions import RunningMode
 
 CURDIR = os.path.dirname(__file__)
 
@@ -38,13 +39,13 @@ class TestFilters(object):
     def test_distance(self, fz):
         """Test the distance rules: deterministic
         """
-        fz.filter_by_soma_axon_distance()
+        fz.filter_by_rules(mode=RunningMode.S2S)
         assert fz.circuit.count() == NUM_AFTER_DISTANCE
 
     def test_touch_filter(self, fz):
         """Test the bouton touch filter: deterministic
         """
-        fz.filter_by_touch_rules()
+        fz.filter_by_rules(mode=RunningMode.S2F)
         assert fz.circuit.count() == NUM_AFTER_TOUCH
 
     def test_reduce_and_cut(self, fz):

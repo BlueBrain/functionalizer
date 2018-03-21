@@ -144,6 +144,7 @@ def setup_package():
         install_requires=[
             'sparkmanager>=0.0.3',
             'py4j',
+            'funcsigs',
             'future',
             'docopt',
             'enum34;python_version<"3.4"',

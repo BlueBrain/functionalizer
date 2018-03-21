@@ -1,11 +1,13 @@
 from os import path as osp
 from collections import namedtuple
 from contextlib import contextmanager
+from funcsigs import signature
 from functools import update_wrapper
 from pyspark.sql.column import _to_seq
 from . import get_logger
 
 import sparkmanager as sm
+
 
 class defaults(object):
     directory = None
@@ -35,13 +37,15 @@ def checkpoint_resume(name,
     """
     def decorator(f):
         def new_f(*args, **kw):
-            mode = kw.pop("mode", None)
+            if 'mode' in signature(f).parameters:
+                mode = kw['mode']
+            else:
+                mode = kw.pop("mode", None)
             table_path = osp.join(dest or defaults.directory, name.lower())
             if mode:
                 table_path += '_' + str(mode)
             parquet_file_path = table_path + ".parquet"
             table_name = name.lower()
-
 
             # Attempt to load, unless overwrite is set to True
             if defaults.overwrite or kw.pop('overwrite', False):
