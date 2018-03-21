@@ -132,10 +132,6 @@ class Functionalizer(object):
         # Init the Enumeration to contain fzer CellClass index
         CellClass.init_fzer_indexes(fdata.cellClasses)
 
-        # Load synapse properties
-        self.synapse_class_matrix = fdata.load_synapse_prop_matrix(self.recipe)
-        self.synapse_class_prop_df = fdata.load_synapse_properties_and_classification(self.recipe)
-
         # 'Load' touches
         touches = fdata.load_touch_parquet(*touch_files) \
             .withColumnRenamed("pre_neuron_id", "src") \
@@ -266,8 +262,8 @@ class Functionalizer(object):
         self._ensure_data_loaded()
         extended_touches = synapse_properties.compute_additional_h5_fields(
             self.circuit,
-            self.synapse_class_matrix,
-            self.synapse_class_prop_df
+            self.circuit.synapse_class_matrix,
+            self.circuit.synapse_class_properties
         )
         return extended_touches
 
