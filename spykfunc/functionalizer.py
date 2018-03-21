@@ -32,16 +32,6 @@ __all__ = ["Functionalizer", "session", "CheckpointPhases", "ExtendedCheckpointA
 logger = utils.get_logger(__name__)
 _MB = 1024**2
 
-spark_config = {
-    "spark.shuffle.compress": False,
-    "spark.checkpoint.compress": True,
-    "spark.jars": os.path.join(os.path.dirname(__file__), "data/spykfunc_udfs.jar"),
-    "spark.sql.autoBroadcastJoinThreshold": 0,
-    "spark.sql.broadcastTimeout": 30 * 60,  # 30 minutes to do calculations that will be broadcasted
-    "spark.sql.catalogImplementation": "hive",
-    "spark.sql.files.maxPartitionBytes": 128 * _MB
-}
-
 
 class ExtendedCheckpointAvail(Exception):
     """An exception signalling that process_filters can be skipped
@@ -73,7 +63,6 @@ class Functionalizer(object):
     def __init__(self, only_s2s=False, format_hdf5=False, spark_opts=None, checkpoints=None, output="spykfunc_output"):
         # Create Spark session with the static config
         filename = os.path.join(output, 'report.json')
-        sm.create("Functionalizer", spark_config, spark_opts, report=filename)
 
         if checkpoints:
             self.__checkpoints = checkpoints
@@ -82,6 +71,18 @@ class Functionalizer(object):
         self.__output = output
 
         checkpoint_defaults.directory = self.__checkpoints
+
+        spark_config = {
+            "spark.shuffle.compress": False,
+            "spark.checkpoint.compress": True,
+            "spark.jars": os.path.join(os.path.dirname(__file__), "data/spykfunc_udfs.jar"),
+            "spark.sql.autoBroadcastJoinThreshold": 0,
+            "spark.sql.broadcastTimeout": 30 * 60,  # 30 minutes to do calculations that will be broadcasted
+            "spark.sql.catalogImplementation": "hive",
+            "spark.sql.files.maxPartitionBytes": 128 * _MB,
+            "derby.system.home": os.path.join(self.__checkpoints, "derby")
+        }
+        sm.create("Functionalizer", spark_config, spark_opts, report=filename)
 
         # Configuring Spark runtime
         sm.setLogLevel("WARN")
