@@ -1,36 +1,17 @@
 """Test the various filters
 """
 
-import os
 import pytest
 import spykfunc
 from spykfunc.definitions import RunningMode
 
-CURDIR = os.path.dirname(__file__)
-
-ARGS = (
-    os.path.join(CURDIR, "circuit_1000n/builderRecipeAllPathways.xml"),
-    os.path.join(CURDIR, "circuit_1000n/circuit.mvd3"),
-    os.path.join(CURDIR, "circuit_1000n/touches/*.parquet")
-)
+from fixtures import ARGS, fz
 
 NUM_AFTER_DISTANCE = 2264809
 NUM_AFTER_TOUCH = 2218004
 NUM_AFTER_FILTER = 169000  # To be used with tolerance defined below
 
 TOLERANCE = 0.02  # Statistical tolerance in %
-
-
-@pytest.fixture(scope='session')
-def fz(tmpdir_factory):
-    tmpdir = tmpdir_factory.mktemp('filters')
-    cdir = tmpdir.join('check')
-    odir = tmpdir.join('out')
-    kwargs = {
-        'checkpoint-dir': str(cdir),
-        'output-dir': str(odir)
-    }
-    return spykfunc.session(*ARGS, **kwargs)
 
 
 @pytest.mark.slow
