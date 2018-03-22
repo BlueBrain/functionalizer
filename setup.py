@@ -158,7 +158,7 @@ def setup_package():
         dependency_links=[
             'https://github.com/matz-e/sparkmanager/tarball/master#egg=sparkmanager-0.0.3'
         ],
-        tests_require=['pytest', 'pytest-cov'],
+        tests_require=['pandas', 'pytest', 'pytest-cov'],
         extras_require={
             # Dependencies if the user wants a dev env
             'dev': ['cython<0.26', 'flake8']
