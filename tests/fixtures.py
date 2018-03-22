@@ -2,12 +2,12 @@ import os
 import pytest
 import spykfunc
 
-CURDIR = os.path.dirname(__file__)
+DATADIR = os.path.join(os.path.dirname(__file__), "circuit_1000n")
 
 ARGS = (
-    os.path.join(CURDIR, "circuit_1000n/builderRecipeAllPathways.xml"),
-    os.path.join(CURDIR, "circuit_1000n/circuit.mvd3"),
-    os.path.join(CURDIR, "circuit_1000n/touches/*.parquet")
+    os.path.join(DATADIR, "builderRecipeAllPathways.xml"),
+    os.path.join(DATADIR, "circuit.mvd3"),
+    os.path.join(DATADIR, "touches/*.parquet")
 )
 
 
