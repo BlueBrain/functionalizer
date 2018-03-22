@@ -5,6 +5,9 @@ from __future__ import absolute_import
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
 from pyspark import SparkContext
+import sparkmanager as sm
+
+from .schema import SYNAPSE_CLASS_MAP_SCHEMA as schema
 
 # -----
 def compute_additional_h5_fields(circuit, syn_class_matrix, syn_props_df):
@@ -23,12 +26,11 @@ def compute_additional_h5_fields(circuit, syn_class_matrix, syn_props_df):
                                  circuit.dst_electrophysiology * index_length[5] +
                                  circuit.dst_syn_class_index)
 
-    # Get the rule index from the numpy matrix
-    # According to benchmarks in pyspark, applying to_syn_prop_i (py) with 1000 N (2M touches) split by three cores
-    # takes 5 more seconds. That means that in average there's 5min overhead per 20k neurons per core
-    to_syn_prop_i = get_synapse_property_udf(syn_class_matrix)
-    touches = touches.withColumn("syn_prop_i", to_syn_prop_i(touches.syn_prop_index))
-    touches = touches.drop("syn_prop_index")
+    # Convert the numpy matrix into a dataframe and join to get the right
+    # property index
+    rdd = sm.parallelize(enumerate(int(n) for n in syn_class_matrix.flatten()), 200)
+    syn_class = sm.createDataFrame(rdd, schema).cache()
+    touches = touches.join(F.broadcast(syn_class), "syn_prop_index").drop("syn_prop_index")
 
     # Join with Syn Prop Class
     syn_props_df = syn_props_df.alias("synprop")  # Synprops is globally cached and broadcasted
@@ -96,20 +98,3 @@ def compute_additional_h5_fields(circuit, syn_class_matrix, syn_props_df):
         t.ase.alias("ase"),
         F.lit(0).alias("branch_type"),  # TBD (0 soma, 1 axon, 2 basel dendrite, 3 apical dendrite)
     )
-    
-    
-# *********************************************************
-# Synapse classification UDF
-# *********************************************************
-def get_synapse_property_udf(syn_class_matrix, sc=None):
-    if sc is None:
-        sc = SparkContext.getOrCreate()
-
-    # We need the matrix in all nodes, flattened
-    syn_class_matrix_flat = sc.broadcast(syn_class_matrix.flatten())
-
-    def syn_prop_udf(syn_prop_index):
-        # Leaves are still tuple size2
-        return syn_class_matrix_flat.value[syn_prop_index].tolist()
-
-    return F.udf(syn_prop_udf, T.ShortType())
