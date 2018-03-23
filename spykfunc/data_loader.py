@@ -89,6 +89,11 @@ class NeuronDataSpark(NeuronData):
         if os.path.exists(mvd_parquet):
             logger.info("Loading from MVD parquet")
             mvd = sm.read.parquet(mvd_parquet)
+            if 'layer_i' not in mvd.schema.names:
+                self.layers = mvd.select('layer').distinct().collect()
+                lrdd = sm.parallelize(enumerate(i.layer for i in self.layers))
+                layers = lrdd.toDF(schema.LAYER_SCHEMA)
+                mvd = mvd.join(layers, "layer")
             self.neuronDF = F.broadcast(mvd).cache()
             n_neurons = self.neuronDF.count()  # Force broadcast to meterialize
             logger.info("Loaded {} neurons from MVD".format(n_neurons))
@@ -206,6 +211,40 @@ class NeuronDataSpark(NeuronData):
 
         merged_props = F.broadcast(merged_props.checkpoint())
         return merged_props
+
+    def load_touch_rules_matrix(self, recipe):
+        """Loader for TouchRules
+        """
+        self.require_mvd_globals()
+
+        layers = self.layers
+        layers_rev = {layer: i for i, layer in enumerate(layers)}
+
+        mtype = self.mTypes
+        mtype_rev = {name: i for i, name in enumerate(mtype)}
+
+        touch_rule_matrix = np.zeros(
+            shape=(len(layers_rev), len(layers_rev),
+                   len(mtype_rev), len(mtype_rev), 2
+                   ),
+            dtype="uint8"
+        )
+
+        for rule in recipe.touch_rules:
+            l1 = rule.fromLayer if rule.fromLayer else slice(None)
+            l2 = rule.toLayer if rule.toLayer else slice(None)
+            t1s = [slice(None)]
+            t2s = [slice(None)]
+            if rule.fromMType:
+                t1s = [mtype_rev[m] for m in fnmatch.filter(mtype, rule.fromMType)]
+            if rule.toMType:
+                t2s = [mtype_rev[m] for m in fnmatch.filter(mtype, rule.toMType)]
+            r = (0 if rule.type == "soma" else 1) if rule.type else slice(None)
+
+            for t1 in t1s:
+                for t2 in t2s:
+                    touch_rule_matrix[l1, l2, t1, t2, r] = 1
+        return touch_rule_matrix
 
     # ---
     def load_synapse_prop_matrix(self, recipe):

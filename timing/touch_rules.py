@@ -6,7 +6,8 @@ import spykfunc.filters
 import tempfile
 
 
-DATADIR = os.path.join(os.path.dirname(__file__), '..', 'tests', 'circuit_1000n')
+# DATADIR = os.path.join(os.path.dirname(__file__), '..', 'tests', 'circuit_1000n')
+DATADIR = '/home/matwolf/Work/Playpen/O1.v6a'
 
 ARGS = (
     os.path.join(DATADIR, "builderRecipeAllPathways.xml"),
@@ -23,7 +24,7 @@ kwargs = {
 }
 
 fz = spykfunc.session(*ARGS, **kwargs)
-fl = spykfunc.filters.TouchRulesFilter(fz.recipe.touch_rules)
+fl = spykfunc.filters.TouchRulesFilter(fz._circuit.touch_rules)
 
 
 def run():
@@ -32,4 +33,4 @@ def run():
 
 if __name__ == '__main__':
     import timeit
-    print(timeit.repeat('run()', setup='from __main__ import run', repeat=7, number=5))
+    print(timeit.repeat('run()', setup='from __main__ import run', repeat=5, number=1))

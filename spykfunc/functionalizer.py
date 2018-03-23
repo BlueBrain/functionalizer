@@ -283,7 +283,7 @@ class Functionalizer(object):
         result = distance_filter.apply(self.circuit)
         if mode == RunningMode.S2F:
             logger.info("Filtering by touchRules...")
-            touch_rules_filter = filters.TouchRulesFilter(self.recipe.touch_rules)
+            touch_rules_filter = filters.TouchRulesFilter(self._circuit.touch_rules)
             result = touch_rules_filter.apply(result)
         return result
 

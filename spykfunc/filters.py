@@ -1,9 +1,10 @@
 from __future__ import division
 import os
 import sys
+import numpy as np
 from pyspark.sql import functions as F
-import sparkmanager as sm
 from pyspark.sql import types as T
+import sparkmanager as sm
 # from pyspark import StorageLevel
 from .circuit import Circuit
 from .definitions import CellClass, CheckpointPhases
@@ -75,8 +76,16 @@ class TouchRulesFilter(DataSetOperation):
     """
 # -------------------------------------------------------------------------------------------------
 
-    def __init__(self, recipe_touch_rules):
-        self._rules = recipe_touch_rules
+    def __init__(self, matrix):
+        """Create a new instance
+
+        :param matrix: a matrix indicating
+        """
+        rdd = sm.parallelize(((i,) for i, v in enumerate(matrix.flatten()) if v == 0), 200)
+        self._rules = sm.createDataFrame(rdd, schema=["fail"])
+        self._indices = list(matrix.shape)
+        for i in reversed(range(len(self._indices) - 1)):
+            self._indices[i] *= self._indices[i + 1]
 
     def apply(self, circuit, *args, **kw):
         """ .apply() method (runner) of the filter
@@ -84,28 +93,15 @@ class TouchRulesFilter(DataSetOperation):
         # For each neuron we require: preLayer, preMType, postLayer, postMType, postBranchIsSoma
         # The first four fields are properties of the neurons, part of neuronDF, while postBranchIsSoma
         # is a property if the touch, checked by the index of the target neuron section (0->soma)
-        sql_queries = []
-
-        for rule in self._rules:
-            rule_sqls = []
-            if rule.fromLayer:
-                rule_sqls.append("src_layer={}".format(rule.fromLayer))
-            if rule.toLayer:
-                rule_sqls.append("dst_layer={}".format(rule.toLayer))
-            if rule.fromMType:
-                rule_sqls.append("src_morphology LIKE '{}'".format(rule.fromMType.replace("*", "%")))
-            if rule.toMType:
-                rule_sqls.append("dst_morphology LIKE '{}'".format(rule.toMType.replace("*", "%")))
-            if rule.type:
-                rule_sqls.append("post_section {sign} 0".format(sign="=" if (rule.type == "soma") else ">"))
-
-            if rule_sqls:
-                sql_queries.append("(" + " AND ".join(rule_sqls) + ")")
-
-        master_filter_sql = " OR ".join(sql_queries)
-        new_circuit = circuit.where(master_filter_sql)
-
-        return new_circuit
+        touches = circuit.withColumn("fail",
+                                     circuit.src_layer_i * self._indices[1] +
+                                     circuit.dst_layer_i * self._indices[2] +
+                                     circuit.src_morphology_i * self._indices[3] +
+                                     circuit.dst_morphology_i * self._indices[4] +
+                                     (circuit.post_section > 0).cast('integer')) \
+                         .join(F.broadcast(self._rules), "fail", "left_anti") \
+                         .drop("fail")
+        return touches
 
 
 # -------------------------------------------------------------------------------------------------

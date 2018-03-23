@@ -11,6 +11,11 @@ class DataSets:
     MORPHOLOGIES = "Dataset.Morphologies"
 
 
+LAYER_SCHEMA = T.StructType([
+    T.StructField("layer_i", T.ByteType(), False),
+    T.StructField("layer", T.ByteType(), False),
+])
+
 NEURON_SCHEMA = T.StructType([
     T.StructField("id", T.IntegerType(), False),
     T.StructField("morphology_i", T.IntegerType(), False),  # mtype

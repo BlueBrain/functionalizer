@@ -20,12 +20,19 @@ class Circuit(object):
         self.__neuron_data = neurons
         self.__synapse_class_matrix = neurons.load_synapse_prop_matrix(recipe)
         self.__synapse_class_properties = neurons.load_synapse_properties_and_classification(recipe)
+        self.__touch_rules_matrix = neurons.load_touch_rules_matrix(recipe)
 
         self._touches = touches
         self._initial_touches = touches
 
         # The circuit will be constructed 
         self.__circuit = None
+
+    @property
+    def touch_rules(self):
+        """:property: rules for touches
+        """
+        return self.__touch_rules_matrix
 
     @property
     def synapse_class_matrix(self):
