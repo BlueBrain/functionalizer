@@ -1,14 +1,12 @@
 from __future__ import division
 import os
 import sys
-import numpy as np
 from pyspark.sql import functions as F
-from pyspark.sql import types as T
 import sparkmanager as sm
 # from pyspark import StorageLevel
 from .circuit import Circuit
 from .definitions import CellClass, CheckpointPhases
-from .schema import to_pathway_i, pathway_i_to_str, touches_with_pathway
+from .schema import pathway_i_to_str, touches_with_pathway
 from ._filtering import DataSetOperation
 from .utils import get_logger
 from .utils.spark import checkpoint_resume, number_shuffle_partitions
@@ -218,6 +216,7 @@ class ReduceAndCut(DataSetOperation):
         return Circuit.only_touch_columns(cut2AF_touches)
 
     # ---
+    @sm.assign_to_jobgroup
     @checkpoint_resume("pathway_stats",
                        bucket_cols="pathway_i", n_buckets=1)
     def compute_reduce_cut_params(self, full_touches):
