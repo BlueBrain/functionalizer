@@ -4,7 +4,6 @@
 import os
 import pytest
 import sparkmanager as sm
-import spykfunc
 
 from fixtures import DATADIR, ARGS, fz
 from spykfunc.synapse_properties import compute_additional_h5_fields
