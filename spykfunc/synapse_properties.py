@@ -4,12 +4,11 @@ Additional "Synapse property fields
 from __future__ import absolute_import
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
-from pyspark import SparkContext
 import sparkmanager as sm
 
 from .schema import SYNAPSE_CLASS_MAP_SCHEMA as schema
 
-# -----
+
 def compute_additional_h5_fields(circuit, syn_class_matrix, syn_props_df):
     syn_class_dims = syn_class_matrix.shape  # tuple of len 6
 
