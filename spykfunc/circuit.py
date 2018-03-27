@@ -25,7 +25,7 @@ class Circuit(object):
         self._touches = touches
         self._initial_touches = touches
 
-        # The circuit will be constructed 
+        # The circuit will be constructed
         self.__circuit = None
 
     @property

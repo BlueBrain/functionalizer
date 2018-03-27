@@ -76,7 +76,7 @@ class NeuronStats(object):
     @property
     @assign_to_property("_pathway_touches_conns", True)
     def pathway_touch_stats(self):
-        return self.get_pathway_touch_stats_from_touch_counts(self.neurons_touch_counts)    
+        return self.get_pathway_touch_stats_from_touch_counts(self.neurons_touch_counts)
 
     @staticmethod
     def get_neurons_touch_counts(circuit):
@@ -90,7 +90,6 @@ class NeuronStats(object):
         )
         return NeuronStats.get_connections_counts_from_touches_with_pathway(touches_with_pathway)
 
-
     @staticmethod
     def get_connections_counts_from_touches_with_pathway(touches):
         connections_counts = (
@@ -99,7 +98,6 @@ class NeuronStats(object):
             .agg(F.count("*").cast(IntegerType()).alias("count"))
         )
         return connections_counts
-
 
     @staticmethod
     def get_pathway_touch_stats_from_touch_counts(neurons_touch_counts):
@@ -118,7 +116,6 @@ class NeuronStats(object):
             )
         )
 
-
     @staticmethod
     def get_pathway_touch_stats_from_touches_with_pathway(touches):
         """For every pathway (src-dst mtype) calc the number of touches, connections, and the mean (touches/connection)
@@ -126,7 +123,7 @@ class NeuronStats(object):
         neurons_touch_counts = NeuronStats.get_connections_counts_from_touches_with_pathway(touches)
         return NeuronStats.get_pathway_touch_stats_from_touch_counts(neurons_touch_counts)
 
-    
+
 class MTYPE_STATS_FIELDS:
     PRE_MORPHOLOGY = 0
     POST_MORPHOLOGY = 1

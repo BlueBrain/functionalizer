@@ -3,13 +3,12 @@
 # *************************************************************************
 from __future__ import absolute_import
 from fnmatch import filter as matchfilter
-from glob import glob
 import time
 import os
 
 from pyspark.sql import SQLContext
-from pyspark.sql import functions as F
-from pyspark.sql import types as T
+# from pyspark.sql import functions as F
+# from pyspark.sql import types as T
 
 import sparkmanager as sm
 
@@ -139,7 +138,7 @@ class Functionalizer(object):
 
         self._circuit = Circuit(fdata, touches, self.recipe)
         self.neuron_stats.circuit = self._circuit
-        
+
         # Grow suffle partitions with size of touches DF
         # In generic cases we dont shuffle all the fields, so we reduce this by a factor of 2
         # Min: 100 reducers
@@ -246,19 +245,19 @@ class Functionalizer(object):
                 # However, in s2s that might still be too much.
                 if self._mode == RunningMode.S2S:
                     n_parts = n_parts * 2
-            exporter.export_hdf5(extended_touches, 
-                                 self._circuit.neuron_count, 
+            exporter.export_hdf5(extended_touches,
+                                 self._circuit.neuron_count,
                                  create_efferent=False,
                                  n_partitions=n_parts)
         else:
             exporter.export_parquet(extended_touches)
         logger.info("Data export complete")
 
-    # --- 
+    # ---
     @checkpoint_resume(CheckpointPhases.SYNAPSE_PROPS.name,
                        before_save_handler=Circuit.only_touch_columns)
     def _assign_synpse_properties(self, overwrite=False, mode=None):
-        # Calc syn props 
+        # Calc syn props
         self._ensure_data_loaded()
         extended_touches = synapse_properties.compute_additional_h5_fields(
             self.circuit,
@@ -314,7 +313,7 @@ class Functionalizer(object):
         """ Ensures required data is available"""
         if self.recipe is None or self._circuit is None:
             raise RuntimeError("No touches available. Please load data first.")
-    
+
     # ---
     @staticmethod
     def _build_concrete_mtype_conn_rules(src_conn_rules, mTypes):

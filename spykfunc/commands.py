@@ -13,7 +13,7 @@ def _create_parser():
     parser.add_argument("recipe_file", help="the XML recipe file")
     parser.add_argument("mvd_file",    help="the input mvd file")
     parser.add_argument("morpho_dir",  help="the H5 morphology database directory")
-    parser.add_argument("touch_files", 
+    parser.add_argument("touch_files",
                         help="The touch files (parquets). A litertal blob expression is also accepted.",
                         nargs="+")
     group = parser.add_mutually_exclusive_group()
@@ -58,7 +58,7 @@ def spykfunc():
     # If everything seems ok, import functionalizer.
     # Like this we can use the parser without starting with pyspark or spark-submit
     # NOTE: Scripts must be executed from pyspark or spark-submit to import pyspark
-    from spykfunc.functionalizer import session, ExtendedCheckpointAvail
+    from spykfunc.functionalizer import session
     logger = utils.get_logger(__name__)
 
     try:

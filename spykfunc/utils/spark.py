@@ -1,5 +1,4 @@
 from os import path as osp
-from collections import namedtuple
 from contextlib import contextmanager
 from funcsigs import signature
 from functools import update_wrapper
@@ -31,9 +30,6 @@ def checkpoint_resume(name,
                       bucket_cols=False,
                       n_buckets=True):
     """Checkpoint a table in the execution flow
-
-    :param before_save_handler: transformation to be applied to the
-                                dataframe before saving to disk
     """
     def decorator(f):
         def new_f(*args, **kw):
@@ -112,13 +108,14 @@ def checkpoint_resume(name,
             logger.debug("Checkpoint Finished")
 
             if break_exec_plan:
-                if before_load_handler: before_load_handler()
+                if before_load_handler:
+                    before_load_handler()
                 with sm.jobgroup("restoring checkpoint " + name.lower()):
                     if bucket_cols:
                         df = sm.read.table(table_name)
                     else:
                         df = sm.read.parquet(parquet_file_path)
-                
+
             if post_compute_handler:
                 return post_compute_handler(df)
 

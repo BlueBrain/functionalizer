@@ -7,9 +7,11 @@
 from __future__ import print_function, absolute_import, division
 import pytest
 
+
 def pytest_addoption(parser):
     parser.addoption("--run-slow", action="store_true",
                      default=False, help="run slow tests")
+
 
 def pytest_collection_modifyitems(config, items):
     if config.getoption("--run-slow"):
@@ -20,14 +22,16 @@ def pytest_collection_modifyitems(config, items):
         if "slow" in item.keywords:
             item.add_marker(skip_slow)
 
+
 def pytest_runtest_makereport(item, call):
     if "incremental" in item.keywords:
         if call.excinfo is not None:
             parent = item.parent
             parent._previousfailed = item
 
+
 def pytest_runtest_setup(item):
     if "incremental" in item.keywords:
         previousfailed = getattr(item.parent, "_previousfailed", None)
         if previousfailed is not None:
-            pytest.xfail("previous test failed (%s)" %previousfailed.name)
+            pytest.xfail("previous test failed ({})".format(previousfailed.name))

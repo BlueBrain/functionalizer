@@ -1,6 +1,5 @@
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
-from pyspark import SparkContext
 from math import exp, sqrt
 import logging
 
@@ -175,4 +174,3 @@ def pprime_approximation(r, cv, p):
             mu2 = mu2 + step
 
     return pprime, f1, mu2, r_actual
-

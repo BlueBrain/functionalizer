@@ -8,6 +8,7 @@ __all__ = ["DictAccum", "ListAccum", "wrap_java_udf"]
 class DictAccum(AccumulatorParam):
     """ A Spark accumulator to aggregate dictionaries
     """
+
     def zero(self, initialValue):
         return {}
 
@@ -23,6 +24,7 @@ class DictAccum(AccumulatorParam):
 class ListAccum(AccumulatorParam):
     """ A Spark accumulator to aggregate lists
     """
+
     def zero(self, initialValue):
         return list(initialValue)
 

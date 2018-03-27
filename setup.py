@@ -101,14 +101,12 @@ extensions = [
     for name, opts in ext_mods.items()
 ]
 
-if "test" in sys.argv:
+
+if BUILD_TYPE == 'DEVEL':
     extensions.append(
         Extension('tests.tst_neuron_memview',
                   ['tests/tst_neuron_memview' + _filename_ext],
                   language="c++"))
-
-
-if BUILD_TYPE == 'DEVEL':
     extensions = cythonize(extensions,
                            cplus=True,
                            build_dir="build",

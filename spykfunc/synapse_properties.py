@@ -53,14 +53,14 @@ def compute_additional_h5_fields(circuit, syn_class_matrix, syn_props_df):
     # 15-16: BranchOrder of the dendrite, BranchOrder of the axon (int,int)
     # 17: ASE Absolute Synaptic Efficacy (Millivolts) (int)
     # 18: Branch Type from the post neuron(0 for soma,
-    
+
     # Compute #1: delaySomaDistance
     touches = touches.withColumn(
         "axional_delay",
         F.expr("synprop.neuralTransmitterReleaseDelay + distance_soma  / synprop.axonalConductionVelocity")
-            .cast(T.FloatType())
+        .cast(T.FloatType())
     )
-    
+
     # Compute #8-12: g, u, d, f, dtc
     touches = touches.selectExpr(
         "*",
@@ -74,8 +74,8 @@ def compute_additional_h5_fields(circuit, syn_class_matrix, syn_props_df):
     # Compute #13: synapseType:  Inhibitory < 100 or  Excitatory >= 100
     t = touches.withColumn("synapseType",
                            (F.when(F.col("synprop.type").substr(0, 1) == F.lit('E'), 100)
-                            .otherwise(0)) 
-                           + F.col("synprop._class_i"))
+                            .otherwise(0)) +
+                           F.col("synprop._class_i"))
 
     # Select fields
     return t.select(

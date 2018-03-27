@@ -32,6 +32,7 @@ class BoutonDistanceFilter(DataSetOperation):
     Class implementing filtering by Bouton Distance (min. distance to soma)
     """
 # -------------------------------------------------------------------------------------------------
+
     def __init__(self, bouton_distance_obj):
         self._bouton_distance_obj = bouton_distance_obj
 
@@ -97,8 +98,8 @@ class TouchRulesFilter(DataSetOperation):
                                      circuit.src_morphology_i * self._indices[3] +
                                      circuit.dst_morphology_i * self._indices[4] +
                                      (circuit.post_section > 0).cast('integer')) \
-                         .join(F.broadcast(self._rules), "fail", "left_anti") \
-                         .drop("fail")
+            .join(F.broadcast(self._rules), "fail", "left_anti") \
+            .drop("fail")
         return touches
 
 
@@ -180,7 +181,7 @@ class ReduceAndCut(DataSetOperation):
         # We can use checkpoint_resume on it
         # Bucketing is to be done by pathway, to optimize subsequent queries. Bucket count should
         # still be optimal since pathway is directly dependent on src-dst ids
-        f = checkpoint_resume("cut_conn_counts", bucket_cols=("src", "dst")) (
+        f = checkpoint_resume("cut_conn_counts", bucket_cols=("src", "dst"))(
             lambda: cut_touch_counts_connection
         )
         cut_touch_counts_connection = f()
@@ -268,7 +269,7 @@ class ReduceAndCut(DataSetOperation):
         return all_touches.sampleBy("pathway_i", fractions).repartition("src", "dst")
 
     # ---
-    # Note: apply_cut is not checkpointed since it 
+    # Note: apply_cut is not checkpointed since it
     #       builds up with apply_cut_active_fraction filter
     @staticmethod
     @sm.assign_to_jobgroup
@@ -328,7 +329,7 @@ class ReduceAndCut(DataSetOperation):
     # ----
     @staticmethod
     @sm.assign_to_jobgroup
-    # Note: Filter not checkpointed since it's the last stage 
+    # Note: Filter not checkpointed since it's the last stage
     #       of global filtering (which is checkpointed)
     def apply_cut_active_fraction(cut_touches, params_df, cut_touch_counts_connection, **kw):
         """
@@ -346,7 +347,7 @@ class ReduceAndCut(DataSetOperation):
                 .groupBy("pathway_i")
                 .agg(F.sum("reduced_touch_counts_connection").alias("cut_touch_counts_pathway"))
             )
-        
+
         active_fractions = (
             cut_touch_counts_pathway
             .join(params_df, "pathway_i")
@@ -369,7 +370,7 @@ class ReduceAndCut(DataSetOperation):
             .select("pathway_i", "active_fraction")
             .cache()
         )
-        
+
         # This is a minimal DS so we cache and broadcast in single partition
         active_fractions.count()
         active_fractions = F.broadcast(active_fractions.coalesce(1))

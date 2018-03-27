@@ -56,6 +56,7 @@ class classproperty(property):
 def assign_to_property(prop_name, use_as_cache=False):
     def decorator(f):
         "Convenience docorator to assign results to a property of the instance"
+
         def newf(self, *args, **kw):
             if use_as_cache:
                 val = getattr(self, prop_name)
@@ -66,8 +67,8 @@ def assign_to_property(prop_name, use_as_cache=False):
             return val
         return update_wrapper(newf, f)
     return decorator
-    
-    
+
+
 # -----------------------------------------------
 # UI utils
 # -----------------------------------------------

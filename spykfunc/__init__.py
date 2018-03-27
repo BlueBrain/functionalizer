@@ -59,7 +59,7 @@ def session(recipe, mvd_file, touch_files, **opts):
         args = args + (touch_files,)
     else:
         args += tuple(touch_files)
-    
+
     # Extract options that dont take arguments
     if opts.pop("s2s", False):
         args += ("--s2s",)

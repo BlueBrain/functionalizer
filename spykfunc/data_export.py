@@ -46,7 +46,7 @@ class NeuronExporter(object):
         if path.exists(filepath):
             return sm.read.parquet(filepath)
         return None
-        
+
     # ---
     def export_parquet(self, extended_touches_df, filename="nrn.parquet"):
         output_path = self.ensure_file_path(filename)
@@ -57,7 +57,7 @@ class NeuronExporter(object):
         # In the export a lot of shuffling happens, we must carefully control partitioning
         if n_partitions is None:
             n_partitions = ((n_gids - 1) // DEFAULT_N_NEURONS_FILE) + 1
-        # We use shuffle.partitions to define the nr of partitions since coalesce is innefective 
+        # We use shuffle.partitions to define the nr of partitions since coalesce is innefective
         # with larger number of partitions (and repartition is not an option!)
         sm.conf.set("spark.sql.shuffle.partitions", n_partitions)
 
@@ -86,8 +86,8 @@ class NeuronExporter(object):
                         "int2binary(pre_gids) as pre_gids_bin",
                         "int2binary(conn_counts) as conn_counts_bin")
         )
-        
-        #arrays_df = self.save_temp(arrays_df, "aggregated_touches.parquet", partition_col="file_nr")
+
+        # arrays_df = self.save_temp(arrays_df, "aggregated_touches.parquet", partition_col="file_nr")
 
         # Init a list accumulator to gather output filenames
         nrn_filenames = sm.accumulator([], spark_udef_utils.ListAccum())
@@ -100,7 +100,7 @@ class NeuronExporter(object):
         # We need it since there's a coalesce after, for little parallelism later
         summary_rdd = summary_rdd.persist(StorageLevel.MEMORY_AND_DISK)
         summary_rdd.count()
-        
+
         # Mass rename
         new_names = []
         for i, fn in enumerate(nrn_filenames.value):

@@ -3,7 +3,6 @@ from __future__ import absolute_import
 from lazy_property import LazyProperty
 import os
 import numpy as np
-from pyspark import SparkContext
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
 from .dataio.cppneuron import NeuronData
@@ -117,7 +116,7 @@ class NeuronDataSpark(NeuronData):
             # Mark as "broadcastable" and cache
             self.neuronDF = F.broadcast(
                 sm.createDataFrame(neuronRDD, schema.NEURON_SCHEMA)
-                    .where(F.col("id").isNotNull())
+                .where(F.col("id").isNotNull())
             ).cache()
 
             # Evaluate to build partial NameMaps
