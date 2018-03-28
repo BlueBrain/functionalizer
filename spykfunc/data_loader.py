@@ -44,6 +44,7 @@ class NeuronDataSpark(NeuronData):
 
     def __init__(self, loader):
         self.neuronDF = None
+        self.layers = None
         self.set_loader(loader)
 
         if not os.path.isdir(".cache"):
@@ -88,11 +89,7 @@ class NeuronDataSpark(NeuronData):
         if os.path.exists(mvd_parquet):
             logger.info("Loading from MVD parquet")
             mvd = sm.read.parquet(mvd_parquet)
-            if 'layer_i' not in mvd.schema.names:
-                self.layers = mvd.select('layer').distinct().collect()
-                lrdd = sm.parallelize(enumerate(i.layer for i in self.layers))
-                layers = lrdd.toDF(schema.LAYER_SCHEMA)
-                mvd = mvd.join(layers, "layer")
+            self.layers = mvd.select('layer').distinct().collect()
             self.neuronDF = F.broadcast(mvd).cache()
             n_neurons = self.neuronDF.count()  # Force broadcast to meterialize
             logger.info("Loaded {} neurons from MVD".format(n_neurons))
@@ -113,11 +110,14 @@ class NeuronDataSpark(NeuronData):
                                   n_neurons, total_parts, name_accu, self.mTypes))
             # Create DF
             logger.info("Creating data frame...")
+
+            mvd = sm.createDataFrame(neuronRDD, schema.NEURON_SCHEMA).where(F.col("id").isNotNull())
+            self.layers = mvd.select('layer').distinct().collect()
+            lrdd = sm.parallelize(enumerate(i.layer for i in self.layers))
+            layers = lrdd.toDF(schema.LAYER_SCHEMA)
+
             # Mark as "broadcastable" and cache
-            self.neuronDF = F.broadcast(
-                sm.createDataFrame(neuronRDD, schema.NEURON_SCHEMA)
-                .where(F.col("id").isNotNull())
-            ).cache()
+            self.neuronDF = F.broadcast(mvd.join(layers, "layer")).cache()
 
             # Evaluate to build partial NameMaps
             self.neuronDF.write.mode('overwrite').parquet(mvd_parquet)
