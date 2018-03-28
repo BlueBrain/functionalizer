@@ -26,6 +26,7 @@ kwargs = {
 fz = spykfunc.session(*ARGS, **kwargs)
 fl = spykfunc.filters.TouchRulesFilter(fz._circuit.touch_rules)
 
+import pdb; pdb.set_trace()
 
 def run():
     data = fl.apply(fz.circuit)

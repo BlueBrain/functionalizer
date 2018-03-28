@@ -110,10 +110,8 @@ class ReduceAndCut(DataSetOperation):
     """
 # -------------------------------------------------------------------------------------------------
 
-    def __init__(self, conn_rules, stats, spark):
-        self.spark = spark
-        self.sc = spark.sparkContext
-        self.conn_rules = self.sc.broadcast(conn_rules)
+    def __init__(self, conn_rules, stats):
+        self.conn_rules = sm.broadcast(conn_rules)
         self.stats = stats
 
     # ---

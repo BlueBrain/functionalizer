@@ -6,10 +6,6 @@ from fnmatch import filter as matchfilter
 import time
 import os
 
-from pyspark.sql import SQLContext
-# from pyspark.sql import functions as F
-# from pyspark.sql import types as T
-
 import sparkmanager as sm
 
 from .circuit import Circuit
@@ -87,10 +83,11 @@ class Functionalizer(object):
         sm.setLogLevel("WARN")
         sm.setCheckpointDir(os.path.join(self.__checkpoints, "tmp"))
         sm._jsc.hadoopConfiguration().setInt("parquet.block.size", 32 * _MB)
-        sqlContext = SQLContext.getOrCreate(sm.sc)
-        sqlContext.registerJavaFunction("gauss_rand", "spykfunc.udfs.GaussRand")
-        sqlContext.registerJavaFunction("float2binary", "spykfunc.udfs.FloatArraySerializer")
-        sqlContext.registerJavaFunction("int2binary", "spykfunc.udfs.IntArraySerializer")
+        sm.register_java_functions([
+            ("gauss_rand", "spykfunc.udfs.GaussRand"),
+            ("float2binary", "spykfunc.udfs.FloatArraySerializer"),
+            ("int2binary", "spykfunc.udfs.IntArraySerializer")
+        ])
 
         self._mode = RunningMode.S2S if only_s2s else RunningMode.S2F
         self._format_hdf5 = format_hdf5
@@ -303,7 +300,7 @@ class Functionalizer(object):
         # self.touchDF = cumulative_distance_f.apply(self.circuit)
 
         logger.info("Applying Reduce and Cut...")
-        rc = filters.ReduceAndCut(mtype_conn_rules, self.neuron_stats, sm.spark, )
+        rc = filters.ReduceAndCut(mtype_conn_rules, self.neuron_stats)
         return rc.apply(self.circuit, mtypes=self.mtypes_df)
 
     # -------------------------------------------------------------------------

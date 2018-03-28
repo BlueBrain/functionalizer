@@ -140,7 +140,7 @@ def setup_package():
         ],
         #  ----- Requirements -----
         install_requires=[
-            'sparkmanager>=0.0.3',
+            'sparkmanager>=0.2',
             'py4j',
             'funcsigs',
             'future',
@@ -153,9 +153,6 @@ def setup_package():
             'progress'
         ],
         setup_requires=maybe_sphinx + maybe_cython,
-        dependency_links=[
-            'https://github.com/matz-e/sparkmanager/tarball/master#egg=sparkmanager-0.0.3'
-        ],
         tests_require=['pandas', 'pytest', 'pytest-cov'],
         extras_require={
             # Dependencies if the user wants a dev env
