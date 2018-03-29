@@ -64,11 +64,11 @@ def compute_additional_h5_fields(circuit, syn_class_matrix, syn_props_df):
     # Compute #8-12: g, u, d, f, dtc
     touches = touches.selectExpr(
         "*",
-        "gauss_rand(0) * synprop.gsynSD + synprop.gsyn as gsyn",
-        "gauss_rand(0) * synprop.uSD + synprop.u as u",
-        "gauss_rand(0) * synprop.dSD + synprop.d as d",
-        "gauss_rand(0) * synprop.fSD + synprop.f as f",
-        "gauss_rand(0) * synprop.dtcSD + synprop.dtc as dtc"
+        "gauss_rand(0) * synprop.gsynSD + synprop.gsyn as rand_gsyn",
+        "gauss_rand(0) * synprop.uSD + synprop.u as rand_u",
+        "gauss_rand(0) * synprop.dSD + synprop.d as rand_d",
+        "gauss_rand(0) * synprop.fSD + synprop.f as rand_f",
+        "gauss_rand(0) * synprop.dtcSD + synprop.dtc as rand_dtc"
     )
 
     # Compute #13: synapseType:  Inhibitory < 100 or  Excitatory >= 100
@@ -89,7 +89,11 @@ def compute_additional_h5_fields(circuit, syn_class_matrix, syn_props_df):
         t.pre_section.alias("pre_section"),
         t.pre_segment.alias("pre_segment"),
         t.pre_offset.alias("pre_offset"),
-        "synprop.gsyn", "synprop.u", "synprop.d", "synprop.f", "synprop.dtc",
+        t.rand_gsyn.alias("gsyn"),
+        t.rand_u.alias("u"),
+        t.rand_d.alias("d"),
+        t.rand_f.alias("f"),
+        t.rand_dtc.alias("dtc"),
         t.synapseType.alias("synapseType"),
         t.src_morphology_i.alias("morphology"),
         F.lit(0).alias("branch_order_dend"),  # TBD
