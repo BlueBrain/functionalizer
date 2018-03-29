@@ -64,11 +64,11 @@ def compute_additional_h5_fields(circuit, syn_class_matrix, syn_props_df):
     # Compute #8-12: g, u, d, f, dtc
     touches = touches.selectExpr(
         "*",
-        "gauss_rand(0) * synprop.gsynVar + synprop.gsyn as gsyn",
-        "gauss_rand(0) * synprop.uVar + synprop.u as u",
-        "gauss_rand(0) * synprop.dVar + synprop.d as d",
-        "gauss_rand(0) * synprop.fVar + synprop.f as f",
-        "gauss_rand(0) * synprop.dtcVar + synprop.dtc as dtc"
+        "gauss_rand(0) * synprop.gsynSD + synprop.gsyn as gsyn",
+        "gauss_rand(0) * synprop.uSD + synprop.u as u",
+        "gauss_rand(0) * synprop.dSD + synprop.d as d",
+        "gauss_rand(0) * synprop.fSD + synprop.f as f",
+        "gauss_rand(0) * synprop.dtcSD + synprop.dtc as dtc"
     )
 
     # Compute #13: synapseType:  Inhibitory < 100 or  Excitatory >= 100

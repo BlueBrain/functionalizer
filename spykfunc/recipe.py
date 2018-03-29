@@ -208,17 +208,17 @@ class SynapsesClassification(_GenericPropHolder):
 # -------------------------------------------------------------------------------------------------------------
     id = ""
     gsyn = .0
-    gsynVar = .0
+    gsynSD = .0
     nsyn = .0
-    nsynVar = .0
+    nsynSD = .0
     dtc = .0
-    dtcVar = .0
+    dtcSD = .0
     u = .0
-    uVar = .0
+    uSD = .0
     d = .0
-    dVar = .0
+    dSD = .0
     f = .0
-    fVar = .0
+    fSD = .0
     ase = .0
     _supported_attrs = [k for k in locals().keys()
                         if not k.startswith("_")]

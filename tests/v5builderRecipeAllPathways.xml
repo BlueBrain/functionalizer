@@ -22,7 +22,7 @@
   <!ATTLIST synapse id1 CDATA #REQUIRED id2 CDATA #REQUIRED id3 CDATA #REQUIRED id4 CDATA #REQUIRED GAB1 CDATA #REQUIRED GAB2 CDATA #REQUIRED>
   <!ELEMENT SynapsesClassification (class*)>
   <!ELEMENT class (#PCDATA)>
-  <!ATTLIST class id CDATA #REQUIRED gsyn CDATA #REQUIRED gsynVar CDATA #REQUIRED nsyn CDATA #REQUIRED nsynVar CDATA #REQUIRED dtc CDATA #REQUIRED dtcVar CDATA #REQUIRED u CDATA #REQUIRED uVar CDATA #REQUIRED d CDATA #REQUIRED dVar CDATA #REQUIRED f CDATA #REQUIRED fVar CDATA #REQUIRED ase CDATA #REQUIRED>
+  <!ATTLIST class id CDATA #REQUIRED gsyn CDATA #REQUIRED gsynSD CDATA #REQUIRED nsyn CDATA #REQUIRED nsynSD CDATA #REQUIRED dtc CDATA #REQUIRED dtcSD CDATA #REQUIRED u CDATA #REQUIRED uSD CDATA #REQUIRED d CDATA #REQUIRED dSD CDATA #REQUIRED f CDATA #REQUIRED fSD CDATA #REQUIRED ase CDATA #REQUIRED>
   <!ELEMENT ConnectionRules (class*)>  
   <!ELEMENT TouchRules (class*)>
   <!ENTITY connectivityRecipe SYSTEM "builderConnectivityRecipeAllPathways.xml">
@@ -625,71 +625,71 @@ So, for the recipe, after I exclude the 1 CRC cell, the 2 excitatory cells, and 
 	</SynapsesProperties>
 	
 	<SynapsesClassification>
-	  <!-- Important!!! : gsynVar is interpreted by functionalizer as a standard deviation, not a variance - SR-->
+	  <!-- Important!!! : gsynSD is interpreted by functionalizer as a standard deviation, not a variance - SR-->
 
-		<class id="I1"  gsyn="0.829" gsynVar="0.55" nsyn="9.30" nsynVar="3.10" dtc="10.4" dtcVar="6.2" u="0.16" uVar="0.10" d="45" dVar="21" f="376" fVar="253" ase="9" />
-		<class id="I2"  gsyn="0.829" gsynVar="0.55" nsyn="16.0" nsynVar="5.50" dtc="8.30" dtcVar="2.2" u="0.25" uVar="0.13" d="706" dVar="405" f="021" fVar="9" ase="0" />
-		<class id="I3"  gsyn="0.829" gsynVar="0.55" nsyn="16.7" nsynVar="11.9" dtc="6.40" dtcVar="1.7" u="0.32" uVar="0.14" d="144" dVar="80" f="062" fVar="31" ase="55" />
+		<class id="I1"  gsyn="0.829" gsynSD="0.55" nsyn="9.30" nsynSD="3.10" dtc="10.4" dtcSD="6.2" u="0.16" uSD="0.10" d="45" dSD="21" f="376" fSD="253" ase="9" />
+		<class id="I2"  gsyn="0.829" gsynSD="0.55" nsyn="16.0" nsynSD="5.50" dtc="8.30" dtcSD="2.2" u="0.25" uSD="0.13" d="706" dSD="405" f="021" fSD="9" ase="0" />
+		<class id="I3"  gsyn="0.829" gsynSD="0.55" nsyn="16.7" nsynSD="11.9" dtc="6.40" dtcSD="1.7" u="0.32" uSD="0.14" d="144" dSD="80" f="062" fSD="31" ase="55" />
 
-		<class id="I1_PT"  gsyn="0.911" gsynVar="0.607" nsyn="9.30" nsynVar="3.10" dtc="10.4" dtcVar="6.2" u="0.16" uVar="0.10" d="45" dVar="21" f="376" fVar="253" ase="9" />
-		<class id="I2_PT"  gsyn="0.911" gsynVar="0.607" nsyn="16.0" nsynVar="5.50" dtc="8.30" dtcVar="2.2" u="0.25" uVar="0.13" d="706" dVar="405" f="021" fVar="9" ase="0" />
-		<class id="I3_PT"  gsyn="0.911" gsynVar="0.607" nsyn="16.7" nsynVar="11.9" dtc="6.40" dtcVar="1.7" u="0.32" uVar="0.14" d="144" dVar="80" f="062" fVar="31" ase="55" />
+		<class id="I1_PT"  gsyn="0.911" gsynSD="0.607" nsyn="9.30" nsynSD="3.10" dtc="10.4" dtcSD="6.2" u="0.16" uSD="0.10" d="45" dSD="21" f="376" fSD="253" ase="9" />
+		<class id="I2_PT"  gsyn="0.911" gsynSD="0.607" nsyn="16.0" nsynSD="5.50" dtc="8.30" dtcSD="2.2" u="0.25" uSD="0.13" d="706" dSD="405" f="021" fSD="9" ase="0" />
+		<class id="I3_PT"  gsyn="0.911" gsynSD="0.607" nsyn="16.7" nsynSD="11.9" dtc="6.40" dtcSD="1.7" u="0.32" uSD="0.14" d="144" dSD="80" f="062" fSD="31" ase="55" />
 
-		<class id="I1_DT"  gsyn="0.746" gsynVar="0.317" nsyn="9.30" nsynVar="3.10" dtc="10.4" dtcVar="6.2" u="0.16" uVar="0.10" d="45" dVar="21" f="376" fVar="253" ase="9" />
-		<class id="I3_DT"  gsyn="0.746" gsynVar="0.317" nsyn="16.7" nsynVar="11.9" dtc="6.40" dtcVar="1.7" u="0.32" uVar="0.14" d="144" dVar="80" f="062" fVar="31" ase="55" />
-		<class id="I2_DT"  gsyn="0.746" gsynVar="0.317" nsyn="16.0" nsynVar="5.50" dtc="8.30" dtcVar="2.2" u="0.25" uVar="0.13" d="706" dVar="405" f="021" fVar="9" ase="0" />
+		<class id="I1_DT"  gsyn="0.746" gsynSD="0.317" nsyn="9.30" nsynSD="3.10" dtc="10.4" dtcSD="6.2" u="0.16" uSD="0.10" d="45" dSD="21" f="376" fSD="253" ase="9" />
+		<class id="I3_DT"  gsyn="0.746" gsynSD="0.317" nsyn="16.7" nsynSD="11.9" dtc="6.40" dtcSD="1.7" u="0.32" uSD="0.14" d="144" dSD="80" f="062" fSD="31" ase="55" />
+		<class id="I2_DT"  gsyn="0.746" gsynSD="0.317" nsyn="16.0" nsynSD="5.50" dtc="8.30" dtcSD="2.2" u="0.25" uSD="0.13" d="706" dSD="405" f="021" fSD="9" ase="0" />
 
 <!-- I2-like *MC->*PC specific pathway parameters from Silberberg & Markram, 2007 SR -->
-        <class id="I4"  gsyn="0.746" gsynVar="0.317" nsyn="5.00" nsynVar="2.00" dtc="8.3" dtcVar="2.2" u="0.3" uVar="0.08" d="1250" dVar="520" f="2" fVar="4" ase="0" />
+        <class id="I4"  gsyn="0.746" gsynSD="0.317" nsyn="5.00" nsynSD="2.00" dtc="8.3" dtcSD="2.2" u="0.3" uSD="0.08" d="1250" dSD="520" f="2" fSD="4" ase="0" />
 
 <!-- I2-like *NBC/*LBC->*PC specific pathway parameters from Yun et al. 2002.
       Since *SBC->*PC innervation is largely proximal, we will continue to use the 
       lumped values for I2 dynamics from Gupta et al. 2000 for these pathways SR  -->
-        <class id="I5_PT"  gsyn="0.911" gsynVar="0.607" nsyn="5.00" nsynVar="2.00" dtc="8.3" dtcVar="2.7" u="0.14" uVar="0.05" d="875" dVar="285" f="22" fVar="5" ase="0" />
+        <class id="I5_PT"  gsyn="0.911" gsynSD="0.607" nsyn="5.00" nsynSD="2.00" dtc="8.3" dtcSD="2.7" u="0.14" uSD="0.05" d="875" dSD="285" f="22" fSD="5" ase="0" />
 
 <!-- I2-like *NGC->L23_PC specific pathway parameters from Szabadics et al 2007. Only IPSC rise and decay time constants are mentioned. All the other parameters for I2 dynamics will continue to be used from Gupta et al. 2000. SR  -->
-		<class id="I6"  gsyn="0.829" gsynVar="0.55" nsyn="5.00" nsynVar="2.00" dtc="36.5" dtcVar="1.3" u="0.25" uVar="0.13" d="706" dVar="405" f="21" fVar="9" ase="0" />
+		<class id="I6"  gsyn="0.829" gsynSD="0.55" nsyn="5.00" nsynSD="2.00" dtc="36.5" dtcSD="1.3" u="0.25" uSD="0.13" d="706" dSD="405" f="21" fSD="9" ase="0" />
 
 <!-- *ChC->*Excitatory pathway specific parameters were derived under the standard propagation of relative errors for a mean of 3 +/- 1 synaptic contacts/connection from Markram et al. 2004. A "super synapse" will be placed for ChC -> Excitatory instead of 3 different synapses on the AIS. The gsyn is drawn from the standard propagation of relative errors from I2 synapse dynamics. The U,D,F and other parameters will be the same as I2 synapse dynamics  SR -->
-		<class id="I7"  gsyn="2.734" gsynVar="2.04" nsyn="5.00" nsynVar="2.00" dtc="8.3" dtcVar="2.2" u="0.25" uVar="0.13" d="706" dVar="405" f="21" fVar="9" ase="0" />
+		<class id="I7"  gsyn="2.734" gsynSD="2.04" nsyn="5.00" nsynSD="2.00" dtc="8.3" dtcSD="2.2" u="0.25" uSD="0.13" d="706" dSD="405" f="21" fSD="9" ase="0" />
 
 <!-- new synaptic dynamics for I-E intra-laminar L6 pathways from Thomas Berger's thesis -->
-                <class id="I1_L6_MC-L6_IPC"  gsyn="0.746" gsynVar="0.317" nsyn="5.00" nsynVar="2.00" dtc="10.4" dtcVar="6.2" u="0.41" uVar="0.4" d="160" dVar="130" f="690" fVar="10" ase="1" />
+                <class id="I1_L6_MC-L6_IPC"  gsyn="0.746" gsynSD="0.317" nsyn="5.00" nsynSD="2.00" dtc="10.4" dtcSD="6.2" u="0.41" uSD="0.4" d="160" dSD="130" f="690" fSD="10" ase="1" />
 
 <!--  Excitatory pathways  -->
-	  <!-- Important!!! : gsynVar is interpreted by functionalizer as a standard deviation, not a variance - SR-->
+	  <!-- Important!!! : gsynSD is interpreted by functionalizer as a standard deviation, not a variance - SR-->
 
-		<class id="E1_INH"  gsyn="0.42" gsynVar="0.28" nsyn="5.00" nsynVar="2.00" dtc="1.74" dtcVar="0.18" u="0.02" uVar="0.001" d="194" dVar="18" f="507" fVar="37" ase="0" />
-		<class id="E1_PT"  gsyn="0.725" gsynVar="0.48" nsyn="5.00" nsynVar="2.00" dtc="1.74" dtcVar="0.18" u="0.02" uVar="0.001" d="194" dVar="18" f="507" fVar="37" ase="0" />
+		<class id="E1_INH"  gsyn="0.42" gsynSD="0.28" nsyn="5.00" nsynSD="2.00" dtc="1.74" dtcSD="0.18" u="0.02" uSD="0.001" d="194" dSD="18" f="507" fSD="37" ase="0" />
+		<class id="E1_PT"  gsyn="0.725" gsynSD="0.48" nsyn="5.00" nsynSD="2.00" dtc="1.74" dtcSD="0.18" u="0.02" uSD="0.001" d="194" dSD="18" f="507" fSD="37" ase="0" />
 
-		<class id="E2"  gsyn="0.792" gsynVar="0.528" nsyn="5.00" nsynVar="2.00" dtc="1.74" dtcVar="0.18" u="0.50" uVar="0.02" d="671" dVar="17" f="017" fVar="5" ase="1" />
-		<class id="E2_INH"  gsyn="0.42" gsynVar="0.28" nsyn="5.00" nsynVar="2.00" dtc="1.74" dtcVar="0.18" u="0.50" uVar="0.02" d="671" dVar="17" f="017" fVar="5" ase="1" />
-		<class id="E2_PT"  gsyn="0.725" gsynVar="0.48" nsyn="5.00" nsynVar="2.00" dtc="1.74" dtcVar="0.18" u="0.50" uVar="0.02" d="671" dVar="17" f="017" fVar="5" ase="1" />
+		<class id="E2"  gsyn="0.792" gsynSD="0.528" nsyn="5.00" nsynSD="2.00" dtc="1.74" dtcSD="0.18" u="0.50" uSD="0.02" d="671" dSD="17" f="017" fSD="5" ase="1" />
+		<class id="E2_INH"  gsyn="0.42" gsynSD="0.28" nsyn="5.00" nsynSD="2.00" dtc="1.74" dtcSD="0.18" u="0.50" uSD="0.02" d="671" dSD="17" f="017" fSD="5" ase="1" />
+		<class id="E2_PT"  gsyn="0.725" gsynSD="0.48" nsyn="5.00" nsynSD="2.00" dtc="1.74" dtcSD="0.18" u="0.50" uSD="0.02" d="671" dSD="17" f="017" fSD="5" ase="1" />
 
-		<class id="E2_L3PC"  gsyn="0.684" gsynVar="0.46" nsyn="5.00" nsynVar="2.00" dtc="1.74" dtcVar="0.18" u="0.46" uVar="0.26" d="671" dVar="17" f="17" fVar="5" ase="1" /> 
-                <class id="E2_L4PC"  gsyn="0.677" gsynVar="0.45" nsyn="5.00" nsynVar="2.00" dtc="1.74" dtcVar="0.18" u="0.86" uVar="0.09" d="671" dVar="17" f="17" fVar="5" ase="1" />
-                <class id="E2_L4SS"  gsyn="0.187" gsynVar="0.124" nsyn="5.00" nsynVar="2.00" dtc="1.74" dtcVar="0.18" u="0.79" uVar="0.04" d="671" dVar="17" f="17" fVar="5" ase="1" />
-                <class id="E2_L5STPC"  gsyn="0.841" gsynVar="0.56" nsyn="5.00" nsynVar="2.00" dtc="1.74" dtcVar="0.18" u="0.39" uVar="0.03" d="671" dVar="17" f="17" fVar="5" ase="1" />
-		<class id="E2_L5TTPC"  gsyn="1.57" gsynVar="1.05" nsyn="5.00" nsynVar="2.00" dtc="1.74" dtcVar="0.18" u="0.50" uVar="0.02" d="671" dVar="17" f="017" fVar="5" ase="1" />
-                <class id="E2_L6CCPC"  gsyn="0.792" gsynVar="0.528" nsyn="5.00" nsynVar="2.00" dtc="1.74" dtcVar="0.18" u="0.61" uVar="0.14" d="671" dVar="17" f="17" fVar="5" ase="1" />
-                <class id="E2_L6CTPC"  gsyn="0.792" gsynVar="0.528" nsyn="5.00" nsynVar="2.00" dtc="1.74" dtcVar="0.18" u="0.28" uVar="0.03" d="671" dVar="17" f="17" fVar="5" ase="1" />
+		<class id="E2_L3PC"  gsyn="0.684" gsynSD="0.46" nsyn="5.00" nsynSD="2.00" dtc="1.74" dtcSD="0.18" u="0.46" uSD="0.26" d="671" dSD="17" f="17" fSD="5" ase="1" /> 
+                <class id="E2_L4PC"  gsyn="0.677" gsynSD="0.45" nsyn="5.00" nsynSD="2.00" dtc="1.74" dtcSD="0.18" u="0.86" uSD="0.09" d="671" dSD="17" f="17" fSD="5" ase="1" />
+                <class id="E2_L4SS"  gsyn="0.187" gsynSD="0.124" nsyn="5.00" nsynSD="2.00" dtc="1.74" dtcSD="0.18" u="0.79" uSD="0.04" d="671" dSD="17" f="17" fSD="5" ase="1" />
+                <class id="E2_L5STPC"  gsyn="0.841" gsynSD="0.56" nsyn="5.00" nsynSD="2.00" dtc="1.74" dtcSD="0.18" u="0.39" uSD="0.03" d="671" dSD="17" f="17" fSD="5" ase="1" />
+		<class id="E2_L5TTPC"  gsyn="1.57" gsynSD="1.05" nsyn="5.00" nsynSD="2.00" dtc="1.74" dtcSD="0.18" u="0.50" uSD="0.02" d="671" dSD="17" f="017" fSD="5" ase="1" />
+                <class id="E2_L6CCPC"  gsyn="0.792" gsynSD="0.528" nsyn="5.00" nsynSD="2.00" dtc="1.74" dtcSD="0.18" u="0.61" uSD="0.14" d="671" dSD="17" f="17" fSD="5" ase="1" />
+                <class id="E2_L6CTPC"  gsyn="0.792" gsynSD="0.528" nsyn="5.00" nsynSD="2.00" dtc="1.74" dtcSD="0.18" u="0.28" uSD="0.03" d="671" dSD="17" f="17" fSD="5" ase="1" />
 
 <!-- new synaptic dynamics for E-E intra-laminar L6 pathways from Thomas Berger's thesis -->
-                <class id="E2_L6_TPC-L6_TPC"  gsyn="0.792" gsynVar="0.528" nsyn="5.00" nsynVar="2.00" dtc="1.74" dtcVar="0.18" u="0.21" uVar="0.06" d="460" dVar="100" f="230" fVar="130" ase="1" />
-                <class id="E2_L6_IPC-L6_IPC"  gsyn="0.792" gsynVar="0.528" nsyn="5.00" nsynVar="2.00" dtc="1.74" dtcVar="0.18" u="0.39" uVar="0.25" d="780" dVar="100" f="50" fVar="70" ase="1" />
-                <class id="E2_L6_IPC-L6_BPC"  gsyn="0.792" gsynVar="0.528" nsyn="5.00" nsynVar="2.00" dtc="1.74" dtcVar="0.18" u="0.27" uVar="0.06" d="560" dVar="440" f="200" fVar="170" ase="1" />
-                <class id="E2_L6_IPC-L6_TPC"  gsyn="0.792" gsynVar="0.528" nsyn="5.00" nsynVar="2.00" dtc="1.74" dtcVar="0.18" u="0.22" uVar="0.1" d="530" dVar="250" f="110" fVar="160" ase="1" />
+                <class id="E2_L6_TPC-L6_TPC"  gsyn="0.792" gsynSD="0.528" nsyn="5.00" nsynSD="2.00" dtc="1.74" dtcSD="0.18" u="0.21" uSD="0.06" d="460" dSD="100" f="230" fSD="130" ase="1" />
+                <class id="E2_L6_IPC-L6_IPC"  gsyn="0.792" gsynSD="0.528" nsyn="5.00" nsynSD="2.00" dtc="1.74" dtcSD="0.18" u="0.39" uSD="0.25" d="780" dSD="100" f="50" fSD="70" ase="1" />
+                <class id="E2_L6_IPC-L6_BPC"  gsyn="0.792" gsynSD="0.528" nsyn="5.00" nsynSD="2.00" dtc="1.74" dtcSD="0.18" u="0.27" uSD="0.06" d="560" dSD="440" f="200" fSD="170" ase="1" />
+                <class id="E2_L6_IPC-L6_TPC"  gsyn="0.792" gsynSD="0.528" nsyn="5.00" nsynSD="2.00" dtc="1.74" dtcSD="0.18" u="0.22" uSD="0.1" d="530" dSD="250" f="110" fSD="160" ase="1" />
 
 <!-- new synaptic dynamics for E-I intra-laminar L6 pathways from Thomas Berger's thesis -->
-                <class id="E2_L6_TPC-BC"  gsyn="0.725" gsynVar="0.48" nsyn="5.00" nsynVar="2.00" dtc="1.74" dtcVar="0.18" u="0.36" uVar="0.21" d="380" dVar="310" f="280" fVar="340" ase="1" />
-                <class id="E2_L6_IPC-BC"  gsyn="0.725" gsynVar="0.48" nsyn="5.00" nsynVar="2.00" dtc="1.74" dtcVar="0.18" u="0.58" uVar="0.13" d="240" dVar="80" f="70" fVar="90" ase="1" />
-		<class id="E1_L6_TPC-L6_BC" gsyn="0.725" gsynVar="0.48" nsyn="5.00" nsynVar="2.00" dtc="1.74" dtcVar="0.18" u="0.01" uVar="0.001" d="242" dVar="28" f="563" fVar="60" ase="1" />
+                <class id="E2_L6_TPC-BC"  gsyn="0.725" gsynSD="0.48" nsyn="5.00" nsynSD="2.00" dtc="1.74" dtcSD="0.18" u="0.36" uSD="0.21" d="380" dSD="310" f="280" fSD="340" ase="1" />
+                <class id="E2_L6_IPC-BC"  gsyn="0.725" gsynSD="0.48" nsyn="5.00" nsynSD="2.00" dtc="1.74" dtcSD="0.18" u="0.58" uSD="0.13" d="240" dSD="80" f="70" fSD="90" ase="1" />
+		<class id="E1_L6_TPC-L6_BC" gsyn="0.725" gsynSD="0.48" nsyn="5.00" nsynSD="2.00" dtc="1.74" dtcSD="0.18" u="0.01" uSD="0.001" d="242" dSD="28" f="563" fSD="60" ase="1" />
 
 <!-- E1-like *PC->*MC specific pathway parameters from Silberberg & Markram, 2007 -->
-		<class id="E4"  gsyn="0.115" gsynVar="0.08" nsyn="5.00" nsynVar="2.00" dtc="1.74" dtcVar="0.18" u="0.09" uVar="0.12" d="138" dVar="211" f="670" fVar="830" ase="0" />
+		<class id="E4"  gsyn="0.115" gsynSD="0.08" nsyn="5.00" nsynSD="2.00" dtc="1.74" dtcSD="0.18" u="0.09" uSD="0.12" d="138" dSD="211" f="670" fSD="830" ase="0" />
 
 <!-- E2-like *PC->*NBC/*LBC specific pathway parameters from Yun et al, 2002 -->
-		<class id="E5_PT"  gsyn="0.725" gsynVar="0.48" nsyn="5.00" nsynVar="2.00" dtc="1.74" dtcVar="0.18" u="0.72" uVar="0.12" d="227" dVar="70" f="13" fVar="24" ase="0" />
+		<class id="E5_PT"  gsyn="0.725" gsynSD="0.48" nsyn="5.00" nsynSD="2.00" dtc="1.74" dtcSD="0.18" u="0.72" uSD="0.12" d="227" dSD="70" f="13" fSD="24" ase="0" />
 
 	</SynapsesClassification>
     

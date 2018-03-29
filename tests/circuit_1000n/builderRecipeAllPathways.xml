@@ -22,7 +22,7 @@
   <!ATTLIST synapse id1 CDATA #REQUIRED id2 CDATA #REQUIRED id3 CDATA #REQUIRED id4 CDATA #REQUIRED GAB1 CDATA #REQUIRED GAB2 CDATA #REQUIRED>
   <!ELEMENT SynapsesClassification (class*)>
   <!ELEMENT class (#PCDATA)>
-  <!ATTLIST class id CDATA #REQUIRED gsyn CDATA #REQUIRED gsynVar CDATA #REQUIRED nsyn CDATA #REQUIRED nsynVar CDATA #REQUIRED dtc CDATA #REQUIRED dtcVar CDATA #REQUIRED u CDATA #REQUIRED uVar CDATA #REQUIRED d CDATA #REQUIRED dVar CDATA #REQUIRED f CDATA #REQUIRED fVar CDATA #REQUIRED ase CDATA #REQUIRED>
+  <!ATTLIST class id CDATA #REQUIRED gsyn CDATA #REQUIRED gsynSD CDATA #REQUIRED nsyn CDATA #REQUIRED nsynSD CDATA #REQUIRED dtc CDATA #REQUIRED dtcSD CDATA #REQUIRED u CDATA #REQUIRED uSD CDATA #REQUIRED d CDATA #REQUIRED dSD CDATA #REQUIRED f CDATA #REQUIRED fSD CDATA #REQUIRED ase CDATA #REQUIRED>
   <!ELEMENT ConnectionRules (class*)>  
   <!ELEMENT TouchRules (class*)>
   <!ENTITY connectivityRecipe SYSTEM "builderConnectivityRecipeAllPathways.xml">
@@ -111,8 +111,8 @@
     </SynapsesProperties>
 
     <SynapsesClassification>
-	    <class id="I2"  gsyn="0.33" gsynVar="0.28" nsyn="16.0" nsynVar="5.50" dtc="8.30" dtcVar="2.2" u="0.25" uVar="0.13" d="706" dVar="405" f="021" fVar="9" ase="0" />
-	    <class id="E2"  gsyn="0.30" gsynVar="0.20" nsyn="5.00" nsynVar="2.00" dtc="1.74" dtcVar="0.18" u="0.50" uVar="0.02" d="671" dVar="017" f="017" fVar="5" ase="1" />
+	    <class id="I2"  gsyn="0.33" gsynSD="0.28" nsyn="16.0" nsynSD="5.50" dtc="8.30" dtcSD="2.2" u="0.25" uSD="0.13" d="706" dSD="405" f="021" fSD="9" ase="0" />
+	    <class id="E2"  gsyn="0.30" gsynSD="0.20" nsyn="5.00" nsynSD="2.00" dtc="1.74" dtcSD="0.18" u="0.50" uSD="0.02" d="671" dSD="017" f="017" fSD="5" ase="1" />
     </SynapsesClassification>
         
     <ConnectionRules>
