@@ -58,17 +58,18 @@ def compute_additional_h5_fields(circuit, reduced, syn_class_matrix, syn_props_d
     # 13: synapseType, the synapse type Inhibitory < 100 or Excitatory >= 100 (specific value depends recipe)
     # 14: The morphology type of the pre neuron.  Index corresponds with circuit.mvd2
     # 15-16: BranchOrder of the dendrite, BranchOrder of the axon (int,int)
-    # 17: NRRP - 
+    # 17: NRRP - Number of Readily Releasable Pool vesicles
     # 18: Branch Type from the post neuron(0 for soma,
 
     # Compute #8-12: g, u, d, f, dtc
     connections = connections.selectExpr(
         "*",
-        "gauss_rand(0) * synprop.gsynSD + synprop.gsyn as rand_gsyn",
-        "gauss_rand(0) * synprop.uSD + synprop.u as rand_u",
-        "gauss_rand(0) * synprop.dSD + synprop.d as rand_d",
-        "gauss_rand(0) * synprop.fSD + synprop.f as rand_f",
-        "gauss_rand(0) * synprop.dtcSD + synprop.dtc as rand_dtc"
+        "gamma_rand(synprop.gsyn, synprop.gsynSD) as rand_gsyn",
+        "gauss_rand(synprop.u, synprop.uSD) as rand_u",
+        "gamma_rand(synprop.d, synprop.dSD) as rand_d",
+        "gamma_rand(synprop.f, synprop.fSD) as rand_f",
+        "gauss_rand(synprop.dtc, synprop.dtcSD) as rand_dtc",
+        "if(synprop.nrrp >= 1, poisson_rand(synprop.nrrp - 1) + 1, 1) as rand_nrrp"
     )
 
     touches = circuit.alias("c").join(connections.alias("conn"),
@@ -108,6 +109,6 @@ def compute_additional_h5_fields(circuit, reduced, syn_class_matrix, syn_props_d
         F.col("c.src_morphology_i").alias("morphology"),
         F.lit(0).alias("branch_order_dend"),  # TBD
         t.branch_order.alias("branch_order_axon"),
-        t.nrrp.alias("nrrp"),
+        # t.rand_nrrp.alias("nrrp"),
         F.lit(0).alias("branch_type"),  # TBD (0 soma, 1 axon, 2 basel dendrite, 3 apical dendrite)
     )

@@ -86,8 +86,12 @@ class Functionalizer(object):
         sm.register_java_functions([
             ("gauss_rand", "spykfunc.udfs.GaussRand"),
             ("float2binary", "spykfunc.udfs.FloatArraySerializer"),
-            ("int2binary", "spykfunc.udfs.IntArraySerializer")
+            ("int2binary", "spykfunc.udfs.IntArraySerializer"),
+            ("poisson_rand", "spykfunc.udfs.PoissonRand"),
+            ("gamma_rand", "spykfunc.udfs.GammaRand")
         ])
+        # sm.spark._jvm.spykfunc.udfs.PoissonRand.registerUDF(sm.spark._jsparkSession)
+        # sm.spark._jvm.spykfunc.udfs.GammaRand.registerUDF(sm.spark._jsparkSession)
 
         self._mode = RunningMode.S2S if only_s2s else RunningMode.S2F
         self._format_hdf5 = format_hdf5

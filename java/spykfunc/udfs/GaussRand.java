@@ -1,25 +1,13 @@
 package spykfunc.udfs;
 
-import org.apache.spark.sql.api.java.UDF1;  //UDF0 will make it soon to release
-import random.Ziggurat;
-import java.util.Random;
+import org.apache.spark.sql.api.java.UDF2;
+import org.apache.commons.math3.distribution.NormalDistribution;
 
 
-public class GaussRand implements UDF1<Integer, Float> {
-    private Random rng = null;
-
+public class GaussRand implements UDF2<Float, Float, Float> {
     @Override
-    public Float call(Integer seed) throws Exception {
-        // UDF0 doesnt exist, so we profit to receive the seed 
-        if (rng == null) {
-            if (seed == 0) {
-                rng = new Random();
-            }
-            else {
-                rng = new Random(seed);
-            }
-        }
-        return new Float(Ziggurat.nextGaussian(rng));
+    public Float call(Float mean, Float sd) throws Exception {
+        return (float) (new NormalDistribution(mean, sd).sample());
     }
 }
 
