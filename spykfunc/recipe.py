@@ -219,7 +219,7 @@ class SynapsesClassification(_GenericPropHolder):
     dSD = .0
     f = .0
     fSD = .0
-    ase = .0
+    nrrp = .0
     _supported_attrs = [k for k in locals().keys()
                         if not k.startswith("_")]
 

@@ -83,7 +83,7 @@ SYNAPSE_CLASS_SCHEMA = T.StructType([
     T.StructField("dSD", T.FloatType(), False),
     T.StructField("f", T.FloatType(), False),
     T.StructField("fSD", T.FloatType(), False),
-    T.StructField("ase", T.FloatType(), False),
+    T.StructField("nrrp", T.FloatType(), False),
 ])
 
 INT_STR_SCHEMA = T.StructType([

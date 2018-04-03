@@ -162,7 +162,7 @@ class NeuronExporter(object):
             df.morphology.cast(T.FloatType()).alias("morphology"),
             df.branch_order_dend.cast(T.FloatType()).alias("branch_order_dend"),
             df.branch_order_axon.cast(T.FloatType()).alias("branch_order_axon"),
-            df.ase.cast(T.FloatType()).alias("ase"),
+            df.nrrp.cast(T.FloatType()).alias("nrrp"),
             df.branch_type.cast(T.FloatType()).alias("branch_type")
             # TBD (0 soma, 1 axon, 2 basel dendrite, 3 apical dendrite)
         )

@@ -58,7 +58,7 @@ def compute_additional_h5_fields(circuit, reduced, syn_class_matrix, syn_props_d
     # 13: synapseType, the synapse type Inhibitory < 100 or Excitatory >= 100 (specific value depends recipe)
     # 14: The morphology type of the pre neuron.  Index corresponds with circuit.mvd2
     # 15-16: BranchOrder of the dendrite, BranchOrder of the axon (int,int)
-    # 17: ASE Absolute Synaptic Efficacy (Millivolts) (int)
+    # 17: NRRP - 
     # 18: Branch Type from the post neuron(0 for soma,
 
     # Compute #8-12: g, u, d, f, dtc
@@ -108,6 +108,6 @@ def compute_additional_h5_fields(circuit, reduced, syn_class_matrix, syn_props_d
         F.col("c.src_morphology_i").alias("morphology"),
         F.lit(0).alias("branch_order_dend"),  # TBD
         t.branch_order.alias("branch_order_axon"),
-        t.ase.alias("ase"),
+        t.nrrp.alias("nrrp"),
         F.lit(0).alias("branch_type"),  # TBD (0 soma, 1 axon, 2 basel dendrite, 3 apical dendrite)
     )
