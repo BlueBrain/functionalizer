@@ -125,8 +125,6 @@ class ReduceAndCut(DataSetOperation):
         params_df = F.broadcast(_params)
 
         # Debug params info -----------------------------------------------------------------------
-        if _DEBUG and "mtypes" not in kw:
-            logger.warning("Cant debug without mtypes df. Please provide as kw arg to apply()")
         if _DEBUG and _DEBUG_REDUCE:
             debug_info = params_df.select("pathway_i", "total_touches", "structural_mean",
                                           "pP_A", "pMu_A", "active_fraction_legacy", "_debug")
@@ -172,7 +170,7 @@ class ReduceAndCut(DataSetOperation):
             self.apply_cut(reduced_touches,
                            params_df,
                            reduced_touch_counts_connection,
-                           mtypes=kw["mtypes"])
+                           mtypes=circuit.mtype_df)
         )
 
         # cut_touch_counts_connection is only an exec plan (no actions within)
@@ -190,7 +188,7 @@ class ReduceAndCut(DataSetOperation):
                 .groupBy("pathway_i")
                 .agg(F.sum("reduced_touch_counts_connection").alias("cut_touch_counts_pathway"))
             )
-            pathway_i_to_str(cut_touch_counts_pathway, kw["mtypes"])\
+            pathway_i_to_str(cut_touch_counts_pathway, circuit.mtype_df)\
                 .coalesce(1)\
                 .write.csv("_debug/cut_counts.csv", header=True, mode="overwrite")
             logger.warning("Debugging: Execution terminated for debugging Cut")
@@ -202,7 +200,7 @@ class ReduceAndCut(DataSetOperation):
         logger.info("Applying Cut step part 2: Active Fraction...")
         cut2AF_touches = self.apply_cut_active_fraction(cut_touches, params_df,
                                                         cut_touch_counts_connection,
-                                                        mtypes=kw["mtypes"])
+                                                        mtypes=circuit.mtype_df)
         if _DEBUG and _DEBUG_CUT2AF:  # -----------------------------------------------------------
             cut2AF_touches = cut2AF_touches.checkpoint(False)
             (cut2AF_touches

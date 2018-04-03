@@ -122,9 +122,6 @@ class Functionalizer(object):
         fdata = NeuronDataSpark(MVD_Morpho_Loader(mvd_file, morpho_dir))
         fdata.load_mvd_neurons_morphologies()
 
-        # Reverse DF name vectors
-        self.mtypes_df = sm.createDataFrame(enumerate(fdata.mTypes), schema.INT_STR_SCHEMA)
-
         # Init the Enumeration to contain fzer CellClass index
         CellClass.init_fzer_indexes(fdata.cellClasses)
 
@@ -301,7 +298,7 @@ class Functionalizer(object):
 
         logger.info("Applying Reduce and Cut...")
         rc = filters.ReduceAndCut(mtype_conn_rules, self.neuron_stats)
-        return rc.apply(self.circuit, mtypes=self.mtypes_df)
+        return rc.apply(self.circuit)
 
     # -------------------------------------------------------------------------
     # Helper functions

@@ -12,12 +12,16 @@ from .dataio.common import Part
 from .definitions import MType
 from .utils.spark_udef import DictAccum
 from .utils import get_logger, make_slices, to_native_str
+from .utils.spark import BroadcastValue
 from collections import defaultdict, OrderedDict
 import fnmatch
-
 import sparkmanager as sm
-
 import logging
+try:
+    import morphotool
+except ImportError:
+    morphotool = False
+
 
 # Globals
 logger = get_logger(__name__)
@@ -46,6 +50,7 @@ class NeuronDataSpark(NeuronData):
         self.neuronDF = None
         self.layers = None
         self.set_loader(loader)
+        self.morphologies = None
 
         if not os.path.isdir(".cache"):
             os.makedirs(".cache")
@@ -73,10 +78,12 @@ class NeuronDataSpark(NeuronData):
     # ---
     def load_mvd_neurons_morphologies(self, neuron_filter=None, **kwargs):
         self._load_mvd_neurons(neuron_filter, **kwargs)
-        # Dont load morphologies in the begginging
-        # if morphotool:
-        #     self._load_h5_morphologies(self.nameMap.keys(), neuron_filter, **kwargs)
-        self.morphologyRDD = None
+        if morphotool:
+            # Morphologies are loaded lazily by the MorphologyDB object
+            from morphotool import MorphologyDB
+            self.morphologies = BroadcastValue(MorphologyDB(self._loader.morphology_dir))
+        else:
+            logger.warning("Morphotool not available. Dependent transformations wont be applied.")
 
     # ---
     def _load_mvd_neurons(self, neuron_filter=None):
@@ -126,8 +133,11 @@ class NeuronDataSpark(NeuronData):
             self.set_name_map(name_accu.value)
 
     # ---
-    def _load_h5_morphologies(self, names, filter=None, total_parts=128):
+    def _load_h5_morphologies_RDD(self, names, filter=None, total_parts=128):
         """ Load morphologies into a spark RDD
+
+        :deprecated: This function is currently superseded by _init_h5_morphologies
+                     which will lazily load morphologies in the workers they are needed
         """
         # Initial with the morpho names
         neuronRDD = sm.parallelize((names[s] for s in make_slices(len(names), total_parts)), total_parts)
@@ -398,7 +408,7 @@ def neuron_loader_gen(data_class, loader_class, loader_params, n_neurons,
 
 
 # Load given Morphology
-# TODO: Can we avoid loading morphologies (at all) or load them lazily?
+# @deprecated - This method is currently superseded by the morphology DB object
 def morphology_loader_gen(data_class, loader_class, loader_params):
     """
     Generates a loading function for morphologies, returning the MorphoTree objects

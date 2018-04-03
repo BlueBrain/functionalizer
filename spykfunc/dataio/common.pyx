@@ -41,14 +41,14 @@ cdef class NeuronDataI:
     def set_loader(self, NeuronLoaderI loader): pass
     def load_globals(self): pass
     def load_neurons(self, _Part_t part=None): pass
-    def load_morphology(self, string morphology): pass
+    # def load_morphology(self, string morphology): pass
     def set_name_map(self, dict name_map): pass
 
 
 cdef class NeuronLoaderI:
     def load_globals(self, NeuronDataI neuron_data_dst): pass
     def load_neurons(self, NeuronDataI neuron_data, Part part): pass
-    def load_morphologies(self, NeuronDataI neuron_data, Part part): pass
+    # def load_morphologies(self, NeuronDataI neuron_data, Part part): pass
     # Params to construct another loader which is similar, for sub-processes
     def get_params(self): pass
 

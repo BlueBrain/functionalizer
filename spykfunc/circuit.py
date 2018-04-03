@@ -60,13 +60,13 @@ class Circuit(object):
 
     @property
     def morphologies(self):
-        """:property: morphologies as a Spark RDD
+        """:property: morphology DB
         """
-        return self.__neuron_data.morphologyRDD
+        return self.__neuron_data.morphologies
 
     @property
     def morphology_types(self):
-        """:property: types of the morphologies
+        """:property: morphology names used in the circuit
         """
         return self.__neuron_data.mTypes
 
@@ -112,3 +112,16 @@ class Circuit(object):
         def belongs_to_neuron(col):
             return col.startswith("src_") or col.startswith("dst_")
         return df.select([col for col in df.schema.names if not belongs_to_neuron(col)])
+
+    @property
+    def data(self):
+        """Direct access to the base data object
+        """
+        return self.__neuron_data
+
+    def __getattr__(self, item):
+        """Direct access to some interesting data attributes, namely existing dataframes
+        """
+        if item in ("sclass_df", "mtype_df", "etype_df"):
+            return getattr(self.__neuron_data, item)
+        raise AttributeError("Attribute {} not accessible.".format(item))

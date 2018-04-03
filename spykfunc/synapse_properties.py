@@ -73,9 +73,12 @@ def compute_additional_h5_fields(circuit, syn_class_matrix, syn_props_df):
 
     # Compute #13: synapseType:  Inhibitory < 100 or  Excitatory >= 100
     t = touches.withColumn("synapseType",
-                           (F.when(F.col("synprop.type").substr(0, 1) == F.lit('E'), 100)
-                            .otherwise(0)) +
-                           F.col("synprop._class_i"))
+                           (F.when(F.col("synprop.type").substr(0, 1) == F.lit('E'),
+                                   100)
+                            .otherwise(
+                               0
+                           )) + F.col("synprop._class_i"))
+
 
     # Select fields
     return t.select(
@@ -97,3 +100,9 @@ def compute_additional_h5_fields(circuit, syn_class_matrix, syn_props_df):
         t.ase.alias("ase"),
         F.lit(0).alias("branch_type"),  # TBD (0 soma, 1 axon, 2 basel dendrite, 3 apical dendrite)
     )
+
+
+def patch_ChC_SPAA_cells(circuit):
+    """Patches a circuit, fixing the touch post-segment of ChC and SPAA cells to axon
+    """
+    pass
