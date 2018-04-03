@@ -20,7 +20,6 @@ from . import filters
 from . import schema
 from . import utils
 from .utils.spark import defaults as checkpoint_defaults, checkpoint_resume
-from . import synapse_properties
 
 __all__ = ["Functionalizer", "session", "CheckpointPhases", "ExtendedCheckpointAvail"]
 
@@ -251,10 +250,14 @@ class Functionalizer(object):
     @checkpoint_resume(CheckpointPhases.SYNAPSE_PROPS.name,
                        before_save_handler=Circuit.only_touch_columns)
     def _assign_synpse_properties(self, overwrite=False, mode=None):
-        # Calc syn props
         self._ensure_data_loaded()
-        extended_touches = synapse_properties.compute_additional_h5_fields(
-            self.circuit,
+        from .synapse_properties import patch_ChC_SPAA_cells
+        from .synapse_properties import compute_additional_h5_fields
+
+        patched_circuit = patch_ChC_SPAA_cells(self.circuit, self._circuit.morphologies)
+
+        extended_touches = compute_additional_h5_fields(
+            patched_circuit,
             self._circuit.synapse_class_matrix,
             self._circuit.synapse_class_properties
         )
@@ -291,14 +294,15 @@ class Functionalizer(object):
         """
         self._ensure_data_loaded()
         # Index and distribute mtype rules across the cluster
-        mtype_conn_rules = self._build_concrete_mtype_conn_rules(self.recipe.conn_rules, self._circuit.morphology_types)
+        mtype_conn_rules = self._build_concrete_mtype_conn_rules(self.recipe.conn_rules,
+                                                                 self._circuit.morphology_types)
 
         # cumulative_distance_f = filters.CumulativeDistanceFilter(distributed_conn_rules, self.neuron_stats)
         # self.touchDF = cumulative_distance_f.apply(self.circuit)
 
         logger.info("Applying Reduce and Cut...")
         rc = filters.ReduceAndCut(mtype_conn_rules, self.neuron_stats)
-        return rc.apply(self.circuit)
+        return rc.apply(self.circuit, mtypes=self._circuit.mtype_df)
 
     # -------------------------------------------------------------------------
     # Helper functions

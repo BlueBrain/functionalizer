@@ -8,6 +8,7 @@ from pyspark.sql import types as T
 from .dataio.cppneuron import NeuronData
 from . import schema
 from .dataio import touches
+from .dataio.morphologies import MorphologyDB
 from .dataio.common import Part
 from .definitions import MType
 from .utils.spark_udef import DictAccum
@@ -17,10 +18,7 @@ from collections import defaultdict, OrderedDict
 import fnmatch
 import sparkmanager as sm
 import logging
-try:
-    import morphotool
-except ImportError:
-    morphotool = False
+
 
 
 # Globals
@@ -78,12 +76,8 @@ class NeuronDataSpark(NeuronData):
     # ---
     def load_mvd_neurons_morphologies(self, neuron_filter=None, **kwargs):
         self._load_mvd_neurons(neuron_filter, **kwargs)
-        if morphotool:
-            # Morphologies are loaded lazily by the MorphologyDB object
-            from morphotool import MorphologyDB
-            self.morphologies = BroadcastValue(MorphologyDB(self._loader.morphology_dir))
-        else:
-            logger.warning("Morphotool not available. Dependent transformations wont be applied.")
+        # Morphologies are loaded lazily by the MorphologyDB object
+        self.morphologies = BroadcastValue(MorphologyDB(self._loader.morphology_dir))
 
     # ---
     def _load_mvd_neurons(self, neuron_filter=None):

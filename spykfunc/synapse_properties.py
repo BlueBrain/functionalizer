@@ -79,7 +79,6 @@ def compute_additional_h5_fields(circuit, syn_class_matrix, syn_props_df):
                                0
                            )) + F.col("synprop._class_i"))
 
-
     # Select fields
     return t.select(
         # Exported touch gids are 1-base, not 0
@@ -102,7 +101,38 @@ def compute_additional_h5_fields(circuit, syn_class_matrix, syn_props_df):
     )
 
 
-def patch_ChC_SPAA_cells(circuit):
+def patch_ChC_SPAA_cells(circuit, morphology_db):
     """Patches a circuit, fixing the touch post-segment of ChC and SPAA cells to axon
     """
-    pass
+    # isChCpre = neuronMap.getMTypeFromIndex(preMType).find( "ChC" )
+    # isSP_AApre = neuronMap.getMTypeFromIndex(preMType).find("SP_AA")
+
+    get_axon_section_id = _create_axon_section_udf(morphology_db)
+
+    patched_circuit = (
+        circuit.withColumn(
+            "new_post_section",
+            F.when(circuit.src_morphology.endswith('ChC') | circuit.src_morphology.endswith('SP_AA'),
+                   get_axon_section_id(circuit.dst_name))
+            .otherwise(circuit.post_section)
+        )
+        .drop("post_section")
+        .withColumnRenamed("new_post_section", "post_section")
+    )
+
+    return patched_circuit
+
+
+def _create_axon_section_udf(morphology_db):
+    """ Creates a UDF for a given morphologyDB that looks up
+        the first axon section in a morphology given its name
+
+    :param morphology_db: The morphology db
+    :return: The first section index in the morphology
+    """
+
+    @F.udf(returnType=T.IntegerType())
+    def get_axon_section_id(name):
+        return morphology_db[name].first_axon_section
+
+    return get_axon_section_id
