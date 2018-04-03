@@ -84,3 +84,12 @@ class TestFilters(object):
         """Simple test that saving results works.
         """
         fz.export_results()
+
+        df = sm.read.load(os.path.join(fz.output_directory, "nrn.parquet"))
+        props = df.groupBy("pre_gid", "post_gid", "u", "d", "f", "gsyn", "dtc").count().cache()
+        conns = props.groupBy("pre_gid", "post_gid").count()
+
+        assert props.where("count > 1").count() > 0, \
+            "need at least one connection with more than one touch"
+        assert conns.where("count > 1").count() == 0, \
+            "can only have one property setting per connection"

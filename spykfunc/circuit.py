@@ -25,8 +25,9 @@ class Circuit(object):
         self._touches = touches
         self._initial_touches = touches
 
-        # The circuit will be constructed
+        # The circuit will be constructed (and grouped by src, dst
         self.__circuit = None
+        self.__reduced = None
 
     @property
     def touch_rules(self):
@@ -70,6 +71,17 @@ class Circuit(object):
         """
         return self.__neuron_data.mTypes
 
+    def prefixed(self, pre):
+        """Returns the neurons with all columns prefixed
+
+        :param pre: the prefix to use
+        :type pre: string
+        """
+        tmp = self.neurons
+        for col in tmp.schema.names:
+            tmp = tmp.withColumnRenamed(col, pre if col == "id" else "{}_{}".format(pre, col))
+        return tmp
+
     @property
     def dataframe(self):
         """:property: return a dataframe representing the circuit
@@ -77,15 +89,21 @@ class Circuit(object):
         if self.__circuit:
             return self.__circuit
 
-        def prefixed(pre):
-            tmp = self.neurons
-            for col in tmp.schema.names:
-                tmp = tmp.withColumnRenamed(col, pre if col == "id" else "{}_{}".format(pre, col))
-            return tmp
         self.__circuit = self._touches.alias("t") \
-                                      .join(F.broadcast(prefixed("src")), "src") \
-                                      .join(F.broadcast(prefixed("dst")), "dst")
+                                      .join(F.broadcast(self.prefixed("src")), "src") \
+                                      .join(F.broadcast(self.prefixed("dst")), "dst")
         return self.__circuit
+
+    @property
+    def reduced(self):
+        """:property: a reduced circuit with only one connection per src, dst
+        """
+        if self.__reduced:
+            return self.__reduced
+        self.__reduced = self._touches.alias("t").groupBy("src", "dst").count() \
+                                      .join(F.broadcast(self.prefixed("src")), "src") \
+                                      .join(F.broadcast(self.prefixed("dst")), "dst")
+        return self.__reduced
 
     @dataframe.setter
     def dataframe(self, dataframe):
@@ -94,8 +112,10 @@ class Circuit(object):
         self._touches = self.only_touch_columns(dataframe)
         if any(n.startswith('src_') or n.startswith('dst_') for n in dataframe.schema.names):
             self.__circuit = dataframe
+            self.__reduced = None
         else:
             self.__circuit = None
+            self.__reduced = None
 
     @property
     def touches(self):

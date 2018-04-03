@@ -9,7 +9,14 @@ import sparkmanager as sm
 from .schema import SYNAPSE_CLASS_MAP_SCHEMA as schema
 
 
-def compute_additional_h5_fields(circuit, syn_class_matrix, syn_props_df):
+def compute_additional_h5_fields(circuit, reduced, syn_class_matrix, syn_props_df):
+    """Compute randomized properties of touches based on their classification.
+
+    :param circuit: the full synapse connection circuit
+    :param reduced: a reduced connection count with only one pair of src, dst each
+    :param syn_class_matrix: a matrix associating connection properties with a class
+    :param syn_props_df: a dataframe containing the properties of connection classes
+    """
     syn_class_dims = syn_class_matrix.shape  # tuple of len 6
 
     index_length = list(syn_class_dims)
@@ -17,23 +24,23 @@ def compute_additional_h5_fields(circuit, syn_class_matrix, syn_props_df):
         index_length[i] *= index_length[i + 1]
 
     # Compute the index for the matrix as in a flat array
-    touches = circuit.withColumn("syn_prop_index",
-                                 circuit.src_morphology_i * index_length[1] +
-                                 circuit.src_electrophysiology * index_length[2] +
-                                 circuit.src_syn_class_index * index_length[3] +
-                                 circuit.dst_morphology_i * index_length[4] +
-                                 circuit.dst_electrophysiology * index_length[5] +
-                                 circuit.dst_syn_class_index)
+    connections = reduced.withColumn("syn_prop_index",
+                                     reduced.src_morphology_i * index_length[1] +
+                                     reduced.src_electrophysiology * index_length[2] +
+                                     reduced.src_syn_class_index * index_length[3] +
+                                     reduced.dst_morphology_i * index_length[4] +
+                                     reduced.dst_electrophysiology * index_length[5] +
+                                     reduced.dst_syn_class_index)
 
     # Convert the numpy matrix into a dataframe and join to get the right
     # property index
     rdd = sm.parallelize(enumerate(int(n) for n in syn_class_matrix.flatten()), 200)
     syn_class = sm.createDataFrame(rdd, schema).cache()
-    touches = touches.join(F.broadcast(syn_class), "syn_prop_index").drop("syn_prop_index")
+    connections = connections.join(F.broadcast(syn_class), "syn_prop_index").drop("syn_prop_index")
 
     # Join with Syn Prop Class
     syn_props_df = syn_props_df.alias("synprop")  # Synprops is globally cached and broadcasted
-    touches = touches.join(syn_props_df, touches.syn_prop_i == syn_props_df._prop_i)
+    connections = connections.join(F.broadcast(syn_props_df), connections.syn_prop_i == syn_props_df._prop_i)
 
     # 0: Connecting gid: presynaptic for nrn.h5, postsynaptic for nrn_efferent.h5
     # 1: Axonal delay: computed using the distance of the presynaptic axon to the post synaptic terminal (milliseconds)
@@ -54,15 +61,8 @@ def compute_additional_h5_fields(circuit, syn_class_matrix, syn_props_df):
     # 17: ASE Absolute Synaptic Efficacy (Millivolts) (int)
     # 18: Branch Type from the post neuron(0 for soma,
 
-    # Compute #1: delaySomaDistance
-    touches = touches.withColumn(
-        "axional_delay",
-        F.expr("synprop.neuralTransmitterReleaseDelay + distance_soma  / synprop.axonalConductionVelocity")
-        .cast(T.FloatType())
-    )
-
     # Compute #8-12: g, u, d, f, dtc
-    touches = touches.selectExpr(
+    connections = connections.selectExpr(
         "*",
         "gauss_rand(0) * synprop.gsynSD + synprop.gsyn as rand_gsyn",
         "gauss_rand(0) * synprop.uSD + synprop.u as rand_u",
@@ -71,17 +71,27 @@ def compute_additional_h5_fields(circuit, syn_class_matrix, syn_props_df):
         "gauss_rand(0) * synprop.dtcSD + synprop.dtc as rand_dtc"
     )
 
+    touches = circuit.alias("c").join(connections.alias("conn"),
+                                      [F.col("c.src") == F.col("conn.src"), F.col("c.dst") == F.col("conn.dst")])
+
+    # Compute #1: delaySomaDistance
+    touches = touches.withColumn(
+        "axional_delay",
+        F.expr("conn.neuralTransmitterReleaseDelay + distance_soma  / conn.axonalConductionVelocity")
+        .cast(T.FloatType())
+    )
+
     # Compute #13: synapseType:  Inhibitory < 100 or  Excitatory >= 100
     t = touches.withColumn("synapseType",
-                           (F.when(F.col("synprop.type").substr(0, 1) == F.lit('E'), 100)
+                           (F.when(F.col("conn.type").substr(0, 1) == F.lit('E'), 100)
                             .otherwise(0)) +
-                           F.col("synprop._class_i"))
+                           F.col("conn._class_i"))
 
     # Select fields
     return t.select(
         # Exported touch gids are 1-base, not 0
-        t.src.alias("pre_gid"),
-        t.dst.alias("post_gid"),
+        F.col("c.src").alias("pre_gid"),
+        F.col("c.dst").alias("post_gid"),
         t.axional_delay,
         t.post_section.alias("post_section"),
         t.post_segment.alias("post_segment"),
@@ -95,7 +105,7 @@ def compute_additional_h5_fields(circuit, syn_class_matrix, syn_props_df):
         t.rand_f.alias("f"),
         t.rand_dtc.alias("dtc"),
         t.synapseType.alias("synapseType"),
-        t.src_morphology_i.alias("morphology"),
+        F.col("c.src_morphology_i").alias("morphology"),
         F.lit(0).alias("branch_order_dend"),  # TBD
         t.branch_order.alias("branch_order_axon"),
         t.ase.alias("ase"),

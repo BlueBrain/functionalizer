@@ -154,6 +154,12 @@ class Functionalizer(object):
         # Data exporter
         self.exporter = NeuronExporter(output_path=self.__output)
 
+    @property
+    def output_directory(self):
+        """:property: the directory to save results in
+        """
+        return self.__output
+
     # ----
     @property
     def circuit(self):
@@ -258,6 +264,7 @@ class Functionalizer(object):
         self._ensure_data_loaded()
         extended_touches = synapse_properties.compute_additional_h5_fields(
             self.circuit,
+            self._circuit.reduced,
             self._circuit.synapse_class_matrix,
             self._circuit.synapse_class_properties
         )
@@ -288,7 +295,8 @@ class Functionalizer(object):
     @_assign_to_circuit
     @checkpoint_resume(CheckpointPhases.REDUCE_AND_CUT.name,
                        before_save_handler=Circuit.only_touch_columns,
-                       before_load_handler=_change_maxPartitionMB(32))
+                       before_load_handler=_change_maxPartitionMB(32),
+                       bucket_cols=("src", "dst"))
     def run_reduce_and_cut(self):
         """Create and apply Reduce and Cut filter
         """
