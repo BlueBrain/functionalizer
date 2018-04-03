@@ -3,7 +3,7 @@ space +=
 
 DEPENDENCIES := spark-catalyst spark-sql scala-library
 
-SPARK_JARS := $(SPARK_ROOT)/jars
+SPARK_JARS := $(SPARK_HOME)/jars
 JAR_FILES = $(foreach lib,$(DEPENDENCIES),$(wildcard $(SPARK_JARS)/$(lib)*.jar))
 CLASSPATH := $(subst $(space),:,$(strip $(JAR_FILES)))
 
