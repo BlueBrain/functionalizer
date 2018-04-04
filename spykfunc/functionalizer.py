@@ -17,7 +17,6 @@ from .stats import NeuronStats
 from .definitions import CellClass, CheckpointPhases, RunningMode
 from . import _filtering
 from . import filters
-from . import schema
 from . import utils
 from .utils.spark import defaults as checkpoint_defaults, checkpoint_resume
 

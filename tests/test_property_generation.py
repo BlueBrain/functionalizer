@@ -4,8 +4,8 @@
 import os
 import pytest
 import sparkmanager as sm
-
-from fixtures import DATADIR, ARGS, fz
+from fixtures import DATADIR
+from fixtures import fz_fixture  # NoQA
 from spykfunc.synapse_properties import compute_additional_h5_fields
 
 
