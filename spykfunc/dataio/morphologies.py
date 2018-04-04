@@ -30,7 +30,7 @@ class GLIA_SECTION_TYPE:
 
 class Morphology(object):
     def __init__(self, path):
-        self._morph_h5 = h5py.File(path)
+        self._morph_h5 = h5py.File(path, 'r')
 
     @property
     def offsets(self):
