@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 from lazy_property import LazyProperty
+import hashlib
 import os
 import numpy as np
 from pyspark.sql import functions as F
@@ -44,14 +45,15 @@ class NeuronDataSpark(NeuronData):
      - object nameMap
     """
 
-    def __init__(self, loader):
+    def __init__(self, loader, cache):
         self.neuronDF = None
         self.layers = None
         self.set_loader(loader)
         self.morphologies = None
+        self.cache = cache
 
-        if not os.path.isdir(".cache"):
-            os.makedirs(".cache")
+        if not os.path.isdir(self.cache):
+            os.makedirs(self.cache)
 
     def require_mvd_globals(self):
         if not self.globals_loaded:
@@ -84,8 +86,15 @@ class NeuronDataSpark(NeuronData):
         self.require_mvd_globals()
         n_neurons = int(self.nNeurons)
 
+        fn = self._loader.mvd_filename
+        sha = hashlib.sha256()
+        sha.update(os.path.realpath(fn))
+        sha.update(str(os.stat(fn).st_size))
+        sha.update(str(os.stat(fn).st_mtime))
+
         logger.info("Total neurons: %d", n_neurons)
-        mvd_parquet = ".cache/neuronDF{}k.parquet".format(n_neurons / 1000.0)
+        mvd_parquet = os.path.join(self.cache,
+                                   "neurons_{}k_{}.parquet".format(n_neurons / 1000.0, sha.hexdigest()))
 
         if os.path.exists(mvd_parquet):
             logger.info("Loading from MVD parquet")
@@ -93,8 +102,7 @@ class NeuronDataSpark(NeuronData):
             self.layers = mvd.select('layer').distinct().collect()
             self.neuronDF = F.broadcast(mvd).cache()
             n_neurons = self.neuronDF.count()  # Force broadcast to meterialize
-            logger.info("Loaded {} neurons from MVD".format(n_neurons))
-
+            logger.info("Loaded {} neurons".format(n_neurons))
         else:
             logger.info("Building MVD from raw mvd files")
             total_parts = max(sm.defaultParallelism * 4, n_neurons // 10000 + 1)

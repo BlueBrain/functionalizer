@@ -54,7 +54,8 @@ class Functionalizer(object):
     )
 
     # ==========
-    def __init__(self, only_s2s=False, format_hdf5=False, spark_opts=None, checkpoints=None, output="spykfunc_output"):
+    def __init__(self, only_s2s=False, format_hdf5=False, spark_opts=None,
+                 checkpoints=None, output="spykfunc_output", cache="_mvd"):
         # Create Spark session with the static config
         filename = os.path.join(output, 'report.json')
 
@@ -63,6 +64,7 @@ class Functionalizer(object):
         else:
             self.__checkpoints = os.path.join(output, "_checkpoints")
         self.__output = output
+        self.__cache = cache
 
         checkpoint_defaults.directory = self.__checkpoints
 
@@ -122,7 +124,7 @@ class Functionalizer(object):
         self.recipe = Recipe(recipe_file)
 
         # Load Neurons data
-        fdata = NeuronDataSpark(MVD_Morpho_Loader(mvd_file, morpho_dir))
+        fdata = NeuronDataSpark(MVD_Morpho_Loader(mvd_file, morpho_dir), self.__cache)
         fdata.load_mvd_neurons_morphologies()
 
         # Init the Enumeration to contain fzer CellClass index
