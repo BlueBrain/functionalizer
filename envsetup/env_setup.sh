@@ -3,23 +3,51 @@
 # Prepare/Load a Python env to run spark
 ##########################################
 
+if [ "${BASH_SOURCE[0]}" != "$0" ]; then
+    echo "Dont source this"
+    return
+fi
+
 set -e
 
-BASEDIR=$HOME/dev/Functionalizer/pyspark
-CURDIR=$BASEDIR/envsetup
-PYENV=$CURDIR/sparkenv
-export SPARK_HOME=/home/leite/usr/spark-2.2.1
+CURDIR=$(readlink -f "$(dirname "$0")")
+PYENV="$CURDIR/sparkenv"
+SPARK_FZER=$(readlink -f "$CURDIR/..")
+
 
 if [ ! -d $PYENV ]; then
+
+    if [ -n "$1" ]; then
+        SPARK_FZER=$(readlink -f "$1")
+    else
+        if [ -f "$SPARK_FZER/setup.py" ]; then
+            echo "Using DEFAULT SPARK FUNCZER location: $SPARK_FZER"
+        else
+            echo "Syntax: env_setup.sh SPARK_FZER_LOCATION"
+            exit
+        fi
+    fi
+
+    if [ -z "$SPARK_HOME"  ]; then
+        echo "Please set SPARK_HOME before launching the script"
+        exit
+    fi
+
     echo "Creating virtualenv in $PYENV"
     virtualenv $PYENV -p `which python`
     . $PYENV/bin/activate
     pip install --upgrade setuptools pip
     pip install -e $SPARK_HOME/python  # Access spark via install develop
-    pip install -r $BASEDIR/dev-requirements.txt
+
+    # Spark conf
+    SPARK_ENV_CONF=$CURDIR/spark_conf
+    echo "BASEDIR=$CURDIR" > $SPARK_ENV_CONF/spark-env.sh
+    cat $SPARK_ENV_CONF/spark-env.sh.tpl >> $SPARK_ENV_CONF/spark-env.sh
+
     # Build install spykfunc
-    rm $BASEDIR/build -rf
-    BUILD_TYPE=DEVEL pip install -e $BASEDIR[dev]
+    pip install -r $SPARK_FZER/dev-requirements.txt
+    rm $SPARK_FZER/build -rf
+    pip install -e $SPARK_FZER[dev]
 else
     . $PYENV/bin/activate
 fi
