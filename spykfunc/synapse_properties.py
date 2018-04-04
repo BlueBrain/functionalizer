@@ -64,12 +64,12 @@ def compute_additional_h5_fields(circuit, reduced, syn_class_matrix, syn_props_d
     # Compute #8-12: g, u, d, f, dtc
     connections = connections.selectExpr(
         "*",
-        "gamma_rand(synprop.gsyn, synprop.gsynSD) as rand_gsyn",
-        "gauss_rand(synprop.u, synprop.uSD) as rand_u",
-        "gamma_rand(synprop.d, synprop.dSD) as rand_d",
-        "gamma_rand(synprop.f, synprop.fSD) as rand_f",
-        "gauss_rand(synprop.dtc, synprop.dtcSD) as rand_dtc",
-        "if(synprop.nrrp >= 1, poisson_rand(synprop.nrrp - 1) + 1, 1) as rand_nrrp"
+        "gamma_rand(syn_prop_i, synprop.gsyn, synprop.gsynSD) as rand_gsyn",
+        "gauss_rand(syn_prop_i, synprop.u, synprop.uSD) as rand_u",
+        "gamma_rand(syn_prop_i, synprop.d, synprop.dSD) as rand_d",
+        "gamma_rand(syn_prop_i, synprop.f, synprop.fSD) as rand_f",
+        "gauss_rand(syn_prop_i, synprop.dtc, synprop.dtcSD) as rand_dtc",
+        "if(synprop.nrrp >= 1, poisson_rand(syn_prop_i, synprop.nrrp - 1) + 1, 1) as rand_nrrp"
     )
 
     touches = circuit.alias("c").join(connections.alias("conn"),

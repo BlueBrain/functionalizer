@@ -5,7 +5,7 @@ DEPENDENCIES := spark-catalyst spark-sql scala-library commons-math3
 
 SPARK_JARS := $(SPARK_HOME)/jars
 JAR_FILES = $(foreach lib,$(DEPENDENCIES),$(wildcard $(SPARK_JARS)/$(lib)*.jar))
-CLASSPATH := $(subst $(space),:,$(strip $(JAR_FILES)))
+CLASSPATH := $(subst $(space),:,$(strip $(JAR_FILES))):.
 
 SCALA_CLASSES := $(foreach fn,$(wildcard spykfunc/udfs/*.scala),$(subst .scala,.class,$(fn)))
 JAVA_CLASSES := $(foreach fn,$(wildcard spykfunc/udfs/*.java),$(subst .java,.class,$(fn)))
