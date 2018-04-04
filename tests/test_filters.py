@@ -7,8 +7,7 @@ import spykfunc
 from spykfunc.definitions import RunningMode
 from spykfunc.utils.spark import defaults as CheckpointDefaults
 
-from fixtures import ARGS
-from fixtures import fz_fixture  # NoQA
+from conftest import ARGS
 
 import sparkmanager as sm
 
