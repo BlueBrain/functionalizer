@@ -21,7 +21,6 @@ import sparkmanager as sm
 import logging
 
 
-
 # Globals
 logger = get_logger(__name__)
 

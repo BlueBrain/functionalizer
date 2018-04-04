@@ -12,8 +12,8 @@ ARGS = (
 )
 
 
-@pytest.fixture(scope='session')
-def fz(tmpdir_factory):
+@pytest.fixture(scope='session', name='fz')
+def fz_fixture(tmpdir_factory):
     tmpdir = tmpdir_factory.mktemp('filters')
     cdir = tmpdir.join('check')
     odir = tmpdir.join('out')
