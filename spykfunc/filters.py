@@ -125,8 +125,6 @@ class ReduceAndCut(DataSetOperation):
         params_df = F.broadcast(_params)
 
         # Debug params info -----------------------------------------------------------------------
-        if _DEBUG and "mtypes" not in kw:
-            logger.warning("Cant debug without mtypes df. Please provide as kw arg to apply()")
         if _DEBUG and _DEBUG_REDUCE:
             debug_info = params_df.select("pathway_i", "total_touches", "structural_mean",
                                           "pP_A", "pMu_A", "active_fraction_legacy", "_debug")

@@ -16,8 +16,8 @@ import os
 from collections import defaultdict
 from .structbuf import StructType, TYPES
 
-# MorphoLib
-from . import morphotool
+# NOTE: morphologies loading is being moved to data_loader
+# from . import morphotool
 
 cdef int DEBUG=0
 
@@ -80,8 +80,8 @@ cdef class NeuronData(NeuronDataI):
     #The actual C-alloc'ed array
     cdef NeuronInfo *_neurons
 
-    # MorphologyDB -
-    cdef public object morphologies
+    # MorphologyDB
+    # cdef public object morphologies
 
 
     def __init__(self, nr_neurons=0):
@@ -92,7 +92,7 @@ cdef class NeuronData(NeuronDataI):
         self.globals_loaded = False
         self.nNeurons = nr_neurons
         self.nameMap = defaultdict(list)
-        self.morphologies = {}
+        # self.morphologies = {}
 
     def set_loader(self, NeuronLoaderI loader):
         self._loader = loader
@@ -105,10 +105,10 @@ cdef class NeuronData(NeuronDataI):
         # We delegate memory allocation to the loader, that we must free
         return self._loader.load_neurons(self, part)
 
-    def load_morphologies(self, morphos=None):
-        if morphos is None:
-            morphos = self.nameMap.keys()
-        return self._loader.load_morphologies(self, morphos)
+    # def load_morphologies(self, morphos=None):
+    #     if morphos is None:
+    #         morphos = self.nameMap.keys()
+    #     return self._loader.load_morphologies(self, morphos)
 
     def set_name_map(self, dict name_map):
         self.nameMap = name_map
@@ -197,16 +197,16 @@ cdef class MVD_Morpho_Loader(NeuronLoaderI):
         return neuron_data.neurons
 
 
-    def load_morphologies(self, NeuronData neuron_data, morphos):
-        # import progressbar
-        # bar = progressbar.ProgressBar()
-        for morpho in morphos:
-            self.load_morphology(neuron_data, morpho)
-
-    def load_morphology(self, NeuronData neuron_data, string morpho_name):
-        assert morphotool, "Morphotool isnt available."
-        morph = neuron_data.morphologies[morpho_name] = morphotool.MorphoReader(os.path.join(self.morphology_dir, morpho_name + ".h5")).create_morpho_tree()
-        return morph
+    # def load_morphologies(self, NeuronData neuron_data, morphos):
+    #     # import progressbar
+    #     # bar = progressbar.ProgressBar()
+    #     for morpho in morphos:
+    #         self.load_morphology(neuron_data, morpho)
+    #
+    # def load_morphology(self, NeuronData neuron_data, string morpho_name):
+    #     assert morphotool, "Morphotool isnt available."
+    #     morph = neuron_data.morphologies[morpho_name] = morphotool.MorphoReader(os.path.join(self.morphology_dir, morpho_name + ".h5")).create_morpho_tree()
+    #     return morph
 
     def get_params(self):
         return {

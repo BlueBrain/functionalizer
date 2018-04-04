@@ -131,3 +131,12 @@ def number_shuffle_partitions(np):
     sm.conf.set("spark.sql.shuffle.partitions", np)
     yield
     sm.conf.set("spark.sql.shuffle.partitions", previous_np)
+
+
+# Descriptor for creating and transparently accessing broadcasted values
+class BroadcastValue(object):
+    def __init__(self, value):
+        self._bcast_value = sm.sc.broadcast(value)
+
+    def __getitem__(self, name):
+        return self._bcast_value.value[name]
