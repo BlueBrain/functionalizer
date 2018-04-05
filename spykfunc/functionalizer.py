@@ -265,10 +265,10 @@ class Functionalizer(object):
         from .synapse_properties import patch_ChC_SPAA_cells
         from .synapse_properties import compute_additional_h5_fields
 
-        patched_circuit = patch_ChC_SPAA_cells(self.circuit, self._circuit.morphologies)
+        self.ciruit = patch_ChC_SPAA_cells(self.circuit, self._circuit.morphologies)
 
         extended_touches = compute_additional_h5_fields(
-            patched_circuit,
+            self.circuit,
             self._circuit.reduced,
             self._circuit.synapse_class_matrix,
             self._circuit.synapse_class_properties
