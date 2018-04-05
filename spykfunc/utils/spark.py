@@ -8,12 +8,37 @@ from . import get_logger
 import sparkmanager as sm
 
 
-class defaults(object):
+class CheckpointGlobals(object):
     directory = None
     """:property: to be set by the main executing branch"""
 
     overwrite = False
     """:property: do not restore from checkpoints"""
+
+
+class CheckpointStatus:
+    """ A CheckpointStatus object shall be passed to the decorator in order to retrieve information
+    """
+    INVALID = 0
+    COMPUTED = 1
+    RESTORED_PARQUET = 2
+    RESTORED_TABLE = 3
+
+    def __init__(self):
+        self.status = self.INVALID
+        self.message = None
+        self.error = None
+
+
+class CheckpointHandler:
+    BEFORE_LOAD = 0
+    BEFORE_SAVE = 1
+    POST_RESUME = 2
+    POST_COMPUTE = 3
+
+    def __init__(self, handler_type, handker_f):
+        self.type = handler_type
+        self.f = handker_f
 
 
 # -----------------------------------------------
@@ -37,14 +62,14 @@ def checkpoint_resume(name,
                 mode = kw['mode']
             else:
                 mode = kw.pop("mode", None)
-            table_path = osp.join(dest or defaults.directory, name.lower())
+            table_path = osp.join(dest or CheckpointGlobals.directory, name.lower())
             if mode:
                 table_path += '_' + str(mode)
             parquet_file_path = table_path + ".parquet"
             table_name = name.lower()
 
             # Attempt to load, unless overwrite is set to True
-            if defaults.overwrite or kw.pop('overwrite', False):
+            if CheckpointGlobals.overwrite or kw.pop('overwrite', False):
                 if osp.exists(parquet_file_path) or osp.exists(table_path):
                     logger.info("[OVERWRITE %s] Checkpoint found. Overwriting...", name)
             else:
@@ -77,7 +102,7 @@ def checkpoint_resume(name,
 
             # We changed data, the rest of the pipeline should overwrite
             # any other saved checkpoints!
-            defaults.overwrite = True
+            CheckpointGlobals.overwrite = True
 
             if bucket_cols:
                 logger.debug("Checkpointing to TABLE %s...", table_name)
@@ -131,6 +156,13 @@ def number_shuffle_partitions(np):
     sm.conf.set("spark.sql.shuffle.partitions", np)
     yield
     sm.conf.set("spark.sql.shuffle.partitions", previous_np)
+
+
+def change_max_partition_MB(size):
+    return lambda: sm.conf.set(
+        "spark.sql.files.maxPartitionBytes",
+        size * 1024**2
+    )
 
 
 # Descriptor for creating and transparently accessing broadcasted values

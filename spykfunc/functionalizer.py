@@ -2,10 +2,9 @@
 #  An implementation of Functionalizer in spark
 # *************************************************************************
 from __future__ import absolute_import
-from fnmatch import filter as matchfilter
-import time
 import os
-
+import time
+from fnmatch import filter as matchfilter
 import sparkmanager as sm
 
 from .circuit import Circuit
@@ -18,18 +17,25 @@ from .definitions import CellClass, CheckpointPhases, RunningMode
 from . import _filtering
 from . import filters
 from . import utils
-from .utils.spark import defaults as checkpoint_defaults, checkpoint_resume
+from .utils.spark import checkpoint_resume, CheckpointGlobals, change_max_partition_MB
 
-__all__ = ["Functionalizer", "session", "CheckpointPhases", "ExtendedCheckpointAvail"]
+__all__ = ["Functionalizer", "session", "CheckpointPhases"]
 
 logger = utils.get_logger(__name__)
 _MB = 1024**2
 
 
-class ExtendedCheckpointAvail(Exception):
-    """An exception signalling that process_filters can be skipped
-    """
-    pass
+class _SpykfuncOptions:
+    format_hdf5 = False
+    spark_opts = None
+    output = "spykfunc_output"
+    cache = "_mvd"
+    no_morphos = False
+    checkpoints = os.path.join(output, "_checkpoints")
+
+    def __init__(self, options_dict):
+        for name, option in options_dict.items():
+            setattr(self, name, option)
 
 
 class Functionalizer(object):
@@ -45,28 +51,19 @@ class Functionalizer(object):
     neuron_stats = None
     """:property: The :py:class:`~spykfunc.stats.NeuronStats` object for the current touch set"""
 
+    exporter = None
+    """:property: The :py:class:`~spykfunc.data_export.NeuronExporter` object"""
+
     # handler functions used in decorators
     _assign_to_circuit = utils.assign_to_property('circuit')
-    _change_maxPartitionMB = lambda size: lambda: sm.conf.set(
-        "spark.sql.files.maxPartitionBytes",
-        size * _MB
-    )
 
     # ==========
-    def __init__(self, only_s2s=False, format_hdf5=False, spark_opts=None,
-                 checkpoints=None, output="spykfunc_output", cache="_mvd"):
+    def __init__(self, only_s2s=False, **options):
+        # Create config
+        self._config = _SpykfuncOptions(options)
+        CheckpointGlobals.directory = self._config.checkpoints
+
         # Create Spark session with the static config
-        filename = os.path.join(output, 'report.json')
-
-        if checkpoints:
-            self.__checkpoints = checkpoints
-        else:
-            self.__checkpoints = os.path.join(output, "_checkpoints")
-        self.__output = output
-        self.__cache = cache
-
-        checkpoint_defaults.directory = self.__checkpoints
-
         spark_config = {
             "spark.shuffle.compress": False,
             "spark.checkpoint.compress": True,
@@ -75,13 +72,14 @@ class Functionalizer(object):
             "spark.sql.broadcastTimeout": 30 * 60,  # 30 minutes to do calculations that will be broadcasted
             "spark.sql.catalogImplementation": "hive",
             "spark.sql.files.maxPartitionBytes": 128 * _MB,
-            "derby.system.home": os.path.join(self.__checkpoints, "derby")
+            "derby.system.home": os.path.join(self._config.checkpoints, "derby")
         }
-        sm.create("Functionalizer", spark_config, spark_opts, report=filename)
+        report_file = os.path.join(self._config.output, 'report.json')
+        sm.create("Functionalizer", spark_config, self._config.spark_opts, report=report_file)
 
         # Configuring Spark runtime
         sm.setLogLevel("WARN")
-        sm.setCheckpointDir(os.path.join(self.__checkpoints, "tmp"))
+        sm.setCheckpointDir(os.path.join(self._config.checkpoints, "tmp"))
         sm._jsc.hadoopConfiguration().setInt("parquet.block.size", 32 * _MB)
         sm.register_java_functions([
             ("gauss_rand", "spykfunc.udfs.GaussRand"),
@@ -94,7 +92,6 @@ class Functionalizer(object):
         # sm.spark._jvm.spykfunc.udfs.GammaRand.registerUDF(sm.spark._jsparkSession)
 
         self._mode = RunningMode.S2S if only_s2s else RunningMode.S2F
-        self._format_hdf5 = format_hdf5
         self.neuron_stats = NeuronStats()
 
         if only_s2s:
@@ -115,19 +112,27 @@ class Functionalizer(object):
         """
         # In "program" mode this dir wont change later, so we can check here
         # for its existence/permission to create
-        os.path.isdir(self.__output) or os.makedirs(self.__output)
-        os.path.isdir(self.__checkpoints) or os.makedirs(self.__checkpoints)
+        os.path.isdir(self._config.output) or os.makedirs(self._config.output)
+        os.path.isdir(self._config.checkpoints) or os.makedirs(self._config.checkpoints)
 
         logger.debug("%s: Data loading...", time.ctime())
         # Load recipe
         self.recipe = Recipe(recipe_file)
 
         # Load Neurons data
-        fdata = NeuronDataSpark(MVD_Morpho_Loader(mvd_file, morpho_dir), self.__cache)
+        fdata = NeuronDataSpark(MVD_Morpho_Loader(mvd_file, morpho_dir), self._config.cache)
         fdata.load_mvd_neurons_morphologies()
 
         # Init the Enumeration to contain fzer CellClass index
         CellClass.init_fzer_indexes(fdata.cellClasses)
+
+        # Verify required morphologies are available
+
+        for m_name in fdata.morphology_names:
+            if not os.path.isfile(os.path.join(morpho_dir, m_name + ".h5")):
+                logger.error("Some morphologies could not be located. Last: " + m_name + "\n"
+                             "Please provide a valid morphology path or restart with --no-morphos")
+                raise ValueError("Morphologies missing")
 
         # 'Load' touches
         touches = fdata.load_touch_parquet(*touch_files) \
@@ -138,7 +143,6 @@ class Functionalizer(object):
         self.neuron_stats.circuit = self._circuit
 
         # Grow suffle partitions with size of touches DF
-        # In generic cases we dont shuffle all the fields, so we reduce this by a factor of 2
         # Min: 100 reducers
         # NOTE: According to some tests we need to cap the amount of reducers to 4000 per node
         # NOTE: Some problems during shuffle happen with many partitions if shuffle compression is enabled!
@@ -153,13 +157,13 @@ class Functionalizer(object):
         sm.conf.set("spark.sql.shuffle.partitions", shuffle_partitions)
 
         # Data exporter
-        self.exporter = NeuronExporter(output_path=self.__output)
+        self.exporter = NeuronExporter(output_path=self._config.output)
 
     @property
     def output_directory(self):
         """:property: the directory to save results in
         """
-        return self.__output
+        return self._config.output
 
     # ----
     @property
@@ -203,8 +207,7 @@ class Functionalizer(object):
            (2.1) Reduce (s2f only)
            (2.2) Cut (s2f only)
         """
-        if overwrite:
-            checkpoint_defaults.overwrite = True
+        CheckpointGlobals.overwrite = overwrite
 
         self._ensure_data_loaded()
         logger.info("Starting Filtering...")
@@ -235,7 +238,7 @@ class Functionalizer(object):
         if output_path is not None:
             exporter.output_path = output_path
         if format_hdf5 is None:
-            format_hdf5 = self._format_hdf5
+            format_hdf5 = self._config.format_hdf5
 
         if format_hdf5:
             # Calc the number of NRN output files to target ~32 MB part ~1M touches
@@ -300,7 +303,7 @@ class Functionalizer(object):
     @_assign_to_circuit
     @checkpoint_resume(CheckpointPhases.REDUCE_AND_CUT.name,
                        before_save_handler=Circuit.only_touch_columns,
-                       before_load_handler=_change_maxPartitionMB(32),
+                       before_load_handler=change_max_partition_MB(32),
                        bucket_cols=("src", "dst"))
     def run_reduce_and_cut(self):
         """Create and apply Reduce and Cut filter
@@ -368,6 +371,7 @@ def session(options):
     args = {
         'format_hdf5': options.format_hdf5,
         'only_s2s': options.s2s,
+        'no-morphos': options.no_morphos,
         'spark_opts': options.spark_opts
     }
     if options.output_dir:

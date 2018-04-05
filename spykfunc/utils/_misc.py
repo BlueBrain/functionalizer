@@ -137,9 +137,9 @@ def format_cur_exception():
 # -----------------------------------------------
 # Logging
 # -----------------------------------------------
-class ErrorHandler(_logging.StreamHandler):
+class InteractiveErrorHandler(_logging.StreamHandler):
     def emit(self, record):
-        super(ErrorHandler, self).emit(record)
+        super(InteractiveErrorHandler, self).emit(record)
         if not query_yes_no("An error occurred. Do you want to continue execution?"):
             print("Exiting...")
             _logging.shutdown()
@@ -165,7 +165,7 @@ class ColoredFormatter(_logging.Formatter):
         return msg
 
 
-ContinueAbortErrorLogHandler = ErrorHandler()
+ContinueAbortErrorLogHandler = InteractiveErrorHandler()
 ContinueAbortErrorLogHandler.setLevel(_logging.ERROR)
 DefaultHandler = _logging.StreamHandler(sys.stdout)
 DefaultHandler.setLevel(_logging.DEBUG)
@@ -177,7 +177,6 @@ def get_logger(name):
     logger.propagate = False
     logger.setLevel(config.log_level)
     logger.addHandler(DefaultHandler)
-    # logger.addHandler(ContinueAbortErrorLogHandler)
     return logger
 
 

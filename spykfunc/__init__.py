@@ -65,6 +65,8 @@ def session(recipe, mvd_file, morphologies, touch_files, **opts):
         args += ("--s2s",)
     if opts.pop("format-hdf5", False):
         args += ("--format-hdf5",)
+    if opts.pop("no-morphos", False):
+        args += ("--no-morphos",)
 
     for opt, opt_val in opts.items():
         args += ("--" + opt.replace("_", "-"), opt_val)

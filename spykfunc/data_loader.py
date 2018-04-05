@@ -19,7 +19,7 @@ from collections import defaultdict, OrderedDict
 import fnmatch
 import sparkmanager as sm
 import logging
-
+import pickle
 
 # Globals
 logger = get_logger(__name__)
@@ -41,7 +41,7 @@ class NeuronDataSpark(NeuronData):
     Neuron info - Depending on the range
      - NeuronBuffer neurons
      - vector[string] neuronNames
-     - object nameMap
+     - dict nameMap
     """
 
     def __init__(self, loader, cache):
@@ -58,6 +58,10 @@ class NeuronDataSpark(NeuronData):
         if not self.globals_loaded:
             logger.info("Loading global Neuron data...")
             self.load_globals()
+
+    @property
+    def morphology_names(self):
+        return self.nameMap.keys()
 
     @LazyProperty
     def mTypes(self):
@@ -94,6 +98,7 @@ class NeuronDataSpark(NeuronData):
         logger.info("Total neurons: %d", n_neurons)
         mvd_parquet = os.path.join(self.cache,
                                    "neurons_{}k_{}.parquet".format(n_neurons / 1000.0, sha.hexdigest()))
+        namemap_file = os.path.join(self.cache, "name_map.pickle")
 
         if os.path.exists(mvd_parquet):
             logger.info("Loading from MVD parquet")
@@ -102,6 +107,8 @@ class NeuronDataSpark(NeuronData):
             self.neuronDF = F.broadcast(mvd).cache()
             n_neurons = self.neuronDF.count()  # Force broadcast to meterialize
             logger.info("Loaded {} neurons".format(n_neurons))
+            name_accu = pickle.load(open(namemap_file, 'rb'))
+            self.set_name_map(name_accu)
         else:
             logger.info("Building MVD from raw mvd files")
             total_parts = max(sm.defaultParallelism * 4, n_neurons // 10000 + 1)
@@ -131,6 +138,7 @@ class NeuronDataSpark(NeuronData):
             self.neuronDF.write.mode('overwrite').parquet(mvd_parquet)
 
             # Then we set the global name map
+            pickle.dump(name_accu.value, open(namemap_file, 'wb'))
             self.set_name_map(name_accu.value)
 
     # ---
@@ -396,7 +404,6 @@ def neuron_loader_gen(data_class, loader_class, loader_params, n_neurons,
 
         # Convert part into object to the actual range of rows
         da.load_neurons(Part(part_nr, total_parts))
-        logging.debug("Name map: %s", da.nameMap)
         name_accumulator.add(da.nameMap)
         if isinstance(da.neurons[0], tuple):
             return da.neurons
