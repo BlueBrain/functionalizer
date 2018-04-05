@@ -17,7 +17,7 @@ from .definitions import CellClass, CheckpointPhases, RunningMode
 from . import _filtering
 from . import filters
 from . import utils
-from .utils.spark import checkpoint_resume, CheckpointGlobals, change_max_partition_MB
+from .utils.spark import checkpoint_resume, change_max_partition_MB
 
 __all__ = ["Functionalizer", "session", "CheckpointPhases"]
 
@@ -54,14 +54,14 @@ class Functionalizer(object):
     exporter = None
     """:property: The :py:class:`~spykfunc.data_export.NeuronExporter` object"""
 
-    # handler functions used in decorators
     _assign_to_circuit = utils.assign_to_property('circuit')
+    """:property: Handler functions used in decorators"""
 
     # ==========
     def __init__(self, only_s2s=False, **options):
         # Create config
         self._config = _SpykfuncOptions(options)
-        CheckpointGlobals.directory = self._config.checkpoints
+        checkpoint_resume.directory = self._config.checkpoints
 
         # Create Spark session with the static config
         spark_config = {
@@ -207,7 +207,7 @@ class Functionalizer(object):
            (2.1) Reduce (s2f only)
            (2.2) Cut (s2f only)
         """
-        CheckpointGlobals.overwrite = overwrite
+        checkpoint_resume.overwrite = overwrite
 
         self._ensure_data_loaded()
         logger.info("Starting Filtering...")

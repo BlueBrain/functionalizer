@@ -5,8 +5,6 @@ import os
 import pytest
 import spykfunc
 from spykfunc.definitions import RunningMode
-from spykfunc.utils.spark import CheckpointGlobals
-
 from conftest import ARGS
 import sparkmanager as sm
 
@@ -39,8 +37,8 @@ class TestFilters(object):
         count = fz.circuit.count()
         assert abs(count - NUM_AFTER_FILTER) < TOLERANCE * NUM_AFTER_FILTER
 
-        sc1 = os.path.join(CheckpointGlobals.directory, "shall_cut")
-        sc2 = os.path.join(CheckpointGlobals.directory, "shall_cut2")
+        sc1 = os.path.join(fz._config.checkpoints, "shall_cut")
+        sc2 = os.path.join(fz._config.checkpoints, "shall_cut2")
 
         assert 0 < sm.read.load(sc1).count()
         assert 0 < sm.read.load(sc2).count()
