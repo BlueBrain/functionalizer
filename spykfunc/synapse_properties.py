@@ -4,6 +4,7 @@ Additional "Synapse property fields
 from __future__ import absolute_import
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
+import math
 import sparkmanager as sm
 
 from .schema import SYNAPSE_CLASS_MAP_SCHEMA as schema
@@ -61,15 +62,19 @@ def compute_additional_h5_fields(circuit, reduced, syn_class_matrix, syn_props_d
     # 17: NRRP - Number of Readily Releasable Pool vesicles
     # 18: Branch Type from the post neuron(0 for soma,
 
+    offset = 10 ** int(math.ceil(math.log10(syn_props_df.count())))
+
     # Compute #8-12: g, u, d, f, dtc
+    #
+    # IDs for random functions need to be unique, hence the use of offset
     connections = connections.selectExpr(
         "*",
-        "gamma_rand(syn_prop_i, synprop.gsyn, synprop.gsynSD) as rand_gsyn",
-        "gauss_rand(syn_prop_i, synprop.u, synprop.uSD) as rand_u",
-        "gamma_rand(syn_prop_i, synprop.d, synprop.dSD) as rand_d",
-        "gamma_rand(syn_prop_i, synprop.f, synprop.fSD) as rand_f",
-        "gauss_rand(syn_prop_i, synprop.dtc, synprop.dtcSD) as rand_dtc",
-        "if(synprop.nrrp >= 1, poisson_rand(syn_prop_i, synprop.nrrp - 1) + 1, 1) as rand_nrrp"
+        "gamma_rand(cast(syn_prop_i as int), synprop.gsyn, synprop.gsynSD) as rand_gsyn",
+        "gamma_rand(cast(syn_prop_i + {o} as int), synprop.d, synprop.dSD) as rand_d".format(o=offset),
+        "gamma_rand(cast(syn_prop_i + 2 * {o} as int), synprop.f, synprop.fSD) as rand_f".format(o=offset),
+        "gauss_rand(cast(syn_prop_i as int), synprop.u, synprop.uSD) as rand_u",
+        "gauss_rand(cast(syn_prop_i + {o} as int), synprop.dtc, synprop.dtcSD) as rand_dtc".format(o=offset),
+        "if(synprop.nrrp >= 1, poisson_rand(cast(syn_prop_i as int), synprop.nrrp - 1) + 1, 1) as rand_nrrp"
     )
 
     touches = circuit.alias("c").join(connections.alias("conn"),
