@@ -74,7 +74,7 @@ def compute_additional_h5_fields(circuit, reduced, syn_class_matrix, syn_props_d
         "gamma_rand(cast(syn_prop_i + 2 * {o} as int), synprop.f, synprop.fSD) as rand_f".format(o=offset),
         "gauss_rand(cast(syn_prop_i as int), synprop.u, synprop.uSD) as rand_u",
         "gauss_rand(cast(syn_prop_i + {o} as int), synprop.dtc, synprop.dtcSD) as rand_dtc".format(o=offset),
-        "if(synprop.nrrp >= 1, poisson_rand(cast(syn_prop_i as int), synprop.nrrp - 1) + 1, 1) as rand_nrrp"
+        "if(synprop.nrrp > 1, poisson_rand(cast(syn_prop_i as int), synprop.nrrp - 1) + 1, 1) as rand_nrrp"
     )
 
     touches = circuit.alias("c").join(connections.alias("conn"),
