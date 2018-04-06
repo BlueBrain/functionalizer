@@ -27,15 +27,17 @@ _MB = 1024**2
 
 class _SpykfuncOptions:
     format_hdf5 = False
-    spark_opts = None
-    output = "spykfunc_output"
+    spark_opts = ""
+    output_dir = "spykfunc_output"
     cache = "_mvd"
     no_morphos = False
-    checkpoints = os.path.join(output, "_checkpoints")
+    checkpoint_dir = os.path.join(output_dir, "_checkpoints")
 
     def __init__(self, options_dict):
         for name, option in options_dict.items():
-            setattr(self, name, option)
+            # Update only relevat, non-None entries
+            if option is not None and hasattr(self, name):
+                setattr(self, name, option)
 
 
 class Functionalizer(object):
@@ -61,7 +63,7 @@ class Functionalizer(object):
     def __init__(self, only_s2s=False, **options):
         # Create config
         self._config = _SpykfuncOptions(options)
-        checkpoint_resume.directory = self._config.checkpoints
+        checkpoint_resume.directory = self._config.checkpoint_dir
 
         # Create Spark session with the static config
         spark_config = {
@@ -72,14 +74,14 @@ class Functionalizer(object):
             "spark.sql.broadcastTimeout": 30 * 60,  # 30 minutes to do calculations that will be broadcasted
             "spark.sql.catalogImplementation": "hive",
             "spark.sql.files.maxPartitionBytes": 128 * _MB,
-            "derby.system.home": os.path.join(self._config.checkpoints, "derby")
+            "derby.system.home": os.path.join(self._config.checkpoint_dir, "derby")
         }
-        report_file = os.path.join(self._config.output, 'report.json')
+        report_file = os.path.join(self._config.output_dir, 'report.json')
         sm.create("Functionalizer", spark_config, self._config.spark_opts, report=report_file)
 
         # Configuring Spark runtime
         sm.setLogLevel("WARN")
-        sm.setCheckpointDir(os.path.join(self._config.checkpoints, "tmp"))
+        sm.setCheckpointDir(os.path.join(self._config.checkpoint_dir, "tmp"))
         sm._jsc.hadoopConfiguration().setInt("parquet.block.size", 32 * _MB)
         sm.register_java_functions([
             ("gauss_rand", "spykfunc.udfs.GaussRand"),
@@ -112,8 +114,8 @@ class Functionalizer(object):
         """
         # In "program" mode this dir wont change later, so we can check here
         # for its existence/permission to create
-        os.path.isdir(self._config.output) or os.makedirs(self._config.output)
-        os.path.isdir(self._config.checkpoints) or os.makedirs(self._config.checkpoints)
+        os.path.isdir(self._config.output_dir) or os.makedirs(self._config.output_dir)
+        os.path.isdir(self._config.checkpoint_dir) or os.makedirs(self._config.checkpoint_dir)
 
         logger.debug("%s: Data loading...", time.ctime())
         # Load recipe
@@ -127,12 +129,15 @@ class Functionalizer(object):
         CellClass.init_fzer_indexes(fdata.cellClasses)
 
         # Verify required morphologies are available
-
-        for m_name in fdata.morphology_names:
-            if not os.path.isfile(os.path.join(morpho_dir, m_name + ".h5")):
-                logger.error("Some morphologies could not be located. Last: " + m_name + "\n"
-                             "Please provide a valid morphology path or restart with --no-morphos")
-                raise ValueError("Morphologies missing")
+        if self._config.no_morphos:
+            logger.info("Running in no-morphologies mode. No ChC cells handling performed.")
+        else:
+            for m_name in fdata.morphology_names:
+                if not os.path.isfile(os.path.join(morpho_dir, m_name + ".h5")):
+                    logger.error("Some morphologies could not be located. Last: " + m_name + "\n"
+                                 "Please provide a valid morphology path or restart with --no-morphos")
+                    raise ValueError("Morphologies missing")
+            logger.debug("All morphology files found")
 
         # 'Load' touches
         touches = fdata.load_touch_parquet(*touch_files) \
@@ -157,13 +162,13 @@ class Functionalizer(object):
         sm.conf.set("spark.sql.shuffle.partitions", shuffle_partitions)
 
         # Data exporter
-        self.exporter = NeuronExporter(output_path=self._config.output)
+        self.exporter = NeuronExporter(output_path=self._config.output_dir)
 
     @property
     def output_directory(self):
         """:property: the directory to save results in
         """
-        return self._config.output
+        return self._config.output_dir
 
     # ----
     @property
@@ -268,7 +273,8 @@ class Functionalizer(object):
         from .synapse_properties import patch_ChC_SPAA_cells
         from .synapse_properties import compute_additional_h5_fields
 
-        self.ciruit = patch_ChC_SPAA_cells(self.circuit, self._circuit.morphologies)
+        if not self._config.no_morphos:
+            self.ciruit = patch_ChC_SPAA_cells(self.circuit, self._circuit.morphologies)
 
         extended_touches = compute_additional_h5_fields(
             self.circuit,
@@ -368,16 +374,7 @@ def session(options):
     :param options: An object containing the required option attributes, as built \
                     by the arg parser: :py:data:`commands.arg_parser`.
     """
-    args = {
-        'format_hdf5': options.format_hdf5,
-        'only_s2s': options.s2s,
-        'no-morphos': options.no_morphos,
-        'spark_opts': options.spark_opts
-    }
-    if options.output_dir:
-        args['output'] = options.output_dir
-    if options.checkpoint_dir:
-        args['checkpoints'] = options.checkpoint_dir
-    fzer = Functionalizer(**args)
+    args = vars(options)
+    fzer = Functionalizer(options.s2s, **args)
     fzer.init_data(options.recipe_file, options.mvd_file, options.morpho_dir, options.touch_files)
     return fzer
