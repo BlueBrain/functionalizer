@@ -116,7 +116,7 @@ def compute_additional_h5_fields(circuit, reduced, syn_class_matrix, syn_props_d
         F.col("c.src_morphology_i").alias("morphology"),
         F.lit(0).alias("branch_order_dend"),  # TBD
         t.branch_order.alias("branch_order_axon"),
-        # t.rand_nrrp.alias("nrrp"),
+        t.rand_nrrp.alias("nrrp"),
         F.lit(0).alias("branch_type"),  # TBD (0 soma, 1 axon, 2 basel dendrite, 3 apical dendrite)
     )
 
