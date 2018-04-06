@@ -37,6 +37,10 @@ def _create_parser():
                         help="Overwrite the result of selected intermediate steps, forcing their recomputation"
                              "Possible values: F (for filtered, implies E) or E (for extended with synapse properties)",
                         choices=("F", "E"), const="F", nargs="?", default="")
+    parser.add_argument("--no-morphos",
+                        help="Rum spykfunc without morphologies. "
+                             "Note: ChC cells wont be patched and branch_type field won't be part of the result",
+                        action="store_true", default=False)
     return parser
 
 
@@ -50,7 +54,7 @@ arg_parser = _create_parser()
 
 def spykfunc():
     """ The main entry-point Spykfunc script. It will launch Spykfunc with a spark instance
-        (created if not provided), run the default filters and export to NRN format (hdf5).
+        (created if not provided), run the default filters and export.
     """
     # Will exit with code 2 if problems in args
     options = arg_parser.parse_args()
