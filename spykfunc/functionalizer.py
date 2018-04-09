@@ -31,13 +31,15 @@ class _SpykfuncOptions:
     output_dir = "spykfunc_output"
     cache = "_mvd"
     no_morphos = False
-    checkpoint_dir = os.path.join(output_dir, "_checkpoints")
+    checkpoint_dir = None
 
     def __init__(self, options_dict):
         for name, option in options_dict.items():
             # Update only relevat, non-None entries
             if option is not None and hasattr(self, name):
                 setattr(self, name, option)
+        if self.checkpoint_dir is None:
+            self.checkpoint_dir = os.path.join(self.output_dir, "_checkpoints")
 
 
 class Functionalizer(object):
@@ -73,8 +75,7 @@ class Functionalizer(object):
             "spark.sql.autoBroadcastJoinThreshold": 0,
             "spark.sql.broadcastTimeout": 30 * 60,  # 30 minutes to do calculations that will be broadcasted
             "spark.sql.catalogImplementation": "hive",
-            "spark.sql.files.maxPartitionBytes": 128 * _MB,
-            "derby.system.home": os.path.join(self._config.checkpoint_dir, "derby")
+            "spark.sql.files.maxPartitionBytes": 128 * _MB
         }
         report_file = os.path.join(self._config.output_dir, 'report.json')
         sm.create("Functionalizer", spark_config, self._config.spark_opts, report=report_file)
