@@ -131,3 +131,13 @@ def number_shuffle_partitions(np):
     sm.conf.set("spark.sql.shuffle.partitions", np)
     yield
     sm.conf.set("spark.sql.shuffle.partitions", previous_np)
+
+
+def cache_broadcast_single_part(df):
+    """ Caches, coalesce(1) and broadcasts var
+        Requires immediate evaluation, otherwise spark-2.2.x doesnt optimize
+    """
+    df = df.coalesce(1).cache()
+    df.count()
+    return F.broadcast(df)
+

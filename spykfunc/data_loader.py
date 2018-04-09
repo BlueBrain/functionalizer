@@ -12,6 +12,7 @@ from .dataio.common import Part
 from .definitions import MType
 from .utils.spark_udef import DictAccum
 from .utils import get_logger, make_slices, to_native_str
+from .utils.spark import cache_broadcast_single_part
 from collections import defaultdict, OrderedDict
 import fnmatch
 
@@ -89,7 +90,7 @@ class NeuronDataSpark(NeuronData):
         if os.path.exists(mvd_parquet):
             logger.info("Loading from MVD parquet")
             mvd = sm.read.parquet(mvd_parquet)
-            self.layers = mvd.select('layer').distinct().collect()
+            self.layers = mvd.select('layer').distinct().rdd.keys().collect()
             self.neuronDF = F.broadcast(mvd).cache()
             n_neurons = self.neuronDF.count()  # Force broadcast to meterialize
             logger.info("Loaded {} neurons from MVD".format(n_neurons))
@@ -111,13 +112,14 @@ class NeuronDataSpark(NeuronData):
             # Create DF
             logger.info("Creating data frame...")
 
-            mvd = sm.createDataFrame(neuronRDD, schema.NEURON_SCHEMA).where(F.col("id").isNotNull())
-            self.layers = mvd.select('layer').distinct().collect()
-            lrdd = sm.parallelize(enumerate(i.layer for i in self.layers))
-            layers = lrdd.toDF(schema.LAYER_SCHEMA)
+            mvd = sm.createDataFrame(neuronRDD, schema.NEURON_SCHEMA).cache()
+            self.layers = mvd.select('layer').distinct().rdd.keys().collect()
+            lrdd = sm.parallelize(enumerate(self.layers))
+            layers = F.broadcast(lrdd.toDF(schema.LAYER_SCHEMA).coalesce(1))
 
             # Mark as "broadcastable" and cache
-            self.neuronDF = F.broadcast(mvd.join(layers, "layer")).cache()
+            self.neuronDF = F.broadcast(mvd.join(layers, "layer").checkpoint()).cache()
+            mvd.unpersist()
 
             # Evaluate to build partial NameMaps
             self.neuronDF.write.mode('overwrite').parquet(mvd_parquet)
@@ -150,27 +152,26 @@ class NeuronDataSpark(NeuronData):
         logger.error("Binary touches converted to dataframe not implemented yet")
         return touch_info
 
+    def mvdvec_to_df(self, vec, field_names):
+        """ Transforms a small string vector into an indexed dataframe.
+            The dataframe is immediately cached and broadcasted as single partition
+        """
+        self.require_mvd_globals()
+        return cache_broadcast_single_part(
+            sm.parallelize(enumerate(vec), 1)
+            .toDF(field_names, schema.INT_STR_SCHEMA))
+    
     @LazyProperty
     def sclass_df(self):
-        self.require_mvd_globals()
-        return F.broadcast(sm.parallelize(enumerate(self.cellClasses))
-                           .toDF(["sclass_i", "sclass_name"], schema.INT_STR_SCHEMA).cache())
+        return self.mvdvec_to_df(self.cellClasses, ["sclass_i", "sclass_name"])
 
     @LazyProperty
     def mtype_df(self):
-        self.require_mvd_globals()
-        if not self.globals_loaded:
-            raise RuntimeError("Global MVD info not loaded")
-        return F.broadcast(sm.parallelize(enumerate(self.mTypes))
-                           .toDF(["mtype_i", "mtype_name"], schema.INT_STR_SCHEMA).cache())
+        return self.mvdvec_to_df(self.mTypes, ["mtype_i", "mtype_name"])
 
     @LazyProperty
     def etype_df(self):
-        self.require_mvd_globals()
-        if not self.globals_loaded:
-            raise RuntimeError("Global MVD info not loaded")
-        return F.broadcast(sm.parallelize(enumerate(self.eTypes))
-                           .toDF(["etype_i", "etype_name"], schema.INT_STR_SCHEMA).cache())
+        return self.mvdvec_to_df(self.eTypes, ["etype_i", "etype_name"])
 
     # ----
     def load_synapse_properties_and_classification(self, recipe, map_ids=False):
