@@ -4,11 +4,13 @@ from os import path as osp
 from contextlib import contextmanager
 from funcsigs import signature
 from functools import update_wrapper
-from pyspark.sql import functions as F
 from pyspark.sql.column import _to_seq
+from pyspark.sql import functions as F
 import sparkmanager as sm
 from . import get_logger
 
+import sparkmanager as sm
+==== BASE ====
 
 class CheckpointStatus:
     """ A CheckpointStatus object shall be passed to the decorator in order to retrieve information
@@ -163,12 +165,17 @@ def number_shuffle_partitions(np):
     sm.conf.set("spark.sql.shuffle.partitions", previous_np)
 
 
-def cache_broadcast_single_part(df):
-    """ Caches, coalesce(1) and broadcasts var
-        Requires immediate evaluation, otherwise spark-2.2.x doesnt optimize
+def cache_broadcast_single_part(df, parallelism=1):
+    """Caches, coalesce(1) and broadcasts df
+    Requires immediate evaluation, otherwise spark-2.2.x doesnt optimize
+    
+    :param df: The dataframe to be evaluated and broadcasted
+    :param parallelism: The number of tasks to use for evaluation. Default: 1
     """
-    df = df.coalesce(1).cache()
+    df = df.coalesce(parallelism).cache()
     df.count()
+    if parallelism > 1:
+        df = df.coalesce(1)
     return F.broadcast(df)
 
 

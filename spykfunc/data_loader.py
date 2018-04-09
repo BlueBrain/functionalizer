@@ -101,12 +101,11 @@ class NeuronDataSpark(NeuronData):
         namemap_file = os.path.join(self.cache, "name_map.pickle")
 
         if os.path.exists(mvd_parquet):
-            logger.info("Loading from MVD parquet")
-            mvd = sm.read.parquet(mvd_parquet)
+            logger.info("Loading MVD from parquet")
+            mvd = sm.read.parquet(mvd_parquet).cache()
             self.layers = mvd.select('layer').distinct().rdd.keys().collect()
-            self.neuronDF = F.broadcast(mvd).cache()
-            n_neurons = self.neuronDF.count()  # Force broadcast to meterialize
-            logger.info("Loaded {} neurons".format(n_neurons))
+            self.neuronDF = F.broadcast(mvd)
+            n_neurons = self.neuronDF.count()  # force materialize
             name_accu = pickle.load(open(namemap_file, 'rb'))
             self.set_name_map(name_accu)
         else:
@@ -126,17 +125,17 @@ class NeuronDataSpark(NeuronData):
             # Create DF
             logger.info("Creating data frame...")
 
-            mvd = sm.createDataFrame(neuronRDD, schema.NEURON_SCHEMA).cache()
-            self.layers = mvd.select('layer').distinct().rdd.keys().collect()
-            lrdd = sm.parallelize(enumerate(self.layers))
-            layers = F.broadcast(lrdd.toDF(schema.LAYER_SCHEMA).coalesce(1))
+            raw_mvd = sm.createDataFrame(neuronRDD, schema.NEURON_SCHEMA).cache()
+            self.layers = raw_mvd.select('layer').distinct().rdd.keys().collect()
+            layer_rdd = sm.parallelize(enumerate(self.layers), 1)
+            layer_df = F.broadcast(layer_rdd.toDF(schema.LAYER_SCHEMA))
+
+            # Evaluate (build partial NameMaps) and store
+            mvd = raw_mvd.join(layer_df, "layer").write.mode('overwrite').parquet(mvd_parquet)
+            raw_mvd.unpersist()
 
             # Mark as "broadcastable" and cache
-            self.neuronDF = F.broadcast(mvd.join(layers, "layer").checkpoint()).cache()
-            mvd.unpersist()
-
-            # Evaluate to build partial NameMaps
-            self.neuronDF.write.mode('overwrite').parquet(mvd_parquet)
+            self.neuronDF = F.broadcast(sm.read.parquet(mvd_parquet)).cache()            
 
             # Then we set the global name map
             pickle.dump(name_accu.value, open(namemap_file, 'wb'))
