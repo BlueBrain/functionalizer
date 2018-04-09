@@ -9,7 +9,7 @@ from .definitions import CellClass, CheckpointPhases
 from .schema import pathway_i_to_str, touches_with_pathway
 from ._filtering import DataSetOperation
 from .utils import get_logger
-from .utils.spark import checkpoint_resume, number_shuffle_partitions
+from .utils.spark import checkpoint_resume, cache_broadcast_single_part
 from .filter_udfs import reduce_cut_parameter_udef
 
 logger = get_logger(__name__)
@@ -118,7 +118,7 @@ class ReduceAndCut(DataSetOperation):
 
         # Get and broadcast Pathway stats
         # NOTE we cache and count to force evaluation in N tasks, while sorting in a single task
-        logger.info("Computing Pathway stats...")
+        logger.debug("Computing Pathway stats...")
         _params = self.compute_reduce_cut_params(full_touches)
         params_df = F.broadcast(_params)
 
@@ -166,11 +166,10 @@ class ReduceAndCut(DataSetOperation):
         """ Computes the pathway parameters, used by Reduce and Cut filters
         """
         # First obtain the pathway (morpho-morpho) stats dataframe
-        n_parts_shuffle = max(full_touches.rdd.getNumPartitions() // 20, 100)
-        logger.debug("Computing Pathway stats")
+        _n_parts = max(full_touches.rdd.getNumPartitions() // 20, 100)
         pathway_stats = (self.stats
             .get_pathway_touch_stats_from_touches_with_pathway(full_touches)
-            .coalesce(n_parts_shuffle))
+            .coalesce(_n_parts))
 
         # param create udf
         rc_param_maker = reduce_cut_parameter_udef(self.conn_rules)
@@ -259,7 +258,7 @@ class ReduceAndCut(DataSetOperation):
             .where((_df.survival_rate > .0) & (_df.survival_rate > F.rand()))
             .select("src", "dst", "pathway_i", "reduced_touch_counts_connection")
         )
-
+        # Much smaller data volume but we cant coealesce
         return cut_connections
 
     # ----
@@ -274,15 +273,14 @@ class ReduceAndCut(DataSetOperation):
                (built previously in an optimized way)
         :return: The final cut touches
         """
-        _n_parts = max(cut_touch_counts_connection.rdd.getNumPartitions() // 10, 100)
+        
         logger.debug("Computing Pathway stats")
-        with number_shuffle_partitions(_n_parts):
-            cut_touch_counts_pathway = (
-                cut_touch_counts_connection
-                .groupBy("pathway_i")
-                .agg(F.sum("reduced_touch_counts_connection").alias("cut_touch_counts_pathway"))
-            )
-
+        cut_touch_counts_pathway = (
+            cut_touch_counts_connection
+            .groupBy("pathway_i")
+            .agg(F.sum("reduced_touch_counts_connection").alias("cut_touch_counts_pathway"))
+        )
+        
         active_fractions = (
             cut_touch_counts_pathway
             .join(params_df, "pathway_i")
@@ -303,13 +301,14 @@ class ReduceAndCut(DataSetOperation):
                 )
             )
             .select("pathway_i", "active_fraction")
-            .cache()
         )
 
-        # This is a minimal DS so we cache and broadcast in single partition
         logger.debug("Computing Active Fractions")
-        active_fractions.first()
-        active_fractions = F.broadcast(active_fractions.coalesce(1))
+        # On both ends data is small (500x less) so we can reduce parallelism
+        _n_parts = max(cut_touch_counts_connection.rdd.getNumPartitions() // 50, 50)
+        # Result is a minimal DS so we cache and broadcast in single partition
+        active_fractions = cache_broadcast_single_part(active_fractions, parallelism=_n_parts)
+        
         _write_csv(pathway_i_to_str(active_fractions, mtypes), "active_fractions.csv")
 
         shall_keep_connections = (
