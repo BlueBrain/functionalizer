@@ -16,11 +16,8 @@ logger = get_logger(__name__)
 
 # Control variable that outputs intermediate calculations, and makes processing slower
 _DEBUG = False
-_DEBUG_REDUCE = False
-_DEBUG_CUT = False
-_DEBUG_CUT2AF = False
-_MB = 1024*1024
-
+_DEBUG_CSV_OUT = False
+_MB = 1024 * 1024
 
 if _DEBUG:
     os.path.isdir("_debug") or os.makedirs("_debug")
@@ -117,6 +114,7 @@ class ReduceAndCut(DataSetOperation):
     # ---
     def apply(self, circuit, *args, **kw):
         full_touches = Circuit.only_touch_columns(touches_with_pathway(circuit))
+        mtypes = kw["mtypes"]
 
         # Get and broadcast Pathway stats
         # NOTE we cache and count to force evaluation in N tasks, while sorting in a single task
@@ -124,90 +122,38 @@ class ReduceAndCut(DataSetOperation):
         _params = self.compute_reduce_cut_params(full_touches)
         params_df = F.broadcast(_params)
 
-        # Debug params info -----------------------------------------------------------------------
-        if _DEBUG and _DEBUG_REDUCE:
-            debug_info = params_df.select("pathway_i", "total_touches", "structural_mean",
-                                          "pP_A", "pMu_A", "active_fraction_legacy", "_debug")
-            debug_info.show()
-            debug_info.write.csv("_debug/pathway_params.csv", header=True, mode="overwrite")
-        # -----------------------------------------------------------------------------------------
+        # Params ouput for validation
+        _params_out_csv(params_df)
 
-        # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        #
         # Reduce
-        # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         logger.info("Applying Reduce step...")
         reduced_touches = self.apply_reduce(full_touches, params_df)
 
-        if _DEBUG and _DEBUG_REDUCE:  # -----------------------------------------------------------
-            (reduced_touches
-             .groupBy("pathway_i").count()
-             .coalesce(1)
-             .write.csv("_debug/reduce_counts.csv", header=True, mode="overwrite"))
-        # -----------------------------------------------------------------------------------------
-
-        logger.info("Computing reduced touch counts")
-        with sm.jobgroup("Computing reduced touch counts", ""):
-            reduced_touch_counts_connection = (
-                reduced_touches
-                .groupBy("src", "dst")
-                .agg(F.first("pathway_i").alias("pathway_i"),
-                     F.count("src").alias("reduced_touch_counts_connection"))
-            )
-
-            # Make this computation resumable.
-            # Compute/Resume and Checkpoint from TABLE (which preserves partitioning)
-            f = checkpoint_resume("reduced_conn_counts", bucket_cols=("src", "dst"))(
-                lambda: reduced_touch_counts_connection
-            )
-            reduced_touch_counts_connection = f()
-
-        # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        #
         # Cut
-        # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        logger.info("Applying Cut step...")
-        logger.debug(" -> Calculating cut touches and resulting connection counts...")
-        cut_touches, cut_touch_counts_connection = (
-            self.apply_cut(reduced_touches,
-                           params_df,
-                           reduced_touch_counts_connection,
-                           mtypes=kw["mtypes"])
+        logger.info("Calculating CUT part 1: survival rate")
+        cut1_shall_keep_connections = self.calc_cut_survival_rate(
+            reduced_touches,
+            params_df,
+            mtypes=mtypes
         )
 
-        # cut_touch_counts_connection is only an exec plan (no actions within)
-        # We can use checkpoint_resume on it
-        # Bucketing is to be done by pathway, to optimize subsequent queries. Bucket count should
-        # still be optimal since pathway is directly dependent on src-dst ids
-        f = checkpoint_resume("cut_conn_counts", bucket_cols=("src", "dst"))(
-            lambda: cut_touch_counts_connection
-        )
-        cut_touch_counts_connection = f()
+        _connection_counts_out_csv(cut1_shall_keep_connections, "cut_counts.csv", mtypes)
 
-        if _DEBUG and _DEBUG_CUT:  # --------------------------------------------------------------
-            cut_touch_counts_pathway = (
-                cut_touch_counts_connection
-                .groupBy("pathway_i")
-                .agg(F.sum("reduced_touch_counts_connection").alias("cut_touch_counts_pathway"))
+        logger.info("Calculating CUT part 2: Active Fractions")
+        cut_shall_keep_connections = self.calc_cut_active_fraction(
+            cut1_shall_keep_connections,
+            params_df,
+            mtypes=mtypes
+        ).select("src", "dst")
+
+        with sm.jobgroup("Filtering touches CUT step", ""):
+            cut2AF_touches = (
+                reduced_touches.join(cut_shall_keep_connections, ["src", "dst"])
             )
-            pathway_i_to_str(cut_touch_counts_pathway, kw["mtypes"])\
-                .coalesce(1)\
-                .write.csv("_debug/cut_counts.csv", header=True, mode="overwrite")
-            logger.warning("Debugging: Execution terminated for debugging Cut")
-        # -----------------------------------------------------------------------------------------
 
-        # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        # Cut 2: by Active Fraction
-        # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        logger.info("Applying Cut step part 2: Active Fraction...")
-        cut2AF_touches = self.apply_cut_active_fraction(cut_touches, params_df,
-                                                        cut_touch_counts_connection,
-                                                        mtypes=kw["mtypes"])
-        if _DEBUG and _DEBUG_CUT2AF:  # -----------------------------------------------------------
-            cut2AF_touches = cut2AF_touches.checkpoint(False)
-            (cut2AF_touches
-                .groupBy("pathway_i").count()
-                .coalesce(1)
-                .write.csv("_debug/cut2af_counts.csv", header=True, mode="overwrite"))
-        # -----------------------------------------------------------------------------------------
+            _touch_counts_out_csv(cut2AF_touches, "cut2af_counts.csv", mtypes)
 
         # Only the touch fields
         return Circuit.only_touch_columns(cut2AF_touches)
@@ -221,9 +167,10 @@ class ReduceAndCut(DataSetOperation):
         """
         # First obtain the pathway (morpho-morpho) stats dataframe
         n_parts_shuffle = max(full_touches.rdd.getNumPartitions() // 20, 100)
+        logger.debug("Computing Pathway stats")
         pathway_stats = (self.stats
-                         .get_pathway_touch_stats_from_touches_with_pathway(full_touches)
-                         .coalesce(n_parts_shuffle))
+            .get_pathway_touch_stats_from_touches_with_pathway(full_touches)
+            .coalesce(n_parts_shuffle))
 
         # param create udf
         rc_param_maker = reduce_cut_parameter_udef(self.conn_rules)
@@ -262,19 +209,31 @@ class ReduceAndCut(DataSetOperation):
         fractions = params_df.select("pathway_i", "pP_A").rdd.collectAsMap()
 
         logger.debug(" -> Cutting touches")
-        return all_touches.sampleBy("pathway_i", fractions).repartition("src", "dst")
+        return (all_touches
+                .sampleBy("pathway_i", fractions)
+                .repartition("src", "dst"))
 
     # ---
     # Note: apply_cut is not checkpointed since it
     #       builds up with apply_cut_active_fraction filter
     @staticmethod
     @sm.assign_to_jobgroup
-    def apply_cut(reduced_touches, params_df, reduced_touch_counts_connection, **kw):
+    def calc_cut_survival_rate(reduced_touches, params_df, mtypes):
         """
         Apply cut filter
         Cut computes a survivalRate and activeFraction for each post neuron
         And filters out those not passing the random test
         """
+        logger.info("Computing reduced touch counts")
+        reduced_touch_counts_connection = (
+            reduced_touches
+                .groupBy("src", "dst")
+                .agg(F.first("pathway_i").alias("pathway_i"),
+                     F.count("src").alias("reduced_touch_counts_connection"))
+        )
+        # Debug
+        _connection_counts_out_csv(reduced_touch_counts_connection, "reduced_touch_counts_pathway", mtypes)
+
         params_df_sigma = (
             params_df
             .where(F.col("pMu_A").isNotNull())
@@ -284,59 +243,39 @@ class ReduceAndCut(DataSetOperation):
 
         connection_survival_rate = (
             reduced_touch_counts_connection
-            .join(params_df_sigma, "pathway_i")  # Fetch the pathway params
-            .withColumn("survival_rate",         # Calc survivalRate
-                        F.expr("1.0 / (1.0 + exp((-4.0/sigma) * (reduced_touch_counts_connection-pMu_A)))"))
-            .where("survival_rate < 1.0")
-            .drop("sigma", "pMu_A")
+                .join(params_df_sigma, "pathway_i")  # Fetch the pathway params
+                .withColumn("survival_rate",  # Calc survivalRate
+                            F.expr("1.0 / (1.0 + exp((-4.0/sigma) * (reduced_touch_counts_connection-pMu_A)))"))
+                .drop("sigma", "pMu_A")
         )
 
-        if _DEBUG and _DEBUG_CUT:
-            _dbg_df = connection_survival_rate\
-                .select("src", "dst", "reduced_touch_counts_connection", "survival_rate")
-            _dbg_df.show()
-            _dbg_df.coalesce(1).write.csv("_debug/connection_survival_rate.csv", header=True, mode="overwrite")
-
-        # --- COMPUTING STRATEGY ------
-        # Shall cut gets us the list of connections which shall be removed -> always 0 count -> little mem (12b /entry)
-        # We later reuse this to recompute the updated touch count
-        # It should be also quite fast to drop connections given both DFs are partitioned by pathway_i
+        _dbg_df = connection_survival_rate.select("src", "dst", "reduced_touch_counts_connection", "survival_rate")
+        _write_csv(_dbg_df, "connection_survival_rate.csv")
 
         logger.debug(" -> Computing connections to cut according to survival_rate")
-        shall_cut = (
-            connection_survival_rate
-            .where(F.rand() >= F.col("survival_rate"))
-            .select("src", "dst")
+        _df = connection_survival_rate
+        cut_connections = (
+            _df
+            .where((_df.survival_rate > .0) & (_df.survival_rate > F.rand()))
+            .select("src", "dst", "pathway_i", "reduced_touch_counts_connection")
         )
-        # Checkpoint resume this
-        shall_cut = checkpoint_resume("shall_cut", bucket_cols=("src", "dst"))(lambda: shall_cut)()
 
-        cut_touches = (reduced_touches
-                       .join(shall_cut, ["src", "dst"], how="left_anti"))
-
-        # Calc cut_touch_counts_connection
-        # Since we cut full connections, it is enough to exclude them from the counts
-        # This shall not shuffle since both DF are bucketed&sorted by src-dst
-        cut_touch_counts_connection = (reduced_touch_counts_connection
-                                       .join(shall_cut, ["src", "dst"], how="left_anti"))
-
-        return cut_touches, cut_touch_counts_connection
+        return cut_connections
 
     # ----
     @staticmethod
     @sm.assign_to_jobgroup
-    # Note: Filter not checkpointed since it's the last stage
-    #       of global filtering (which is checkpointed)
-    def apply_cut_active_fraction(cut_touches, params_df, cut_touch_counts_connection, **kw):
+    @checkpoint_resume("shall_keep_connections", bucket_cols=("src", "dst"))
+    def calc_cut_active_fraction(cut_touch_counts_connection, params_df, mtypes):
         """
         Performs the second part of the cut algorithm according to the active_fractions
-        :param cut_touches: The cut (phase1) touches (probably not materialized yet)
         :param params_df: The parameters DF (pA, uA, active_fraction_legacy)
         :param cut_touch_counts_connection: The DF with the cut touch counts per connection \
                (built previously in an optimized way)
         :return: The final cut touches
         """
         _n_parts = max(cut_touch_counts_connection.rdd.getNumPartitions() // 10, 100)
+        logger.debug("Computing Pathway stats")
         with number_shuffle_partitions(_n_parts):
             cut_touch_counts_pathway = (
                 cut_touch_counts_connection
@@ -368,33 +307,44 @@ class ReduceAndCut(DataSetOperation):
         )
 
         # This is a minimal DS so we cache and broadcast in single partition
-        active_fractions.count()
+        logger.debug("Computing Active Fractions")
+        active_fractions.first()
         active_fractions = F.broadcast(active_fractions.coalesce(1))
+        _write_csv(pathway_i_to_str(active_fractions, mtypes), "active_fractions.csv")
 
-        shall_cut2 = (
+        shall_keep_connections = (
             cut_touch_counts_connection
             .join(active_fractions, "pathway_i")
-            .where(F.rand() >= F.col("active_fraction"))
+            .where(F.rand() < F.col("active_fraction"))
             .select("src", "dst")
         )
 
-        f = checkpoint_resume("shall_cut2", bucket_cols=("src", "dst"))(
-            lambda: shall_cut2
-        )
-        shall_cut2 = f()
+        return shall_keep_connections
 
-        if _DEBUG and _DEBUG_CUT2AF:
-            active_fractions = pathway_i_to_str(active_fractions, kw["mtypes"])
-            active_fractions.show()
-            active_fractions.coalesce(1).write.csv("_debug/active_fractions.csv", header=True, mode="overwrite")
-            sys.exit(0)
 
-        cut2AF_touches = (
-            cut_touches
-            .join(shall_cut2, ["src", "dst"], how="left_anti")
-        )
+def _params_out_csv(df):
+    debug_info = df.select("pathway_i", "total_touches", "structural_mean",
+                           "pP_A", "pMu_A", "active_fraction_legacy", "_debug")
+    _write_csv(debug_info, "pathway_params.csv")
 
-        return cut2AF_touches
+
+def _touch_counts_out_csv(df, filename, mtypes):
+    _write_csv(pathway_i_to_str(
+        df.groupBy("pathway_i").count(),
+        mtypes
+    ), filename)
+
+
+def _connection_counts_out_csv(df, filename, mtypes):
+    _write_csv(pathway_i_to_str(
+        df.groupBy("pathway_i").sum("reduced_touch_counts_connection"),
+        mtypes
+    ), filename)
+
+
+def _write_csv(df, filename):
+    if _DEBUG_CSV_OUT:
+        df.coalesce(1).write.csv("_debug/" + filename, header=True, mode="overwrite")
 
 
 # -------------------------------------------------------------------------------------------------

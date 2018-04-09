@@ -4,6 +4,7 @@ from os import path as osp
 from contextlib import contextmanager
 from funcsigs import signature
 from functools import update_wrapper
+from pyspark.sql import functions as F
 from pyspark.sql.column import _to_seq
 import sparkmanager as sm
 from . import get_logger
@@ -162,11 +163,13 @@ def number_shuffle_partitions(np):
     sm.conf.set("spark.sql.shuffle.partitions", previous_np)
 
 
-def change_max_partition_MB(size):
-    return lambda: sm.conf.set(
-        "spark.sql.files.maxPartitionBytes",
-        size * 1024**2
-    )
+def cache_broadcast_single_part(df):
+    """ Caches, coalesce(1) and broadcasts var
+        Requires immediate evaluation, otherwise spark-2.2.x doesnt optimize
+    """
+    df = df.coalesce(1).cache()
+    df.count()
+    return F.broadcast(df)
 
 
 # Descriptor for creating and transparently accessing broadcasted values

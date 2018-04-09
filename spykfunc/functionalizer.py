@@ -17,7 +17,7 @@ from .definitions import CellClass, CheckpointPhases, RunningMode
 from . import _filtering
 from . import filters
 from . import utils
-from .utils.spark import checkpoint_resume, change_max_partition_MB
+from .utils.spark import checkpoint_resume
 
 __all__ = ["Functionalizer", "session", "CheckpointPhases"]
 
@@ -312,7 +312,6 @@ class Functionalizer(object):
     @_assign_to_circuit
     @checkpoint_resume(CheckpointPhases.REDUCE_AND_CUT.name,
                        before_save_handler=Circuit.only_touch_columns,
-                       before_load_handler=change_max_partition_MB(32),
                        bucket_cols=("src", "dst"))
     def run_reduce_and_cut(self):
         """Create and apply Reduce and Cut filter
