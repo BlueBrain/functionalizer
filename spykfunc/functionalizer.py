@@ -133,11 +133,13 @@ class Functionalizer(object):
         if self._config.no_morphos:
             logger.info("Running in no-morphologies mode. No ChC cells handling performed.")
         else:
-            for m_name in fdata.morphology_names:
-                if not os.path.isfile(os.path.join(morpho_dir, m_name + ".h5")):
-                    logger.error("Some morphologies could not be located. Last: " + m_name + "\n"
-                                 "Please provide a valid morphology path or restart with --no-morphos")
-                    raise ValueError("Morphologies missing")
+            expected = set(n + '.h5' for n in fdata.morphology_names)
+            have = set(os.listdir(morpho_dir))
+            missing = expected - have
+            if len(missing) > 0:
+                logger.error("Some morphologies could not be located. Missing:\n\t" + " ".join(missing) + "\n"
+                             "Please provide a valid morphology path or restart with --no-morphos")
+                raise ValueError("Morphologies missing")
             logger.debug("All morphology files found")
 
         # 'Load' touches
