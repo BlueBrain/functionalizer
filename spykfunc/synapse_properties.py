@@ -8,6 +8,7 @@ import math
 import sparkmanager as sm
 
 from .schema import SYNAPSE_CLASS_MAP_SCHEMA as schema
+from .utils.spark import cache_broadcast_single_part, checkpoint_resume
 
 
 def compute_additional_h5_fields(circuit, reduced, syn_class_matrix, syn_props_df):
@@ -35,9 +36,10 @@ def compute_additional_h5_fields(circuit, reduced, syn_class_matrix, syn_props_d
 
     # Convert the numpy matrix into a dataframe and join to get the right
     # property index
-    rdd = sm.parallelize(enumerate(int(n) for n in syn_class_matrix.flatten()), 200)
-    syn_class = sm.createDataFrame(rdd, schema).cache()
-    connections = connections.join(F.broadcast(syn_class), "syn_prop_index").drop("syn_prop_index")
+    nparts = 100
+    rdd = sm.parallelize(enumerate(int(n) for n in syn_class_matrix.flatten()), nparts)
+    syn_class = cache_broadcast_single_part(sm.createDataFrame(rdd, schema), parallelism=nparts)
+    connections = connections.join(syn_class, "syn_prop_index").drop("syn_prop_index")
 
     # Join with Syn Prop Class
     syn_props_df = syn_props_df.alias("synprop")  # Synprops is globally cached and broadcasted

@@ -10,7 +10,6 @@ import sparkmanager as sm
 from . import get_logger
 
 import sparkmanager as sm
-==== BASE ====
 
 class CheckpointStatus:
     """ A CheckpointStatus object shall be passed to the decorator in order to retrieve information
@@ -168,7 +167,7 @@ def number_shuffle_partitions(np):
 def cache_broadcast_single_part(df, parallelism=1):
     """Caches, coalesce(1) and broadcasts df
     Requires immediate evaluation, otherwise spark-2.2.x doesnt optimize
-    
+
     :param df: The dataframe to be evaluated and broadcasted
     :param parallelism: The number of tasks to use for evaluation. Default: 1
     """
