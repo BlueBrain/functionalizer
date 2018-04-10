@@ -2,13 +2,13 @@ from __future__ import division
 import os
 from pyspark.sql import functions as F
 import sparkmanager as sm
-# from pyspark import StorageLevel
 from .circuit import Circuit
 from .definitions import CellClass, CheckpointPhases
 from .schema import pathway_i_to_str, touches_with_pathway
 from ._filtering import DataSetOperation
 from .utils import get_logger
-from .utils.spark import checkpoint_resume, cache_broadcast_single_part
+from .utils.checkpointing import checkpoint_resume
+from .utils.spark import cache_broadcast_single_part
 from .filter_udfs import reduce_cut_parameter_udef
 
 logger = get_logger(__name__)

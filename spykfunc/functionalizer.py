@@ -17,7 +17,7 @@ from .definitions import CellClass, CheckpointPhases, RunningMode
 from . import _filtering
 from . import filters
 from . import utils
-from .utils.spark import checkpoint_resume
+from .utils.checkpointing import checkpoint_resume
 
 __all__ = ["Functionalizer", "session", "CheckpointPhases"]
 
