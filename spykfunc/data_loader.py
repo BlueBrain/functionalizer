@@ -137,7 +137,7 @@ class NeuronDataSpark(NeuronData):
             raw_mvd.unpersist()
 
             # Mark as "broadcastable" and cache
-            self.neuronDF = F.broadcast(sm.read.parquet(mvd_parquet)).cache()            
+            self.neuronDF = F.broadcast(sm.read.parquet(mvd_parquet)).cache()
 
             # Then we set the global name map
             pickle.dump(name_accu.value, open(namemap_file, 'wb'))
@@ -179,7 +179,7 @@ class NeuronDataSpark(NeuronData):
         return cache_broadcast_single_part(
             sm.parallelize(enumerate(vec), 1)
             .toDF(field_names, schema.INT_STR_SCHEMA))
-    
+
     @LazyProperty
     def sclass_df(self):
         return self.mvdvec_to_df(self.cellClasses, ["sclass_i", "sclass_name"])

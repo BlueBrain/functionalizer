@@ -8,7 +8,7 @@ import math
 import sparkmanager as sm
 
 from .schema import SYNAPSE_CLASS_MAP_SCHEMA as schema
-from .utils.spark import cache_broadcast_single_part, checkpoint_resume
+from .utils.spark import cache_broadcast_single_part
 
 
 def compute_additional_h5_fields(circuit, reduced, syn_class_matrix, syn_props_df):

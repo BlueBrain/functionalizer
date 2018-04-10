@@ -1,6 +1,5 @@
 from __future__ import division
 import os
-import sys
 from pyspark.sql import functions as F
 import sparkmanager as sm
 # from pyspark import StorageLevel
@@ -226,9 +225,9 @@ class ReduceAndCut(DataSetOperation):
         logger.info("Computing reduced touch counts")
         reduced_touch_counts_connection = (
             reduced_touches
-                .groupBy("src", "dst")
-                .agg(F.first("pathway_i").alias("pathway_i"),
-                     F.count("src").alias("reduced_touch_counts_connection"))
+            .groupBy("src", "dst")
+            .agg(F.first("pathway_i").alias("pathway_i"),
+                 F.count("src").alias("reduced_touch_counts_connection"))
         )
         # Debug
         _connection_counts_out_csv(reduced_touch_counts_connection, "reduced_touch_counts_pathway", mtypes)
@@ -242,10 +241,10 @@ class ReduceAndCut(DataSetOperation):
 
         connection_survival_rate = (
             reduced_touch_counts_connection
-                .join(params_df_sigma, "pathway_i")  # Fetch the pathway params
-                .withColumn("survival_rate",  # Calc survivalRate
-                            F.expr("1.0 / (1.0 + exp((-4.0/sigma) * (reduced_touch_counts_connection-pMu_A)))"))
-                .drop("sigma", "pMu_A")
+            .join(params_df_sigma, "pathway_i")  # Fetch the pathway params
+            .withColumn("survival_rate",  # Calc survivalRate
+                        F.expr("1.0 / (1.0 + exp((-4.0/sigma) * (reduced_touch_counts_connection-pMu_A)))"))
+            .drop("sigma", "pMu_A")
         )
 
         _dbg_df = connection_survival_rate.select("src", "dst", "reduced_touch_counts_connection", "survival_rate")
@@ -273,14 +272,14 @@ class ReduceAndCut(DataSetOperation):
                (built previously in an optimized way)
         :return: The final cut touches
         """
-        
+
         logger.debug("Computing Pathway stats")
         cut_touch_counts_pathway = (
             cut_touch_counts_connection
             .groupBy("pathway_i")
             .agg(F.sum("reduced_touch_counts_connection").alias("cut_touch_counts_pathway"))
         )
-        
+
         active_fractions = (
             cut_touch_counts_pathway
             .join(params_df, "pathway_i")
@@ -308,7 +307,7 @@ class ReduceAndCut(DataSetOperation):
         _n_parts = max(cut_touch_counts_connection.rdd.getNumPartitions() // 50, 50)
         # Result is a minimal DS so we cache and broadcast in single partition
         active_fractions = cache_broadcast_single_part(active_fractions, parallelism=_n_parts)
-        
+
         _write_csv(pathway_i_to_str(active_fractions, mtypes), "active_fractions.csv")
 
         shall_keep_connections = (
