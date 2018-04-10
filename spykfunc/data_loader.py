@@ -94,11 +94,13 @@ class NeuronDataSpark(NeuronData):
         sha.update(os.path.realpath(fn))
         sha.update(str(os.stat(fn).st_size))
         sha.update(str(os.stat(fn).st_mtime))
+        digest = sha.hexdigest()[:8]
 
         logger.info("Total neurons: %d", n_neurons)
         mvd_parquet = os.path.join(self.cache,
-                                   "neurons_{}k_{}.parquet".format(n_neurons / 1000.0, sha.hexdigest()))
-        namemap_file = os.path.join(self.cache, "name_map.pickle")
+                                   "neurons_{:.1f}k_{}.parquet".format(n_neurons / 1000.0, digest))
+        namemap_file = os.path.join(self.cache,
+                                   "morphos_{:.1f}k_{}.parquet".format(n_neurons / 1000.0, digest))
 
         if os.path.exists(mvd_parquet):
             logger.info("Loading MVD from parquet")
