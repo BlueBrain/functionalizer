@@ -14,7 +14,7 @@ from .dataio.common import Part
 from .definitions import MType
 from .utils.spark_udef import DictAccum
 from .utils import get_logger, make_slices, to_native_str
-from .utils.checkpointing import BroadcastValue, cache_broadcast_single_part
+from .utils.spark import BroadcastValue, cache_broadcast_single_part
 from collections import defaultdict, OrderedDict
 import fnmatch
 import sparkmanager as sm

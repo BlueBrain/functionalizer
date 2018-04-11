@@ -7,7 +7,7 @@ from .definitions import CellClass, CheckpointPhases
 from .schema import pathway_i_to_str, touches_with_pathway
 from ._filtering import DataSetOperation
 from .utils import get_logger
-from .utils.checkpointing import checkpoint_resume
+from .utils.checkpointing import checkpoint_resume, CheckpointHandler
 from .utils.spark import cache_broadcast_single_part
 from .filter_udfs import reduce_cut_parameter_udef
 
@@ -159,8 +159,7 @@ class ReduceAndCut(DataSetOperation):
 
     # ---
     @sm.assign_to_jobgroup
-    @checkpoint_resume("pathway_stats",
-                       bucket_cols="pathway_i", n_buckets=1)
+    @checkpoint_resume("pathway_stats", bucket_cols="pathway_i", n_buckets=1)
     def compute_reduce_cut_params(self, full_touches):
         """ Computes the pathway parameters, used by Reduce and Cut filters
         """
@@ -194,10 +193,9 @@ class ReduceAndCut(DataSetOperation):
     # ---
     @staticmethod
     @sm.assign_to_jobgroup
-    @checkpoint_resume(CheckpointPhases.FILTER_REDUCED_TOUCHES.name,
-                       bucket_cols=("src", "dst"),
+    @checkpoint_resume(CheckpointPhases.FILTER_REDUCED_TOUCHES.name, bucket_cols=("src", "dst"),
                        # Even if we change to not break exec plan we always keep only touch cols
-                       before_save_handler=Circuit.only_touch_columns)
+                       handlers=[CheckpointHandler.before_save(Circuit.only_touch_columns)])
     def apply_reduce(all_touches, params_df):
         """ Applying reduce as a sampling
         """
@@ -212,8 +210,6 @@ class ReduceAndCut(DataSetOperation):
                 .repartition("src", "dst"))
 
     # ---
-    # Note: apply_cut is not checkpointed since it
-    #       builds up with apply_cut_active_fraction filter
     @staticmethod
     @sm.assign_to_jobgroup
     def calc_cut_survival_rate(reduced_touches, params_df, mtypes):

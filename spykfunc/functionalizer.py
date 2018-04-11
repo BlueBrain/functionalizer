@@ -17,7 +17,7 @@ from .definitions import CellClass, CheckpointPhases, RunningMode
 from . import _filtering
 from . import filters
 from . import utils
-from .utils.checkpointing import checkpoint_resume
+from .utils.checkpointing import checkpoint_resume, CheckpointHandler
 
 __all__ = ["Functionalizer", "session", "CheckpointPhases"]
 
@@ -239,7 +239,7 @@ class Functionalizer(object):
         :param output_path: Changes the default export directory
         """
         logger.info("Computing touch synaptical properties")
-        extended_touches = self._assign_synpse_properties(overwrite, mode=self._mode)
+        extended_touches = self._assign_synpse_properties(overwrite=overwrite, mode=self._mode)
 
         logger.info("Exporting touches...")
         exporter = self.exporter
@@ -270,8 +270,8 @@ class Functionalizer(object):
 
     # ---
     @checkpoint_resume(CheckpointPhases.SYNAPSE_PROPS.name,
-                       before_save_handler=Circuit.only_touch_columns)
-    def _assign_synpse_properties(self, overwrite=False, mode=None):
+                       handlers=[CheckpointHandler.before_save(Circuit.only_touch_columns)])
+    def _assign_synpse_properties(self, **kwargs):
         self._ensure_data_loaded()
         from .synapse_properties import patch_ChC_SPAA_cells
         from .synapse_properties import compute_additional_h5_fields
@@ -293,7 +293,7 @@ class Functionalizer(object):
     @sm.assign_to_jobgroup
     @_assign_to_circuit
     @checkpoint_resume(CheckpointPhases.FILTER_RULES.name,
-                       before_save_handler=Circuit.only_touch_columns)
+                       handlers=[CheckpointHandler.before_save(Circuit.only_touch_columns)])
     def filter_by_rules(self, mode):
         """Creates a TouchRules filter according to recipe and applies it to the current touch set
         """
@@ -311,7 +311,7 @@ class Functionalizer(object):
     @sm.assign_to_jobgroup
     @_assign_to_circuit
     @checkpoint_resume(CheckpointPhases.REDUCE_AND_CUT.name,
-                       before_save_handler=Circuit.only_touch_columns,
+                       handlers=[CheckpointHandler.before_save(Circuit.only_touch_columns)],
                        bucket_cols=("src", "dst"))
     def run_reduce_and_cut(self):
         """Create and apply Reduce and Cut filter
