@@ -140,7 +140,7 @@ def setup_package():
         ],
         #  ----- Requirements -----
         install_requires=[
-            'sparkmanager>=0.3.1',
+            'sparkmanager>=0.3.2',
             'py4j',
             'funcsigs',
             'future',
@@ -153,16 +153,19 @@ def setup_package():
             'progress'
         ],
         setup_requires=maybe_sphinx + maybe_cython,
-        tests_require=['pandas', 'pytest', 'pytest-cov'],
+        tests_require=['pytest', 'pytest-cov'],
         extras_require={
             # Dependencies if the user wants a dev env
-            'dev': ['cython<0.26', 'flake8']
+            'dev': ['cython<0.26', 'flake8'],
+            'plot': ['pandas', 'seaborn', 'requests']
         },
         cmdclass={'test': PyTest,
                   'install': Install},
         entry_points={
             'console_scripts': [
-                'spykfunc = spykfunc.commands:spykfunc'],
+                'spykfunc = spykfunc.commands:spykfunc',
+                'spykfunc_plot = spykfunc.tools.scaling:run [plot]'
+            ],
         },
     )
 
