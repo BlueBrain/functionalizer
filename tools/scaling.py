@@ -1,6 +1,8 @@
+# vim: fileencoding=utf8
 from __future__ import print_function
 import argparse
 import json
+import logging
 import pandas
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter, ScalarFormatter
@@ -16,7 +18,10 @@ seaborn.set_context("paper")
 
 rack = re.compile(r'r(\d+)')
 extract = re.compile(r'([^/.]+)(?:\.v\da)?(?:_\d+)?(?:_(mixed|nvme))?/(\d+)cores_(\d+)nodes_(\d+)execs')
-COLUMNS = "fn circuit cores size density mode version rules cut export runtime".split()
+COLUMNS = "fn jobid circuit cores size density mode version rules cut export runtime".split()
+
+
+L = logging.getLogger(__name__)
 
 
 def to_time(x, pos=None):
@@ -46,7 +51,7 @@ def extract_ganglia(fn, nodes, start, end):
     get = 'http://bbpvadm.epfl.ch/ganglia/graph.php?c=Rack+{}&h={}&m={}{}&csv=1&cs={}&ce={}'
     reports = "cpu mem load network".split()
     if os.path.exists(fn):
-        return
+        return pandas.read_pickle(fn)
 
     datas = []
 
@@ -76,12 +81,16 @@ def extract_ganglia(fn, nodes, start, end):
         datas.append(hostdata)
     data = pandas.concat(datas)
     data.to_pickle(fn)
+    return data
 
 
-def extract_data(fns):
+def extract_data(fns, timeline=False):
+    if isinstance(fns, basestring):
+        fns = [fns]
     for fn in fns:
         m = extract.search(fn)
         if not m:
+            L.error("no match for pattern in %s", fn)
             continue
         try:
             circuit, mode = m.groups()[:2]
@@ -96,17 +105,25 @@ def extract_data(fns):
             cut = maybe_first(timing['run_reduce_and_cut'])
             export = maybe_first(timing['export_results'])
             runtime = maybe_first(data.get('runtime', [[None]])[-1])
-            version = data.get('version', data.get('spark').get('version'))
-            yield fn, circuit, ncores, size, occupancy, (mode or ''), version, rules, cut, export, runtime
-
+            version = data.get('version', data.get('spark', dict()).get('version'))
             slurm = data.get('slurm')
+            df = pandas.DataFrame(columns=COLUMNS,
+                                  data=[[fn, (slurm or dict()).get('jobid'), circuit,
+                                         ncores, size, occupancy, (mode or ''),
+                                         version, rules, cut, export, runtime]])
+
+            if not timeline:
+                yield df
             if not slurm:
+                L.error("no slurm data for %s", fn)
                 continue
 
             start, end = (str(int(float(s))) for s in data['runtime'][-1][1:])
-            extract_ganglia(fn, slurm['nodes'], start, end)
+            timedf = extract_ganglia(fn, slurm['nodes'], start, end)
+            yield df, timedf
         except Exception as e:
-            print(fn, e)
+            L.error("could not parse file '%s'", fn)
+            L.exception(e)
 
 
 def extract_times(fn, step):
@@ -130,61 +147,26 @@ def get_label(data):
     return label
 
 
-def save_all(df):
-    ax = None
-    for (version, size), group in df.groupby(['version', 'size']):
-        ax = group.plot(ax=ax, x='cores', y='runtime', style='o', figsize=(6, 4),
-                        label="Spark {}, {} cores/exe".format(version, size))
-    ax.legend()
-    label = get_label(df)
-    ax.set_title("Strong scaling: {}".format(label))
-    ax.set_xscale('log', basex=2)
-    ax.set_xlabel('Number of Cores')
-    ax.set_yscale('log', basey=2)
-    ax.set_ylabel('Runtime')
-    ax.xaxis.set_major_formatter(ScalarFormatter())
-    ax.yaxis.set_major_formatter(FuncFormatter(to_time))
-    seaborn.despine()
-    plt.savefig('strong_scaling_{}_all.png'.format(label.replace(", ", "_")))
+def generate_timeline_filename(info):
+    circuit = info.circuit[0]
+    jobid = info.jobid[0]
+    cores = info.cores[0]
+    cores_node = info.density[0]
+    nodes = cores // cores_node
+    return "timeline_{}_{}nodes_{}cores_{}.png".format(circuit, nodes, cores, jobid)
 
 
-def save_density(df):
-    ax = None
-    for (mode, density), group in df.groupby(['mode', 'density']):
-        group = group.sort_values('cores')
-        if mode == '':
-            label = "{} cores/node".format(density)
-        else:
-            label = "{} cores/node, {}".format(density, mode)
-        ax = group.plot(ax=ax, x='cores', y='runtime', style='o', figsize=(6, 4),
-                        label=label)
-    ax.legend()
-    label = get_label(df)
-    ax.set_title("Strong scaling: {}".format(label))
-    ax.set_xscale('log', basex=2)
-    ax.set_xlabel('Number of Cores')
-    # ax.set_yscale('log', basey=2)
-    ax.set_ylabel('Runtime')
-    ax.xaxis.set_major_formatter(ScalarFormatter())
-    ax.yaxis.set_major_formatter(FuncFormatter(to_time))
-    seaborn.despine()
-    plt.savefig('strong_scaling_{}_density.png'.format(label.replace(", ", "_")))
+def annotate_plot(fig, info):
+    circuit = info.circuit[0]
+    jobid = info.jobid[0]
+    cores = info.cores[0]
+    cores_node = info.density[0]
+    nodes = cores // cores_node
 
-
-def save_fractions(df):
-    label = get_label(df)
-    ax = df.plot.area(x='cores', y=['other', 'rules', 'cut', 'export'], figsize=(6, 4))
-
-    ax.set_title("Strong scaling: runtime fractions for {}".format(label))
-    ax.set_xscale('log', basex=2)
-    ax.set_xlabel('Number of Cores')
-    # ax.set_yscale('log', basey=2)
-    ax.set_ylabel('Runtime')
-    ax.xaxis.set_major_formatter(ScalarFormatter())
-    ax.yaxis.set_major_formatter(FuncFormatter(to_time))
-
-    seaborn.despine()
-    plt.savefig('strong_scaling_{}_fractions.png'.format(label.replace(", ", "_")))
+    t = fig.suptitle(u"Circuit {}: SLURM id {}\n"
+                     u"{} nodes, {} cores → {} cores/node".format(circuit, jobid, nodes, cores, cores_node),
+                     color='white')
+    t.set_bbox(dict(facecolor='gray', boxstyle='round', pad=0.6))
 
 
 def annotate_steps(ax, fn):
@@ -194,32 +176,61 @@ def annotate_steps(ax, fn):
              ("export_results", 1)]
     for step, level in steps:
         start, end = extract_times(fn, step)
-        ymin, ymax = plt.ylim()
+        ymin, ymax = ax.get_ylim()
         y = ymin + (0.7 + level * 0.1) * (ymax - ymin)
         y2 = ymin + (0.73 + level * 0.1) * (ymax - ymin)
+        y3 = (ymin + (0.71 + level * 0.1) * (ymax - ymin)) / ymax
         ax.annotate('',
                     xy=(start, y), xycoords='data',
                     xytext=(end, y), textcoords='data',
-                    arrowprops=dict(arrowstyle="<->", linewidth=1))
+                    arrowprops=dict(arrowstyle="<->", linewidth=1, color='gray'))
         ax.text(start + 0.5 * (end - start), y2, step, horizontalalignment='center', fontsize=8)
+        ax.axvline(start, ymax=y3, color='gray')
+        ax.axvline(end, ymax=y3, color='gray')
         # props = dict(boxstyle='darrow')
         # t = ax.text(, step, bbox=props)
 
 
-def save_timeline(data, cfg, name, stub):
+plot_setup = [
+    {
+        'columns': ['cpu_user'],
+        'title': 'CPU usage',
+        'unit': '%',
+        'yscale': 1,
+    },
+    {
+        'columns': ['mem_use'],
+        'title': 'Memory usage',
+        'unit': 'GB',
+        'yscale': 1024**3,
+    },
+    {
+        'columns': ['disk_usage'],
+        'title': 'Disk usage',
+        'unit': '%',
+        'yscale': 1,
+    },
+    {
+        'columns': ['network_out', 'network_in'],
+        'title': 'Network usage',
+        'unit': 'GB/s',
+        'yscale': 1024**3,
+    },
+]
+
+
+def save_timeline(data, cfg, ax):
     yscale = cfg.get('yscale', 1.0)
 
-    ax = None
     handels = []
     labels = []
     for col in cfg['columns']:
-        # import pdb;pdb.set_trace()
         if yscale != 1.0:
             data[col + '_avg'] /= yscale
             data[col + '_min'] /= yscale
             data[col + '_max'] /= yscale
         label = col.replace('_', ' ')
-        ax = data.plot(ax=ax, x=data.index, y=[col + "_avg"], style='o-', figsize=(6, 4),
+        ax = data.plot(ax=ax, x=data.index, y=[col + "_avg"], style='o-',
                        label=label)
         hs, _ = ax.get_legend_handles_labels()
         handels.append(hs[-1])
@@ -228,22 +239,44 @@ def save_timeline(data, cfg, name, stub):
                         data[col + '_min'],
                         data[col + '_max'],
                         alpha=0.3)
-    if len(cols) > 1:
+    if len(cfg['columns']) > 1:
         ax.legend(handels, labels)
     else:
         ax.legend([], [])
-    ax.set_title(cfg['title'])
-    # ax.set_xscale('log', basex=2)
-    ax.set_xlabel('Time')
-    _, ymax = plt.ylim()
-    plt.ylim(0, 1.5 * ymax)
-    # ax.set_yscale('log', basey=2)
+    _, ymax = ax.get_ylim()
+    ax.set_ylim(0, 1.5 * ymax)
     ax.set_ylabel("{} / {}".format(cfg['title'], cfg['unit']))
-    # ax.xaxis.set_major_formatter(ScalarFormatter())
-    # ax.yaxis.set_major_formatter(FuncFormatter(to_time))
+
+
+def save_timelines(fn):
+    for info, data in extract_data(fn, timeline=True):
+        break
+    else:
+        L.error("failed to save timeline for %s", fn)
+        return
+    L.info("saving timeline for %s", fn)
+    data['timestamp'] = pandas.to_datetime(data['timestamp'])
+    for time, group in data.groupby('timestamp'):
+        cols = set()
+        for col, val in group.mean().items():
+            cols.add(col)
+            data.loc[data.timestamp == time, col + '_avg'] = val
+        for col, val in group.min().items():
+            if col in cols:
+                data.loc[data.timestamp == time, col + '_min'] = val
+        for col, val in group.max().items():
+            if col in cols:
+                data.loc[data.timestamp == time, col + '_max'] = val
+    data = data.groupby('timestamp').first()
+    fig, axs = plt.subplots(len(plot_setup), sharex=True, figsize=(6, 12), constrained_layout=True)
+    for ax, cfg in zip(axs, plot_setup):
+        save_timeline(data, cfg, ax)
+        annotate_steps(ax, fn)
+    annotate_plot(fig, info)
+    axs[-1].set_xlabel('Time')
     seaborn.despine()
-    annotate_steps(ax, stub + ".json")
-    plt.savefig('{}_{}.png'.format(stub, name))
+    plt.savefig(generate_timeline_filename(info))
+    plt.close()
 
 
 def save(df, value, cols, fn, mean=False, title='', legend=True):
@@ -296,40 +329,13 @@ def save(df, value, cols, fn, mean=False, title='', legend=True):
     ax.yaxis.set_major_formatter(FuncFormatter(to_time))
     seaborn.despine()
     plt.savefig(fn)
-
-
-plot_setup = {
-    'cpu': {
-        'columns': ['cpu_user'],
-        'title': 'CPU usage',
-        'unit': '%',
-        'yscale': 1,
-    },
-    'mem': {
-        'columns': ['mem_use'],
-        'title': 'Memory usage',
-        'unit': 'GB',
-        'yscale': 1024**3,
-    },
-    'disk': {
-        'columns': ['disk_usage'],
-        'title': 'Disk usage',
-        'unit': '%',
-        'yscale': 1,
-    },
-    'net': {
-        'columns': ['network_out', 'network_in'],
-        'title': 'Network usage',
-        'unit': 'GB/s',
-        'yscale': 1024**3,
-    },
-}
+    plt.close()
 
 
 def run():
     parser = argparse.ArgumentParser()
     parser.add_argument('--extract-only', default=False, action='store_true',
-                        help='extract data, but do not plot')
+                        help='extract timeline data, but do not plot')
     parser.add_argument('--no-scaling', default=False, action='store_true',
                         help='do not produce scaling plots')
     parser.add_argument('--no-timeline', default=False, action='store_true',
@@ -337,38 +343,19 @@ def run():
     parser.add_argument('filename', nargs='+', help='files to process')
     opts = parser.parse_args()
 
-    df = pandas.DataFrame(columns=COLUMNS, data=extract_data(opts.filename))
-
     if opts.extract_only:
         return
 
     if not opts.no_timeline:
         for fn in opts.filename:
-            pfn = fn.replace(".json", ".pkl")
-            if not os.path.exists(pfn):
-                continue
-            print('processing {}'.format(pfn))
-            data = pandas.read_pickle(pfn)
-            data['timestamp'] = pandas.to_datetime(data['timestamp'])
-            for time, group in data.groupby('timestamp'):
-                cols = set()
-                for col, val in group.mean().items():
-                    cols.add(col)
-                    data.loc[data.timestamp == time, col + '_avg'] = val
-                for col, val in group.min().items():
-                    if col in cols:
-                        data.loc[data.timestamp == time, col + '_min'] = val
-                for col, val in group.max().items():
-                    if col in cols:
-                        data.loc[data.timestamp == time, col + '_max'] = val
-            stub = fn.replace(".json", "")
-            for name, cfg in plot_setup.items():
-                save_timeline(data.groupby('timestamp').first(), cfg, name, stub)
+            save_timelines(fn)
 
     if opts.no_scaling:
         return
 
-    print("circuits available: {}".format(", ".join(df.circuit.unique())))
+    df = pandas.concat(extract_data(opts.filename))
+
+    L.info("circuits available: %s", ", ".join(df.circuit.unique()))
 
 # O1: Spark version 2.2.1 vs 2.3.0
     data = df[(df.circuit == "O1") & ((df.version == '2.3.0') | ((df.version == '2.2.1') & (df['mode'] == "mixed")))]
@@ -393,20 +380,8 @@ def run():
             save(data, step, ["mode"], "strong_scaling_{}_step_{}.png".format(circ, step), mean=True,
                  title='{}, runtime for step {}'.format(circ, step), legend=False)
 
-    # data = df[(
-    #
-    # for circuit in df.circuit.unique():
-    #     subset = df[df.circuit == circuit]
-    #     save_all(subset)
-    #     for mode in subset['mode'].unique():
-    #         save_density(subset[(subset.version == '2.2.1') & (subset['mode'] == mode)])
-    #
-    # df['other'] = df.runtime - df.rules - df.cut - df.export
-    # means = df[df['mode'].isin(['', 'nvme'])].groupby(['circuit', 'cores'], as_index=False).mean()
-    # for circuit in means.circuit.unique():
-    #     subset = means[means.circuit == circuit]
-    #     save_fractions(subset)
-
 
 if __name__ == '__main__':
+    logging.basicConfig(format='%(levelname)s line %(lineno)d: %(message)s', style='{')
+    L.setLevel(logging.INFO)
     run()
