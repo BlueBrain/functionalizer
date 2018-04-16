@@ -1,10 +1,15 @@
 # vim: fileencoding=utf8
+"""Plot resource performance
+"""
 from __future__ import print_function
 import argparse
+import datetime
+import itertools
 import json
 import logging
 import pandas
 import matplotlib.pyplot as plt
+import matplotlib.dates as dates
 from matplotlib.ticker import FuncFormatter, ScalarFormatter
 import os
 import re
@@ -19,6 +24,8 @@ seaborn.set_context("paper")
 rack = re.compile(r'r(\d+)')
 extract = re.compile(r'([^/.]+)(?:\.v\da)?(?:_\d+)?(?:_(mixed|nvme))?/(\d+)cores_(\d+)nodes_(\d+)execs')
 COLUMNS = "fn jobid circuit cores size density mode version rules cut export runtime".split()
+
+GANGLIA_SCALE_CPU = 72 / 100.
 
 
 L = logging.getLogger(__name__)
@@ -46,41 +53,128 @@ def maybe_first(o):
     return o
 
 
-def extract_ganglia(fn, nodes, start, end):
-    fn = fn.replace("json", "pkl")
-    get = 'http://bbpvadm.epfl.ch/ganglia/graph.php?c=Rack+{}&h={}&m={}{}&csv=1&cs={}&ce={}'
-    reports = "cpu mem load network".split()
-    if os.path.exists(fn):
-        return pandas.read_pickle(fn)
+def extract_ganglia(metric, alias, hosts, start, end):
+    """Extract data from ganglia
 
+    :param metric: the metric to extract
+    :param alias: a list of column names to assign
+    :param hosts: a list of hostnames
+    :param start: the starting timestamp
+    :param end: the end timestamp
+    """
+    get = 'http://bbpvadm.epfl.ch/ganglia/graph.php?c=Rack+{}&h={}&{}&csv=1&cs={}&ce={}'
     datas = []
-
-    hosts = subprocess.check_output('scontrol show hostname {}'.format(nodes).split()).split()
     for host in hosts:
-        hostdata = None
-
         rck = rack.match(host).group(1)
-        for report in reports:
-            r = requests.get(get.format(rck, host, 'load_one', '&g=' + report + '_report', start, end))
-            data = pandas.read_csv(StringIO(r.text))
-            data.rename(columns=dict(
-                (d, d.lower() if d == 'Timestamp' else '{}_{}'.format(
-                    report, d.lower().replace('\\g', '').strip())) for d in data.columns
-            ), inplace=True)
-            if hostdata is None:
-                hostdata = data
-            else:
-                del data['timestamp']
-                hostdata = hostdata.join(data)
-
-        r = requests.get(get.format(rck, host, 'part_max_used', '', start, end))
+        r = requests.get(get.format(rck, host, metric, start, end))
         data = pandas.read_csv(StringIO(r.text))
-        data.rename(columns=dict(zip(data.columns, ['timestamp', 'disk_usage'])), inplace=True)
-        hostdata['disk_usage'] = data['disk_usage']
-        hostdata['host'] = host
-        datas.append(hostdata)
-    data = pandas.concat(datas)
-    data.to_pickle(fn)
+        data.rename(columns=dict(zip(data.columns, ['timestamp'] + alias)), inplace=True)
+        data['timestamp'] = pandas.to_datetime(data.timestamp, utc=False)
+        data['host'] = host
+        datas.append(data)
+    data = pandas.concat(datas).groupby('timestamp').aggregate(['mean', 'min', 'max'])
+    data.columns = ['_'.join([c, f.replace('mean', 'avg')]) for (c, f) in data.columns]
+    return data
+
+
+def process_response(response, columns, collapse=False):
+    """Process a response from graphite into a Pandas dataframe
+
+    Data can optionally be collapsed: return mean/min/max per timestamp for
+    a single column.
+
+    :param response: a response object
+    :param columns: the column names to use
+    :param collapse: collapse data by building mean, min, and max columns
+    """
+    datas = []
+    rawdata = json.loads(response.text)
+    if collapse:
+        columns = columns * len(rawdata)
+    for col, data in zip(columns, rawdata):
+        df = pandas.DataFrame(columns=[col, 'timestamp'], data=data['datapoints'])
+        df['timestamp'] = pandas.to_datetime(df.timestamp, unit='s', utc=False)
+        datas.append(df)
+    if collapse:
+        data = pandas.concat(datas).groupby('timestamp').aggregate(['mean', 'min', 'max'])
+        data.columns = ['_'.join([c, f.replace('mean', 'avg')]) for (c, f) in data.columns]
+        return data
+    data = datas[0]
+    for c, d in zip(columns[1:], datas[1:]):
+        if not all(data.timestamp == d.timestamp):
+            L.error('unreliable timestamp data!')
+        data[c] = d[c]
+    return data.set_index('timestamp')
+
+
+def extract_graphite(hosts, start, end):
+    """Extract data from graphite (cpu, memory, network usage)
+
+    :param hosts: a list of hostnames
+    :param start: the starting timestamp
+    :param end: the end timestamp
+    """
+    fcts = {
+        'avg': 'target=averageSeries(bb5.ps.{}_bbp_epfl_ch.memory.memory.used)',
+        'min': 'target=minSeries(bb5.ps.{}_bbp_epfl_ch.memory.memory.used)',
+        'max': 'target=maxSeries(bb5.ps.{}_bbp_epfl_ch.memory.memory.used)'
+    }
+    get = 'http://bbpfs43.bbp.epfl.ch/render/?{}&from={}&until={}&format=json'
+    start = datetime.datetime.fromtimestamp(float(start)).strftime("%H:%M_%Y%m%d")
+    end = datetime.datetime.fromtimestamp(float(end)).strftime("%H:%M_%Y%m%d")
+
+    cpu_metric = 'target=sumSeries(bb5.ps.{}_bbp_epfl_ch.cpu.*.percent.active)'
+    cpu_query = get.format('&'.join(cpu_metric.format(h) for h in hosts), start, end)
+    cpu_data = process_response(requests.get(cpu_query), ['cpu'], collapse=True)
+
+    in_metric = 'target=perSecond(bb5.ps.{}_bbp_epfl_ch.interface.ib0.if_octets.rx)'
+    in_query = get.format('&'.join(in_metric.format(h) for h in hosts), start, end)
+    in_data = process_response(requests.get(in_query), ['network_in'], collapse=True)
+
+    out_metric = 'target=perSecond(bb5.ps.{}_bbp_epfl_ch.interface.ib0.if_octets.tx)'
+    out_query = get.format('&'.join(out_metric.format(h) for h in hosts), start, end)
+    out_data = process_response(requests.get(out_query), ['network_out'], collapse=True)
+
+    hq = '{{{}}}'.format(','.join(hosts))
+    mem_query = get.format('&'.join(f.format(hq) for f in fcts.values()), start, end)
+    mem_data = process_response(requests.get(mem_query), ['mem_' + f for f in fcts.keys()])
+
+    data = cpu_data.join(in_data).join(out_data).join(mem_data)
+    # CPU columns originally in percent per core: convert to overall usage
+    # in terms of cores.
+    data['cpu_avg'] /= 100
+    data['cpu_min'] /= 100
+    data['cpu_max'] /= 100
+
+    return data
+
+
+fallback = [
+    ('g=network_report', ['network_in', 'network_out']),
+    ('g=cpu_report', ['cpu', 'nice', 'sys', 'wait', 'idle']),
+    ('g=mem_report', ['mem', 'share', 'cache', 'buffer', 'total']),
+]
+
+
+def extract_node_data(nodes, start, end):
+    hosts = subprocess.check_output('scontrol show hostname {}'.format(nodes).split()).split()
+
+    disk = extract_ganglia('m=part_max_used', ['disk'], hosts, start, end)
+    try:
+        data = extract_graphite(hosts, start, end)
+        disk = disk.append(pandas.DataFrame(index=data.index.copy())) \
+                   .interpolate(method='nearest')
+        data = data.join(disk.loc[data.index])
+        data['cpu_avg'] *= GANGLIA_SCALE_CPU
+        data['cpu_min'] *= GANGLIA_SCALE_CPU
+        data['cpu_max'] *= GANGLIA_SCALE_CPU
+    except ValueError as e:
+        L.exception(e)
+        L.warn("falling back to ganglia data")
+        data = disk
+        for m, a in fallback:
+            data = data.join(extract_ganglia(m, a, hosts, start, end))
+    L.info("data gathered for %s", ", ".join(str(c) for c in data.columns))
     return data
 
 
@@ -92,6 +186,7 @@ def extract_data(fns, timeline=False):
         if not m:
             L.error("no match for pattern in %s", fn)
             continue
+        L.info("processing %s", fn)
         try:
             circuit, mode = m.groups()[:2]
             ncores, nodes, execs = (int(n) for n in m.groups()[2:])
@@ -114,13 +209,19 @@ def extract_data(fns, timeline=False):
 
             if not timeline:
                 yield df
+                continue
             if not slurm:
                 L.error("no slurm data for %s", fn)
-                continue
+                yield None, None
 
             start, end = (str(int(float(s))) for s in data['runtime'][-1][1:])
-            timedf = extract_ganglia(fn, slurm['nodes'], start, end)
-            yield df, timedf
+            pickle = fn.replace(".json", ".pkl")
+            if os.path.exists(pickle):
+                timedata = pandas.read_pickle(pickle)
+            else:
+                timedata = extract_node_data(slurm['nodes'], start, end)
+                timedata.to_pickle(pickle, protocol=-1)
+            yield df, timedata
         except Exception as e:
             L.error("could not parse file '%s'", fn)
             L.exception(e)
@@ -163,10 +264,29 @@ def annotate_plot(fig, info):
     cores_node = info.density[0]
     nodes = cores // cores_node
 
-    t = fig.suptitle(u"Circuit {}: SLURM id {}\n"
-                     u"{} nodes, {} cores → {} cores/node".format(circuit, jobid, nodes, cores, cores_node),
-                     color='white')
-    t.set_bbox(dict(facecolor='gray', boxstyle='round', pad=0.6))
+    fig.text(0.5, 0.95, circuit,
+             fontsize=20, weight='bold', ha='center', va='center')
+    fig.text(0.1, 0.98, str(nodes),
+             fontsize=10, ha='right', va='top')
+    fig.text(0.1, 0.98, " nodes",
+             fontsize=10, ha='left', va='top')
+    fig.text(0.1, 0.965, str(cores_node),
+             fontsize=10, ha='right', va='top')
+    fig.text(0.1, 0.965, " cores / node",
+             fontsize=10, ha='left', va='top')
+    fig.text(0.1, 0.95, str(cores),
+             fontsize=10, ha='right', va='top')
+    fig.text(0.1, 0.95, " cores total",
+             fontsize=10, ha='left', va='top')
+    fig.text(0.9, 0.98, "SLURM: ",
+             fontsize=10, ha='right', va='top')
+    fig.text(0.9, 0.98, str(jobid),
+             fontsize=10, ha='left', va='top')
+
+    # t = fig.suptitle(u"Circuit {}: SLURM id {}\n"
+    #                  u"{} nodes, {} cores/node".format(circuit, jobid, nodes, cores, cores_node),
+    #                  color='white')
+    # t.set_bbox(dict(facecolor='gray', boxstyle='round', pad=0.6))
 
 
 def annotate_steps(ax, fn):
@@ -175,46 +295,53 @@ def annotate_steps(ax, fn):
              ("apply_reduce", 0),
              ("export_results", 1)]
     for step, level in steps:
+        conv = datetime.datetime.utcfromtimestamp
         start, end = extract_times(fn, step)
         ymin, ymax = ax.get_ylim()
         y = ymin + (0.7 + level * 0.1) * (ymax - ymin)
         y2 = ymin + (0.73 + level * 0.1) * (ymax - ymin)
         y3 = (ymin + (0.71 + level * 0.1) * (ymax - ymin)) / ymax
         ax.annotate('',
-                    xy=(start, y), xycoords='data',
-                    xytext=(end, y), textcoords='data',
+                    xy=(conv(start), y), xycoords='data',
+                    xytext=(conv(end), y), textcoords='data',
                     arrowprops=dict(arrowstyle="<->", linewidth=1, color='gray'))
-        ax.text(start + 0.5 * (end - start), y2, step, horizontalalignment='center', fontsize=8)
-        ax.axvline(start, ymax=y3, color='gray')
-        ax.axvline(end, ymax=y3, color='gray')
-        # props = dict(boxstyle='darrow')
-        # t = ax.text(, step, bbox=props)
+        ax.text(conv(start + 0.5 * (end - start)), y2, step, horizontalalignment='center', fontsize=8)
+        ax.axvline(conv(start), ymax=y3, color='gray')
+        ax.axvline(conv(end), ymax=y3, color='gray')
 
 
 plot_setup = [
     {
-        'columns': ['cpu_user'],
+        'columns': ['cpu'],
         'title': 'CPU usage',
-        'unit': '%',
+        'unit': 'cores',
         'yscale': 1,
+        'ylimit': None,
+        'ymax': None,
     },
     {
-        'columns': ['mem_use'],
+        'columns': ['mem'],
         'title': 'Memory usage',
         'unit': 'GB',
         'yscale': 1024**3,
+        'ylimit': None,
+        'ymax': None,
     },
     {
-        'columns': ['disk_usage'],
+        'columns': ['disk'],
         'title': 'Disk usage',
         'unit': '%',
         'yscale': 1,
+        'ylimit': 100,
+        'ymax': None,
     },
     {
         'columns': ['network_out', 'network_in'],
         'title': 'Network usage',
         'unit': 'GB/s',
         'yscale': 1024**3,
+        'ylimit': None,
+        'ymax': None,
     },
 ]
 
@@ -230,6 +357,7 @@ def save_timeline(data, cfg, ax):
             data[col + '_min'] /= yscale
             data[col + '_max'] /= yscale
         label = col.replace('_', ' ')
+        L.info("plotting %s", col)
         ax = data.plot(ax=ax, x=data.index, y=[col + "_avg"], style='o-',
                        label=label)
         hs, _ = ax.get_legend_handles_labels()
@@ -244,39 +372,45 @@ def save_timeline(data, cfg, ax):
     else:
         ax.legend([], [])
     _, ymax = ax.get_ylim()
+    if cfg.get('ymax'):
+        ymax = cfg.get('ymax')
     ax.set_ylim(0, 1.5 * ymax)
+    _, ymax = ax.get_ylim()
     ax.set_ylabel("{} / {}".format(cfg['title'], cfg['unit']))
+    ylimit = cfg.get('ylimit')
+    if ylimit and ylimit < ymax:
+        ax.axhline(y=ylimit, color='r', alpha=0.2, linewidth=4)
 
 
-def save_timelines(fn):
-    for info, data in extract_data(fn, timeline=True):
-        break
-    else:
-        L.error("failed to save timeline for %s", fn)
-        return
-    L.info("saving timeline for %s", fn)
-    data['timestamp'] = pandas.to_datetime(data['timestamp'])
-    for time, group in data.groupby('timestamp'):
-        cols = set()
-        for col, val in group.mean().items():
-            cols.add(col)
-            data.loc[data.timestamp == time, col + '_avg'] = val
-        for col, val in group.min().items():
-            if col in cols:
-                data.loc[data.timestamp == time, col + '_min'] = val
-        for col, val in group.max().items():
-            if col in cols:
-                data.loc[data.timestamp == time, col + '_max'] = val
-    data = data.groupby('timestamp').first()
-    fig, axs = plt.subplots(len(plot_setup), sharex=True, figsize=(6, 12), constrained_layout=True)
-    for ax, cfg in zip(axs, plot_setup):
-        save_timeline(data, cfg, ax)
-        annotate_steps(ax, fn)
-    annotate_plot(fig, info)
-    axs[-1].set_xlabel('Time')
-    seaborn.despine()
-    plt.savefig(generate_timeline_filename(info))
-    plt.close()
+def save_timelines(fns):
+    to_process = [(fn, i, d) for fn in fns for i, d in extract_data(fn, timeline=True) if i is not None]
+    for cfg in plot_setup:
+        want = [c + '_max' for c in cfg['columns']]
+        cfg['ymax'] = max(sum((d[want].max().tolist() for (_, _, d) in to_process), []))
+        cfg['ymax'] /= cfg.get('yscale', 1.0)
+    for fn, info, data in to_process:
+        if len(data.index) < 5:
+            L.error("not enough data (>4 points) for %s", fn)
+            continue
+        L.info("saving timeline for %s", fn)
+        plot_setup[0]['ylimit'] = info.density[0]
+        try:
+            fig, axs = plt.subplots(len(plot_setup), sharex=True, figsize=(7, 12), constrained_layout=True)
+            for ax, cfg in zip(axs, plot_setup):
+                save_timeline(data, cfg, ax)
+                annotate_steps(ax, fn)
+            annotate_plot(fig, info)
+            fig.subplots_adjust(right=0.95, top=0.92, bottom=0.05, hspace=0.05)
+            axs[-1].set_xlabel('Time')
+            axs[-1].xaxis.set_major_formatter(dates.DateFormatter('%H:%M'))
+            # axs[-1].xaxis.set_minor_locator(dates.MinuteLocator(interval=5))
+            # axs[-1].xaxis.set_minor_formatter(dates.DateFormatter(':%M'))
+            # axs[-1].xaxis.set_major_locator(dates.HourLocator(interval=1))
+            seaborn.despine()
+            plt.savefig(generate_timeline_filename(info))
+            plt.close()
+        except ValueError as e:
+            L.exception(e)
 
 
 def save(df, value, cols, fn, mean=False, title='', legend=True):
@@ -334,49 +468,48 @@ def save(df, value, cols, fn, mean=False, title='', legend=True):
 
 def run():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--extract-only', default=False, action='store_true',
-                        help='extract timeline data, but do not plot')
-    parser.add_argument('--no-scaling', default=False, action='store_true',
-                        help='do not produce scaling plots')
-    parser.add_argument('--no-timeline', default=False, action='store_true',
-                        help='do not produce timeline plots')
+    parser.add_argument('--timeline', default=False, action='store_true',
+                        help='plot timeline data')
+    parser.add_argument('--scaling', default=False, action='store_true',
+                        help='plot scaling data')
     parser.add_argument('filename', nargs='+', help='files to process')
     opts = parser.parse_args()
 
-    if opts.extract_only:
-        return
+    if opts.timeline:
+        save_timelines(opts.filename)
 
-    if not opts.no_timeline:
-        for fn in opts.filename:
-            save_timelines(fn)
-
-    if opts.no_scaling:
+    if not opts.scaling:
         return
 
     df = pandas.concat(extract_data(opts.filename))
 
     L.info("circuits available: %s", ", ".join(df.circuit.unique()))
 
-# O1: Spark version 2.2.1 vs 2.3.0
+    # O1: Spark version 2.2.1 vs 2.3.0
     data = df[(df.circuit == "O1") & ((df.version == '2.3.0') | ((df.version == '2.2.1') & (df['mode'] == "mixed")))]
     if data.size > 0:
+        L.info("saving strong scaling depending on Spark version")
         save(data, "runtime", ["version"], "strong_scaling_O1_spark_version.png", mean=True, title='O1')
 
     data = df[(df.circuit == "O1") & (df.version == '2.2.1')]
     if data.size > 0:
+        L.info("saving strong scaling file system")
         save(data, "runtime", ["mode"], "strong_scaling_O1_gpfs_vs_nvme.png", mean=True, title='O1')
 
     for circ in "10x10 O1 S1".split():
+        L.info("saving density for %s", circ)
         data = df[(df.circuit == circ) & (df.version == '2.2.1') & (df['mode'].isin(['nvme', '']))]
         save(data, "runtime", ["density"], "strong_scaling_{}_density.png".format(circ), mean=True,
              title='{}, cores used per node'.format(circ))
 
+        L.info("saving runtime for %s", circ)
         data = df[(df.circuit == circ) & (df.version == '2.2.1') & (df['mode'].isin(['nvme', '']))]
         save(data, "runtime", ["mode"], "strong_scaling_{}_runtime.png".format(circ), mean=True,
              title='{}, total runtime'.format(circ), legend=False)
 
         data = df[(df.circuit == circ) & (df.version == '2.2.1') & (df['mode'].isin(['nvme', '']))]
         for step in "rules cut export".split():
+            L.info("saving runtime for step %s of %s", step, circ)
             save(data, step, ["mode"], "strong_scaling_{}_step_{}.png".format(circ, step), mean=True,
                  title='{}, runtime for step {}'.format(circ, step), legend=False)
 
