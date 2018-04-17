@@ -209,12 +209,10 @@ def extract_data(fns, timeline=False):
                                          ncores, size, occupancy, (mode or ''),
                                          version, rules, cut, export, runtime, start]])
 
-            if not timeline:
-                yield df
-                continue
-            if not slurm:
+            if slurm is None:
                 L.error("no slurm data for %s", fn)
-                yield None, None
+                yield df, None
+                continue
 
             start, end = (str(int(float(s))) for s in data['runtime'][-1][1:])
             pickle = fn.replace(".json", ".pkl")
@@ -264,6 +262,8 @@ def annotate_plot(fig, info):
     start = info.start[0]
     runtime = info.runtime[0]
 
+    start = datetime.datetime.fromtimestamp(float(start)).strftime("%Y-%m-%d")
+
     circuit = info.circuit[0]
     cores = info.cores[0]
     cores_node = info.density[0]
@@ -271,29 +271,29 @@ def annotate_plot(fig, info):
 
     fig.text(0.5, 0.95, circuit,
              fontsize=20, weight='bold', ha='center', va='center')
-    fig.text(0.1, 0.98, str(nodes),
+    fig.text(0.13, 0.98, str(nodes),
              fontsize=10, ha='right', va='top')
-    fig.text(0.1, 0.98, " nodes",
+    fig.text(0.13, 0.98, " nodes",
              fontsize=10, ha='left', va='top')
-    fig.text(0.1, 0.965, str(cores_node),
+    fig.text(0.13, 0.965, str(cores_node),
              fontsize=10, ha='right', va='top')
-    fig.text(0.1, 0.965, " cores / node",
+    fig.text(0.13, 0.965, " cores / node",
              fontsize=10, ha='left', va='top')
-    fig.text(0.1, 0.95, str(cores),
+    fig.text(0.13, 0.95, str(cores),
              fontsize=10, ha='right', va='top')
-    fig.text(0.1, 0.95, " cores total",
+    fig.text(0.13, 0.95, " cores total",
              fontsize=10, ha='left', va='top')
-    fig.text(0.9, 0.98, "SLURM: ",
+    fig.text(0.87, 0.98, "SLURM: ",
              fontsize=10, ha='right', va='top')
-    fig.text(0.9, 0.98, str(jobid),
+    fig.text(0.87, 0.98, str(jobid),
              fontsize=10, ha='left', va='top')
-    fig.text(0.9, 0.965, "start: ",
+    fig.text(0.87, 0.965, "date: ",
              fontsize=10, ha='right', va='top')
-    fig.text(0.9, 0.965, start,
+    fig.text(0.87, 0.965, start,
              fontsize=10, ha='left', va='top')
-    fig.text(0.9, 0.95, "runtime: ",
+    fig.text(0.87, 0.95, "runtime: ",
              fontsize=10, ha='right', va='top')
-    fig.text(0.9, 0.95, to_time(runtime),
+    fig.text(0.87, 0.95, to_time(runtime),
              fontsize=10, ha='left', va='top')
 
     # t = fig.suptitle(u"Circuit {}: SLURM id {}\n"
@@ -391,13 +391,14 @@ def save_timeline(data, cfg, ax):
         ax.axhline(y=ylimit, color='r', alpha=0.2, linewidth=4)
 
 
-def save_timelines(fns):
-    to_process = [(fn, i, d) for fn in fns for i, d in extract_data(fn, timeline=True) if i is not None]
+def save_timelines(to_process):
     for cfg in plot_setup:
         want = [c + '_max' for c in cfg['columns']]
         cfg['ymax'] = max(sum((d[want].max().tolist() for (_, _, d) in to_process), []))
         cfg['ymax'] /= cfg.get('yscale', 1.0)
     for fn, info, data in to_process:
+        if data is None:
+            continue
         if len(data.index) < 5:
             L.error("not enough data (>4 points) for %s", fn)
             continue
@@ -419,7 +420,7 @@ def save_timelines(fns):
             L.exception(e)
 
 
-def save(df, value, cols, fn, mean=False, title='', legend=True):
+def save(df, value, cols, fn, mean=False, title='', legend=True, xcol='cores', xlabel=None, xticks=None):
     ax = None
     handels = []
     labels = []
@@ -427,19 +428,16 @@ def save(df, value, cols, fn, mean=False, title='', legend=True):
         if not isinstance(names, list) and not isinstance(names, tuple):
             names = [names]
         if mean:
-            for n, g in group.groupby("cores"):
-                group.loc[group.cores == n, value + "_std"] = g[value].std()
-                group.loc[group.cores == n, value + "_avg"] = g[value].mean()
-                group.loc[group.cores == n, value + "_min"] = g[value].min()
-                group.loc[group.cores == n, value + "_max"] = g[value].max()
-        group = group.sort_values('cores')
+            group = group.groupby(xcol).aggregate(['mean', 'min', 'max'])
+            group.columns = ['_'.join([c, f.replace('mean', 'avg')]) for (c, f) in group.columns]
+        # print(names, group[xcol])
         label = ", ".join("{} = {}".format(k, v) for k, v in zip(cols, names))
-        ax = group.plot(ax=ax, x='cores', y=[value + "_avg"], style='o-', figsize=(6, 4),
+        ax = group.plot(ax=ax, x=group.index, y=[value + "_avg"], style='o-', figsize=(6, 4),
                         label=label)
         hs, _ = ax.get_legend_handles_labels()
         handels.append(hs[-1])
         labels.append(label)
-        ax.fill_between(group.cores,
+        ax.fill_between(group.index,
                         group[value + '_min'],
                         group[value + '_max'],
                         alpha=0.3)
@@ -447,66 +445,96 @@ def save(df, value, cols, fn, mean=False, title='', legend=True):
         ax.legend(handels, labels)
     else:
         ax.legend([], [])
-    ax.set_title(("Strong scaling: {}".format(title)).strip(': '))
-    ax.set_xscale('log', basex=2)
-    ax.set_xlabel('Number of Cores')
+    ax.set_title(title)
+    if xcol == 'cores':
+        ax.set_xscale('log', basex=2)
+        ax.set_xlabel('Number of Cores')
+        ax.xaxis.set_major_formatter(ScalarFormatter())
+    elif xticks:
+        ax.set_xlabel('Circuit')
+        ax.xaxis.set_ticks(range(len(xticks)))
+        ax.xaxis.set_ticklabels(xticks)
     _, ymax = plt.ylim()
     plt.ylim(0, 1.2 * ymax)
     # ax.set_yscale('log', basey=2)
     ax.set_ylabel('Runtime')
-    ax.xaxis.set_major_formatter(ScalarFormatter())
     ax.yaxis.set_major_formatter(FuncFormatter(to_time))
     seaborn.despine()
     plt.savefig(fn)
     plt.close()
 
 
-def run():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--timeline', default=False, action='store_true',
-                        help='plot timeline data')
-    parser.add_argument('--scaling', default=False, action='store_true',
-                        help='plot scaling data')
-    parser.add_argument('filename', nargs='+', help='files to process')
-    opts = parser.parse_args()
-
-    if opts.timeline:
-        save_timelines(opts.filename)
-
-    if not opts.scaling:
-        return
-
-    df = pandas.concat(extract_data(opts.filename))
-
-    L.info("circuits available: %s", ", ".join(df.circuit.unique()))
-
+def save_strong(df):
     # O1: Spark version 2.2.1 vs 2.3.0
     data = df[(df.circuit == "O1") & ((df.version == '2.3.0') | ((df.version == '2.2.1') & (df['mode'] == "mixed")))]
     if data.size > 0:
         L.info("saving strong scaling depending on Spark version")
-        save(data, "runtime", ["version"], "strong_scaling_O1_spark_version.png", mean=True, title='O1')
+        save(data, "runtime", ["version"], "strong_scaling_O1_spark_version.png", mean=True, title='Strong Scaling: O1')
 
     data = df[(df.circuit == "O1") & (df.version == '2.2.1')]
     if data.size > 0:
         L.info("saving strong scaling file system")
-        save(data, "runtime", ["mode"], "strong_scaling_O1_gpfs_vs_nvme.png", mean=True, title='O1')
+        save(data, "runtime", ["mode"], "strong_scaling_O1_gpfs_vs_nvme.png", mean=True, title='Strong Scaling: O1')
 
-    for circ in "10x10 O1 S1".split():
+    for circ in df.circuit.unique():
         L.info("saving density for %s", circ)
         data = df[(df.circuit == circ) & (df.version == '2.2.1') & (df['mode'].isin(['nvme', '']))]
         save(data, "runtime", ["density"], "strong_scaling_{}_density.png".format(circ), mean=True,
-             title='{}, cores used per node'.format(circ))
+             title='Strong Scaling: {}, cores used per node'.format(circ))
 
         L.info("saving runtime for %s", circ)
         data = df[(df.circuit == circ) & (df.version == '2.2.1') & (df['mode'].isin(['nvme', '']))]
         save(data, "runtime", ["mode"], "strong_scaling_{}_runtime.png".format(circ), mean=True,
-             title='{}, total runtime'.format(circ), legend=False)
+             title='Strong Scaling: {}, total runtime'.format(circ), legend=False)
 
         data = df[(df.circuit == circ) & (df.version == '2.2.1') & (df['mode'].isin(['nvme', '']))]
         for step in "rules cut export".split():
             L.info("saving runtime for step %s of %s", step, circ)
             save(data, step, ["mode"], "strong_scaling_{}_step_{}.png".format(circ, step), mean=True,
-                 title='{}, runtime for step {}'.format(circ, step), legend=False)
+                 title='Strong Scaling: {}, runtime for step {}'.format(circ, step), legend=False)
+
+
+def save_weak(df, order):
+    def index(c):
+        return order.index(c)
+    df["circuit"] = df.circuit.apply(index)
+    data = df[(df.version == '2.2.1') & (df['mode'].isin(['nvme', '']))]
+    L.info("saving weak scaling")
+    save(data, "runtime", ["cores"], "weak_scaling_runtime.png",
+         mean=True, xcol='circuit', xticks=order,
+         title='Weak Scaling: total runtime')
+    for step in "rules cut export".split():
+        L.info("saving weak scaling for step %s", step)
+        save(data, step, ["cores"], "weak_scaling_step_{}.png".format(step),
+             mean=True, xcol='circuit', xticks=order,
+             title='Weak Scaling: runtime for step {}'.format(step))
+
+
+def run():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--timeline', default=False, action='store_true',
+                        help='plot timeline data')
+    parser.add_argument('--strong', default=False, action='store_true',
+                        help='plot strong scaling data')
+    parser.add_argument('--weak', default=False, action='store_true',
+                        help='plot weak scaling data')
+    parser.add_argument('--circuit-order', default='O1,S1,10x10',
+                        help='comma separated order of circuits')
+    parser.add_argument('filename', nargs='+', help='files to process')
+    opts = parser.parse_args()
+
+    to_process = [(fn, i, d) for fn in opts.filename for i, d in extract_data(fn, timeline=True)]
+    df = pandas.concat(d for _, d, _ in to_process)
+
+    if opts.timeline:
+        save_timelines(to_process)
+
+    L.info("circuits available: %s", ", ".join(df.circuit.unique()))
+
+    if opts.strong:
+        save_strong(df)
+    if opts.weak:
+        save_weak(df, opts.circuit_order.split(','))
 
 
 if __name__ == '__main__':
