@@ -434,17 +434,6 @@ def save(df, value, cols, fn, mean=False, title='', legend=True):
                 group.loc[group.cores == n, value + "_max"] = g[value].max()
         group = group.sort_values('cores')
         label = ", ".join("{} = {}".format(k, v) for k, v in zip(cols, names))
-        # if mode == '':
-        #     label = "{} cores/node".format(density)
-        # else:
-        #     label = "{} cores/node, {}".format(density, mode)
-        # ax = group.plot(ax=ax, x='cores', y=value, style='o', figsize=(6, 4),
-        #                 label=label)
-        # ax.plot(x=group.cores, y=group[value + '_avg'])
-        # ax.fill_between(group.cores,
-        #                 group[value + '_avg'] - group[value + '_std'],
-        #                 group[value + '_avg'] + group[value + '_std'],
-        #                 alpha=0.5)
         ax = group.plot(ax=ax, x='cores', y=[value + "_avg"], style='o-', figsize=(6, 4),
                         label=label)
         hs, _ = ax.get_legend_handles_labels()
