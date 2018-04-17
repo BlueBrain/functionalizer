@@ -23,7 +23,7 @@ seaborn.set_context("paper")
 
 rack = re.compile(r'r(\d+)')
 extract = re.compile(r'([^/.]+)(?:\.v\da)?(?:_\d+)?(?:_(mixed|nvme))?/(\d+)cores_(\d+)nodes_(\d+)execs')
-COLUMNS = "fn jobid circuit cores size density mode version rules cut export runtime".split()
+COLUMNS = "fn jobid circuit cores size density mode version rules cut export runtime start".split()
 
 GANGLIA_SCALE_CPU = 72 / 100.
 
@@ -47,10 +47,11 @@ def to_time(x, pos=None):
     return ":".join("{:02}".format(int(i)) for i in reversed(res)).lstrip("0")
 
 
-def maybe_first(o):
+def maybe(o, idx=0):
     if isinstance(o, list):
-        return o[0]
-    return o
+        return o[idx]
+    elif idx == 0:
+        return o
 
 
 def extract_ganglia(metric, alias, hosts, start, end):
@@ -104,7 +105,7 @@ def process_response(response, columns, collapse=False):
         if not all(data.timestamp == d.timestamp):
             L.error('unreliable timestamp data!')
         data[c] = d[c]
-    return data.set_index('timestamp')
+    return data.groupby('timestamp').first()
 
 
 def extract_graphite(hosts, start, end):
@@ -196,16 +197,17 @@ def extract_data(fns, timeline=False):
                 data = json.load(fd)
             assert(len(data['timing'])) == 1
             timing = dict(data['timing'][0])
-            rules = maybe_first(timing['filter_by_rules'])
-            cut = maybe_first(timing['run_reduce_and_cut'])
-            export = maybe_first(timing['export_results'])
-            runtime = maybe_first(data.get('runtime', [[None]])[-1])
+            rules = maybe(timing['filter_by_rules'])
+            cut = maybe(timing['run_reduce_and_cut'])
+            export = maybe(timing['export_results'])
+            runtime = maybe(data.get('runtime', [[None]])[-1])
+            start = maybe(data.get('runtime', [[None]])[-1], idx=1)
             version = data.get('version', data.get('spark', dict()).get('version'))
             slurm = data.get('slurm')
             df = pandas.DataFrame(columns=COLUMNS,
                                   data=[[fn, (slurm or dict()).get('jobid'), circuit,
                                          ncores, size, occupancy, (mode or ''),
-                                         version, rules, cut, export, runtime]])
+                                         version, rules, cut, export, runtime, start]])
 
             if not timeline:
                 yield df
@@ -258,8 +260,11 @@ def generate_timeline_filename(info):
 
 
 def annotate_plot(fig, info):
-    circuit = info.circuit[0]
     jobid = info.jobid[0]
+    start = info.start[0]
+    runtime = info.runtime[0]
+
+    circuit = info.circuit[0]
     cores = info.cores[0]
     cores_node = info.density[0]
     nodes = cores // cores_node
@@ -281,6 +286,14 @@ def annotate_plot(fig, info):
     fig.text(0.9, 0.98, "SLURM: ",
              fontsize=10, ha='right', va='top')
     fig.text(0.9, 0.98, str(jobid),
+             fontsize=10, ha='left', va='top')
+    fig.text(0.9, 0.965, "start: ",
+             fontsize=10, ha='right', va='top')
+    fig.text(0.9, 0.965, start,
+             fontsize=10, ha='left', va='top')
+    fig.text(0.9, 0.95, "runtime: ",
+             fontsize=10, ha='right', va='top')
+    fig.text(0.9, 0.95, to_time(runtime),
              fontsize=10, ha='left', va='top')
 
     # t = fig.suptitle(u"Circuit {}: SLURM id {}\n"
@@ -358,10 +371,8 @@ def save_timeline(data, cfg, ax):
             data[col + '_max'] /= yscale
         label = col.replace('_', ' ')
         L.info("plotting %s", col)
-        ax = data.plot(ax=ax, x=data.index, y=[col + "_avg"], style='o-',
-                       label=label)
-        hs, _ = ax.get_legend_handles_labels()
-        handels.append(hs[-1])
+        (handle,) = ax.plot_date(x=data.index.to_pydatetime(), y=data[col + "_avg"], fmt='o-')
+        handels.append(handle)
         labels.append(label)
         ax.fill_between(data.index,
                         data[col + '_min'],
@@ -369,8 +380,6 @@ def save_timeline(data, cfg, ax):
                         alpha=0.3)
     if len(cfg['columns']) > 1:
         ax.legend(handels, labels)
-    else:
-        ax.legend([], [])
     _, ymax = ax.get_ylim()
     if cfg.get('ymax'):
         ymax = cfg.get('ymax')
@@ -400,12 +409,9 @@ def save_timelines(fns):
                 save_timeline(data, cfg, ax)
                 annotate_steps(ax, fn)
             annotate_plot(fig, info)
-            fig.subplots_adjust(right=0.95, top=0.92, bottom=0.05, hspace=0.05)
-            axs[-1].set_xlabel('Time')
             axs[-1].xaxis.set_major_formatter(dates.DateFormatter('%H:%M'))
-            # axs[-1].xaxis.set_minor_locator(dates.MinuteLocator(interval=5))
-            # axs[-1].xaxis.set_minor_formatter(dates.DateFormatter(':%M'))
-            # axs[-1].xaxis.set_major_locator(dates.HourLocator(interval=1))
+            axs[-1].set_xlabel('Time')
+            fig.subplots_adjust(right=0.95, top=0.92, bottom=0.05, hspace=0.05)
             seaborn.despine()
             plt.savefig(generate_timeline_filename(info))
             plt.close()
