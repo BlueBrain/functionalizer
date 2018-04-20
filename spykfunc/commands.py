@@ -9,7 +9,7 @@ from . import utils
 # Executed from the SHELL
 # ------------------------------------
 def _create_parser():
-    parser = argparse.ArgumentParser(description="spykfunc is a pyspark implementation of pyspark.")
+    parser = argparse.ArgumentParser(description="spykfunc is a pyspark implementation of functionalizer.")
     parser.add_argument("recipe_file", help="the XML recipe file")
     parser.add_argument("mvd_file",    help="the input mvd file")
     parser.add_argument("morpho_dir",  help="the H5 morphology database directory")
@@ -38,7 +38,7 @@ def _create_parser():
                              "Possible values: F (for filtered, implies E) or E (for extended with synapse properties)",
                         choices=("F", "E"), const="F", nargs="?", default="")
     parser.add_argument("--no-morphos",
-                        help="Rum spykfunc without morphologies. "
+                        help="Run spykfunc without morphologies. "
                              "Note: ChC cells wont be patched and branch_type field won't be part of the result",
                         action="store_true", default=False)
     return parser
