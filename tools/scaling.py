@@ -22,7 +22,7 @@ seaborn.set()
 seaborn.set_context("paper")
 
 rack = re.compile(r'r(\d+)')
-extract = re.compile(r'([^/.]+)(?:\.v\da)?(?:_\d+)?(?:_(mixed|nvme))?/(\d+)cores_(\d+)nodes_(\d+)execs')
+extract = re.compile(r'([^/]+)(?:_(mixed|nvme))?/(\d+)cores_(\d+)nodes_(\d+)execs')
 COLUMNS = "fn jobid circuit cores size density mode version rules cut export runtime start".split()
 
 GANGLIA_SCALE_CPU = 72 / 100.
@@ -157,9 +157,14 @@ fallback = [
 ]
 
 
-def extract_node_data(nodes, start, end):
-    hosts = subprocess.check_output('scontrol show hostname {}'.format(nodes).split()).split()
+def expand_hosts(nodes):
+    """Returns an expanded nodelist via slurm.
+    """
+    return subprocess.check_output('scontrol show hostname {}'.format(nodes).split()).split()
 
+
+def extract_node_data(nodes, start, end):
+    hosts = expand_hosts(nodes)
     disk = extract_ganglia('m=part_max_used', ['disk'], hosts, start, end)
     try:
         data = extract_graphite(hosts, start, end)
@@ -183,31 +188,46 @@ def extract_data(fns, timeline=False):
     if isinstance(fns, basestring):
         fns = [fns]
     for fn in fns:
-        m = extract.search(fn)
-        if not m:
-            L.error("no match for pattern in %s", fn)
-            continue
         L.info("processing %s", fn)
         try:
-            circuit, mode = m.groups()[:2]
-            ncores, nodes, execs = (int(n) for n in m.groups()[2:])
-            size = ncores // execs
-            occupancy = ncores // nodes
             with open(fn, 'r') as fd:
                 data = json.load(fd)
-            assert(len(data['timing'])) == 1
-            timing = dict(data['timing'][0])
+
+            # assert(len(data['timing']) == 1)
+            slurm = data.get('slurm')
+
+            try:
+                nodes = len(expand_hosts(slurm['nodes']))
+                execs = data['spark']['executors']
+                ncores = data['spark']['parallelism']
+
+                circuit = os.path.basename(os.path.dirname(fn))
+                mode = None
+            except KeyError:
+                m = extract.search(fn)
+                if not m:
+                    L.error("no match for pattern in %s", fn)
+                    continue
+                circuit, mode = m.groups()[:2]
+                ncores, nodes, execs = (int(n) for n in m.groups()[2:])
+            size = ncores // execs
+            occupancy = ncores // nodes
+
+            timing = dict(data['timing'][-1])
             rules = maybe(timing['filter_by_rules'])
             cut = maybe(timing['run_reduce_and_cut'])
-            export = maybe(timing['export_results'])
+            export = maybe(timing.get('export_results', [0]))
             runtime = maybe(data.get('runtime', [[None]])[-1])
             start = maybe(data.get('runtime', [[None]])[-1], idx=1)
             version = data.get('version', data.get('spark', dict()).get('version'))
-            slurm = data.get('slurm')
             df = pandas.DataFrame(columns=COLUMNS,
                                   data=[[fn, (slurm or dict()).get('jobid'), circuit,
                                          ncores, size, occupancy, (mode or ''),
                                          version, rules, cut, export, runtime, start]])
+
+            if not timeline:
+                yield df, None
+                continue
 
             if slurm is None:
                 L.error("no slurm data for %s", fn)
@@ -308,19 +328,22 @@ def annotate_steps(ax, fn):
              ("apply_reduce", 0),
              ("export_results", 1)]
     for step, level in steps:
-        conv = datetime.datetime.utcfromtimestamp
-        start, end = extract_times(fn, step)
-        ymin, ymax = ax.get_ylim()
-        y = ymin + (0.7 + level * 0.1) * (ymax - ymin)
-        y2 = ymin + (0.73 + level * 0.1) * (ymax - ymin)
-        y3 = (ymin + (0.71 + level * 0.1) * (ymax - ymin)) / ymax
-        ax.annotate('',
-                    xy=(conv(start), y), xycoords='data',
-                    xytext=(conv(end), y), textcoords='data',
-                    arrowprops=dict(arrowstyle="<->", linewidth=1, color='gray'))
-        ax.text(conv(start + 0.5 * (end - start)), y2, step, horizontalalignment='center', fontsize=8)
-        ax.axvline(conv(start), ymax=y3, color='gray')
-        ax.axvline(conv(end), ymax=y3, color='gray')
+        try:
+            conv = datetime.datetime.utcfromtimestamp
+            start, end = extract_times(fn, step)
+            ymin, ymax = ax.get_ylim()
+            y = ymin + (0.7 + level * 0.1) * (ymax - ymin)
+            y2 = ymin + (0.73 + level * 0.1) * (ymax - ymin)
+            y3 = (ymin + (0.71 + level * 0.1) * (ymax - ymin)) / ymax
+            ax.annotate('',
+                        xy=(conv(start), y), xycoords='data',
+                        xytext=(conv(end), y), textcoords='data',
+                        arrowprops=dict(arrowstyle="<->", linewidth=1, color='gray'))
+            ax.text(conv(start + 0.5 * (end - start)), y2, step, horizontalalignment='center', fontsize=8)
+            ax.axvline(conv(start), ymax=y3, color='gray')
+            ax.axvline(conv(end), ymax=y3, color='gray')
+        except KeyError as e:
+            L.error("no data for %s in %s", e, fn)
 
 
 plot_setup = [
@@ -394,7 +417,7 @@ def save_timeline(data, cfg, ax):
 def save_timelines(to_process):
     for cfg in plot_setup:
         want = [c + '_max' for c in cfg['columns']]
-        cfg['ymax'] = max(sum((d[want].max().tolist() for (_, _, d) in to_process), []))
+        cfg['ymax'] = max(sum((d[want].max().tolist() for (_, _, d) in to_process if d is not None), []))
         cfg['ymax'] /= cfg.get('yscale', 1.0)
     for fn, info, data in to_process:
         if data is None:
