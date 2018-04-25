@@ -166,7 +166,6 @@ def extract_node_data(nodes, start, end):
     :param end: time to extract up to
     """
     hosts = expand_hosts(nodes)
-    L.error(hosts)
     try:
         disk = extract_ganglia('m=part_max_used', ['disk'], hosts, start, end)
     except Exception:
