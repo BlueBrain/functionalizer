@@ -128,7 +128,8 @@ def setup_package():
             'spykfunc',
             'spykfunc.dataio',
             'spykfunc.utils',
-            'spykfunc.tools'
+            'spykfunc.tools',
+            'spykfunc.tools.analysis',
         ],
         ext_modules=extensions,
         package_data={
