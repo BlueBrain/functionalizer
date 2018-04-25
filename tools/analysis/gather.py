@@ -237,7 +237,7 @@ def extract_data_from_json(fn):
     return df, slurm.get('nodes'), start, end
 
 
-def extract_data_from_slurm(jobid, circuit, version='C', fn=None):
+def extract_data_from_slurm(jobid, circuit, version='C functionalizer', fn=None):
     nodenames, tasks, ncores, start, end = get_slurm_data(jobid)
     runtime = int((end - start).total_seconds())
 
