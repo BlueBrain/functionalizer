@@ -29,6 +29,7 @@ class _SpykfuncOptions:
     format_hdf5 = False
     spark_opts = ""
     output_dir = "spykfunc_output"
+    name = "Functionalizer"
     cache = "_mvd"
     no_morphos = False
     checkpoint_dir = None
@@ -78,7 +79,7 @@ class Functionalizer(object):
             "spark.sql.files.maxPartitionBytes": 128 * _MB
         }
         report_file = os.path.join(self._config.output_dir, 'report.json')
-        sm.create("Functionalizer", spark_config, self._config.spark_opts, report=report_file)
+        sm.create(self._config.name, spark_config, self._config.spark_opts, report=report_file)
 
         # Configuring Spark runtime
         sm.setLogLevel("WARN")

@@ -26,6 +26,8 @@ def _create_parser():
     parser.add_argument("--format-hdf5",
                         help="Write result to HDF5 rather than parquet",
                         action="store_true", default=False)
+    parser.add_argument("--name",
+                        help="Name that will show up in the Spark logs. Defaults to 'Functionalizer'")
     parser.add_argument("--checkpoint-dir",
                         help="Specify directory to store checkpoints. Defaults to OUTPUT_DIR/_checkpoints")
     parser.add_argument("--output-dir",
