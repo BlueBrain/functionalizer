@@ -60,7 +60,7 @@ def generate_timeline_filename(info):
     cores = info.cores[0]
     cores_node = info.density[0]
     nodes = cores // cores_node
-    return "timeline_{}_{}nodes_{}cores_{}.png".format(circuit, nodes, cores, jobid)
+    return "timeline_{}_{}nodes_{}cores_{}.png".format(circuit, nodes, cores, jobid).lower().replace(" ", "_")
 
 
 def annotate_plot(fig, info):
@@ -207,12 +207,16 @@ def save_timeline(data, cfg, ax):
         ax.axhline(y=ylimit, color='r', alpha=0.2, linewidth=4)
 
 
-def save_timelines(to_process):
+def save_timelines(to_process, opts):
     for cfg in plot_setup:
         want = [c + '_max' for c in cfg['columns']]
         cfg['ymax'] = max(sum((d[want].max().tolist() for (_, _, d) in to_process if d is not None), []))
         cfg['ymax'] /= cfg.get('yscale', 1.0)
     for fn, info, data in to_process:
+        if opts.title:
+            info.circuit = opts.title
+        if opts.subtitle:
+            info.version = opts.subtitle
         if data is None:
             continue
         if len(data.index) < 5:
