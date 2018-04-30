@@ -180,7 +180,7 @@ def extract_node_data(nodes, start, end):
         data['cpu_avg'] *= GANGLIA_SCALE_CPU
         data['cpu_min'] *= GANGLIA_SCALE_CPU
         data['cpu_max'] *= GANGLIA_SCALE_CPU
-    except ValueError as e:
+    except (ValueError, IndexError) as e:
         L.exception(e)
         L.warn("falling back to ganglia data")
         data = disk
