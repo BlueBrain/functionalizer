@@ -1,6 +1,7 @@
 """Extract data from SLURM, graphite, and ganglia to measure job performance.
 """
 from __future__ import print_function
+from collections import OrderedDict
 import datetime
 import json
 import logging
@@ -13,7 +14,7 @@ import subprocess
 
 rack = re.compile(r'r(\d+)')
 extract = re.compile(r'([^/]+)(?:_(mixed|nvme))?/(\d+)cores_(\d+)nodes_(\d+)execs')
-COLUMNS = "fn jobid circuit cores size density mode version rules cut export runtime start".split()
+COLUMNS = "fn jobid circuit cores size density mode version rules cut export runtime start success".split()
 
 GANGLIA_SCALE_CPU = 72 / 100.
 
@@ -152,10 +153,13 @@ def get_slurm_data(jobid):
     """
     def conv(t):
         return datetime.datetime.strptime(t, '%Y-%m-%dT%H:%M:%S')
-    output = subprocess.check_output('sacct --noheader -P -o node,ntasks,ncpus,start,end -j {}'.format(jobid).split())
+    output = subprocess.check_output(
+        'sacct --noheader -P -o node,ntasks,ncpus,start,end,jobname,state-j {}'.format(jobid).split())
     ntasks = max(line.split('|')[1] for line in output.splitlines())
-    nodes, _, cpus, start, end = output.splitlines()[-1].split('|')
-    return nodes, int(ntasks), int(cpus), conv(start), conv(end)
+    statii = OrderedDict([l.split('|')[-2:] for l in output.splitlines()])
+    done = statii.get('sm_cluster', statii.values()[0]) == 'COMPLETED'
+    nodes, _, cpus, start, end, _, _ = output.splitlines()[-1].split('|')
+    return nodes, int(ntasks), int(cpus), conv(start), conv(end), done
 
 
 def extract_node_data(nodes, start, end):
@@ -226,6 +230,7 @@ def extract_data_from_json(fn):
     cut = maybe(timing['run_reduce_and_cut'])
     export = maybe(timing.get('export_results', [0]))
     runtime = maybe(data.get('runtime', [[None]])[-1])
+    done = export is not None and export > 0
     try:
         start, end = (str(int(float(s))) for s in data['runtime'][-1][1:])
     except Exception:
@@ -235,12 +240,12 @@ def extract_data_from_json(fn):
     df = pandas.DataFrame(columns=COLUMNS,
                           data=[[fn, (slurm or dict()).get('jobid'), circuit,
                                  ncores, size, occupancy, (mode or ''),
-                                 version, rules, cut, export, runtime, start]])
+                                 version, rules, cut, export, runtime, start, done]])
     return df, slurm.get('nodes'), start, end
 
 
 def extract_data_from_slurm(jobid, circuit, version='C functionalizer', fn=None):
-    nodenames, tasks, ncores, start, end = get_slurm_data(jobid)
+    nodenames, tasks, ncores, start, end, done = get_slurm_data(jobid)
     runtime = int((end - start).total_seconds())
 
     nodes = len(expand_hosts(nodenames))
@@ -257,7 +262,7 @@ def extract_data_from_slurm(jobid, circuit, version='C functionalizer', fn=None)
     df = pandas.DataFrame(columns=COLUMNS,
                           data=[[fn, jobid, circuit,
                                  ncores, size, occupancy, '',
-                                 version, rules, cut, export, runtime, epic(start)]])
+                                 version, rules, cut, export, runtime, epic(start), done]])
     return df, nodenames, epic(start), epic(end)
 
 

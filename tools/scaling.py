@@ -39,6 +39,7 @@ def run():
     if opts.command == 'timeline':
         save_timelines(to_process, opts)
         return
+    df = df[df.success]
     L.info("circuits available: %s", ", ".join(df.circuit.unique()))
     if opts.command == 'strong':
         save_strong(df)
