@@ -30,6 +30,8 @@ def run():
     weak = subparsers.add_parser('weak')
     weak.add_argument('--circuit-order', default='O1.v6a,S1.v6a,10x10,4.10x10,10.10x10',
                       help='comma separated order of circuits')
+    weak.add_argument('--cores',
+                      help='comma separated list of core counts to include')
     weak.add_argument('filename', nargs='+', help='files to process')
     opts = parser.parse_args()
 
@@ -44,7 +46,7 @@ def run():
     if opts.command == 'strong':
         save_strong(df)
     if opts.command == 'weak':
-        save_weak(df, opts.circuit_order.split(','))
+        save_weak(df, opts.circuit_order.split(','), opts.cores)
 
 
 if __name__ == '__main__':

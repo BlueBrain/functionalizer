@@ -312,10 +312,12 @@ def save_strong(df):
                  title='Strong Scaling: {}, runtime for step {}'.format(circ, step), legend=False)
 
 
-def save_weak(df, order):
+def save_weak(df, order, cores=None):
     def index(c):
         return order.index(c)
     df["circuit"] = df.circuit.apply(index)
+    if cores:
+        df = df[df.cores.isin([int(c) for c in cores.split(',')])]
     data = df[(df.version == 'Spark 2.2.1') & (df['mode'].isin(['nvme', '']))]
     L.info("saving weak scaling")
     save(data, "runtime", ["cores"], "weak_scaling_runtime.png",
