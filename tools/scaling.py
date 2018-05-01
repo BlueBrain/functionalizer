@@ -28,7 +28,7 @@ def run():
     strong = subparsers.add_parser('strong')
     strong.add_argument('filename', nargs='+', help='files to process')
     weak = subparsers.add_parser('weak')
-    weak.add_argument('--circuit-order', default='O1,S1,10x10,4.10x10,10.10x10',
+    weak.add_argument('--circuit-order', default='O1.v6a,S1.v6a,10x10,4.10x10,10.10x10',
                       help='comma separated order of circuits')
     weak.add_argument('filename', nargs='+', help='files to process')
     opts = parser.parse_args()
