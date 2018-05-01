@@ -20,11 +20,15 @@ def run():
                           help='title to use (default: circuit name)')
     timeline.add_argument('--subtitle', default=None,
                           help='subtitle to use (default: version)')
-    subparsers.add_parser('strong')
+    timeline.add_argument('--min-points', default=10, type=int,
+                          help='minimum amount of data points required for plotting (default: 10)')
+    timeline.add_argument('filename', nargs='+', help='files to process')
+    strong = subparsers.add_parser('strong')
+    strong.add_argument('filename', nargs='+', help='files to process')
     weak = subparsers.add_parser('weak')
     weak.add_argument('--circuit-order', default='O1,S1,10x10,4.10x10,10.10x10',
                       help='comma separated order of circuits')
-    parser.add_argument('filename', nargs='+', help='files to process')
+    weak.add_argument('filename', nargs='+', help='files to process')
     opts = parser.parse_args()
 
     to_process = [(fn, i, d) for fn in opts.filename for i, d in extract_data(fn, timeline=True)]

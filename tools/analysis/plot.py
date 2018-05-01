@@ -219,8 +219,8 @@ def save_timelines(to_process, opts):
             info.version = opts.subtitle
         if data is None:
             continue
-        if len(data.index) < 5:
-            L.error("not enough data (>4 points) for %s", fn)
+        if len(data.index) < opts.min_points:
+            L.error("not enough data (>=%d points) for %s", opts.min_points, fn)
             continue
         L.info("saving timeline for %s", fn)
         plot_setup[0]['ylimit'] = info.density[0]
