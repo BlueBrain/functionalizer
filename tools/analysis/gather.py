@@ -208,6 +208,9 @@ def extract_data_from_json(fn):
 
         circuit = os.path.basename(os.path.dirname(fn))
         mode = None
+        if ncores < 10:
+            L.warn("small parallelism in %s, falling back to filename matching", fn)
+            raise KeyError('ncores')
     except KeyError:
         m = extract.search(fn)
         if not m:

@@ -241,6 +241,9 @@ def save_timelines(to_process, opts):
 
 
 def save(df, value, cols, fn, mean=False, title='', legend=True, xcol='cores', xlabel=None, xticks=None):
+    if df.size == 0:
+        L.error("nothing to plot!")
+        return
     ax = None
     handels = []
     labels = []
@@ -285,29 +288,24 @@ def save(df, value, cols, fn, mean=False, title='', legend=True, xcol='cores', x
 
 
 def save_strong(df):
-    # O1: Spark version 2.2.1 vs 2.3.0
-    data = df[(df.circuit == "O1") & ((df.version == '2.3.0') | ((df.version == '2.2.1') & (df['mode'] == "mixed")))]
-    if data.size > 0:
-        L.info("saving strong scaling depending on Spark version")
-        save(data, "runtime", ["version"], "strong_scaling_O1_spark_version.png", mean=True, title='Strong Scaling: O1')
-
-    data = df[(df.circuit == "O1") & (df.version == '2.2.1')]
-    if data.size > 0:
-        L.info("saving strong scaling file system")
-        save(data, "runtime", ["mode"], "strong_scaling_O1_gpfs_vs_nvme.png", mean=True, title='Strong Scaling: O1')
-
     for circ in df.circuit.unique():
+        data = df[(df.circuit == circ)]
+        if data.size == 0:
+            continue
+
+        if len(data.version.unique()) > 1:
+            L.info("saving strong scaling depending on Spark version")
+            save(data, "runtime", ["version"], "strong_scaling_{}_spark_version.png".format(circ),
+                 mean=True, title='Strong Scaling: {}'.format(circ))
+
         L.info("saving density for %s", circ)
-        data = df[(df.circuit == circ) & (df.version == '2.2.1') & (df['mode'].isin(['nvme', '']))]
         save(data, "runtime", ["density"], "strong_scaling_{}_density.png".format(circ), mean=True,
              title='Strong Scaling: {}, cores used per node'.format(circ))
 
         L.info("saving runtime for %s", circ)
-        data = df[(df.circuit == circ) & (df.version == '2.2.1') & (df['mode'].isin(['nvme', '']))]
         save(data, "runtime", ["mode"], "strong_scaling_{}_runtime.png".format(circ), mean=True,
              title='Strong Scaling: {}, total runtime'.format(circ), legend=False)
 
-        data = df[(df.circuit == circ) & (df.version == '2.2.1') & (df['mode'].isin(['nvme', '']))]
         for step in "rules cut export".split():
             L.info("saving runtime for step %s of %s", step, circ)
             save(data, step, ["mode"], "strong_scaling_{}_step_{}.png".format(circ, step), mean=True,
@@ -318,7 +316,7 @@ def save_weak(df, order):
     def index(c):
         return order.index(c)
     df["circuit"] = df.circuit.apply(index)
-    data = df[(df.version == '2.2.1') & (df['mode'].isin(['nvme', '']))]
+    data = df[(df.version == 'Spark 2.2.1') & (df['mode'].isin(['nvme', '']))]
     L.info("saving weak scaling")
     save(data, "runtime", ["cores"], "weak_scaling_runtime.png",
          mean=True, xcol='circuit', xticks=order,

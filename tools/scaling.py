@@ -9,7 +9,9 @@ import pandas
 from .analysis.gather import extract_data
 from .analysis.plot import save_timelines, save_strong, save_weak
 
+logging.basicConfig(format='%(levelname)s line %(lineno)d: %(message)s', style='{')
 L = logging.getLogger(__name__)
+L.setLevel(logging.INFO)
 
 
 def run():
@@ -45,6 +47,4 @@ def run():
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format='%(levelname)s line %(lineno)d: %(message)s', style='{')
-    L.setLevel(logging.INFO)
     run()
