@@ -30,6 +30,10 @@ def run():
     weak = subparsers.add_parser('weak')
     weak.add_argument('--circuit-order', default='O1.v6a,S1.v6a,10x10,4.10x10,10.10x10',
                       help='comma separated order of circuits')
+    weak.add_argument('--circuit-sizes', default='4.6,57.7,124.4,497.7,1244.3',
+                      help='comma separated sizes of circuits')
+    weak.add_argument('--circuit-unit', default='Touches (in billions)',
+                      help='unit to use for the sizes')
     weak.add_argument('--cores',
                       help='comma separated list of core counts to include')
     weak.add_argument('filename', nargs='+', help='files to process')
@@ -46,7 +50,9 @@ def run():
     if opts.command == 'strong':
         save_strong(df)
     if opts.command == 'weak':
-        save_weak(df, opts.circuit_order.split(','), opts.cores)
+        save_weak(df, opts.circuit_order.split(','),
+                  [float(n) for n in opts.circuit_sizes.split(',')],
+                  opts.circuit_unit, opts.cores)
 
 
 if __name__ == '__main__':
