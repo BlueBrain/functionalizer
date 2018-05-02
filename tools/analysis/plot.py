@@ -58,7 +58,7 @@ def generate_timeline_filename(info):
     circuit = info.circuit[0]
     jobid = info.jobid[0]
     cores = info.cores[0]
-    cores_node = info.density[0]
+    cores_node = info.threads[0]
     nodes = cores // cores_node
     return "timeline_{}_{}nodes_{}cores_{}.png".format(circuit, nodes, cores, jobid).lower().replace(" ", "_")
 
@@ -73,7 +73,7 @@ def annotate_plot(fig, info):
     circuit = info.circuit[0]
     version = info.version[0]
     cores = info.cores[0]
-    cores_node = info.density[0]
+    cores_node = info.threads[0]
     nodes = cores // cores_node
 
     fig.text(0.5, 0.9675, circuit,
@@ -223,7 +223,7 @@ def save_timelines(to_process, opts):
             L.error("not enough data (>=%d points) for %s", opts.min_points, fn)
             continue
         L.info("saving timeline for %s", fn)
-        plot_setup[0]['ylimit'] = info.density[0]
+        plot_setup[0]['ylimit'] = info.threads[0]
         try:
             fig, axs = plt.subplots(len(plot_setup), sharex=True, figsize=(7, 12), constrained_layout=True)
             for ax, cfg in zip(axs, plot_setup):
@@ -302,15 +302,21 @@ def save_strong(df):
 
         if len(data.version.unique()) > 1:
             L.info("saving strong scaling depending on Spark version")
-            save(data, "runtime", ["version"], "strong_scaling_{}_spark_version.png".format(circ).lower(),
+            save(data, "runtime", ["version"], "strong_scaling_spark_version_{}.png".format(circ).lower(),
                  mean=True, title='Strong Scaling: {}'.format(circ))
 
-        L.info("saving density for %s", circ)
-        save(data, "runtime", ["density"], "strong_scaling_{}_density.png".format(circ).lower(), mean=True,
+            for step in "rules cut export".split():
+                L.info("saving runtime for step %s of %s", step, circ)
+                save(data, step, ["version"],
+                     "strong_scaling_spark_version_{}_step_{}.png".format(circ, step).lower(), mean=True,
+                     title='Strong Scaling: {}, runtime for step {}'.format(circ, step), legend=False)
+
+        L.info("saving threads for %s", circ)
+        save(data, "runtime", ["threads"], "strong_scaling_{}_threads.png".format(circ).lower(), mean=True,
              title='Strong Scaling: {}, cores used per node'.format(circ))
 
         L.info("saving runtime for %s", circ)
-        save(data, "runtime", ["mode"], "strong_scaling_{}_runtime.png".format(circ).lower(), mean=True,
+        save(data, "runtime", ["mode"], "strong_scaling_{}.png".format(circ).lower(), mean=True,
              title='Strong Scaling: {}, total runtime'.format(circ), legend=False)
 
         for step in "rules cut export".split():

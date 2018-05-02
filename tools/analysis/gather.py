@@ -14,7 +14,7 @@ import subprocess
 
 rack = re.compile(r'r(\d+)')
 extract = re.compile(r'([^/]+)(?:_(mixed|nvme))?/(\d+)cores_(\d+)nodes_(\d+)execs')
-COLUMNS = "fn jobid circuit cores size density mode version rules cut export runtime start success".split()
+COLUMNS = "fn jobid circuit cores size threads mode version rules cut export runtime start success".split()
 
 GANGLIA_SCALE_CPU = 72 / 100.
 
