@@ -11,7 +11,7 @@ import os
 import os.path as osp
 import glob
 
-SPYKFUNC_VERSION = "0.7.1.dev1"
+SPYKFUNC_VERSION = "0.7.1.dev2"
 BUILD_TYPE = os.getenv('BUILD_TYPE', "RELEASE").upper()
 BASE_DIR = osp.dirname(__file__)
 EXAMPLES_DESTINATION = "share/spykfunc/examples"
