@@ -154,7 +154,7 @@ def get_slurm_data(jobid):
     def conv(t):
         return datetime.datetime.strptime(t, '%Y-%m-%dT%H:%M:%S')
     output = subprocess.check_output(
-        'sacct --noheader -P -o node,ntasks,ncpus,start,end,jobname,state-j {}'.format(jobid).split())
+        'sacct --noheader -P -o node,ntasks,ncpus,start,end,jobname,state -j {}'.format(jobid).split())
     ntasks = max(line.split('|')[1] for line in output.splitlines())
     statii = OrderedDict([l.split('|')[-2:] for l in output.splitlines()])
     done = statii.get('sm_cluster', statii.values()[0]) == 'COMPLETED'
