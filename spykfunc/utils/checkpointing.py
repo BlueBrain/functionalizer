@@ -1,7 +1,5 @@
 from __future__ import absolute_import
 
-import inspect
-
 from os import path as osp
 from collections import namedtuple
 from funcsigs import signature
@@ -25,7 +23,6 @@ class CheckpointStatus:
     def __init__(self):
         self.state = self.INVALID   # property: The Checkpointing end state
         self.error = None           # property: The Exception if any thrown during checkpointing"""
-
 
 
 class CheckpointHandler:
