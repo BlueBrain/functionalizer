@@ -54,6 +54,19 @@ class TestFilters(object):
         assert count != original
         assert abs(count - NUM_AFTER_FILTER) < TOLERANCE * NUM_AFTER_FILTER
 
+    def test_checkpoint_schema(self, fz, tmpdir_factory):
+        """To conserve space, only touch columns should be written to disk
+        """
+        basedir = tmpdir_factory.getbasetemp().join('filters0').join('check')
+        files = [
+            'filter_reduced_touches.ptable',
+            'filter_rules_RunningMode.S2F.parquet',
+            'filter_rules_RunningMode.S2S.parquet'
+        ]
+        for fn in files:
+            df = sm.read.load(str(basedir.join(fn)))
+            assert all('src_' not in s and 'dst_' not in s for s in df.schema.names)
+
     def test_overwrite(self, fz, tmpdir_factory):
         """Test that overwriting checkpointed data works
         """

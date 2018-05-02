@@ -263,7 +263,7 @@ class CheckpointResume:
         table_name = params.table_name
         bucket_cols = params.bucket_cols
 
-        CheckpointHandler.apply_all(df, params.handlers, CheckpointHandler.BEFORE_SAVE)
+        df = CheckpointHandler.apply_all(df, params.handlers, CheckpointHandler.BEFORE_SAVE)
 
         if params.bucket_cols:
             params.logger.debug("Checkpointing to TABLE %s...", table_name)
