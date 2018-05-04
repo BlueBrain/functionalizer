@@ -11,7 +11,7 @@ import os
 import os.path as osp
 import glob
 
-SPYKFUNC_VERSION = "0.7.1.dev2"
+SPYKFUNC_VERSION = "0.8.0.dev"
 BUILD_TYPE = os.getenv('BUILD_TYPE', "RELEASE").upper()
 BASE_DIR = osp.dirname(__file__)
 EXAMPLES_DESTINATION = "share/spykfunc/examples"
@@ -141,12 +141,13 @@ def setup_package():
         ],
         #  ----- Requirements -----
         install_requires=[
-            'sparkmanager>=0.3.2',
+            'sparkmanager>=0.4.0',
             'py4j',
             'funcsigs',
             'future',
             'docopt',
             'enum34;python_version<"3.4"',
+            'jprops',
             'numpy',
             'lazy-property',
             'h5py',

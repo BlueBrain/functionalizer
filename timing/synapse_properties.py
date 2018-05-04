@@ -20,7 +20,12 @@ odir = os.path.join(tmpdir, 'out')
 kwargs = {
     'checkpoint-dir': cdir,
     'output-dir': odir,
-    'spark-opts': '--master local[4] --driver-memory=4g --total-executor-cores 4 --executor-cores 4 --executor-memory 20g'
+    'overrides': [
+        'spark.master=local[4]',
+        'spark.driver.memory=4g',
+        'spark.executor.cores=4',
+        'spark.executor.memory=20g'
+    ]
 }
 
 fz = spykfunc.session(*ARGS, **kwargs)

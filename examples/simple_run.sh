@@ -6,5 +6,5 @@ spykfunc $CIRCUIT_DIR/builderRecipeAllPathways.xml \
          $CIRCUIT_DIR/circuit.mvd3 \
          $MORPHO_DIR \
          $CIRCUIT_DIR/touches/touchesData.*.parquet \
-         --spark-opts "--driver-memory 4G"
+         -p "spark.driver.memory=4G"
 

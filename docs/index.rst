@@ -20,7 +20,7 @@ apply the same filters as functionalizer.
 
    $ spykfunc
    usage: spykfunc [-h] [--s2s] [--no-hdf5] [--output-dir OUTPUT_DIR]
-                   [--spark-opts SPARK_OPTS]
+                   [-p PROPERTY=VALUE]
                    recipe_file mvd_file morpho_dir touch_files
 
 **Alternatively you can use the Python API**
@@ -30,7 +30,7 @@ apply the same filters as functionalizer.
    '0.5.1'
 
    >>> spykfunc.session?
-   Signature: spykfunc.session(recipe, mvd_file, first_touch, spark_opts=None)
+   Signature: spykfunc.session(recipe, mvd_file, first_touch, properties=None, …)
    Docstring: Creates and Initializes a Functionalizer session
    :returns: A :py:class:`~spykfunc.Functionalizer` instance
 

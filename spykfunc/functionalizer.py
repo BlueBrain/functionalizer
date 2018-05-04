@@ -27,20 +27,25 @@ _MB = 1024**2
 
 class _SpykfuncOptions:
     format_hdf5 = False
-    spark_opts = ""
     output_dir = "spykfunc_output"
+    properties = None
     name = "Functionalizer"
     cache = "_mvd"
     no_morphos = False
     checkpoint_dir = None
 
     def __init__(self, options_dict):
+        filename = options_dict.get('configuration', None)
         for name, option in options_dict.items():
             # Update only relevat, non-None entries
             if option is not None and hasattr(self, name):
                 setattr(self, name, option)
         if self.checkpoint_dir is None:
             self.checkpoint_dir = os.path.join(self.output_dir, "_checkpoints")
+        if self.properties is None:
+            self.properties = utils.Configuration(outdir=self.output_dir,
+                                                  filename=filename,
+                                                  overrides=options_dict.get('overrides'))
 
 
 class Functionalizer(object):
@@ -69,22 +74,13 @@ class Functionalizer(object):
         checkpoint_resume.directory = self._config.checkpoint_dir
 
         # Create Spark session with the static config
-        spark_config = {
-            "spark.shuffle.compress": False,
-            "spark.checkpoint.compress": True,
-            "spark.jars": os.path.join(os.path.dirname(__file__), "data/spykfunc_udfs.jar"),
-            "spark.sql.autoBroadcastJoinThreshold": 0,
-            "spark.sql.broadcastTimeout": 30 * 60,  # 30 minutes to do calculations that will be broadcasted
-            "spark.sql.catalogImplementation": "hive",
-            "spark.sql.files.maxPartitionBytes": 128 * _MB
-        }
         report_file = os.path.join(self._config.output_dir, 'report.json')
-        sm.create(self._config.name, spark_config, self._config.spark_opts, report=report_file)
+        sm.create(self._config.name, self._config.properties("spark"), report=report_file)
 
         # Configuring Spark runtime
         sm.setLogLevel("WARN")
         sm.setCheckpointDir(os.path.join(self._config.checkpoint_dir, "tmp"))
-        sm._jsc.hadoopConfiguration().setInt("parquet.block.size", 32 * _MB)
+        sm._jsc.hadoopConfiguration().setInt("parquet.block.size", 64 * _MB)
         sm.register_java_functions([
             ("gauss_rand", "spykfunc.udfs.GaussRand"),
             ("float2binary", "spykfunc.udfs.FloatArraySerializer"),

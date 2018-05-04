@@ -9,6 +9,17 @@ from . import utils
 # Executed from the SHELL
 # ------------------------------------
 def _create_parser():
+    class _ConfDumpAction(argparse._HelpAction):
+        """Dummy class to list default configuration and exit, just like `--help`.
+        """
+        def __call__(self, parser, namespace, values, option_string=None):
+            from spykfunc.utils import Configuration
+            kwargs = dict(overrides=namespace.overrides)
+            if namespace.configuration:
+                kwargs['configuration'] = namespace.configuration
+            Configuration(namespace.output_dir, **kwargs).dump()
+            parser.exit()
+
     parser = argparse.ArgumentParser(description="spykfunc is a pyspark implementation of functionalizer.")
     parser.add_argument("recipe_file", help="the XML recipe file")
     parser.add_argument("mvd_file",    help="the input mvd file")
@@ -30,11 +41,16 @@ def _create_parser():
                         help="Name that will show up in the Spark logs. Defaults to 'Functionalizer'")
     parser.add_argument("--checkpoint-dir",
                         help="Specify directory to store checkpoints. Defaults to OUTPUT_DIR/_checkpoints")
-    parser.add_argument("--output-dir",
+    parser.add_argument("--output-dir", default="spykfunc_output",  # see also `spykfunc/functionalizer.py`!
                         help="Specify output directory. Defaults to ./spykfunc_output")
-    parser.add_argument("--spark-opts",
-                        help="All arguments to configure the spark session. Use with quotation marks. E.g. "
-                             "--spark-opts \"--master spark://111.222.333.444:7077 --spark.conf.xx 123\"")
+    parser.add_argument("-c", "--configuration",
+                        help="A configuration file to use. See `--dump-defaults` for default settings")
+    parser.add_argument("-p", "--property", dest='overrides', action='append', default=[],
+                        help="Override single properties of the configuration, i.e.,"
+                             "`-p spark.master=spark://1.2.3.4:7077`. May be specified multiple times.")
+    parser.add_argument("--dump-configuration", action=_ConfDumpAction,
+                        help="Show the configuration including modifications via options prior to this "
+                             "flag and exit")
     parser.add_argument("--overwrite",
                         help="Overwrite the result of selected intermediate steps, forcing their recomputation"
                              "Possible values: F (for filtered, implies E) or E (for extended with synapse properties)",

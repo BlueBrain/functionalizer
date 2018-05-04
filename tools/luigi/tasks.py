@@ -54,10 +54,7 @@ class Spykfunc(luigi.Task):
         nodes = self.cores // self.node_cores
 
         spark_opts = " ".join([
-            "--master spark://$(hostname):7077",
-            "--driver-memory {mem}G",
-            "--executor-cores {cores}",
-            "--executor-memory {mem}G"
+            "-p spark.master=spark://$(hostname):7077"
         ]).format(mem=self.exec_memory,
                   cores=self.exec_cores)
 
@@ -69,7 +66,7 @@ class Spykfunc(luigi.Task):
             "export DATADIR={dd}",
             "export OUTDIR={od}",
             "export SM_WORKER_CORES=$(({nc} + 1))",
-            "export SM_EXECUTE='spykfunc --name {nm} --output-dir=$OUTDIR --spark-opts \"{so}\" {args}'",
+            "export SM_EXECUTE='spykfunc --name {nm} --output-dir=$OUTDIR {so} {args}'",
             "mkdir -p $OUTDIR",
             "cd $OUTDIR",
             "sm_cluster startup $OUTDIR/_cluster {env}",

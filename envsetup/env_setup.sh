@@ -55,7 +55,7 @@ fi
 export SPARK_CONF_DIR=$CURDIR/spark_conf
 
 # Options to pyspark for running spykfunc
-export SPYKFUNC_SPARK_OPTS="--conf spark.sql.shuffle.partitions=$((`nproc`*4))"
+export SPYKFUNC_SPARK_OPTS="-p spark.sql.shuffle.partitions=$((`nproc`*4))"
 
 function pyspark_ipython {
   PYSPARK_DRIVER_PYTHON=ipython pyspark $SPYKFUNC_SPARK_OPTS
