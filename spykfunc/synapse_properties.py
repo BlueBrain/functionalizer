@@ -134,7 +134,7 @@ def patch_ChC_SPAA_cells(circuit, morphology_db):
     patched_circuit = (
         circuit.withColumn(
             "new_post_section",
-            F.when(circuit.src_morphology.endswith('ChC') | circuit.src_morphology.endswith('SP_AA'),
+            F.when(circuit.src_morphology.contains('ChC') | circuit.src_morphology.contains('SP_AA'),
                    get_axon_section_id(circuit.dst_name))
             .otherwise(circuit.post_section)
         )
