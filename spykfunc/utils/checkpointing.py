@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 
-from os import path as osp
 from collections import namedtuple
 from funcsigs import signature
 from functools import wraps
@@ -8,6 +7,7 @@ from pyspark.sql.column import _to_seq
 from pyspark.sql import DataFrame
 import sparkmanager as sm
 from . import get_logger
+from .filesystem import exists, isdir
 
 
 class CheckpointStatus:
@@ -181,7 +181,7 @@ class CheckpointResume:
         :param params: The params of the current checkpoint_resume run
         """
         params.table_name = name.lower()
-        basename = osp.join(params.dest, params.table_name)
+        basename = '/'.join([params.dest, params.table_name])
         if params.filename_suffix:
             basename += '_' + str(params.filename_suffix)
         params.table_path = basename + ".ptable"
@@ -189,7 +189,7 @@ class CheckpointResume:
 
         # Attempt to load, unless overwrite is set to True
         if params.overwrite:
-            if osp.exists(params.parquet_file_path) or osp.exists(params.table_path):
+            if exists(params.parquet_file_path) or exists(params.table_path):
                 params.logger.info("[OVERWRITE %s] Checkpoint found. Overwriting...", name)
         else:
             restored_df = cls._try_restore(name, params)
@@ -241,13 +241,13 @@ class CheckpointResume:
                 return None
 
         # Attempting from table
-        if params.bucket_cols and osp.isdir(params.table_path):
+        if params.bucket_cols and isdir(params.table_path):
             df = try_except_restore(sm.read.table, params.table_name)
             if df is not None:
                 params.status.state = CheckpointStatus.RESTORED_TABLE
 
         # If no table, or error, try with direct parquet
-        if df is None and osp.exists(params.parquet_file_path):
+        if df is None and exists(params.parquet_file_path):
             df = try_except_restore(sm.read.parquet, params.parquet_file_path)
             if df is not None:
                 params.status.state = CheckpointStatus.RESTORED_PARQUET

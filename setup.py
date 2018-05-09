@@ -152,7 +152,8 @@ def setup_package():
             'lazy-property',
             'h5py',
             'lxml',
-            'progress'
+            'progress',
+            'snakebite'
         ],
         setup_requires=maybe_sphinx + maybe_cython,
         tests_require=['pytest', 'pytest-cov'],

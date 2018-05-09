@@ -18,6 +18,7 @@ from . import _filtering
 from . import filters
 from . import utils
 from .utils.checkpointing import checkpoint_resume, CheckpointHandler
+from .utils.filesystem import adjust_for_spark
 
 __all__ = ["Functionalizer", "session", "CheckpointPhases"]
 
@@ -46,6 +47,8 @@ class _SpykfuncOptions:
             self.properties = utils.Configuration(outdir=self.output_dir,
                                                   filename=filename,
                                                   overrides=options_dict.get('overrides'))
+        # In case a Hadoop cluster is running, this needs to be adjusted.
+        self.cache = adjust_for_spark(self.cache)
 
 
 class Functionalizer(object):
@@ -79,7 +82,7 @@ class Functionalizer(object):
 
         # Configuring Spark runtime
         sm.setLogLevel("WARN")
-        sm.setCheckpointDir(os.path.join(self._config.checkpoint_dir, "tmp"))
+        sm.setCheckpointDir(os.path.sep.join([self._config.checkpoint_dir, "tmp"]))
         sm._jsc.hadoopConfiguration().setInt("parquet.block.size", 64 * _MB)
         sm.register_java_functions([
             ("gauss_rand", "spykfunc.udfs.GaussRand"),
@@ -113,7 +116,6 @@ class Functionalizer(object):
         # In "program" mode this dir wont change later, so we can check here
         # for its existence/permission to create
         os.path.isdir(self._config.output_dir) or os.makedirs(self._config.output_dir)
-        os.path.isdir(self._config.checkpoint_dir) or os.makedirs(self._config.checkpoint_dir)
 
         logger.debug("%s: Data loading...", time.ctime())
         # Load recipe
@@ -241,7 +243,7 @@ class Functionalizer(object):
         logger.info("Exporting touches...")
         exporter = self.exporter
         if output_path is not None:
-            exporter.output_path = output_path
+            exporter.output_path = adjust_for_spark(output_path)
         if format_hdf5 is None:
             format_hdf5 = self._config.format_hdf5
 

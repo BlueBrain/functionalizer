@@ -15,6 +15,7 @@ from .definitions import MType
 from .utils.spark_udef import DictAccum
 from .utils import get_logger, make_slices, to_native_str
 from .utils.spark import BroadcastValue, cache_broadcast_single_part
+from .utils.filesystem import adjust_for_spark
 from collections import defaultdict, OrderedDict
 import fnmatch
 import sparkmanager as sm
@@ -160,6 +161,7 @@ class NeuronDataSpark(NeuronData):
 
     # ---
     def load_touch_parquet(self, *files):
+        files = [adjust_for_spark(f) for f in files]
         return sm.read.schema(schema.TOUCH_SCHEMA).parquet(*files)
 
     # ---
