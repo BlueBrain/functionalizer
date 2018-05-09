@@ -35,6 +35,8 @@ class Configuration(dict):
             for k, v in jprops.iter_properties(fd):
                 self[k] = v
         self["spark.jars"] = self.jar_filename
+        self.setdefault("spark.driver.extraJavaOptions",
+                        "-Dderby.system.home=" + os.path.abspath(outdir))
         self.setdefault("spark.eventLog.dir", os.path.abspath(os.path.join(outdir, "spark_eventlog")))
         self.setdefault("spark.sql.warehouse.dir", os.path.abspath(os.path.join(outdir, "spark_warehouse")))
         for k in ["spark.eventLog.dir", "spark.sql.warehouse.dir"]:
