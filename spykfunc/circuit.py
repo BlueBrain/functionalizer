@@ -18,6 +18,7 @@ class Circuit(object):
         :param recipe: a :py:class:`~spykfunc.recipe.Recipe` object
         """
         self.__neuron_data = neurons
+        self.__synapse_reposition_pathways = neurons.load_synapse_reposition_pathways(recipe)
         self.__synapse_class_matrix = neurons.load_synapse_prop_matrix(recipe)
         self.__synapse_class_properties = neurons.load_synapse_properties_and_classification(recipe)
         self.__touch_rules_matrix = neurons.load_touch_rules_matrix(recipe)
@@ -46,6 +47,12 @@ class Circuit(object):
         """:property: synapse class properties
         """
         return self.__synapse_class_properties
+
+    @property
+    def synapse_reposition_pathways(self):
+        """:property: synapse pathways to be repositioned
+        """
+        return self.__synapse_reposition_pathways
 
     @property
     def neurons(self):

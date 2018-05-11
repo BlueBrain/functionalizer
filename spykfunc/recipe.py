@@ -185,6 +185,14 @@ class TouchRule(_GenericPropHolder):
     type = ""
 
 
+class SynapsesReposition(_GenericPropHolder):
+    """Class representing rules to shift synapse positions"""
+    _supported_attrs = {'fromMType', 'toMType', 'type'}
+    fromMType = None
+    toMType = None
+    type = ""
+
+
 # -------------------------------------------------------------------------------------------------------------
 class SynapsesProperty(_GenericPropHolder):
     """Class representing a Synapse property"""
@@ -238,6 +246,7 @@ class Recipe(object):
         self.synapses_distance = None
         self.synapse_properties = []
         self.synapse_classification = []
+        self.synapse_reposition = []
         self.recipe_seeds = [None] * 3
 
         if recipe_file:
@@ -264,6 +273,8 @@ class Recipe(object):
                                                  self.touch_rules, TouchRule)
         self.load_recipe_group_into_list_convert(recipe_xml.find("SynapsesProperties"),
                                                  self.synapse_properties, SynapsesProperty)
+        self.load_recipe_group_into_list_convert(recipe_xml.find("SynapsesReposition"),
+                                                 self.synapse_reposition, SynapsesReposition)
         self.load_recipe_group_into_list_convert(recipe_xml.find("SynapsesClassification"),
                                                  self.synapse_classification, SynapsesClassification)
 

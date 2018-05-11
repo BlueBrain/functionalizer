@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 from lazy_property import LazyProperty
 import hashlib
+import itertools
 import os
 import numpy as np
 from pyspark.sql import functions as F
@@ -232,6 +233,26 @@ class NeuronDataSpark(NeuronData):
 
         merged_props = F.broadcast(merged_props.checkpoint())
         return merged_props
+
+    def load_synapse_reposition_pathways(self, recipe):
+        """Loader for pathways that need synapses to be repositioned
+        """
+        mtype = self.mTypes
+        mtype_rev = {name: i for i, name in enumerate(mtype)}
+
+        paths = []
+        for shift in recipe.synapse_reposition:
+            src = mtype_rev.values()
+            dst = mtype_rev.values()
+            if shift.type != 'AIS':
+                continue
+            if shift.fromMType:
+                src = [mtype_rev[m] for m in fnmatch.filter(mtype, shift.fromMType)]
+            if shift.toMType:
+                dst = [mtype_rev[m] for m in fnmatch.filter(mtype, shift.toMType)]
+            paths.extend(itertools.product(src, dst))
+        pathways = sm.createDataFrame([((s << 16) | d, True) for s, d in paths], schema.SYNAPSE_REPOSITION_SCHEMA)
+        return F.broadcast(pathways)
 
     def load_touch_rules_matrix(self, recipe):
         """Loader for TouchRules

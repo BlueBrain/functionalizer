@@ -7,7 +7,7 @@ from pyspark.sql import types as T
 import math
 import sparkmanager as sm
 
-from .schema import SYNAPSE_CLASS_MAP_SCHEMA as schema
+from .schema import touches_with_pathway, SYNAPSE_CLASS_MAP_SCHEMA as schema
 from .utils.spark import cache_broadcast_single_part
 
 
@@ -123,7 +123,7 @@ def compute_additional_h5_fields(circuit, reduced, syn_class_matrix, syn_props_d
     )
 
 
-def patch_ChC_SPAA_cells(circuit, morphology_db):
+def patch_ChC_SPAA_cells(circuit, morphology_db, pathways_to_patch):
     """Patches a circuit, fixing the touch post-segment of ChC and SPAA cells to axon
     """
     # isChCpre = neuronMap.getMTypeFromIndex(preMType).find( "ChC" )
@@ -131,14 +131,16 @@ def patch_ChC_SPAA_cells(circuit, morphology_db):
 
     get_axon_section_id = _create_axon_section_udf(morphology_db)
 
+    circuit = touches_with_pathway(circuit).join(pathways_to_patch, "pathway_i", "left_outer")
+
     patched_circuit = (
         circuit.withColumn(
             "new_post_section",
-            F.when(circuit.src_morphology.contains('ChC') | circuit.src_morphology.contains('SP_AA'),
+            F.when(circuit.reposition,
                    get_axon_section_id(circuit.dst_name))
-            .otherwise(circuit.post_section)
+             .otherwise(circuit.post_section)
         )
-        .drop("post_section")
+        .drop("post_section", "pathway_i", "reposition")
         .withColumnRenamed("new_post_section", "post_section")
     )
 

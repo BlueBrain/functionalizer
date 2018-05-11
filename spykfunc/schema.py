@@ -63,6 +63,11 @@ SYNAPSE_PROPERTY_SCHEMA = T.StructType([
     T.StructField("axonalConductionVelocity", T.FloatType(), False),
 ])
 
+SYNAPSE_REPOSITION_SCHEMA = T.StructType([
+    T.StructField("pathway_i", T.IntegerType(), False),
+    T.StructField("reposition", T.BooleanType(), False),
+])
+
 SYNAPSE_CLASS_MAP_SCHEMA = T.StructType([
     T.StructField("syn_prop_index", T.IntegerType(), False),
     T.StructField("syn_prop_i", T.ShortType(), False),

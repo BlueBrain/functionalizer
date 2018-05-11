@@ -23,6 +23,9 @@
   <!ELEMENT SynapsesClassification (class*)>
   <!ELEMENT class (#PCDATA)>
   <!ATTLIST class id CDATA #REQUIRED gsyn CDATA #REQUIRED gsynSD CDATA #REQUIRED nsyn CDATA #REQUIRED nsynSD CDATA #REQUIRED dtc CDATA #REQUIRED dtcSD CDATA #REQUIRED u CDATA #REQUIRED uSD CDATA #REQUIRED d CDATA #REQUIRED dSD CDATA #REQUIRED f CDATA #REQUIRED fSD CDATA #REQUIRED ase CDATA #REQUIRED>
+  <!ELEMENT SynapsesReposition (shift*)>
+  <!ELEMENT shift (#PCDATA)>
+  <!ATTLIST shift fromMType CDATA #REQUIRED toMType CDATA #REQUIRED type CDATA #REQUIRED>
   <!ELEMENT ConnectionRules (class*)>  
   <!ELEMENT TouchRules (class*)>
   <!ENTITY connectivityRecipe SYSTEM "builderConnectivityRecipeAllPathways.xml">
@@ -114,6 +117,11 @@
 	    <class id="I2"  gsyn="0.33" gsynSD="0.28" nsyn="16.0" nsynSD="5.50" dtc="8.30" dtcSD="2.2" u="0.25" uSD="0.13" d="706" dSD="405" f="021" fSD="9" ase="0" />
 	    <class id="E2"  gsyn="0.30" gsynSD="0.20" nsyn="5.00" nsynSD="2.00" dtc="1.74" dtcSD="0.18" u="0.50" uSD="0.02" d="671" dSD="017" f="017" fSD="5" ase="1" />
     </SynapsesClassification>
+
+    <SynapsesReposition>
+        <shift fromMType="L*_CHC" toMType="*" type="AIS"/>
+        <shift fromMType="SP_AA" toMType="*" type="AIS"/>
+    </SynapsesReposition>
         
     <ConnectionRules>
         <mTypeRule from="L1_NGC-DA" to="*" bouton_reduction_factor= "0.114" active_fraction= "0.50" cv_syns_connection= "0.25" />
