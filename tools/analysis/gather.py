@@ -14,9 +14,15 @@ import subprocess
 
 rack = re.compile(r'r(\d+)')
 extract = re.compile(r'([^/]+)(?:_(mixed|nvme))?/(\d+)cores_(\d+)nodes_(\d+)execs')
-COLUMNS = "fn jobid circuit cores size threads mode version rules cut export runtime start success".split()
+COLUMNS = (
+    "fn jobid circuit cores size threads mode version rules cut export runtime start walltime mem disk success"
+).split()
 
 GANGLIA_SCALE_CPU = 72 / 100.
+
+SCALE_DISK = 0.02  # 2 TB per node, devided by 100%
+SCALE_MEMORY = 1. / 1024**3  # GB for memory consumption
+SCALE_RUNTIME = 1. / 60**2  # Runtime in hours
 
 L = logging.getLogger(__name__)
 
@@ -240,7 +246,7 @@ def extract_data_from_json(fn):
     df = pandas.DataFrame(columns=COLUMNS,
                           data=[[fn, (slurm or dict()).get('jobid'), circuit,
                                  ncores, size, occupancy, (mode or ''),
-                                 version, rules, cut, export, runtime, start, done]])
+                                 version, rules, cut, export, runtime, start, -1., -1., -1., done]])
     return df, slurm.get('nodes'), start, end
 
 
@@ -262,7 +268,7 @@ def extract_data_from_slurm(jobid, circuit, version='C functionalizer', fn=None)
     df = pandas.DataFrame(columns=COLUMNS,
                           data=[[fn, jobid, circuit,
                                  ncores, size, occupancy, '',
-                                 version, rules, cut, export, runtime, epic(start), done]])
+                                 version, rules, cut, export, runtime, epic(start), -1., -1., -1., done]])
     return df, nodenames, epic(start), epic(end)
 
 
@@ -306,6 +312,9 @@ def extract_data(fns, timeline=False):
             else:
                 timedata = extract_node_data(nodes, start, end)
                 timedata.to_pickle(pickle, protocol=-1)
+            df['mem'] = df['cores'] / df['threads'] * timedata.mem_avg.max() * SCALE_MEMORY
+            df['disk'] = df['cores'] / df['threads'] * timedata.disk_avg.max() * SCALE_DISK
+            df['walltime'] = df['cores'] * df['runtime'] * SCALE_RUNTIME
             yield df, timedata
         except Exception as e:
             L.error("could not parse file '%s'", fn)

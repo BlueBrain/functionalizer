@@ -240,7 +240,19 @@ def save_timelines(to_process, opts):
             L.exception(e)
 
 
-def save(df, value, cols, fn, mean=False, title='', legend=True, xcol='cores', xlabel=None, xticks=None):
+weak_labels = {
+    "walltime": "Wall time / hours",
+    "runtime": "Runtime",
+    "cut": "Runtime for cut step",
+    "rules": "Runtime for rule step",
+    "export": "Runtime for export step",
+    "mem": "Peak memory consumption / GB",
+    "disk": " Peak disk space consumption / TB"
+}
+
+
+def save(df, value, fn, cols=None, title='', mean=False, scatter=False, legend=True,
+         xcol='cores', xlabel=None, xticks=None, logbase=2):
     if df.size == 0:
         L.error("nothing to plot!")
         return
@@ -248,7 +260,13 @@ def save(df, value, cols, fn, mean=False, title='', legend=True, xcol='cores', x
     handels = []
     labels = []
     ymin = None
-    for names, group in df.groupby(cols):
+
+    if cols:
+        data = df.groupby(cols)
+    else:
+        data = [(None, df)]
+
+    for names, group in data:
         if not isinstance(names, list) and not isinstance(names, tuple):
             names = [names]
         if mean:
@@ -259,7 +277,9 @@ def save(df, value, cols, fn, mean=False, title='', legend=True, xcol='cores', x
             local_min = group[value].min()
         ymin = min(ymin, local_min) if ymin else local_min
         # print(names, group[xcol])
-        label = ", ".join("{} = {}".format(k, v) for k, v in zip(cols, names))
+        label = None
+        if cols:
+            label = ", ".join("{} = {}".format(k, v) for k, v in zip(cols, names))
         ax = group.plot(ax=ax, x=group.index, y=[value + "_avg"], style='o-', figsize=(6, 4),
                         label=label)
         hs, _ = ax.get_legend_handles_labels()
@@ -269,12 +289,14 @@ def save(df, value, cols, fn, mean=False, title='', legend=True, xcol='cores', x
                         group[value + '_min'],
                         group[value + '_max'],
                         alpha=0.3)
+    if scatter:
+        ax.scatter(df[xcol], df[value], alpha=0.5)
     if legend:
         ax.legend(handels, labels)
     else:
         ax.legend([], [])
     ax.set_title(title)
-    ax.set_xscale('log', basex=2)
+    ax.set_xscale('log', basex=logbase)
     if xcol == 'cores':
         ax.set_xlabel('Number of Cores')
         ax.xaxis.set_major_formatter(ScalarFormatter())
@@ -285,9 +307,11 @@ def save(df, value, cols, fn, mean=False, title='', legend=True, xcol='cores', x
     _, ymax = plt.ylim()
     # At least half a minute for the ymin!
     plt.ylim(0.8 * ymin, 1.2 * ymax)
-    ax.set_yscale('log', basey=2)
-    ax.set_ylabel('Runtime')
-    ax.yaxis.set_major_formatter(FuncFormatter(to_time))
+    ax.set_yscale('log', basey=logbase)
+    ax.set_ylabel(weak_labels[value])
+    if value == 'runtime':
+        ax.yaxis.set_major_formatter(FuncFormatter(to_time))
+    seaborn.set_style(rc={'ytick.minor.size': 3.0, 'ytick.direction': 'in', 'ytick.color': '.5'})
     seaborn.despine()
     plt.subplots_adjust(bottom=0.13)
     plt.savefig(fn)
@@ -302,27 +326,29 @@ def save_strong(df):
 
         if len(data.version.unique()) > 1:
             L.info("saving strong scaling depending on Spark version")
-            save(data, "runtime", ["version"], "strong_scaling_spark_version_{}.png".format(circ).lower(),
-                 mean=True, title='Strong Scaling: {}'.format(circ))
+            save(data, "runtime", "strong_scaling_spark_version_{}.png".format(circ).lower(),
+                 ["version"], mean=True, title='Strong Scaling: {}'.format(circ))
 
             for step in "rules cut export".split():
                 L.info("saving runtime for step %s of %s", step, circ)
-                save(data, step, ["version"],
-                     "strong_scaling_spark_version_{}_step_{}.png".format(circ, step).lower(), mean=True,
-                     title='Strong Scaling: {}, runtime for step {}'.format(circ, step), legend=False)
+                save(data, step,
+                     "strong_scaling_spark_version_{}_step_{}.png".format(circ, step).lower(), ["version"],
+                     mean=True, title='Strong Scaling: {}, runtime for step {}'.format(circ, step),
+                     legend=False)
 
         L.info("saving threads for %s", circ)
-        save(data, "runtime", ["threads"], "strong_scaling_{}_threads.png".format(circ).lower(), mean=True,
-             title='Strong Scaling: {}, cores used per node'.format(circ))
+        save(data, "runtime", "strong_scaling_{}_threads.png".format(circ).lower(), ["threads"],
+             mean=True, title='Strong Scaling: {}, cores used per node'.format(circ))
 
         L.info("saving runtime for %s", circ)
-        save(data, "runtime", ["mode"], "strong_scaling_{}.png".format(circ).lower(), mean=True,
+        save(data, "runtime", "strong_scaling_{}.png".format(circ).lower(), ["mode"], mean=True,
              title='Strong Scaling: {}, total runtime'.format(circ), legend=False)
 
         for step in "rules cut export".split():
             L.info("saving runtime for step %s of %s", step, circ)
-            save(data, step, ["mode"], "strong_scaling_{}_step_{}.png".format(circ, step).lower(), mean=True,
-                 title='Strong Scaling: {}, runtime for step {}'.format(circ, step), legend=False)
+            save(data, step, "strong_scaling_{}_step_{}.png".format(circ, step).lower(), ["mode"],
+                 mean=True, title='Strong Scaling: {}, runtime for step {}'.format(circ, step),
+                 legend=False)
 
 
 def save_weak(df, names, sizes, unit, cores=None):
@@ -330,16 +356,24 @@ def save_weak(df, names, sizes, unit, cores=None):
         return sizes[names.index(c)]
     xticks = (sizes, ['{}\n{:.1f}'.format(n, s) for n, s in zip(names, sizes)])
     xlabel = unit
+    df["name"] = df.circuit
     df["circuit"] = df.circuit.apply(index)
+    data = df[(df.version == 'Spark 2.2.1') & (df['mode'].isin(['nvme', '']))]
+    data[data.mem > 0][
+        ['name', 'version', 'cores', 'runtime', 'walltime', 'mem', 'disk']].to_csv('weak_scaling_data.csv')
+    L.info("saving weak scaling")
+    for measure in "walltime mem disk".split():
+        d = data[data[measure] > 0]
+        save(d, measure, "weak_scaling_{}.png".format(measure).lower(),
+             mean=True, xcol='circuit', xticks=xticks, xlabel=xlabel,
+             title='Weak Scaling', legend=False, scatter=True, logbase=10)
     if cores:
         df = df[df.cores.isin([int(c) for c in cores.split(',')])]
-    data = df[(df.version == 'Spark 2.2.1') & (df['mode'].isin(['nvme', '']))]
-    L.info("saving weak scaling")
-    save(data, "runtime", ["cores"], "weak_scaling_runtime.png".lower(),
-         mean=True, xcol='circuit', xticks=xticks, xlabel=xlabel,
-         title='Weak Scaling: total runtime')
+    save(data, "runtime", "weak_scaling_runtime.png".lower(),
+         ["cores"], mean=True, xcol='circuit', xticks=xticks, xlabel=xlabel,
+         title='Weak Scaling: runtime')
     for step in "rules cut export".split():
         L.info("saving weak scaling for step %s", step)
-        save(data, step, ["cores"], "weak_scaling_step_{}.png".format(step).lower(),
-             mean=True, xcol='circuit', xticks=xticks, xlabel=xlabel,
+        save(data, step, "weak_scaling_step_{}.png".format(step).lower(),
+             ["cores"], mean=True, xcol='circuit', xticks=xticks, xlabel=xlabel,
              title='Weak Scaling: runtime for step {}'.format(step))
