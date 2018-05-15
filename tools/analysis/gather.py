@@ -13,7 +13,7 @@ from StringIO import StringIO
 import subprocess
 
 rack = re.compile(r'r(\d+)')
-extract = re.compile(r'([^/]+)(?:_(mixed|nvme))?/(\d+)cores_(\d+)nodes_(\d+)execs')
+extract = re.compile(r'(mixed|nvme|hdfs)?/([^/]+)/(\d+)cores_(\d+)nodes_(\d+)execs')
 COLUMNS = (
     "fn jobid circuit cores size threads mode version rules cut export runtime start walltime mem disk success"
 ).split()
@@ -221,12 +221,15 @@ def extract_data_from_json(fn):
         if ncores < 10:
             L.warn("small parallelism in %s, falling back to filename matching", fn)
             raise KeyError('ncores')
+        m = extract.search(fn)
+        if m:
+            mode = m.groups()[0]
     except KeyError:
         m = extract.search(fn)
         if not m:
             L.error("no match for pattern in %s", fn)
             return None, None, None, None
-        circuit, mode = m.groups()[:2]
+        mode, circuit = m.groups()[:2]
         ncores, nodes, execs = (int(n) for n in m.groups()[2:])
     size = ncores // execs
     occupancy = ncores // nodes
