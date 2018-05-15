@@ -141,7 +141,7 @@ def setup_package():
         ],
         #  ----- Requirements -----
         install_requires=[
-            'sparkmanager>=0.4.0',
+            'sparkmanager>=0.5.0',
             'py4j',
             'funcsigs',
             'future',
