@@ -66,7 +66,8 @@ class Spykfunc(luigi.Task):
             "export DATADIR={dd}",
             "export OUTDIR={od}",
             "export SM_WORKER_CORES=$(({nc} + 1))",
-            "export SM_EXECUTE='spykfunc --name {nm} --output-dir=$OUTDIR {so} {args}'",
+            "export SM_EXECUTE='spykfunc --name {nm} --output-dir=$OUTDIR {so} {args} " +
+            "--checkpoint-dir /check_$SLURM_JOBID'",
             "mkdir -p $OUTDIR",
             "cd $OUTDIR",
             "sm_cluster startup $OUTDIR/_cluster {env}",
@@ -93,7 +94,8 @@ class Spykfunc(luigi.Task):
         sl = slurm.Slurm(remote)
         code = sl.launch_job('proj16', self.queue, 'fz_' + self._name(), timedelta(hours=self.hours), cmd,
                              self._workdir(),
-                             self._format_slurm(extras)) \
+                             self._format_slurm(extras),
+                             sbatch_path="/gpfs/bbp.cscs.ch/home/matwolf/.local/bin/sbest") \
                  .wait()
         if not slurm.SlurmExecState.issuccessful(code):
             return
