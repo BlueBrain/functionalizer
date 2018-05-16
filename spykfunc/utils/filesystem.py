@@ -14,8 +14,14 @@ if "HADOOP_HOME" in os.environ:
     __client = snakebite.client.AutoConfigClient()
 
 
-def adjust_for_spark(p):
-    """Adjust a path: add a "file://" prefix if the underlying directory exists and 
+def adjust_for_spark(p, local=None):
+    """Adjust a file path to be used with both HDFS and local filesystems
+
+    Add a "file://" prefix if the underlying directory exists and a HDFS
+    setup is detected, and remove optional "hdfs://" prefixes.
+
+    :param p: file path to adjust
+    :param local: enforce usage of local filesystem when paths are ambiguous
     """
     if p.startswith("hdfs://"):
         if not __client:
@@ -27,7 +33,7 @@ def adjust_for_spark(p):
             return p.replace("file://", "")
         return p
     elif __client:
-        if len(glob.glob(p)) > 0:
+        if local or len(glob.glob(p)) > 0:
             return "file://" + os.path.abspath(p)
     return p
 

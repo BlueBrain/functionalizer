@@ -12,6 +12,7 @@ from pyspark.sql import functions as F
 from pyspark.sql import types as T
 from . import utils
 from .utils import spark_udef as spark_udef_utils
+from .utils.filesystem import adjust_for_spark
 from . import tools
 
 DEFAULT_N_NEURONS_FILE = 200
@@ -49,8 +50,9 @@ class NeuronExporter(object):
 
     # ---
     def export_parquet(self, extended_touches_df, filename="nrn.parquet"):
-        output_path = self.ensure_file_path(filename)
-        return extended_touches_df.sort("pre_gid", "post_gid").write.parquet(output_path, mode="overwrite")
+        output_path = os.path.join(self.output_path, filename)
+        return extended_touches_df.sort("pre_gid", "post_gid") \
+                                  .write.parquet(adjust_for_spark(output_path), mode="overwrite")
 
     # ---
     def export_hdf5(self, extended_touches_df, n_gids, create_efferent=False, n_partitions=None):
