@@ -237,8 +237,6 @@ class Functionalizer(object):
         :param format_parquet: If True will export the touches in parquet format (rather than hdf5)
         :param output_path: Changes the default export directory
         """
-        import pdb
-        pdb.set_trace()
         logger.info("Computing touch synaptical properties")
         extended_touches = self._assign_synpse_properties(overwrite=overwrite, mode=self._mode)
 
