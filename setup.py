@@ -75,9 +75,9 @@ ext_mods = {
     'common': {},
     'structbuf': {},
     'cppneuron': dict(
-        include_dirs=[osp.join(BASE_DIR, '../deps/hadoken/include'),
-                      osp.join(BASE_DIR, '../deps/mvd-tool/include'),
-                      osp.join(BASE_DIR, '../deps/mvd-tool/deps/highfive/include')],
+        include_dirs=[osp.join(BASE_DIR, 'deps/hadoken/include'),
+                      osp.join(BASE_DIR, 'deps/mvd-tool/include'),
+                      osp.join(BASE_DIR, 'deps/mvd-tool/deps/highfive/include')],
         library_dirs=[],
         libraries=['hdf5']
     ),
