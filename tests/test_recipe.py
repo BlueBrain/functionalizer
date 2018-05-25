@@ -1,6 +1,5 @@
 """Test recipe class and functionality
 """
-import pytest
 from spykfunc.recipe import Recipe
 try:
     from pathlib2 import Path
@@ -26,9 +25,12 @@ def test_syn_distances():
     rep.load_bouton_distance({"blaaaa": 1, "defaultInhSynapsesDistance": 0.26})
     assert rep.synapses_distance.inhibitorySynapsesDistance == 0.26
 
+
 def test_syn_distances_repr():
-    import sys, spykfunc.recipe
+    """Test that xml->python->xml is identical.
+    """
     rep = Recipe()
     rep.load_bouton_distance({"blaaaa": 1, "defaultInhSynapsesDistance": 6})
-    rpr = '<InitialBoutonDistance defaultExcSynapsesDistance="25.0" defaultInhSynapsesDistance="6">'
-    assert str(rep.synapses_distance) == rpr
+    rpr1 = '<InitialBoutonDistance defaultExcSynapsesDistance="25.0" defaultInhSynapsesDistance="6">'
+    rpr2 = '<InitialBoutonDistance defaultInhSynapsesDistance="6" defaultExcSynapsesDistance="25.0">'
+    assert str(rep.synapses_distance) in (rpr1, rpr2)

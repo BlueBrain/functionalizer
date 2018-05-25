@@ -4,10 +4,9 @@
 # *******************************************************************************************************
 from __future__ import print_function, absolute_import
 
-from os import path
+import pprint
 from lxml import etree
 from six import iteritems
-import pprint
 from .definitions import CellClass
 from .utils import get_logger
 

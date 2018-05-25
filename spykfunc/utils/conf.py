@@ -1,13 +1,15 @@
+"""Small configuration shim module.
+"""
 from __future__ import print_function
 import io
+import subprocess
+import sys
+
 import jprops
-import os
 try:
     from pathlib2 import Path
 except ImportError:
     from pathlib import Path
-import subprocess
-import sys
 from six import iteritems, text_type
 
 
