@@ -1,13 +1,18 @@
 package spykfunc.udfs;
 
-import org.apache.spark.sql.api.java.UDF3;
+import spykfunc.udfs.hadoken.Random;
+
+import org.apache.spark.sql.api.java.UDF5;
 import org.apache.commons.math3.distribution.GammaDistribution;
 
-public class GammaRand extends Rand<GammaDistribution> implements UDF3<Integer, Float, Float, Float> {
+public class GammaRand implements UDF5<Integer, Integer, Integer, Float, Float, Double> {
     @Override
-    public Float call(Integer id, Float mean, Float sd) throws Exception {
+    public Double call(Integer pre, Integer post, Integer id, Float mean, Float sd) throws Exception {
         Float shape = mean * mean / (sd * sd);
         Float scale = sd * sd / mean;
-        return (float) (this.get(id, () -> new GammaDistribution(shape, scale)).sample());
+        Random r = Random.create(pre, post, id);
+        Double value = new GammaDistribution(r, shape, scale).sample();
+        r.dispose();
+        return value;
     }
 }

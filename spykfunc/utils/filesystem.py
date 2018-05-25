@@ -10,7 +10,7 @@ import snakebite.client
 
 
 __client = None
-if "HADOOP_HOME" in os.environ:
+if os.environ.get("HADOOP_HOME", "") != "":
     __client = snakebite.client.AutoConfigClient()
 
 

@@ -76,7 +76,9 @@ class Functionalizer(object):
 
         # Create Spark session with the static config
         report_file = os.path.join(self._config.output_dir, 'report.json')
-        sm.create(self._config.name, self._config.properties("spark"), report=report_file)
+        sm.create(self._config.name,
+                  self._config.properties("spark"),
+                  report=report_file)
 
         # Configuring Spark runtime
         sm.setLogLevel("WARN")

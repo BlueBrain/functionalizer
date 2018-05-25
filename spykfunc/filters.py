@@ -206,7 +206,7 @@ class ReduceAndCut(DataSetOperation):
 
         logger.debug(" -> Cutting touches")
         return (all_touches
-                .sampleBy("pathway_i", fractions)
+                .sampleBy("pathway_i", fractions, seed=42)
                 .repartition("src", "dst"))
 
     # ---
@@ -250,7 +250,7 @@ class ReduceAndCut(DataSetOperation):
         _df = connection_survival_rate
         cut_connections = (
             _df
-            .where((_df.survival_rate > .0) & (_df.survival_rate > F.rand()))
+            .where((_df.survival_rate > .0) & (_df.survival_rate > F.rand(seed=42)))
             .select("src", "dst", "pathway_i", "reduced_touch_counts_connection")
         )
         # Much smaller data volume but we cant coealesce
@@ -309,7 +309,7 @@ class ReduceAndCut(DataSetOperation):
         shall_keep_connections = (
             cut_touch_counts_connection
             .join(active_fractions, "pathway_i")
-            .where(F.rand() < F.col("active_fraction"))
+            .where(F.rand(seed=42) < F.col("active_fraction"))
             .select("src", "dst")
         )
 

@@ -2,6 +2,11 @@ from __future__ import print_function
 import io
 import jprops
 import os
+try:
+    from pathlib2 import Path
+except ImportError:
+    from pathlib import Path
+import subprocess
 import sys
 from six import iteritems, text_type
 
@@ -10,10 +15,12 @@ class Configuration(dict):
     """Manage Spark and other configurations.
     """
 
-    default_filename = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'default.properties')
+    default_filename = Path(__file__).parent.parent / 'data' / 'default.properties'
     """:property: filename storing the defaults"""
-    jar_filename = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'spykfunc_udfs.jar')
+    jar_filename = Path(__file__).parent.parent / 'data' / 'spykfunc_udfs.jar'
     """:property: path to a jar needed for operations"""
+    lib_directory = Path(__file__).parent.parent / 'data'
+    """:property: directory with compiled JNI libraries"""
 
     def __init__(self, outdir, filename=None, overrides=None):
         """Provide a configuaration dictionary
@@ -26,22 +33,31 @@ class Configuration(dict):
         :param filename: alternative file to load
         """
         super(Configuration, self).__init__()
-        self.__filename = filename or self.default_filename
-        with open(self.__filename) as fd:
+        outdir = Path(outdir)
+        self.__filename = Path(filename or self.default_filename)
+        with self.__filename.open() as fd:
             for k, v in jprops.iter_properties(fd):
                 self[k] = v
         if overrides:
             fd = io.StringIO("\n".join([text_type(s) for s in overrides]))
             for k, v in jprops.iter_properties(fd):
                 self[k] = v
+
+        libs = ":".join(str(p) for p in self.find_libs(self.lib_directory))
+        libs = str(self.lib_directory)
         self["spark.jars"] = self.jar_filename
+        self["spark.driver.extraLibraryPath"] = libs
+        self["spark.executor.extraLibraryPath"] = libs
         self.setdefault("spark.driver.extraJavaOptions",
-                        "-Dderby.system.home=" + os.path.abspath(outdir))
-        self.setdefault("spark.eventLog.dir", os.path.abspath(os.path.join(outdir, "spark_eventlog")))
-        self.setdefault("spark.sql.warehouse.dir", os.path.abspath(os.path.join(outdir, "spark_warehouse")))
+                        "-Dderby.system.home={} -Djava.library.path={}".format(
+                            outdir.resolve(),
+                            self.lib_directory.resolve()))
+        self.setdefault("spark.executor.extraJavaOptions",
+                        "-Djava.library.path={}".format(self.lib_directory.resolve()))
+        self.setdefault("spark.eventLog.dir", outdir.resolve() / "spark_eventlog")
+        self.setdefault("spark.sql.warehouse.dir", outdir.resolve() / "spark_warehouse")
         for k in ["spark.eventLog.dir", "spark.sql.warehouse.dir"]:
-            if not os.path.exists(self[k]):
-                os.makedirs(self[k])
+            Path(self[k]).mkdir(parents=True, exist_ok=True)
 
     def __call__(self, prefix):
         """Yield all key, value pairs that match the prefix
@@ -51,6 +67,19 @@ class Configuration(dict):
             path = k.split('.')[:len(prefix)]
             if path == prefix:
                 yield k, v
+
+    @staticmethod
+    def find_libs(path):
+        """Find all necessary include paths for the libraries in `path`.
+        """
+        libs = {Path(path)}
+        for lib in Path(path).glob("*.so"):
+            for line in subprocess.check_output(["ldd", str(lib)]).splitlines():
+                if "=>" in line:
+                    libs.add(Path(line.split()[2]).parent)
+                elif line.startswith("\t/"):
+                    libs.add(Path(line.split()[0]).parent)
+        return libs
 
     def dump(self):
         """Dump the default configuration to the terminal

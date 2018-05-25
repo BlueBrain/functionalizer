@@ -71,12 +71,12 @@ def compute_additional_h5_fields(circuit, reduced, syn_class_matrix, syn_props_d
     # IDs for random functions need to be unique, hence the use of offset
     connections = connections.selectExpr(
         "*",
-        "gamma_rand(cast(syn_prop_i as int), synprop.gsyn, synprop.gsynSD) as rand_gsyn",
-        "gamma_rand(cast(syn_prop_i + {o} as int), synprop.d, synprop.dSD) as rand_d".format(o=offset),
-        "gamma_rand(cast(syn_prop_i + 2 * {o} as int), synprop.f, synprop.fSD) as rand_f".format(o=offset),
-        "gauss_rand(cast(syn_prop_i as int), synprop.u, synprop.uSD) as rand_u",
-        "gauss_rand(cast(syn_prop_i + {o} as int), synprop.dtc, synprop.dtcSD) as rand_dtc".format(o=offset),
-        "if(synprop.nrrp > 1, poisson_rand(cast(syn_prop_i as int), synprop.nrrp - 1) + 1, 1) as rand_nrrp"
+        "gamma_rand(src, dst, 0, synprop.gsyn, synprop.gsynSD) as rand_gsyn",
+        "gamma_rand(src, dst, 1, synprop.d, synprop.dSD) as rand_d".format(o=offset),
+        "gamma_rand(src, dst, 2, synprop.f, synprop.fSD) as rand_f".format(o=offset),
+        "gauss_rand(src, dst, 3, synprop.u, synprop.uSD) as rand_u",
+        "gauss_rand(src, dst, 4, synprop.dtc, synprop.dtcSD) as rand_dtc".format(o=offset),
+        "if(synprop.nrrp > 1, poisson_rand(src, dst, 5, synprop.nrrp - 1) + 1, 1) as rand_nrrp"
     )
 
     touches = circuit.alias("c").join(connections.alias("conn"),

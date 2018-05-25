@@ -10,9 +10,7 @@ import sparkmanager as sm
 
 NUM_AFTER_DISTANCE = 2264809
 NUM_AFTER_TOUCH = 2218004
-NUM_AFTER_FILTER = 169000  # To be used with tolerance defined below
-
-TOLERANCE = 0.02  # Statistical tolerance in %
+NUM_AFTER_FILTER = 167560
 
 
 @pytest.mark.slow
@@ -34,8 +32,7 @@ class TestFilters(object):
         """Test the reduce and cut filter: not deterministic
         """
         fz.run_reduce_and_cut()
-        count = fz.circuit.count()
-        assert abs(count - NUM_AFTER_FILTER) < TOLERANCE * NUM_AFTER_FILTER
+        assert fz.circuit.count() == NUM_AFTER_FILTER
 
     def test_resume(self, fz, tmpdir_factory):
         """Make sure that resuming "works"
@@ -51,8 +48,7 @@ class TestFilters(object):
         fz2.process_filters()
         original = fz.circuit.count()
         count = fz2.circuit.count()
-        assert count != original
-        assert abs(count - NUM_AFTER_FILTER) < TOLERANCE * NUM_AFTER_FILTER
+        assert count == original
 
     def test_checkpoint_schema(self, fz, tmpdir_factory):
         """To conserve space, only touch columns should be written to disk
@@ -81,8 +77,7 @@ class TestFilters(object):
         fz2.process_filters(overwrite=True)
         original = fz.circuit.count()
         count = fz2.circuit.count()
-        assert count != original
-        assert abs(count - NUM_AFTER_FILTER) < TOLERANCE * NUM_AFTER_FILTER
+        assert count == original
 
     def test_writeout(self, fz):
         """Simple test that saving results works.

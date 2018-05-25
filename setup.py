@@ -76,15 +76,14 @@ ext_mods = {
     'structbuf': {},
     'cppneuron': dict(
         include_dirs=[osp.join(BASE_DIR, 'deps/hadoken/include'),
-                      osp.join(BASE_DIR, 'deps/mvd-tool/include'),
-                      osp.join(BASE_DIR, 'deps/mvd-tool/deps/highfive/include')],
+                      osp.join(BASE_DIR, 'deps/mvd-tool/include')],
         library_dirs=[],
         libraries=['hdf5']
     ),
 }
 
 # Quick attempt find INCLUDE_DIRS required by cppneuron
-_libs_env = ['HDF5_ROOT', 'BOOST_ROOT']
+_libs_env = ['HDF5_ROOT', 'BOOST_ROOT', 'HIGHFIVE_ROOT']
 for lib in _libs_env:
     lib_ROOT = os.getenv(lib)
     if lib_ROOT is not None and lib_ROOT != '/usr':
@@ -141,19 +140,20 @@ def setup_package():
         ],
         #  ----- Requirements -----
         install_requires=[
-            'sparkmanager>=0.5.0',
-            'py4j',
-            'funcsigs',
-            'future',
             'docopt',
             'enum34;python_version<"3.4"',
-            'jprops',
-            'numpy',
-            'lazy-property',
+            'funcsigs',
+            'future',
             'h5py',
+            'jprops',
+            'lazy-property',
             'lxml',
+            'numpy',
+            'pathlib2;python_version<"3.4"',
             'progress',
-            'snakebite'
+            'py4j',
+            'snakebite',
+            'sparkmanager>=0.5.0',
         ],
         setup_requires=maybe_sphinx + maybe_cython,
         tests_require=['pytest', 'pytest-cov'],
