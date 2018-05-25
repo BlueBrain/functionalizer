@@ -6,6 +6,7 @@ from __future__ import print_function, absolute_import
 
 from os import path
 from lxml import etree
+from six import iteritems
 import pprint
 from .definitions import CellClass
 from .utils import get_logger
@@ -124,14 +125,19 @@ class _GenericPropHolder(object):
 # -------------------------------------------------------------------------------------------------------------
     # We keep the index in which entries are declared
     _supported_attrs = ("_i",)
+    # allow to rename attributes
+    _map_attrs = dict()
 
     def __init__(self, **rules):
+        self._supported_attrs = set(self._supported_attrs) | set(self._map_attrs.keys())
         for name, value in rules.items():
             # Note: "_i" must be checked for since subclasses override _supported_attrs
             if name not in self._supported_attrs and name != "_i":
                 logger.warning("Attribute %s not expected for recipe class %s",
                                name, type(self).__name__)
                 continue
+
+            name = self._map_attrs.get(name, name)
 
             if value == "*":
                 # * the match-all, is represented as None
@@ -140,7 +146,8 @@ class _GenericPropHolder(object):
 
             # Attempt conversion to real types
             try:
-                value = int(value)
+                if value == str(int(value)):
+                    value = int(value)
             except ValueError:
                 try:
                     value = float(value)
@@ -153,16 +160,30 @@ class _GenericPropHolder(object):
         return getattr(self, item)
 
     def __repr__(self):
-        attrs = " ".join('{0}="{1}"'.format(attr_name, getattr(self, attr_name))
-                         for attr_name in self._supported_attrs)
+        unmap = {v: k for k, v in iteritems(self._map_attrs)}
+        attrs = " ".join('{0}="{1}"'.format(unmap.get(n, n), getattr(self, self._map_attrs.get(n, n)))
+                         for n in self._supported_attrs if n != '_i')
         return '<{cls_name} {attrs}>'.format(cls_name=type(self).__name__, attrs=attrs)
 
 
+class Seeds(_GenericPropHolder):
+    """Container to store seeds"""
+
+    _supported_attrs = {'recipeSeed', 'columnSeed', 'synapseSeed'}
+    recipeSeed = 0
+    columnSeed = 0
+    synapseSeed = 0
+
+
 # -------------------------------------------------------------------------------------------------------------
-class SynapseBoutonDistances(_GenericPropHolder):
+class InitialBoutonDistance(_GenericPropHolder):
     """Info/filter for Synapses Bouton Distance"""
     # -------------------------------------------------------------------------------------------------------------
-    _supported_attrs = {'inhibitorySynapsesDistance', 'excitatorySynapsesDistance'}
+    # implies _supported_attrs
+    _map_attrs = {
+        'defaultInhSynapsesDistance': 'inhibitorySynapsesDistance',
+        'defaultExcSynapsesDistance': 'excitatorySynapsesDistance'
+    }
     inhibitorySynapsesDistance = 5.0
     excitatorySynapsesDistance = 25.0
 
@@ -247,7 +268,7 @@ class Recipe(object):
         self.synapse_properties = []
         self.synapse_classification = []
         self.synapse_reposition = []
-        self.recipe_seeds = [None] * 3
+        self.seeds = None
 
         if recipe_file:
             self.load_from_xml(recipe_file)
@@ -267,6 +288,7 @@ class Recipe(object):
         else:
             recipe_xml = tree.getroot()
 
+        self.load_seeds(recipe_xml.find("Seeds"))
         self.load_probabilities(recipe_xml.find("ConnectionRules"))
         self.load_bouton_distance(recipe_xml.find("InitialBoutonDistance"))
         self.load_recipe_group_into_list_convert(recipe_xml.find("TouchRules"),
@@ -289,12 +311,20 @@ class Recipe(object):
 
     # -------
     def load_bouton_distance(self, initial_bouton_distance_info):
-        expected_fields = ("defaultInhSynapsesDistance", "defaultExcSynapsesDistance")
         if hasattr(initial_bouton_distance_info, "items"):
-            infos = {key: val for key, val in initial_bouton_distance_info.items() if key in expected_fields}
-            self.synapses_distance = SynapseBoutonDistances(**infos)
+            infos = {k: v for k, v in initial_bouton_distance_info.items()}
+            self.synapses_distance = InitialBoutonDistance(**infos)
         else:
-            self.synapses_distance = SynapseBoutonDistances()
+            self.synapses_distance = InitialBoutonDistance()
+
+    def load_seeds(self, seed_info):
+        """Load seeds from XML structure.
+        """
+        if hasattr(seed_info, "items"):
+            infos = {k: v for k, v in seed_info.items()}
+            self.seeds = Seeds(**infos)
+        else:
+            self.seeds = Seeds()
 
     # -------
     @classmethod
@@ -334,28 +364,3 @@ class Recipe(object):
         def __iter__(self, *args):
             """Gets an iterator for children nodes, required for simple probability"""
             return iter(self._sub_nodes)
-
-
-####################
-# TESTING
-####################
-def test_load_xml(path):
-    r = Recipe(recipe_path)
-    print(str(r))
-
-
-def test_syn_distances():
-    from xml.etree.ElementTree import Element
-    el = Element("InitialBoutonDistance", {"blaaaa": 1, "defaultInhSynapsesDistance": 0.25})
-    rep = Recipe()
-    rep.load_bouton_distance(el)
-    assert rep.synapses_distance.inhibitorySynapsesDistance == 0.25
-    rep.load_bouton_distance({"blaaaa": 1, "defaultInhSynapsesDistance": 0.26})
-    assert rep.synapses_distance.inhibitorySynapsesDistance == 0.26
-
-
-if __name__ == "__main__":
-    BASE_DIR = "/home/leite/dev/TestData/circuitBuilding_1000neurons"
-    recipe_path = path.join(BASE_DIR, "recipe/builderRecipeAllPathways.xml")
-    test_load_xml(recipe_path)
-    test_syn_distances()
