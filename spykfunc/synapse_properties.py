@@ -71,12 +71,12 @@ def compute_additional_h5_fields(circuit, reduced, syn_class_matrix, syn_props_d
     # IDs for random functions need to be unique, hence the use of offset
     connections = connections.selectExpr(
         "*",
-        "gamma_rand(src, dst, 0, synprop.gsyn, synprop.gsynSD) as rand_gsyn",
-        "gamma_rand(src, dst, 1, synprop.d, synprop.dSD) as rand_d".format(o=offset),
-        "gamma_rand(src, dst, 2, synprop.f, synprop.fSD) as rand_f".format(o=offset),
-        "gauss_rand(src, dst, 3, synprop.u, synprop.uSD) as rand_u",
-        "gauss_rand(src, dst, 4, synprop.dtc, synprop.dtcSD) as rand_dtc".format(o=offset),
-        "if(synprop.nrrp > 1, poisson_rand(src, dst, 5, synprop.nrrp - 1) + 1, 1) as rand_nrrp"
+        "cast(gamma_rand(src, dst, 0, synprop.gsyn, synprop.gsynSD) as float) rand_gsyn",
+        "cast(gamma_rand(src, dst, 1, synprop.d, synprop.dSD) as float) rand_d".format(o=offset),
+        "cast(gamma_rand(src, dst, 2, synprop.f, synprop.fSD) as float) rand_f".format(o=offset),
+        "cast(gauss_rand(src, dst, 3, synprop.u, synprop.uSD) as float) rand_u",
+        "cast(gauss_rand(src, dst, 4, synprop.dtc, synprop.dtcSD) as float) rand_dtc".format(o=offset),
+        "if(synprop.nrrp > 1, cast(poisson_rand(src, dst, 5, synprop.nrrp - 1) as float) + 1, 1) as rand_nrrp"
     )
 
     touches = circuit.alias("c").join(connections.alias("conn"),
@@ -140,8 +140,14 @@ def patch_ChC_SPAA_cells(circuit, morphology_db, pathways_to_patch):
                    get_axon_section_id(circuit.dst_name))
              .otherwise(circuit.post_section)
         )
-        .drop("post_section", "pathway_i", "reposition")
+        .withColumn("new_post_segment",
+                    F.when(circuit.reposition, 0).otherwise(circuit.post_segment))
+        .withColumn("new_post_offset",
+                    F.when(circuit.reposition, 0.5).otherwise(circuit.post_offset))
+        .drop("post_section", "post_segment", "post_offset", "pathway_i", "reposition")
         .withColumnRenamed("new_post_section", "post_section")
+        .withColumnRenamed("new_post_segment", "post_segment")
+        .withColumnRenamed("new_post_offset", "post_offset")
     )
 
     return patched_circuit
