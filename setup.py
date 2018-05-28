@@ -11,7 +11,7 @@ import os
 import os.path as osp
 import glob
 
-SPYKFUNC_VERSION = "0.8.2"
+SPYKFUNC_VERSION = "0.9.0"
 BUILD_TYPE = os.getenv('BUILD_TYPE', "RELEASE").upper()
 BASE_DIR = osp.dirname(__file__)
 EXAMPLES_DESTINATION = "share/spykfunc/examples"
@@ -123,6 +123,8 @@ def setup_package():
     setup(
         # name and other metadata are in setup.cfg
         version=SPYKFUNC_VERSION,
+        name="spykfunc",
+        summary="A PySpark implementation of the BBP Functionalizer",
         packages=[
             'spykfunc',
             'spykfunc.dataio',

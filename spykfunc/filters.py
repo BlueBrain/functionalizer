@@ -106,9 +106,10 @@ class ReduceAndCut(DataSetOperation):
     """
 # -------------------------------------------------------------------------------------------------
 
-    def __init__(self, conn_rules, stats):
+    def __init__(self, conn_rules, stats, seed):
         self.conn_rules = sm.broadcast(conn_rules)
         self.stats = stats
+        self.seed = seed
 
     # ---
     def apply(self, circuit, *args, **kw):
@@ -191,12 +192,11 @@ class ReduceAndCut(DataSetOperation):
         return params_df.coalesce(1)
 
     # ---
-    @staticmethod
     @sm.assign_to_jobgroup
     @checkpoint_resume(CheckpointPhases.FILTER_REDUCED_TOUCHES.name, bucket_cols=("src", "dst"),
                        # Even if we change to not break exec plan we always keep only touch cols
                        handlers=[CheckpointHandler.before_save(Circuit.only_touch_columns)])
-    def apply_reduce(all_touches, params_df):
+    def apply_reduce(self, all_touches, params_df):
         """ Applying reduce as a sampling
         """
         # Reducing touches on a single neuron is equivalent as reducing on
@@ -206,13 +206,12 @@ class ReduceAndCut(DataSetOperation):
 
         logger.debug(" -> Cutting touches")
         return (all_touches
-                .sampleBy("pathway_i", fractions, seed=42)
+                .sampleBy("pathway_i", fractions, seed=self.seed)
                 .repartition("src", "dst"))
 
     # ---
-    @staticmethod
     @sm.assign_to_jobgroup
-    def calc_cut_survival_rate(reduced_touches, params_df, mtypes):
+    def calc_cut_survival_rate(self, reduced_touches, params_df, mtypes):
         """
         Apply cut filter
         Cut computes a survivalRate and activeFraction for each post neuron
@@ -250,17 +249,16 @@ class ReduceAndCut(DataSetOperation):
         _df = connection_survival_rate
         cut_connections = (
             _df
-            .where((_df.survival_rate > .0) & (_df.survival_rate > F.rand(seed=42)))
+            .where((_df.survival_rate > .0) & (_df.survival_rate > F.rand(seed=self.seed)))
             .select("src", "dst", "pathway_i", "reduced_touch_counts_connection")
         )
         # Much smaller data volume but we cant coealesce
         return cut_connections
 
     # ----
-    @staticmethod
     @sm.assign_to_jobgroup
     @checkpoint_resume("shall_keep_connections", bucket_cols=("src", "dst"))
-    def calc_cut_active_fraction(cut_touch_counts_connection, params_df, mtypes):
+    def calc_cut_active_fraction(self, cut_touch_counts_connection, params_df, mtypes):
         """
         Performs the second part of the cut algorithm according to the active_fractions
         :param params_df: The parameters DF (pA, uA, active_fraction_legacy)
@@ -309,7 +307,7 @@ class ReduceAndCut(DataSetOperation):
         shall_keep_connections = (
             cut_touch_counts_connection
             .join(active_fractions, "pathway_i")
-            .where(F.rand(seed=42) < F.col("active_fraction"))
+            .where(F.rand(seed=self.seed) < F.col("active_fraction"))
             .select("src", "dst")
         )
 

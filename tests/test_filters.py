@@ -12,7 +12,7 @@ import sparkmanager as sm
 
 NUM_AFTER_DISTANCE = 2264809
 NUM_AFTER_TOUCH = 2218004
-NUM_AFTER_FILTER = 167560
+NUM_AFTER_FILTER = 170113
 
 
 @pytest.mark.slow

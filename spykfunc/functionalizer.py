@@ -324,7 +324,9 @@ class Functionalizer(object):
         # self.touchDF = cumulative_distance_f.apply(self.circuit)
 
         logger.info("Applying Reduce and Cut...")
-        rc = filters.ReduceAndCut(mtype_conn_rules, self.neuron_stats)
+        rc = filters.ReduceAndCut(mtype_conn_rules,
+                                  self.neuron_stats,
+                                  self.recipe.seeds.synapseSeed)
         return rc.apply(self.circuit, mtypes=self._circuit.mtype_df)
 
     # -------------------------------------------------------------------------
