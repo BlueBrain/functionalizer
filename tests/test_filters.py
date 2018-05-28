@@ -2,8 +2,10 @@
 """
 
 import os
+import pandas as pd
 import pytest
 import spykfunc
+import pyspark.sql.functions as F
 from spykfunc.definitions import RunningMode
 from conftest import ARGS
 import sparkmanager as sm
@@ -16,6 +18,9 @@ NUM_AFTER_FILTER = 167560
 @pytest.mark.slow
 @pytest.mark.incremental
 class TestFilters(object):
+    """Sequential tests of filters.
+    """
+
     def test_distance(self, fz):
         """Test the distance rules: deterministic
         """
@@ -92,3 +97,16 @@ class TestFilters(object):
             "need at least one connection with more than one touch"
         assert conns.where("count > 1").count() == 0, \
             "can only have one property setting per connection"
+
+        props = df.where((F.col("pre_gid") == 618) & (F.col("post_gid") == 608)) \
+                  .select("gsyn", "u", "d", "f", "dtc").toPandas()
+        want = pd.DataFrame([(0.41551604866981506, 0.484548956155777, 656.5263671875,
+                              11.101598739624023, 1.8590598106384277)],
+                            dtype='float64',
+                            columns=["gsyn", "u", "d", "f", "dtc"])
+        assert props.drop_duplicates().equals(want)
+
+    def test_writeout_hdf5(self, fz):
+        """Simple test for h5 export.
+        """
+        fz.export_results(format_hdf5=True)

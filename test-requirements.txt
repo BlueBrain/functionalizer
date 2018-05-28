@@ -2,5 +2,6 @@
 # They will be installed automatically when running `python setup.py test`.
 # ATTENTION: Don't remove pytest-cov and pytest as they are needed.
 -r requirements.txt
+pandas
 pytest-cov
 pytest
