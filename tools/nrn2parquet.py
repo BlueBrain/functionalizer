@@ -99,18 +99,12 @@ h5touches = h5floats.select(
     h5floats.data.getItem(11).alias("d"),
     h5floats.data.getItem(12).alias("f"),
     h5floats.data.getItem(13).alias("dtc"),
-    h5floats.data.getItem(14).alias("synapseType"),
-    h5floats.data.getItem(15).alias("morphology"),
-    h5floats.data.getItem(16).alias("branch_order_dend"),
-    h5floats.data.getItem(17).alias("branch_order_axon"),
-    h5floats.data.getItem(18).alias("ase"),
-    h5floats.data.getItem(19).alias("branch_type"))
-    # h5floats.data.getItem(14).cast("int").alias("synapseType"),
-    # h5floats.data.getItem(15).cast("int").alias("morphology"),
-    # h5floats.data.getItem(16).cast("int").alias("branch_order_dend"),
-    # h5floats.data.getItem(17).cast("int").alias("branch_order_axon"),
-    # h5floats.data.getItem(18).cast("int").alias("ase"),
-    # h5floats.data.getItem(19).cast("int").alias("branch_type"))
+    h5floats.data.getItem(14).cast("int").alias("synapseType"),
+    h5floats.data.getItem(15).cast("int").alias("morphology"),
+    h5floats.data.getItem(16).cast("int").alias("branch_order_dend"),
+    h5floats.data.getItem(17).cast("int").alias("branch_order_axon"),
+    h5floats.data.getItem(18).cast("int").alias("ase"),
+    h5floats.data.getItem(19).cast("int").alias("branch_type"))
 
 h5touches.write.parquet(os.path.join(args.output, "circuit.parquet"))
 print("converted {} touches".format(h5touches.count()))
