@@ -134,7 +134,7 @@ def setup_package():
         ],
         ext_modules=extensions,
         package_data={
-            'spykfunc': ['data/*']
+            'spykfunc': ['data/*', 'data/librandom.so']
         },
         data_files=[
             (EXAMPLES_DESTINATION, glob.glob(osp.join(BASE_DIR, "examples", "*.py")) +
