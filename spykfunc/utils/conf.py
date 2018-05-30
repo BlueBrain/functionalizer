@@ -35,7 +35,7 @@ class Configuration(dict):
         :param filename: alternative file to load
         """
         super(Configuration, self).__init__()
-        outdir = Path(outdir)
+        outdir = Path(outdir) / "_spark"
         self.__filename = Path(filename or self.default_filename)
         with self.__filename.open() as fd:
             for k, v in jprops.iter_properties(fd):
@@ -56,8 +56,8 @@ class Configuration(dict):
                             self.lib_directory.resolve()))
         self.setdefault("spark.executor.extraJavaOptions",
                         "-Djava.library.path={}".format(self.lib_directory.resolve()))
-        self.setdefault("spark.eventLog.dir", outdir.resolve() / "spark_eventlog")
-        self.setdefault("spark.sql.warehouse.dir", outdir.resolve() / "spark_warehouse")
+        self.setdefault("spark.eventLog.dir", outdir.resolve() / "eventlog")
+        self.setdefault("spark.sql.warehouse.dir", outdir.resolve() / "warehouse")
         for k in ["spark.eventLog.dir", "spark.sql.warehouse.dir"]:
             Path(self[k]).mkdir(parents=True, exist_ok=True)
 
