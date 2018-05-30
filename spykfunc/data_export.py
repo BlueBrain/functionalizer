@@ -52,7 +52,8 @@ class NeuronExporter(object):
     def export_parquet(self, extended_touches_df, filename="nrn.parquet"):
         output_path = os.path.join(self.output_path, filename)
         return extended_touches_df.sort("pre_gid", "post_gid") \
-                                  .write.parquet(adjust_for_spark(output_path), mode="overwrite")
+                                  .write.parquet(adjust_for_spark(output_path, local=True),
+                                                 mode="overwrite")
 
     # ---
     def export_hdf5(self, extended_touches_df, n_gids, create_efferent=False, n_partitions=None):
