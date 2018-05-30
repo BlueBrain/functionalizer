@@ -288,8 +288,7 @@ def save(df, value, fn, split_by=None, title='', mean=False, scatter=False,
             label = ", ".join("{}: {}".format(k, v or 'default') for k, v in zip(split_by, names))
         if ax:
             ax.legend([], [])
-        ax = group.plot(ax=ax, x=group.index, y=[value + "_avg"], style='o-', figsize=(6, 4),
-                        label=label)
+        ax = group.plot(ax=ax, y=value + "_avg", style='o-', figsize=(6, 4), label=label)
         handle = [h for h in ax.get_legend_handles_labels()[0] if isinstance(h, lines.Line2D)][-1]
         handels.append(handle)
         labels.append(label)
@@ -319,6 +318,10 @@ def save(df, value, fn, split_by=None, title='', mean=False, scatter=False,
     seaborn.set_style(rc={'ytick.minor.size': 3.0, 'ytick.direction': 'in', 'ytick.color': '.5'})
     seaborn.despine()
     plt.subplots_adjust(bottom=0.13)
+    for tick, _, label in ax.xaxis.iter_ticks():
+        if 'dev-11M' not in label:
+            continue
+        tick.set_pad(21.5)
     plt.savefig(fn)
     plt.close()
 

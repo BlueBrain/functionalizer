@@ -28,9 +28,9 @@ def run():
     strong = subparsers.add_parser('strong')
     strong.add_argument('filename', nargs='+', help='files to process')
     weak = subparsers.add_parser('weak')
-    weak.add_argument('--circuit-order', default='O1.v6a,S1.v6a,10x10,4.10x10,10.10x10',
+    weak.add_argument('--circuit-order', default='O1.v6a,S1.v6a,10x10,4.10x10,10.10x10,dev-11M',
                       help='comma separated order of circuits')
-    weak.add_argument('--circuit-sizes', default='4.6,57.7,124.4,497.7,1244.3',
+    weak.add_argument('--circuit-sizes', default='4.6,57.7,124.4,497.7,1244.3,439.2',
                       help='comma separated sizes of circuits')
     weak.add_argument('--circuit-unit', default='Touches (in billions)',
                       help='unit to use for the sizes')
