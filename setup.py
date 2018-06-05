@@ -154,6 +154,7 @@ def setup_package():
             'pathlib2;python_version<"3.4"',
             'progress',
             'py4j',
+            'recordtype',
             'snakebite',
             'sparkmanager>=0.5.0',
         ],
