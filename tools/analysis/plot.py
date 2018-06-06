@@ -90,7 +90,7 @@ class BaseResourcePlot(object):
         AxesSetup(['cpu'], 'CPU usage', 'cores', 1, None),
         AxesSetup(['mem'], 'Memory usage', 'GB', 1024**3, None),
         AxesSetup(['network_out', 'network_in'], 'Network usage', 'GB/s', 1024**3, None),
-        AxesSetup(['disk'], 'Disk usage', '%', 1, 100),
+        AxesSetup(['disk'], 'Disk usage', 'TB', 1024**4, 2),
     ]
 
     def __init__(self, data):

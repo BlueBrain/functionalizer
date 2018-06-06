@@ -1,4 +1,4 @@
-"""Extract data from SLURM, graphite, and ganglia to measure job performance.
+"""Extract data from SLURM and graphite to measure job performance.
 """
 from __future__ import print_function
 from collections import OrderedDict
@@ -18,11 +18,11 @@ COLUMNS = (
     "fn jobid circuit cores size threads mode version rules cut export runtime start walltime mem disk success"
 ).split()
 
-GANGLIA_SCALE_CPU = 72 / 100.
-
 SCALE_DISK = 0.02  # 2 TB per node, devided by 100%
 SCALE_MEMORY = 1. / 1024**3  # GB for memory consumption
 SCALE_RUNTIME = 1. / 60**2  # Runtime in hours
+
+GANGLIA_SCALE_CPU = 72 / 100.
 
 L = logging.getLogger(__name__)
 
@@ -37,30 +37,6 @@ def maybe(o, idx=0):
         return o[idx]
     elif idx == 0:
         return o
-
-
-def extract_ganglia(metric, alias, hosts, start, end):
-    """Extract data from ganglia
-
-    :param metric: the metric to extract
-    :param alias: a list of column names to assign
-    :param hosts: a list of hostnames
-    :param start: the starting timestamp
-    :param end: the end timestamp
-    """
-    get = 'http://bbpvadm.epfl.ch/ganglia/graph.php?c=Rack+{}&h={}&{}&csv=1&cs={}&ce={}'
-    datas = []
-    for host in hosts:
-        rck = rack.match(host).group(1)
-        r = requests.get(get.format(rck, host, metric, start, end))
-        data = pandas.read_csv(StringIO(r.text))
-        data.rename(columns=dict(zip(data.columns, ['timestamp'] + alias)), inplace=True)
-        data['timestamp'] = pandas.to_datetime(data.timestamp, utc=False)
-        data['host'] = host
-        datas.append(data)
-    data = pandas.concat(datas).groupby('timestamp').aggregate(['mean', 'min', 'max'])
-    data.columns = ['_'.join([c, f.replace('mean', 'avg')]) for (c, f) in data.columns]
-    return data
 
 
 def process_response(response, columns, collapse=False):
@@ -103,10 +79,14 @@ def extract_graphite(hosts, start, end):
     :param end: the end timestamp
     """
     fcts = {
-        'avg': 'target=averageSeries(bb5.ps.{}_bbp_epfl_ch.memory.memory.used)',
-        'min': 'target=minSeries(bb5.ps.{}_bbp_epfl_ch.memory.memory.used)',
-        'max': 'target=maxSeries(bb5.ps.{}_bbp_epfl_ch.memory.memory.used)'
+        'avg': 'target=averageSeries(bb5.ps.{}_bbp_epfl_ch.{})',
+        'min': 'target=minSeries(bb5.ps.{}_bbp_epfl_ch.{})',
+        'max': 'target=maxSeries(bb5.ps.{}_bbp_epfl_ch.{})'
     }
+
+    mem_metric = 'memory.memory.used'
+    disk_metric = 'df.nvme.df_complex.used'
+
     get = 'http://bbpfs43.bbp.epfl.ch/render/?{}&from={}&until={}&format=json'
     start = datetime.datetime.fromtimestamp(float(start)).strftime("%H:%M_%Y%m%d")
     end = datetime.datetime.fromtimestamp(float(end)).strftime("%H:%M_%Y%m%d")
@@ -124,10 +104,13 @@ def extract_graphite(hosts, start, end):
     out_data = process_response(requests.get(out_query), ['network_out'], collapse=True)
 
     hq = '{{{}}}'.format(','.join(hosts))
-    mem_query = get.format('&'.join(f.format(hq) for f in fcts.values()), start, end)
+    mem_query = get.format('&'.join(f.format(hq, mem_metric) for f in fcts.values()), start, end)
     mem_data = process_response(requests.get(mem_query), ['mem_' + f for f in fcts.keys()])
 
-    data = cpu_data.join(in_data).join(out_data).join(mem_data)
+    disk_query = get.format('&'.join(f.format(hq, disk_metric) for f in fcts.values()), start, end)
+    disk_data = process_response(requests.get(disk_query), ['disk_' + f for f in fcts.keys()])
+
+    data = cpu_data.join(in_data).join(out_data).join(mem_data).join(disk_data)
     # CPU columns originally in percent per core: convert to overall usage
     # in terms of cores.
     data['cpu_avg'] /= 100
@@ -169,33 +152,17 @@ def get_slurm_data(jobid):
 
 
 def extract_node_data(nodes, start, end):
-    """Extract performance data from nodes either via graphite or ganglia.
+    """Extract performance data from nodes either via graphite.
 
     :param nodes: a list of node hostnames
     :param start: when to extract from
     :param end: time to extract up to
     """
     hosts = expand_hosts(nodes)
-    try:
-        disk = extract_ganglia('m=part_max_used', ['disk'], hosts, start, end)
-    except Exception:
-        disk = pandas.DataFrame(columns=["timestamp", "disk_avg", "disk_max", "disk_min"],
-                                data=[[start, 0, 0, 0], [end, 0, 0, 0]])
-        disk.set_index("timestamp", inplace=True)
-    try:
-        data = extract_graphite(hosts, start, end)
-        disk = disk.append(pandas.DataFrame(index=data.index.copy())) \
-                   .interpolate(method='nearest')
-        data = data.join(disk.loc[data.index])
-        data['cpu_avg'] *= GANGLIA_SCALE_CPU
-        data['cpu_min'] *= GANGLIA_SCALE_CPU
-        data['cpu_max'] *= GANGLIA_SCALE_CPU
-    except (ValueError, IndexError) as e:
-        L.exception(e)
-        L.warn("falling back to ganglia data")
-        data = disk
-        for m, a in fallback:
-            data = data.join(extract_ganglia(m, a, hosts, start, end))
+    data = extract_graphite(hosts, start, end)
+    data['cpu_avg'] *= GANGLIA_SCALE_CPU
+    data['cpu_min'] *= GANGLIA_SCALE_CPU
+    data['cpu_max'] *= GANGLIA_SCALE_CPU
     L.info("data gathered for %s", ", ".join(str(c) for c in data.columns))
     return data
 
