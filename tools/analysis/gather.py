@@ -9,7 +9,7 @@ import pandas
 import os
 import re
 import requests
-from StringIO import StringIO
+from six import StringIO
 import subprocess
 
 rack = re.compile(r'r(\d+)')
