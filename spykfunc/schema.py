@@ -91,9 +91,13 @@ SYNAPSE_CLASS_SCHEMA = T.StructType([
     T.StructField("nrrp", T.FloatType(), False),
 ])
 
-INT_STR_SCHEMA = T.StructType([
-    T.StructField("_i", T.IntegerType(), False),
-    T.StructField("id", T.StringType(), False)])
+
+def indexed_strings(names):
+    """Create a schema mapping int to str
+    """
+    assert len(names) == 2
+    return T.StructType([T.StructField(names[0], T.IntegerType(), False),
+                         T.StructField(names[1], T.StringType(), False)])
 
 
 def to_pathway_i(col1, col2):

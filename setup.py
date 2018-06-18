@@ -109,7 +109,8 @@ if BUILD_TYPE == 'DEVEL':
     extensions = cythonize(extensions,
                            cplus=True,
                            build_dir="build",
-                           include_path=[osp.join(BASE_DIR, 'spykfunc/dataio/mvdtool')])
+                           include_path=[osp.join(BASE_DIR, 'spykfunc/dataio/mvdtool'),
+                                         osp.join(BASE_DIR, 'deps/mvd-tool/python/include')])
 
 
 # *******************************
@@ -147,6 +148,7 @@ def setup_package():
             'funcsigs',
             'future',
             'h5py',
+            'hdfs',
             'jprops',
             'lazy-property',
             'lxml',
@@ -154,12 +156,11 @@ def setup_package():
             'pathlib2;python_version<"3.4"',
             'progress',
             'py4j',
-            'recordtype',
-            'snakebite',
+            'bb5',
             'sparkmanager>=0.5.0',
         ],
         setup_requires=maybe_sphinx + maybe_cython,
-        tests_require=['pytest', 'pytest-cov'],
+        tests_require=['mock', 'pytest', 'pytest-cov'],
         extras_require={
             # Dependencies if the user wants a dev env
             'dev': ['cython<0.26', 'flake8'],

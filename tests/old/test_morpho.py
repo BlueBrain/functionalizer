@@ -1,3 +1,4 @@
+import functools
 import pytest
 morphotool = pytest.importorskip("morphotool")
 try:
@@ -77,9 +78,12 @@ def run_test(morpho_dir, names, spark, outstream):
     all_probs.sort(key=lambda a: a[1], reverse=True)
     write_results(all_probs, outstream)
 
-    probs_count = reduce(lambda a, b: (a[0] + (1 if b[1] else 0), a[1] + b[1], a[2] + (1 if b[3] else 0), a[3] + b[3]),
-                         all_probs,
-                         (0, 0, 0, 0))
+    probs_count = functools.reduce(lambda a, b: (a[0] + (1 if b[1] else 0),
+                                                 a[1] + b[1],
+                                                 a[2] + (1 if b[3] else 0),
+                                                 a[3] + b[3]),
+                                   all_probs,
+                                   (0, 0, 0, 0))
     print("Problem count for " + morpho_dir + """:
         10x+ radius on subsequent segments: %d morphologies affected (%d points)
         empty points: %d morphologies affected (%d points)""" % probs_count)

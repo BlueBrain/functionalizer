@@ -94,8 +94,8 @@ class NeuronDataSpark(NeuronData):
         fn = self._loader.mvd_filename
         sha = hashlib.sha256()
         sha.update(os.path.realpath(fn))
-        sha.update(str(os.stat(fn).st_size))
-        sha.update(str(os.stat(fn).st_mtime))
+        sha.update(str(os.stat(fn).st_size).encode())
+        sha.update(str(os.stat(fn).st_mtime).encode())
         digest = sha.hexdigest()[:8]
 
         logger.info("Total neurons: %d", n_neurons)
@@ -182,8 +182,7 @@ class NeuronDataSpark(NeuronData):
         """
         self.require_mvd_globals()
         return cache_broadcast_single_part(
-            sm.parallelize(enumerate(vec), 1)
-            .toDF(field_names, schema.INT_STR_SCHEMA))
+            sm.createDataFrame(enumerate(vec), schema.indexed_strings(field_names)))
 
     @LazyProperty
     def sclass_df(self):
@@ -408,6 +407,9 @@ def neuron_loader_gen(data_class, loader_class, loader_params, n_neurons,
 
     # Every loader builds the list of MTypes - avoid serialize/deserialize of the more complex struct
     mtype_bc = sm.broadcast([MType(mt) for mt in mtypes])
+
+    loader_params['mvd_filename'] = loader_params['mvd_filename'].decode('utf-8')
+    loader_params['morphology_dir'] = loader_params['morphology_dir'].decode('utf-8')
 
     def _convert_entry(nrn, name, mtype_name, layer):
         return (int(nrn[0]),                    # id  (0==schema.NeuronFields["id"], but lets avoid all those lookups

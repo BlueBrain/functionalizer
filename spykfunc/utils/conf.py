@@ -76,7 +76,7 @@ class Configuration(dict):
         """
         libs = {Path(path)}
         for lib in Path(path).glob("*.so"):
-            for line in subprocess.check_output(["ldd", str(lib)]).splitlines():
+            for line in subprocess.check_output(["ldd", str(lib)]).decode().splitlines():
                 if "=>" in line:
                     libs.add(Path(line.split()[2]).parent)
                 elif line.startswith("\t/"):

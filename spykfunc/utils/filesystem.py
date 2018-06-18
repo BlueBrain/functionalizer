@@ -5,13 +5,50 @@ cluster, since the underlying Spark API behaves differently in the presence
 of a Hadoop cluster.
 """
 import glob
+import lxml.etree
 import os
-import snakebite.client
+try:
+    from pathlib2 import Path
+except Exception:
+    from pathlib import Path
+
+import hdfs
+import hdfs.util
 
 
-__client = None
-if os.environ.get("HADOOP_HOME", "") != "":
-    __client = snakebite.client.AutoConfigClient()
+class AutoClient(hdfs.InsecureClient):
+    """Simple client that attempts to parse the Hadoop configuration.
+    """
+    def __init__(self):
+        super(AutoClient, self).__init__(self._find_host())
+        self.status('/')
+
+    @staticmethod
+    def _find_host():
+        try:
+            tree = lxml.etree.parse(str(AutoClient._find_config()))
+            return tree.xpath('//property[name="dfs.namenode.http-address"]/value').pop().text
+        except IndexError:
+            return 'localhost:50070'
+
+    @staticmethod
+    def _find_config():
+        """Determine Hadoop configuration location.
+        """
+        cdir = os.environ.get("HADOOP_CONF_DIR", None)
+        home = os.environ.get("HADOOP_HOME", None)
+        if cdir:
+            return Path(cdir) / 'hdfs-site.xml'
+        elif home:
+            return Path(home) / 'conf' / 'hdfs-site.xml'
+        else:
+            raise RuntimeError("cannot determine HADOOP setup")
+
+
+try:
+    __client = AutoClient()
+except Exception as e:
+    __client = None
 
 
 def adjust_for_spark(p, local=None):
@@ -43,7 +80,13 @@ def exists(p):
     """
     if p.startswith("file://") or not __client:
         return os.path.exists(p.replace("file://", ""))
-    return __client.test(p, exists=True)
+    try:
+        __client.status(p)
+        return True
+    except hdfs.util.HdfsError as err:
+        if err.startswith('File does not exist:'):
+            return False
+        raise
 
 
 def isdir(p):
@@ -51,4 +94,10 @@ def isdir(p):
     """
     if p.startswith("file://") or not __client:
         return os.path.isdir(p.replace("file://", ""))
-    return __client.test(p, directory=True, exists=True)
+    try:
+        s = __client.status(p)
+        return s['type'] == 'DIRECTORY'
+    except hdfs.util.HdfsError as err:
+        if err.startswith('File does not exist:'):
+            return False
+        raise

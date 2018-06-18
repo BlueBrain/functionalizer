@@ -5,6 +5,8 @@ that the seeding yields smooth distributions.
 """
 from __future__ import print_function
 
+import matplotlib
+matplotlib.use('agg')  # noqa
 import matplotlib.pyplot as plt
 import numpy as np
 from pathlib2 import Path
