@@ -21,7 +21,6 @@ class AutoClient(hdfs.InsecureClient):
     """
     def __init__(self):
         super(AutoClient, self).__init__(self._find_host())
-        self.status('/')
 
     @staticmethod
     def _find_host():
@@ -47,7 +46,13 @@ class AutoClient(hdfs.InsecureClient):
 
 try:
     __client = AutoClient()
+    try:
+        __client.status('/')
+    except Exception as e:
+        L.exception(e)
+        raise
 except Exception as e:
+    L.warn("deactivating HADOOP setup")
     __client = None
 
 
