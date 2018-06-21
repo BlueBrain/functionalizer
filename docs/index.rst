@@ -6,7 +6,7 @@ Spykfunc is a new Functionalizer implementation on top of Spark (PySpark).
 
 Functionalizer goal is to filter out Synapse touches, produced by Touch Detector, according to rules
 defined in the recipe. The resulting touches can then be exported to a circuit format as expected
-by the simulator, typically nrn_*.h5.
+by the simulator, typically syn2, but also nrn_*.h5.
 
 
 Running
@@ -27,6 +27,9 @@ apply the same filters as Functionalizer.
                    [-c CONFIGURATION] [-p OVERRIDES] [--dump-configuration]
                    [--overwrite [{F,E}]] [--no-morphos]
                    recipe_file mvd_file morpho_dir touch_files [touch_files ...]
+
+Use the `--format-hdf5` flag to obtain output in HDF5. This is not
+guaranteed to work with larger circuits.
 
 
 Input Conversion
