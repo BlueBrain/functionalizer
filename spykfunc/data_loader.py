@@ -408,8 +408,9 @@ def neuron_loader_gen(data_class, loader_class, loader_params, n_neurons,
     # Every loader builds the list of MTypes - avoid serialize/deserialize of the more complex struct
     mtype_bc = sm.broadcast([MType(mt) for mt in mtypes])
 
-    loader_params['mvd_filename'] = loader_params['mvd_filename'].decode('utf-8')
-    loader_params['morphology_dir'] = loader_params['morphology_dir'].decode('utf-8')
+    if str is not bytes:
+        loader_params['mvd_filename'] = loader_params['mvd_filename'].decode('utf-8')
+        loader_params['morphology_dir'] = loader_params['morphology_dir'].decode('utf-8')
 
     def _convert_entry(nrn, name, mtype_name, layer):
         return (int(nrn[0]),                    # id  (0==schema.NeuronFields["id"], but lets avoid all those lookups
