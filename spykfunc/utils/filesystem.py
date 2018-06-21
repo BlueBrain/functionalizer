@@ -84,7 +84,7 @@ def exists(p):
         __client.status(p)
         return True
     except hdfs.util.HdfsError as err:
-        if err.startswith('File does not exist:'):
+        if err.exception == 'FileNotFoundException':
             return False
         raise
 
@@ -98,6 +98,6 @@ def isdir(p):
         s = __client.status(p)
         return s['type'] == 'DIRECTORY'
     except hdfs.util.HdfsError as err:
-        if err.startswith('File does not exist:'):
+        if err.exception == 'FileNotFoundException':
             return False
         raise
