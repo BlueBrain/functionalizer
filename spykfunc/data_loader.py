@@ -106,7 +106,7 @@ class NeuronDataSpark(NeuronData):
 
         if os.path.exists(mvd_parquet):
             logger.info("Loading MVD from parquet")
-            mvd = sm.read.parquet(adjust_for_spark(mvd_parquet)).cache()
+            mvd = sm.read.parquet(adjust_for_spark(mvd_parquet, local=True)).cache()
             self.layers = mvd.select('layer').distinct().rdd.keys().collect()
             self.neuronDF = F.broadcast(mvd)
             n_neurons = self.neuronDF.count()  # force materialize
