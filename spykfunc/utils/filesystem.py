@@ -6,6 +6,7 @@ of a Hadoop cluster.
 """
 import glob
 import lxml.etree
+import logging
 import os
 try:
     from pathlib2 import Path
@@ -14,6 +15,9 @@ except Exception:
 
 import hdfs
 import hdfs.util
+
+
+L = logging.getLogger(__name__)
 
 
 class AutoClient(hdfs.InsecureClient):
