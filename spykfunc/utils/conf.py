@@ -86,6 +86,10 @@ class Configuration(dict):
     def dump(self):
         """Dump the default configuration to the terminal
         """
+        def path2str(s):
+            if isinstance(s, Path):
+                return str(s)
+            return s
         seen = set()
         with open(self.__filename) as fd:
             for k, v in jprops.iter_properties(fd, comments=True):
@@ -94,5 +98,6 @@ class Configuration(dict):
                     continue
                 jprops.write_property(sys.stdout, k, self[k])
                 seen.add(k)
+        print('\n# below: non-default, generated, and user-overridden parameters')
         for k in sorted(set(self.keys()) - seen):
-            jprops.write_property(sys.stdout, k, self[k])
+            jprops.write_property(sys.stdout, k, path2str(self[k]))
