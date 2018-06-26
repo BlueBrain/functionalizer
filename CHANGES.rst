@@ -2,6 +2,15 @@
 Changelog
 =========
 
+Version 0.9.1
+=============
+
+Changes:
+
+  - Allow to build both `py2` and `py3` versions from the source tree with
+    nix
+  - Make the synapse repositioning in the recipe optional
+
 Version 0.9
 ===========
 

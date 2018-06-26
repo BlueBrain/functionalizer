@@ -10,7 +10,13 @@ with import <BBPpkgs> { };
 
 {
   spykfunc = spykfunc.overrideDerivation (oldAttr: rec {
-    name = "spykfunc-DEV_ENV";
+    name = "spykfunc-dev";
+    src = ./.;
+    makeFlags = [ "VERBOSE=1" ];
+  });
+
+  spykfunc-py3 = spykfunc-py3.overrideDerivation (oldAttr: rec {
+    name = "spykfunc-dev-py3";
     src = ./.;
     makeFlags = [ "VERBOSE=1" ];
   });
