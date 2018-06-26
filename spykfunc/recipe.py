@@ -336,6 +336,7 @@ class Recipe(object):
         :param required: allow the list of XML elements to be optional
         """
         if items is None and not required:
+            logger.warn("skipping conversion of %s items (not required)", item_cls)
             return
         # Some fields are referred to by their index. We pick it here
         for i, item in enumerate(items):
