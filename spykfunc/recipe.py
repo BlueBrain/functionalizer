@@ -295,7 +295,7 @@ class Recipe(object):
         self.load_recipe_group_into_list_convert(recipe_xml.find("SynapsesProperties"),
                                                  self.synapse_properties, SynapsesProperty)
         self.load_recipe_group_into_list_convert(recipe_xml.find("SynapsesReposition"),
-                                                 self.synapse_reposition, SynapsesReposition)
+                                                 self.synapse_reposition, SynapsesReposition, required=False)
         self.load_recipe_group_into_list_convert(recipe_xml.find("SynapsesClassification"),
                                                  self.synapse_classification, SynapsesClassification)
 
@@ -327,7 +327,16 @@ class Recipe(object):
 
     # -------
     @classmethod
-    def load_recipe_group_into_list_convert(cls, items, dest_lst, item_cls):
+    def load_recipe_group_into_list_convert(cls, items, dest_lst, item_cls, required=True):
+        """Append contents of an XML list to a list using 
+
+        :param items: a list of XML elements
+        :param dest_lst: Python list to append items to
+        :param item_cls: target class to convert the XML elements to
+        :param required: allow the list of XML elements to be optional
+        """
+        if items is None and not required:
+            return
         # Some fields are referred to by their index. We pick it here
         for i, item in enumerate(items):
             dest_lst.append(cls._check_convert(item, item_cls, i))

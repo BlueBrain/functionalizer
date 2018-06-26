@@ -34,3 +34,10 @@ def test_syn_distances_repr():
     rpr1 = '<InitialBoutonDistance defaultExcSynapsesDistance="25.0" defaultInhSynapsesDistance="6">'
     rpr2 = '<InitialBoutonDistance defaultInhSynapsesDistance="6" defaultExcSynapsesDistance="25.0">'
     assert str(rep.synapses_distance) in (rpr1, rpr2)
+
+
+def test_syn_repo_optional():
+    """Test that synapse repositioning is optional
+    """
+    r = Recipe(str(Path(__file__).parent / "v5builderRecipeAllPathways_no_repositioning.xml"))
+    assert len(r.synapse_reposition) == 0
