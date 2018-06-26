@@ -45,9 +45,10 @@ def _create_parser():
                         help="Specify output directory. Defaults to ./spykfunc_output")
     parser.add_argument("-c", "--configuration",
                         help="A configuration file to use. See `--dump-defaults` for default settings")
-    parser.add_argument("-p", "--property", dest='overrides', action='append', default=[],
+    parser.add_argument("-p", "--spark-property", dest='overrides', action='append', default=[],
                         help="Override single properties of the configuration, i.e.,"
-                             "`-p spark.master=spark://1.2.3.4:7077`. May be specified multiple times.")
+                             "`--spark-property spark.master=spark://1.2.3.4:7077`. "
+                             "May be specified multiple times.")
     parser.add_argument("--dump-configuration", action=_ConfDumpAction,
                         help="Show the configuration including modifications via options prior to this "
                              "flag and exit")

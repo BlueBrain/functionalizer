@@ -24,8 +24,8 @@ apply the same filters as Functionalizer.
    $ spykfunc
    usage: spykfunc [-h] [--s2s | --s2f] [--format-hdf5] [--name NAME]
                    [--checkpoint-dir CHECKPOINT_DIR] [--output-dir OUTPUT_DIR]
-                   [-c CONFIGURATION] [-p OVERRIDES] [--dump-configuration]
-                   [--overwrite [{F,E}]] [--no-morphos]
+                   [-c CONFIGURATION] [--spark-property OVERRIDES]
+                   [--dump-configuration] [--overwrite [{F,E}]] [--no-morphos]
                    recipe_file mvd_file morpho_dir touch_files [touch_files ...]
 
 Use the `--format-hdf5` flag to obtain output in HDF5. This is not
@@ -97,7 +97,7 @@ both a Spark and a HDFS cluster:
            spykfunc --s2f \
                    --output-dir=$OUTDIR \
                    --checkpoint-dir=/use/hadoop/ \
-                   -p spark.master=spark://$(hostname):7077 \
+                   --spark-property spark.master=spark://$(hostname):7077 \
                    $RECIPE $CIRCUIT $MORPHOS $TOUCHES
 
 The `sm_run` command is a custom wrapper tuned to the BB5 environment, used
