@@ -50,12 +50,15 @@ class Configuration(dict):
         self["spark.jars"] = self.jar_filename
         self["spark.driver.extraLibraryPath"] = libs
         self["spark.executor.extraLibraryPath"] = libs
-        self.setdefault("spark.driver.extraJavaOptions",
-                        "-Dderby.system.home={} -Djava.library.path={}".format(
-                            outdir.resolve(),
-                            self.lib_directory.resolve()))
-        self.setdefault("spark.executor.extraJavaOptions",
-                        "-Djava.library.path={}".format(self.lib_directory.resolve()))
+        self["spark.driver.extraJavaOptions"] = \
+            "-Dderby.system.home={} -Djava.library.path={} {}".format(
+                outdir.resolve(),
+                self.lib_directory.resolve(),
+                self.get("spark.driver.extraJavaOptions", ""))
+        self["spark.executor.extraJavaOptions"] = \
+            "-Djava.library.path={} {}".format(
+                self.lib_directory.resolve(),
+                self.get("spark.executor.extraJavaOptions", ""))
         self.setdefault("spark.eventLog.dir", outdir.resolve() / "eventlog")
         self.setdefault("spark.sql.warehouse.dir", outdir.resolve() / "warehouse")
         for k in ["spark.eventLog.dir", "spark.sql.warehouse.dir"]:
