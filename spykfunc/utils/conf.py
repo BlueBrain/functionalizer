@@ -62,7 +62,7 @@ class Configuration(dict):
                 self.lib_directory.resolve(),
                 self.get("spark.executor.extraJavaOptions", ""))
         self.setdefault("spark.eventLog.dir",
-                        adjust_for_spark(outdir.resolve() / "eventlog", local=True))
+                        str(outdir.resolve() / "eventlog"))
         self.setdefault("spark.sql.warehouse.dir",
                         adjust_for_spark(outdir.resolve() / "warehouse", local=True))
         for k in ["spark.eventLog.dir", "spark.sql.warehouse.dir"]:
