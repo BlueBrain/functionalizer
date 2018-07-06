@@ -69,6 +69,7 @@ def adjust_for_spark(p, local=None):
     :param p: file path to adjust
     :param local: enforce usage of local filesystem when paths are ambiguous
     """
+    p = str(p)
     if p.startswith("hdfs://"):
         if not __client:
             msg = "cannot use a fully qualified path '{}' without a running Hadoop cluster!".format(p)
