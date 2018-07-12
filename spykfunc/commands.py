@@ -35,7 +35,7 @@ def _create_parser():
                        help="Run s2f. The default action",
                        action="store_true", default=True)
     parser.add_argument("--format-hdf5",
-                        help="Write result to HDF5 rather than parquet",
+                        help="Write/convert result to HDF5 (nrn.h5) rather than parquet",
                         action="store_true", default=False)
     parser.add_argument("--name",
                         help="Name that will show up in the Spark logs. Defaults to 'Functionalizer'")

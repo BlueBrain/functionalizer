@@ -412,10 +412,10 @@ def neuron_loader_gen(data_class, loader_class, loader_params, n_neurons,
         loader_params['mvd_filename'] = loader_params['mvd_filename'].decode('utf-8')
         loader_params['morphology_dir'] = loader_params['morphology_dir'].decode('utf-8')
 
-    def _convert_entry(nrn, name, mtype_name, layer):
+    def _convert_entry(nrn, name, layer):
         return (int(nrn[0]),                    # id  (0==schema.NeuronFields["id"], but lets avoid all those lookups
                 int(nrn[1]),                    # morphology_index
-                mtype_name,                     # morphology
+                # mtype_name,                   # morphology (str no longer in df)
                 int(nrn[2]),                    # electrophysiology
                 int(nrn[3]),                    # syn_class_index
                 [float(x) for x in nrn[4]],     # position
@@ -433,13 +433,14 @@ def neuron_loader_gen(data_class, loader_class, loader_params, n_neurons,
 
         # Convert part into object to the actual range of rows
         da.load_neurons(Part(part_nr, total_parts))
-        name_accumulator.add(da.nameMap)
+        # name_accumulator.add(da.nameMap)
         if isinstance(da.neurons[0], tuple):
             return da.neurons
         name_it = iter(da.neuronNames)
 
         # Dont alloc a full list, give back generator
-        return (_convert_entry(nrn, next(name_it), mtypes[nrn[1]].name, mtypes[nrn[1]].layer) for nrn in da.neurons)
+        # mtype_name = mtypes[nrn[1]].name
+        return (_convert_entry(nrn, next(name_it), mtypes[nrn[1]].layer) for nrn in da.neurons)
 
     return load_neurons_par
 

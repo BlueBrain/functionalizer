@@ -87,7 +87,7 @@ h5floats = h5binary.selectExpr("binary2float(binary) as data")
 h5touches = h5floats.select(
     (h5floats.data.getItem(0).cast("int") - 1).alias("pre_gid"),
     (h5floats.data.getItem(1).cast("int") - 1).alias("post_gid"),
-    h5floats.data.getItem(2).alias("axional_delay"),
+    h5floats.data.getItem(2).alias("axonal_delay"),
     h5floats.data.getItem(3).cast("int").alias("post_section"),
     h5floats.data.getItem(4).cast("int").alias("post_segment"),
     h5floats.data.getItem(5).alias("post_offset"),

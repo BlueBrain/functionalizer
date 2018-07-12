@@ -1,5 +1,8 @@
 import sys
 import os.path
+import pytest
+
+morphotool = pytest.importorskip("tst_neuron_memview")
 from tst_neuron_memview import NeuronData
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 

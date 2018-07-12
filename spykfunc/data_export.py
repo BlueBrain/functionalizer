@@ -49,11 +49,15 @@ class NeuronExporter(object):
         return None
 
     # ---
-    def export_parquet(self, extended_touches_df, filename="nrn.parquet"):
+    def export_syn2_parquet(self, extended_touches_df, filename="circuit.parquet"):
+        """ Exports the results to parquet, following the transitional SYN2 spec
+        with support for legacy NRN fields, e.g.: morpho_segment_id_post
+        """
         output_path = os.path.join(self.output_path, filename)
-        return extended_touches_df.sort("pre_gid", "post_gid") \
-                                  .write.parquet(adjust_for_spark(output_path, local=True),
-                                                 mode="overwrite")
+        # Sorting will always incur a shuffle, so we sort by post-pre, as accessed in most cases
+        sorted_df = extended_touches_df.sort("post_gid", "pre_gid")
+        df_output = sorted_df.select(*self.get_syn2_parquet_fields(sorted_df))
+        df_output.write.parquet(adjust_for_spark(output_path, local=True), mode="overwrite")
 
     # ---
     def export_hdf5(self, extended_touches_df, n_gids, create_efferent=False, n_partitions=None):
@@ -73,9 +77,13 @@ class NeuronExporter(object):
         # Massive conversion to binary using 'float2binary' java UDF and 'concat_bin' UDAF
         arrays_df = (
             df
-            .select(df.pre_gid, df.post_gid, F.array(*self.nrn_fields_as_float(df)).alias("floatvec"))
+            .select(df.pre_gid, df.post_gid, 
+                    F.array(*self.nrn_fields_as_float(df)).alias("floatvec"))
             .sort("post_gid")
-            .selectExpr("(pre_gid + 1) as pre_gid", "(post_gid + 1) as post_gid", "float2binary(floatvec) as bin_arr")
+                        # Exported touch gids are 1-base, not 0
+            .selectExpr("(pre_gid + 1) as pre_gid", 
+                        "(post_gid + 1) as post_gid", 
+                        "float2binary(floatvec) as bin_arr")
             .groupBy("post_gid", "pre_gid")
             .agg(self.concat_bin("bin_arr").alias("bin_matrix"),
                  F.count("*").cast("int").alias("conn_count"))
@@ -147,13 +155,39 @@ class NeuronExporter(object):
             numberOfFiles=len(nrn_filenames.value)
         ))
 
+    @staticmethod
+    def get_syn2_parquet_fields(df):
+        # Transitional SYN2 spec fields
+        return (
+            df.post_gid.alias("connected_neurons_post"),
+            df.pre_gid.alias("connected_neurons_pre"),
+            df.axonal_delay.alias("delay"),
+            df.post_section.alias("morpho_section_id_post"),
+            df.post_segment.alias("morpho_segment_id_post"),
+            df.post_offset.alias("morpho_offset_segment_post"),
+            df.pre_section.alias("morpho_section_id_pre"),
+            df.pre_segment.alias("morpho_segment_id_pre"),
+            df.pre_offset.alias("morpho_offset_segment_pre"),
+            df.gsyn.alias("conductance"),
+            df.u.alias("u_syn"), 
+            df.d.alias("depression_time"),
+            df.f.alias("facilitation_time"),
+            df.dtc.alias("decay_time"),
+            df.synapseType.alias("syn_type_id"),
+            df.morphology.alias("morpho_type_id_pre"),
+            # df.branch_order_dend.alias("morpho_branch_order_dend"),  # N/A
+            # df.branch_order_axon.alias("morpho_branch_order_axon"),  # Irrelevant
+            df.nrrp.alias("n_rrp_vesicles")
+            # df.branch_type.alias("morpho_section_type_post")  # N/A
+        )
+
     # ---
     @staticmethod
     def nrn_fields_as_float(df):
         # Select fields and cast to Float
         return (
             df.pre_gid.cast(T.FloatType()).alias("gid"),
-            df.axional_delay,
+            df.axonal_delay,
             df.post_section.cast(T.FloatType()).alias("post_section"),
             df.post_segment.cast(T.FloatType()).alias("post_segment"),
             df.post_offset,

@@ -13,6 +13,12 @@ from .utils import get_logger
 logger = get_logger(__name__)
 
 
+class ConfigurationError(Exception):
+    """Exception signaling an unrecoverable inconsistency in the recipe
+    """
+    pass
+
+
 # -------------------------------------------------------------------------------------------------------------
 class ConnectType:
     """Enum class for Connect Types"""
@@ -114,46 +120,72 @@ class ConnectivityPathRule(object):
     def __repr__(self):
         return '<%s from="%s" to="%s">' % (ConnectType.to_str(self.connect_type), self.source, self.destination)
 
+# A singleton to mark required fields
+_REQUIRED_ = object()
 
 # -------------------------------------------------------------------------------------------------------------
 class _GenericPropHolder(object):
     """
     A Generic Property holder whose subclasses shall define a
     _supported_attrs class attribute with the list of supported attributes
+    Additionally, they can define _map_attrs to set alias
+    Class attributes set to None are not required.
     """
 # -------------------------------------------------------------------------------------------------------------
     # We keep the index in which entries are declared
     _supported_attrs = ("_i",)
+    _warn_missing_attrs = ()
     # allow to rename attributes
     _map_attrs = dict()
 
     def __init__(self, **rules):
-        self._supported_attrs = set(self._supported_attrs) | set(self._map_attrs.keys())
+        all_attrs = set(self._supported_attrs) | set(self._map_attrs.keys())
+        changed_attrs = set()
+
         for name, value in rules.items():
             # Note: "_i" must be checked for since subclasses override _supported_attrs
-            if name not in self._supported_attrs and name != "_i":
+            if name not in all_attrs and name != "_i":
                 logger.warning("Attribute %s not expected for recipe class %s",
                                name, type(self).__name__)
                 continue
 
-            name = self._map_attrs.get(name, name)
-
+            # name exists, but might be an alias. Get original
+            att_name = self._map_attrs.get(name, name)
+            changed_attrs.add(att_name)
+            if att_name != name:
+                logger.debug("[Alias] Attribute %s read from field %s", att_name, name) 
+            
             if value == "*":
                 # * the match-all, is represented as None
-                setattr(self, name, None)
-                continue
+                setattr(self, att_name, None)
+            else:
+                # Attempt conversion to real types
+                value = self._convert_type(value)
+                setattr(self, att_name, value)
 
-            # Attempt conversion to real types
+        # Look for required fields which were not set
+        for att_name in self._supported_attrs:
+            if not att_name.startswith("_") and att_name not in changed_attrs:
+                field_desc = "%s: Field %s" % (self.__class__.__name__, att_name) 
+                if att_name in self._warn_missing_attrs:
+                    logger.warning(field_desc + " was not specified. Proceeding with default value.")
+                elif getattr(self.__class__, att_name) is _REQUIRED_:
+                    raise ConfigurationError("%s required but not specified" % field_desc) 
+
+    @staticmethod
+    def _convert_type(value):
+        try:
+            # Will raise if not int
+            # Comparison False if is a true float, so no change
+            if value == str(int(value)):
+                return int(value)
+        except ValueError:
+            # check str has a float
             try:
-                if value == str(int(value)):
-                    value = int(value)
+                return float(value)
             except ValueError:
-                try:
-                    value = float(value)
-                except ValueError:
-                    pass
-
-            setattr(self, name, value)
+                pass
+        return value
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -205,8 +237,10 @@ class TouchRule(_GenericPropHolder):
     type = ""
 
 
+# -------------------------------------------------------------------------------------------------------------
 class SynapsesReposition(_GenericPropHolder):
     """Class representing rules to shift synapse positions"""
+# -------------------------------------------------------------------------------------------------------------
     _supported_attrs = {'fromMType', 'toMType', 'type'}
     fromMType = None
     toMType = None
@@ -235,21 +269,26 @@ class SynapsesClassification(_GenericPropHolder):
     """Class representing a Synapse Classification"""
 # -------------------------------------------------------------------------------------------------------------
     id = ""
-    gsyn = .0
-    gsynSD = .0
-    nsyn = .0
-    nsynSD = .0
-    dtc = .0
-    dtcSD = .0
-    u = .0
-    uSD = .0
-    d = .0
-    dSD = .0
-    f = .0
-    fSD = .0
-    nrrp = .0
+    gsyn = _REQUIRED_
+    gsynSD = _REQUIRED_
+    nsyn = _REQUIRED_
+    nsynSD = _REQUIRED_
+    dtc = _REQUIRED_
+    dtcSD = _REQUIRED_
+    u = _REQUIRED_
+    uSD = _REQUIRED_
+    d = _REQUIRED_
+    dSD = _REQUIRED_
+    f = _REQUIRED_
+    fSD = _REQUIRED_
+    nrrp = 0
     _supported_attrs = [k for k in locals().keys()
                         if not k.startswith("_")]
+
+    # v5 fields were sufixed by Var instead of SD
+    _map_attrs = {name + "Var": name + "SD" for name in 
+                  ["gsyn", "nsyn", "dtc", "u", "d", "f"]}
+    _warn_missing_attrs = ["nrrp"]
 
 
 # -------------------------------------------------------------------------------------------------------------
@@ -336,7 +375,7 @@ class Recipe(object):
         :param required: allow the list of XML elements to be optional
         """
         if items is None and not required:
-            logger.warn("skipping conversion of %s items (not required)", item_cls)
+            logger.warn("skipping conversion of %s items (not required)", item_cls.__name__)
             return
         # Some fields are referred to by their index. We pick it here
         for i, item in enumerate(items):

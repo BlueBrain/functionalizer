@@ -15,7 +15,7 @@ PYENV="$CURDIR/sparkenv"
 SPARK_FZER=$(readlink -f "$CURDIR/..")
 
 
-if [ ! -d $PYENV ]; then
+if [[ ! -d $PYENV || $1 -eq "force" ]]; then
 
     if [ -n "$1" ]; then
         SPARK_FZER=$(readlink -f "$1")
@@ -33,8 +33,10 @@ if [ ! -d $PYENV ]; then
         exit
     fi
 
-    echo "Creating virtualenv in $PYENV"
-    virtualenv $PYENV -p `which python`
+    if [ -d $PYENV ]; then
+        echo "Creating virtualenv in $PYENV"
+        virtualenv $PYENV -p `which python`
+    fi
     . $PYENV/bin/activate
     pip install --upgrade setuptools pip
     pip install -e $SPARK_HOME/python  # Access spark via install develop

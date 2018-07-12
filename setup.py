@@ -96,6 +96,7 @@ for lib in _libs_env:
 extensions = [
     Extension(_ext_mod + name, [_ext_dir + name + _filename_ext],
               language='c++',
+              extra_compile_args=['-std=c++11'],
               **opts)
     for name, opts in ext_mods.items()
 ]
@@ -156,7 +157,6 @@ def setup_package():
             'pathlib2;python_version<"3.4"',
             'progress',
             'py4j',
-            'bb5',
             'sparkmanager>=0.5.0',
         ],
         setup_requires=maybe_sphinx + maybe_cython,
@@ -164,7 +164,7 @@ def setup_package():
         extras_require={
             # Dependencies if the user wants a dev env
             'dev': ['cython<0.26', 'flake8'],
-            'plot': ['pandas', 'seaborn', 'requests']
+            'plot': ['pandas', 'seaborn', 'requests', 'bb5']
         },
         cmdclass={'test': PyTest,
                   'install': Install},

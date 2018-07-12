@@ -16,12 +16,16 @@ LAYER_SCHEMA = T.StructType([
     T.StructField("layer", T.ByteType(), False),
 ])
 
+MTYPE_NAMES_SCHEMA = T.StructType([
+    T.StructField("morphology_i", T.IntegerType(), False),
+    T.StructField("mtype", T.StringType(), False),     
+])
+
 NEURON_SCHEMA = T.StructType([
-    T.StructField("id", T.IntegerType(), False),
-    T.StructField("morphology_i", T.IntegerType(), False),  # mtype
-    T.StructField("morphology", T.StringType(), False),     # mtype
-    T.StructField("electrophysiology", T.IntegerType(), False),  # etype
-    T.StructField("syn_class_index", T.IntegerType(), False),
+    T.StructField("id", T.ShortType(), False),
+    T.StructField("morphology_i", T.ShortType(), False),       # mtype
+    T.StructField("electrophysiology", T.ShortType(), False),  # etype
+    T.StructField("syn_class_index", T.ShortType(), False),
     T.StructField("position", T.ArrayType(T.DoubleType(), False), False),
     T.StructField("rotation", T.ArrayType(T.DoubleType(), False), False),
     T.StructField("name", T.StringType(), False),
@@ -88,7 +92,7 @@ SYNAPSE_CLASS_SCHEMA = T.StructType([
     T.StructField("dSD", T.FloatType(), False),
     T.StructField("f", T.FloatType(), False),
     T.StructField("fSD", T.FloatType(), False),
-    T.StructField("nrrp", T.FloatType(), False),
+    T.StructField("nrrp", T.ShortType(), False),
 ])
 
 

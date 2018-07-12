@@ -262,7 +262,7 @@ class Functionalizer(object):
                                  create_efferent=False,
                                  n_partitions=n_parts)
         else:
-            exporter.export_parquet(extended_touches)
+            exporter.export_syn2_parquet(extended_touches)
         logger.info("Data export complete")
 
     # ---

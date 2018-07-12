@@ -84,25 +84,24 @@ def compute_additional_h5_fields(circuit, reduced, syn_class_matrix, syn_props_d
 
     # Compute #1: delaySomaDistance
     touches = touches.withColumn(
-        "axional_delay",
+        "axonal_delay",
         F.expr("conn.neuralTransmitterReleaseDelay + distance_soma * conn.axonalConductionVelocity")
         .cast(T.FloatType())
     )
 
     # Compute #13: synapseType:  Inhibitory < 100 or  Excitatory >= 100
-    t = touches.withColumn("synapseType",
-                           (F.when(F.col("conn.type").substr(0, 1) == F.lit('E'),
-                                   100)
-                            .otherwise(
-                               0
-                           )) + F.col("conn._class_i"))
+    t = touches.withColumn(
+        "synapseType",
+        (F.when(F.col("conn.type").substr(0, 1) == F.lit('E'), 100).otherwise(0)
+         + F.col("conn._class_i")
+         ).cast(T.ShortType())
+    )
 
     # Select fields
     return t.select(
-        # Exported touch gids are 1-base, not 0
         F.col("c.src").alias("pre_gid"),
         F.col("c.dst").alias("post_gid"),
-        t.axional_delay,
+        t.axonal_delay,
         t.post_section.alias("post_section"),
         t.post_segment.alias("post_segment"),
         t.post_offset.alias("post_offset"),
