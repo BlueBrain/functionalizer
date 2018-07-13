@@ -22,7 +22,7 @@ MTYPE_NAMES_SCHEMA = T.StructType([
 ])
 
 NEURON_SCHEMA = T.StructType([
-    T.StructField("id", T.ShortType(), False),
+    T.StructField("id", T.IntegerType(), False),
     T.StructField("morphology_i", T.ShortType(), False),       # mtype
     T.StructField("electrophysiology", T.ShortType(), False),  # etype
     T.StructField("syn_class_index", T.ShortType(), False),
