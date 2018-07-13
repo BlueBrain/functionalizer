@@ -77,12 +77,11 @@ class NeuronExporter(object):
         # Massive conversion to binary using 'float2binary' java UDF and 'concat_bin' UDAF
         arrays_df = (
             df
-            .select(df.pre_gid, df.post_gid, 
+            .select(df.pre_gid, df.post_gid,
                     F.array(*self.nrn_fields_as_float(df)).alias("floatvec"))
             .sort("post_gid")
-                        # Exported touch gids are 1-base, not 0
-            .selectExpr("(pre_gid + 1) as pre_gid", 
-                        "(post_gid + 1) as post_gid", 
+            .selectExpr("(pre_gid + 1) as pre_gid",  # nrn gids start at 1
+                        "(post_gid + 1) as post_gid",
                         "float2binary(floatvec) as bin_arr")
             .groupBy("post_gid", "pre_gid")
             .agg(self.concat_bin("bin_arr").alias("bin_matrix"),
@@ -169,7 +168,7 @@ class NeuronExporter(object):
             df.pre_segment.alias("morpho_segment_id_pre"),
             df.pre_offset.alias("morpho_offset_segment_pre"),
             df.gsyn.alias("conductance"),
-            df.u.alias("u_syn"), 
+            df.u.alias("u_syn"),
             df.d.alias("depression_time"),
             df.f.alias("facilitation_time"),
             df.dtc.alias("decay_time"),

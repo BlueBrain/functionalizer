@@ -18,7 +18,7 @@ LAYER_SCHEMA = T.StructType([
 
 MTYPE_NAMES_SCHEMA = T.StructType([
     T.StructField("morphology_i", T.IntegerType(), False),
-    T.StructField("mtype", T.StringType(), False),     
+    T.StructField("mtype", T.StringType(), False),
 ])
 
 NEURON_SCHEMA = T.StructType([

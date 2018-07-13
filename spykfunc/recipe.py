@@ -120,8 +120,10 @@ class ConnectivityPathRule(object):
     def __repr__(self):
         return '<%s from="%s" to="%s">' % (ConnectType.to_str(self.connect_type), self.source, self.destination)
 
+
 # A singleton to mark required fields
 _REQUIRED_ = object()
+
 
 # -------------------------------------------------------------------------------------------------------------
 class _GenericPropHolder(object):
@@ -153,8 +155,8 @@ class _GenericPropHolder(object):
             att_name = self._map_attrs.get(name, name)
             changed_attrs.add(att_name)
             if att_name != name:
-                logger.debug("[Alias] Attribute %s read from field %s", att_name, name) 
-            
+                logger.debug("[Alias] Attribute %s read from field %s", att_name, name)
+
             if value == "*":
                 # * the match-all, is represented as None
                 setattr(self, att_name, None)
@@ -166,11 +168,11 @@ class _GenericPropHolder(object):
         # Look for required fields which were not set
         for att_name in self._supported_attrs:
             if not att_name.startswith("_") and att_name not in changed_attrs:
-                field_desc = "%s: Field %s" % (self.__class__.__name__, att_name) 
+                field_desc = "%s: Field %s" % (self.__class__.__name__, att_name)
                 if att_name in self._warn_missing_attrs:
                     logger.warning(field_desc + " was not specified. Proceeding with default value.")
                 elif getattr(self.__class__, att_name) is _REQUIRED_:
-                    raise ConfigurationError("%s required but not specified" % field_desc) 
+                    raise ConfigurationError("%s required but not specified" % field_desc)
 
     @staticmethod
     def _convert_type(value):
@@ -286,7 +288,7 @@ class SynapsesClassification(_GenericPropHolder):
                         if not k.startswith("_")]
 
     # v5 fields were sufixed by Var instead of SD
-    _map_attrs = {name + "Var": name + "SD" for name in 
+    _map_attrs = {name + "Var": name + "SD" for name in
                   ["gsyn", "nsyn", "dtc", "u", "d", "f"]}
     _warn_missing_attrs = ["nrrp"]
 
@@ -367,7 +369,7 @@ class Recipe(object):
     # -------
     @classmethod
     def load_recipe_group_into_list_convert(cls, items, dest_lst, item_cls, required=True):
-        """Append contents of an XML list to a list using 
+        """Append contents of an XML list to a list using
 
         :param items: a list of XML elements
         :param dest_lst: Python list to append items to
