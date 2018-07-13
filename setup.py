@@ -11,6 +11,8 @@ import os
 import os.path as osp
 import glob
 
+import numpy as np
+
 SPYKFUNC_VERSION = "0.9.1"
 BUILD_TYPE = os.getenv('BUILD_TYPE', "RELEASE").upper()
 BASE_DIR = osp.dirname(__file__)
@@ -67,34 +69,39 @@ class Install(InstallCommand):
 # *******************************
 # Extensions setup
 # *******************************
-_ext_dir = osp.join(BASE_DIR, 'spykfunc/dataio/')
-_ext_mod = 'spykfunc.dataio.'
 _filename_ext = '.pyx' if BUILD_TYPE == 'DEVEL' else '.cpp'
 
+_ext_dir = osp.join(BASE_DIR, 'spykfunc/')
+
 ext_mods = {
-    'common': {},
-    'structbuf': {},
-    'cppneuron': dict(
+    'spykfunc.dataio.common': {},
+    'spykfunc.dataio.structbuf': {},
+    'spykfunc.dataio.cppneuron': dict(
         include_dirs=[osp.join(BASE_DIR, 'deps/hadoken/include'),
                       osp.join(BASE_DIR, 'deps/mvd-tool/include')],
         library_dirs=[],
         libraries=['hdf5']
     ),
+    'spykfunc.random.threefry': dict(
+        include_dirs=[osp.join(BASE_DIR, 'deps/hadoken/include'),
+                      np.get_include()],
+    ),
 }
 
 # Quick attempt find INCLUDE_DIRS required by cppneuron
 _libs_env = ['HDF5_ROOT', 'BOOST_ROOT', 'HIGHFIVE_ROOT']
+_cppneuron = 'spykfunc.dataio.cppneuron'
 for lib in _libs_env:
     lib_ROOT = os.getenv(lib)
     if lib_ROOT is not None and lib_ROOT != '/usr':
-        ext_mods['cppneuron']['include_dirs'].append(os.path.join(lib_ROOT, "include"))
+        ext_mods[_cppneuron]['include_dirs'].append(os.path.join(lib_ROOT, "include"))
         for _libdir in ('lib64', 'lib'):
             full_libdir = osp.join(lib_ROOT, _libdir)
             if(os.path.isdir(full_libdir)):
-                ext_mods['cppneuron']['library_dirs'].append(full_libdir)
+                ext_mods[_cppneuron]['library_dirs'].append(full_libdir)
 
 extensions = [
-    Extension(_ext_mod + name, [_ext_dir + name + _filename_ext],
+    Extension(name, [name.replace('.', '/') + _filename_ext],
               language='c++',
               extra_compile_args=['-std=c++11'],
               **opts)
@@ -156,6 +163,7 @@ def setup_package():
             'numpy',
             'pathlib2;python_version<"3.4"',
             'progress',
+            'pyarrow',
             'py4j',
             'sparkmanager>=0.5.0',
         ],

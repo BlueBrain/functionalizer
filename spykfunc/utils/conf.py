@@ -23,8 +23,6 @@ class Configuration(dict):
     """:property: filename storing the defaults"""
     jar_filename = Path(__file__).parent.parent / 'data' / 'spykfunc_udfs.jar'
     """:property: path to a jar needed for operations"""
-    lib_directory = Path(__file__).parent.parent / 'data'
-    """:property: directory with compiled JNI libraries"""
 
     def __init__(self, outdir, filename=None, overrides=None):
         """Provide a configuaration dictionary
@@ -47,20 +45,11 @@ class Configuration(dict):
             for k, v in jprops.iter_properties(fd):
                 self[k] = v
 
-        libs = ":".join(str(p) for p in self.find_libs(self.lib_directory))
-        libs = str(self.lib_directory)
         self["spark.jars"] = self.jar_filename
-        self["spark.driver.extraLibraryPath"] = libs
-        self["spark.executor.extraLibraryPath"] = libs
         self["spark.driver.extraJavaOptions"] = \
-            "-Dderby.system.home={} -Djava.library.path={} {}".format(
+            "-Dderby.system.home={} {}".format(
                 outdir.resolve(),
-                self.lib_directory.resolve(),
                 self.get("spark.driver.extraJavaOptions", ""))
-        self["spark.executor.extraJavaOptions"] = \
-            "-Djava.library.path={} {}".format(
-                self.lib_directory.resolve(),
-                self.get("spark.executor.extraJavaOptions", ""))
         self.setdefault("spark.eventLog.dir",
                         str(outdir.resolve() / "eventlog"))
         self.setdefault("spark.sql.warehouse.dir",
@@ -76,19 +65,6 @@ class Configuration(dict):
             path = k.split('.')[:len(prefix)]
             if path == prefix:
                 yield k, v
-
-    @staticmethod
-    def find_libs(path):
-        """Find all necessary include paths for the libraries in `path`.
-        """
-        libs = {Path(path)}
-        for lib in Path(path).glob("*.so"):
-            for line in subprocess.check_output(["ldd", str(lib)]).decode().splitlines():
-                if "=>" in line:
-                    libs.add(Path(line.split()[2]).parent)
-                elif line.startswith("\t/"):
-                    libs.add(Path(line.split()[0]).parent)
-        return libs
 
     def dump(self):
         """Dump the default configuration to the terminal

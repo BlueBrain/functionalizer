@@ -5,10 +5,13 @@ from __future__ import absolute_import
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
 import math
+import numpy
+import pandas
 import sparkmanager as sm
 
 from .schema import touches_with_pathway, SYNAPSE_CLASS_MAP_SCHEMA as schema
 from .utils.spark import cache_broadcast_single_part
+from .random import RNGThreefry
 
 
 def compute_additional_h5_fields(circuit, reduced, syn_class_matrix, syn_props_df):
@@ -64,20 +67,10 @@ def compute_additional_h5_fields(circuit, reduced, syn_class_matrix, syn_props_d
     # 17: NRRP - Number of Readily Releasable Pool vesicles
     # 18: Branch Type from the post neuron(0 for soma,
 
-    offset = 10 ** int(math.ceil(math.log10(syn_props_df.count())))
-
     # Compute #8-12: g, u, d, f, dtc
     #
     # IDs for random functions need to be unique, hence the use of offset
-    connections = connections.selectExpr(
-        "*",
-        "cast(gamma_rand(src, dst, 0, synprop.gsyn, synprop.gsynSD) as float) rand_gsyn",
-        "cast(gamma_rand(src, dst, 1, synprop.d, synprop.dSD) as float) rand_d".format(o=offset),
-        "cast(gamma_rand(src, dst, 2, synprop.f, synprop.fSD) as float) rand_f".format(o=offset),
-        "cast(gauss_rand(src, dst, 3, synprop.u, synprop.uSD) as float) rand_u",
-        "cast(gauss_rand(src, dst, 4, synprop.dtc, synprop.dtcSD) as float) rand_dtc".format(o=offset),
-        "if(synprop.nrrp > 1, cast(poisson_rand(src, dst, 5, synprop.nrrp - 1) as float) + 1, 1) as rand_nrrp"
-    )
+    connections = _add_connection_properties(connections)
 
     touches = circuit.alias("c").join(connections.alias("conn"),
                                       [F.col("c.src") == F.col("conn.src"), F.col("c.dst") == F.col("conn.dst")])
@@ -150,6 +143,41 @@ def patch_ChC_SPAA_cells(circuit, morphology_db, pathways_to_patch):
     )
 
     return patched_circuit
+
+
+def _add_connection_properties(connections):
+    """Add connection properties drawn from random distributions
+
+    :param connections: A Spark dataframe holding synapse connections
+    :return: The input dataframe with additonal property columns
+    """
+    from spykfunc.random import RNGThreefry, gamma, poisson, truncated_normal
+
+    def __generate(key, fct):
+        @F.pandas_udf('float')
+        def _udf(*args):
+            rng = RNGThreefry()
+            rng.seed(666)
+            args = [a.values for a in args]
+            return pandas.Series(fct(rng.derivate(key), *args))
+        return _udf
+
+    add = [
+        ("gsyn", __generate(0x101, gamma)),
+        ("d", __generate(0x102, gamma)),
+        ("f", __generate(0x103, gamma)),
+        ("u", __generate(0x104, truncated_normal)),
+        ("dtc", __generate(0x105, truncated_normal)),
+        ("nrrp", __generate(0x106, poisson))
+    ]
+
+    connections = connections.sortWithinPartitions("src")
+    for n, f in add:
+        args = [F.col("src"), F.col("dst"), F.col(n)]
+        if n != "nrrp":
+            args.append(F.col(n + "SD"))
+        connections = connections.withColumn("rand_" + n, f(*args))
+    return connections
 
 
 def _create_axon_section_udf(morphology_db):

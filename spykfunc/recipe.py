@@ -273,8 +273,8 @@ class SynapsesClassification(_GenericPropHolder):
     id = ""
     gsyn = _REQUIRED_
     gsynSD = _REQUIRED_
-    nsyn = _REQUIRED_
-    nsynSD = _REQUIRED_
+    nsyn = 0.
+    nsynSD = 0.
     dtc = _REQUIRED_
     dtcSD = _REQUIRED_
     u = _REQUIRED_

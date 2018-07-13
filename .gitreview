@@ -1,0 +1,5 @@
+[gerrit]
+host=bbpcode.epfl.ch
+project=building/Spykfunc
+defaultbranch=master
+port=22

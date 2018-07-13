@@ -3,7 +3,6 @@
 from __future__ import print_function
 
 import argparse
-import sys
 
 import sparkmanager as sm
 from spykfunc import utils
@@ -32,7 +31,7 @@ def connections(df):
 def compare_connection(row, ba, co):
     a = ba.where((col("pre_gid") == row.pre_gid) & (col("post_gid") == row.post_gid))
     b = co.where((col("pre_gid") == row.pre_gid) & (col("post_gid") == row.post_gid))
-    compare(a, b)
+    return compare(a, b)
 
 
 class _ConfDumpAction(argparse._HelpAction):
@@ -80,10 +79,7 @@ if __name__ == '__main__':
     unequal = []
     print(">> Comparing local connections")
     for row in base_conn.sample(withReplacement=False, fraction=f).collect():
-        sys.stdout.write(".")
-        sys.stdout.flush()
         if not compare_connection(row, base, comp):
             unequal.append((row.pre_gid, row.post_gid))
-    sys.stdout.write("\n")
     for pre, post in unequal:
         print("> Differences in {} -> {}".format(pre, post))
