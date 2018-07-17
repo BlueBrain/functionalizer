@@ -2,6 +2,16 @@
 Changelog
 =========
 
+Version 0.10.0
+==============
+
+Changes:
+
+  - Circuits are now reproducible by using the seed specified in the recipe
+    for sampling and filtering of touches
+  - The default output has been renamed from `nrn.parquet` to
+    `circuit.parquet`
+
 Version 0.9.1
 =============
 
