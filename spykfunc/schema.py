@@ -34,6 +34,7 @@ NEURON_SCHEMA = T.StructType([
 
 TOUCH_SCHEMA = T.StructType([
     T.StructField("pre_neuron_id", T.IntegerType(), False),
+    T.StructField("pre_neuron_index", T.IntegerType(), False),
     T.StructField("post_neuron_id", T.IntegerType(), False),
     T.StructField("pre_section", T.ShortType(), False),
     T.StructField("pre_segment", T.ShortType(), False),

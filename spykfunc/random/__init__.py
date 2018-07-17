@@ -1,1 +1,1 @@
-from .threefry import RNGThreefry, gamma, poisson, truncated_normal
+from .threefry import RNGThreefry, gamma, poisson, truncated_normal, uniform

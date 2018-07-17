@@ -194,8 +194,9 @@ class _GenericPropHolder(object):
 
     def __repr__(self):
         unmap = {v: k for k, v in iteritems(self._map_attrs)}
+        all_attrs = set(self._supported_attrs) | set(self._map_attrs.keys())
         attrs = " ".join('{0}="{1}"'.format(unmap.get(n, n), getattr(self, self._map_attrs.get(n, n)))
-                         for n in self._supported_attrs if n != '_i')
+                         for n in all_attrs if n != '_i')
         return '<{cls_name} {attrs}>'.format(cls_name=type(self).__name__, attrs=attrs)
 
 

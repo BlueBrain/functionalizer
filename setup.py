@@ -10,6 +10,7 @@ import sys
 import os
 import os.path as osp
 import glob
+import shutil
 
 import numpy as np
 
@@ -22,7 +23,7 @@ _TERMINAL_CTRL = "\033[{}m"
 assert BUILD_TYPE in ["RELEASE", "DEVEL"], "Build types allowed: DEVEL, RELEASE"
 
 if BUILD_TYPE == "RELEASE":
-    assert glob.glob(osp.join(BASE_DIR, 'spykfunc/dataio/*.cpp'))
+    assert glob.glob(osp.join(BASE_DIR, 'spykfunc/*/*.cpp'))
 elif BUILD_TYPE == "DEVEL":
     from Cython.Build import cythonize
 
@@ -60,7 +61,7 @@ class Install(InstallCommand):
     """Post-installation for installation mode."""
     def run(self):
         InstallCommand.run(self)
-        print("{}Gonna install examples to INSTALL_PREFIX/{}{}"
+        print("{}Going to install examples to INSTALL_PREFIX/{}{}"
               .format(_TERMINAL_CTRL.format(32),    # Green
                       EXAMPLES_DESTINATION,
                       _TERMINAL_CTRL.format(0)))    # reset
@@ -119,6 +120,15 @@ if BUILD_TYPE == 'DEVEL':
                            build_dir="build",
                            include_path=[osp.join(BASE_DIR, 'spykfunc/dataio/mvdtool'),
                                          osp.join(BASE_DIR, 'deps/mvd-tool/python/include')])
+    for name in ext_mods:
+        path = name.replace('.', '/') + '.cpp'
+        src = osp.join("build", path)
+        dst = osp.join(BASE_DIR, path)
+        print("{}Updating Cython-generated extension '{}'{}"
+              .format(_TERMINAL_CTRL.format(32),    # Green
+                      path,
+                      _TERMINAL_CTRL.format(0)))    # reset
+        shutil.copy(src, dst)
 
 
 # *******************************

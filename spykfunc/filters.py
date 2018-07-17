@@ -1,7 +1,10 @@
 from __future__ import division
 import os
 from pyspark.sql import functions as F
+
+import pandas
 import sparkmanager as sm
+
 from .circuit import Circuit
 from .definitions import CellClass, CheckpointPhases
 from .schema import pathway_i_to_str, touches_with_pathway
@@ -10,6 +13,7 @@ from .utils import get_logger
 from .utils.checkpointing import checkpoint_resume, CheckpointHandler
 from .utils.spark import cache_broadcast_single_part
 from .filter_udfs import reduce_cut_parameter_udef
+from .random import RNGThreefry, uniform
 
 logger = get_logger(__name__)
 
@@ -17,6 +21,10 @@ logger = get_logger(__name__)
 _DEBUG = False
 _DEBUG_CSV_OUT = False
 _MB = 1024 * 1024
+
+_KEY_REDUCE = 0x100
+_KEY_CUT = 0x101
+_KEY_ACTIVE = 0x102
 
 if _DEBUG:
     os.path.isdir("_debug") or os.makedirs("_debug")
@@ -202,12 +210,16 @@ class ReduceAndCut(DataSetOperation):
         # Reducing touches on a single neuron is equivalent as reducing on
         # the global set of touches within a pathway (morpho-morpho association)
         logger.debug(" -> Building reduce fractions")
-        fractions = params_df.select("pathway_i", "pP_A").rdd.collectAsMap()
+        fractions = F.broadcast(params_df.select("pathway_i", "pP_A"))
 
         logger.debug(" -> Cutting touches")
-        return (all_touches
-                .sampleBy("pathway_i", fractions, seed=self.seed)
-                .repartition("src", "dst"))
+        return _add_random_column(
+            all_touches.join(fractions, "pathway_i"),
+            "reduce_rand", self.seed, _KEY_REDUCE,
+            F.col("src"), F.col("rand_idx")
+        ).where(F.col("pP_A") > F.col("reduce_rand")) \
+         .drop("reduce_rand", "rand_idx", "pP_A") \
+         .repartition("src", "dst")
 
     # ---
     @sm.assign_to_jobgroup
@@ -247,11 +259,11 @@ class ReduceAndCut(DataSetOperation):
 
         logger.debug(" -> Computing connections to cut according to survival_rate")
         _df = connection_survival_rate
-        cut_connections = (
-            _df
-            .where((_df.survival_rate > .0) & (_df.survival_rate > F.rand(seed=self.seed)))
-            .select("src", "dst", "pathway_i", "reduced_touch_counts_connection")
-        )
+        cut_connections = _add_random_column(
+            _df, "cut_rand", self.seed, _KEY_CUT,
+            F.col("src"), F.col("dst")
+        ).where((_df.survival_rate > .0) & (_df.survival_rate > F.col("cut_rand"))) \
+         .select("src", "dst", "pathway_i", "reduced_touch_counts_connection")
         # Much smaller data volume but we cant coealesce
         return cut_connections
 
@@ -304,15 +316,34 @@ class ReduceAndCut(DataSetOperation):
 
         _write_csv(pathway_i_to_str(active_fractions, mtypes), "active_fractions.csv")
 
-        shall_keep_connections = (
-            cut_touch_counts_connection
-            .join(active_fractions, "pathway_i")
-            .where(F.rand(seed=self.seed) < F.col("active_fraction"))
-            .select("src", "dst")
-        )
+        shall_keep_connections = _add_random_column(
+            cut_touch_counts_connection.join(active_fractions, "pathway_i"),
+            "active_rand", self.seed, _KEY_ACTIVE,
+            F.col("src"), F.col("dst")
+        ).where(F.col("active_rand") < F.col("active_fraction")) \
+         .select("src", "dst")
 
         return shall_keep_connections
 
+
+def _add_random_column(df, name, seed, key, primary, secondary):
+    """Add a random column to a dataframe
+
+    :param df: the dataframe to augment
+    :param name: name for the random column
+    :param seed: the seed to use for the RNG
+    :param key: first key to derive the RNG with
+    :param primary: column to sort internally and second derivative
+    :param secondary: column for third derivative
+    :return: the dataframe with a random column
+    """
+    @F.pandas_udf('float')
+    def _fixed_rand(col1, col2):
+        rng = RNGThreefry().seed(seed).derivate(key)
+        return pandas.Series(uniform(rng, col1.values, col2.values))
+
+    return df.sortWithinPartitions(primary) \
+             .withColumn(name, _fixed_rand(primary, secondary))
 
 def _params_out_csv(df):
     debug_info = df.select("pathway_i", "total_touches", "structural_mean",

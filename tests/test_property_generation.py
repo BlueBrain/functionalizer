@@ -14,7 +14,8 @@ def test_property_assignment(fz):
     data = compute_additional_h5_fields(fz.circuit,
                                         fz._circuit.reduced,
                                         fz._circuit.synapse_class_matrix,
-                                        fz._circuit.synapse_class_properties)
+                                        fz._circuit.synapse_class_properties,
+                                        123)
     have = data.select("pre_gid", "post_gid", "synapseType")
     want = sm.read.parquet(os.path.join(DATADIR, "syn_prop_out.parquet")) \
         .groupBy("pre_gid", "post_gid", "synapseType").count()

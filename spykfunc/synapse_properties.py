@@ -11,16 +11,18 @@ import sparkmanager as sm
 
 from .schema import touches_with_pathway, SYNAPSE_CLASS_MAP_SCHEMA as schema
 from .utils.spark import cache_broadcast_single_part
-from .random import RNGThreefry
+from .random import RNGThreefry, gamma, poisson, truncated_normal
 
 
-def compute_additional_h5_fields(circuit, reduced, syn_class_matrix, syn_props_df):
+
+def compute_additional_h5_fields(circuit, reduced, syn_class_matrix, syn_props_df, seed):
     """Compute randomized properties of touches based on their classification.
 
     :param circuit: the full synapse connection circuit
     :param reduced: a reduced connection count with only one pair of src, dst each
     :param syn_class_matrix: a matrix associating connection properties with a class
     :param syn_props_df: a dataframe containing the properties of connection classes
+    :param seed: the seed to use for the random numbers underlying the properties
     """
     syn_class_dims = syn_class_matrix.shape  # tuple of len 6
 
@@ -70,7 +72,7 @@ def compute_additional_h5_fields(circuit, reduced, syn_class_matrix, syn_props_d
     # Compute #8-12: g, u, d, f, dtc
     #
     # IDs for random functions need to be unique, hence the use of offset
-    connections = _add_connection_properties(connections)
+    connections = _add_connection_properties(connections, seed)
 
     touches = circuit.alias("c").join(connections.alias("conn"),
                                       [F.col("c.src") == F.col("conn.src"), F.col("c.dst") == F.col("conn.dst")])
@@ -145,30 +147,27 @@ def patch_ChC_SPAA_cells(circuit, morphology_db, pathways_to_patch):
     return patched_circuit
 
 
-def _add_connection_properties(connections):
+def _add_connection_properties(connections, seed):
     """Add connection properties drawn from random distributions
 
     :param connections: A Spark dataframe holding synapse connections
     :return: The input dataframe with additonal property columns
     """
-    from spykfunc.random import RNGThreefry, gamma, poisson, truncated_normal
-
     def __generate(key, fct):
         @F.pandas_udf('float')
         def _udf(*args):
-            rng = RNGThreefry()
-            rng.seed(666)
+            rng = RNGThreefry().seed(seed)
             args = [a.values for a in args]
             return pandas.Series(fct(rng.derivate(key), *args))
         return _udf
 
     add = [
-        ("gsyn", __generate(0x101, gamma)),
-        ("d", __generate(0x102, gamma)),
-        ("f", __generate(0x103, gamma)),
-        ("u", __generate(0x104, truncated_normal)),
-        ("dtc", __generate(0x105, truncated_normal)),
-        ("nrrp", __generate(0x106, poisson))
+        ("gsyn", __generate(0x1001, gamma)),
+        ("d", __generate(0x1002, gamma)),
+        ("f", __generate(0x1003, gamma)),
+        ("u", __generate(0x1004, truncated_normal)),
+        ("dtc", __generate(0x1005, truncated_normal)),
+        ("nrrp", __generate(0x1006, poisson))
     ]
 
     connections = connections.sortWithinPartitions("src")

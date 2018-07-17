@@ -12,7 +12,7 @@ import sparkmanager as sm
 
 NUM_AFTER_DISTANCE = 2264809
 NUM_AFTER_TOUCH = 2218004
-NUM_AFTER_FILTER = 170113
+NUM_AFTER_FILTER = 169778
 
 
 @pytest.mark.slow
@@ -89,22 +89,28 @@ class TestFilters(object):
         """
         fz.export_results()
 
-        df = sm.read.load(os.path.join(fz.output_directory, "nrn.parquet"))
-        props = df.groupBy("pre_gid", "post_gid", "u", "d", "f", "gsyn", "dtc").count().cache()
-        conns = props.groupBy("pre_gid", "post_gid").count()
+        cols = ["u_syn", "depression_time", "facilitation_time",
+                "conductance", "decay_time", "n_rrp_vesicles"]
+
+        df = sm.read.load(os.path.join(fz.output_directory, "circuit.parquet"))
+        props = df.groupBy("connected_neurons_pre",
+                           "connected_neurons_post",
+                           *cols).count().cache()
+        conns = props.groupBy("connected_neurons_pre", "connected_neurons_post").count()
 
         assert props.where("count > 1").count() > 0, \
             "need at least one connection with more than one touch"
         assert conns.where("count > 1").count() == 0, \
             "can only have one property setting per connection"
 
-        props = df.where((F.col("pre_gid") == 618) & (F.col("post_gid") == 608)) \
-                  .select("gsyn", "u", "d", "f", "dtc").toPandas()
-        want = pd.DataFrame([(0.41551604866981506, 0.484548956155777, 656.5263671875,
-                              11.101598739624023, 1.8590598106384277)],
-                            dtype='float64',
-                            columns=["gsyn", "u", "d", "f", "dtc"])
-        assert props.drop_duplicates().equals(want)
+        props = df.where((F.col("connected_neurons_pre") == 432) &
+                         (F.col("connected_neurons_post") == 179)) \
+                  .select(*cols).toPandas()
+        want = pd.DataFrame([(0.155061, 289.549713, 12.866484,
+                              0.825946, 7.958006, 1.0)],
+                            dtype='float32',
+                            columns=cols)
+        assert props.drop_duplicates().round(5).equals(want.round(5))
 
     def test_writeout_hdf5(self, fz):
         """Simple test for h5 export.

@@ -39,12 +39,13 @@ cdef class RNGThreefry:
 
     def seed(self, uint64_t seed):
         self.engine.seed(seed)
+        return self
 
     cpdef double gamma(self, double m, double sd):
         cdef double shape = m * m / (sd * sd)
         cdef double scale = sd * sd / m
         cdef b_gamma* dist = new b_gamma(shape, scale)
-        res = deref(dist)(deref(self.engine))
+        cdef double res = deref(dist)(deref(self.engine))
         del dist
         return res
 
@@ -58,7 +59,13 @@ cdef class RNGThreefry:
 
     cpdef double poisson(self, int m):
         cdef b_poisson* dist = new b_poisson(m)
-        res = deref(dist)(deref(self.engine))
+        cdef double res = deref(dist)(deref(self.engine))
+        del dist
+        return res
+
+    cpdef double uniform(self):
+        cdef b_uniform* dist = new b_uniform(0.0, 1.0)
+        cdef double res = deref(dist)(deref(self.engine))
         del dist
         return res
 
@@ -88,6 +95,19 @@ cpdef np.ndarray[float] truncated_normal(RNGThreefry rng,
             last = src[i]
             r = rng.derivate(last)
         res[i] = r.derivate(dst[i]).truncated_normal(m[i], sd[i])
+    return res
+
+cpdef np.ndarray[float] uniform(RNGThreefry rng,
+                                np.ndarray[int] key, np.ndarray[int] subkey):
+    cdef RNGThreefry r = rng
+    cdef int i, last = -1, n = len(key)
+    cdef np.ndarray[float] res = np.empty(n, dtype=np.float32)
+    assert len(key) == len(subkey) == n
+    for i in range(n):
+        if last != key[i]:
+            last = key[i]
+            r = rng.derivate(last)
+        res[i] = r.derivate(subkey[i]).uniform()
     return res
 
 cpdef np.ndarray[float] poisson(RNGThreefry rng,
