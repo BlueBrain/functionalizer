@@ -10,25 +10,31 @@ from pyspark.sql.functions import col
 
 
 def compare(a, b):
+    """Show differences between dataframes `a` and `b`.
+    """
     only_a = a.subtract(b)
     only_b = b.subtract(a)
-    na = only_a.count()
-    nb = only_b.count()
-    if na > 0:
+    n_a = only_a.count()
+    n_b = only_b.count()
+    if n_a > 0:
         print("> Rows unique to baseline found!")
         only_a.show()
-    if nb > 0:
+    if n_b > 0:
         print("> Rows unique to comparison found!")
         only_b.show()
-    return na == nb
+    return n_a == n_b
 
 
 def connections(df):
+    """Shortcut to get unique src ↔ dst pairs
+    """
     keys = ["pre_gid", "post_gid"]
     return df.select(*keys).distinct().cache()
 
 
 def compare_connection(row, ba, co):
+    """Compare connections between src, dst in `row` for dataframes `ba` and `co`.
+    """
     a = ba.where((col("pre_gid") == row.pre_gid) & (col("post_gid") == row.post_gid))
     b = co.where((col("pre_gid") == row.pre_gid) & (col("post_gid") == row.post_gid))
     return compare(a, b)
@@ -46,7 +52,9 @@ class _ConfDumpAction(argparse._HelpAction):
         parser.exit()
 
 
-if __name__ == '__main__':
+def run():
+    """Entry point.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument("baseline", help="the output directory to compare to")
     parser.add_argument("compare", help="the output directory to compare with")
@@ -83,3 +91,7 @@ if __name__ == '__main__':
             unequal.append((row.pre_gid, row.post_gid))
     for pre, post in unequal:
         print("> Differences in {} -> {}".format(pre, post))
+
+
+if __name__ == '__main__':
+    run()

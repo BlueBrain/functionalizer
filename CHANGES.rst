@@ -2,6 +2,14 @@
 Changelog
 =========
 
+Version 0.10.1
+==============
+
+Changes:
+
+  - Add `parquet-compare` to compare output
+  - Add missing package directory
+
 Version 0.10.0
 ==============
 

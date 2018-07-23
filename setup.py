@@ -14,7 +14,7 @@ import shutil
 
 import numpy as np
 
-SPYKFUNC_VERSION = "0.10.0"
+SPYKFUNC_VERSION = "0.10.1"
 BUILD_TYPE = os.getenv('BUILD_TYPE', "RELEASE").upper()
 BASE_DIR = osp.dirname(__file__)
 EXAMPLES_DESTINATION = "share/spykfunc/examples"
@@ -147,9 +147,10 @@ def setup_package():
         packages=[
             'spykfunc',
             'spykfunc.dataio',
-            'spykfunc.utils',
+            'spykfunc.random',
             'spykfunc.tools',
             'spykfunc.tools.analysis',
+            'spykfunc.utils',
         ],
         ext_modules=extensions,
         package_data={
@@ -189,7 +190,8 @@ def setup_package():
         entry_points={
             'console_scripts': [
                 'spykfunc = spykfunc.commands:spykfunc',
-                'spykfunc_plot = spykfunc.tools.scaling:run [plot]'
+                'spykfunc_plot = spykfunc.tools.scaling:run [plot]',
+                'parquet-compare = spykfunc.tools.parquet_compare:run',
             ],
         },
     )
