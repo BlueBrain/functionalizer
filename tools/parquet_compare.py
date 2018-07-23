@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 import argparse
+import sys
 
 import sparkmanager as sm
 from spykfunc import utils
@@ -11,6 +12,9 @@ from pyspark.sql.functions import col
 
 def compare(a, b):
     """Show differences between dataframes `a` and `b`.
+
+    :param a: baseline dataframe
+    :param b: comparison dataframe
     """
     only_a = a.subtract(b)
     only_b = b.subtract(a)
@@ -27,6 +31,8 @@ def compare(a, b):
 
 def connections(df):
     """Shortcut to get unique src ↔ dst pairs
+
+    :param df: the dataframe to reduce. Needs to have columns `pre_gid` and `post_gid`.
     """
     keys = ["pre_gid", "post_gid"]
     return df.select(*keys).distinct().cache()
@@ -54,6 +60,8 @@ class _ConfDumpAction(argparse._HelpAction):
 
 def run():
     """Entry point.
+
+    :return: 0 if no differences found, a positive number otherwise
     """
     parser = argparse.ArgumentParser()
     parser.add_argument("baseline", help="the output directory to compare to")
@@ -81,7 +89,9 @@ def run():
 
     print(">> Comparing global connections")
     base_conn = connections(base)
-    compare(base_conn, connections(comp))
+    n_diff = 0
+    if not compare(base_conn, connections(comp)):
+        n_diff = 1
 
     f = float(args.n) / base_conn.count()
     unequal = []
@@ -89,9 +99,12 @@ def run():
     for row in base_conn.sample(withReplacement=False, fraction=f).collect():
         if not compare_connection(row, base, comp):
             unequal.append((row.pre_gid, row.post_gid))
+    n_diff += len(unequal)
     for pre, post in unequal:
         print("> Differences in {} -> {}".format(pre, post))
 
+    return n_diff
+
 
 if __name__ == '__main__':
-    run()
+    sys.exit(run())
