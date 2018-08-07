@@ -1,9 +1,7 @@
 """Test morphology functions for equivalency with the C++ functionalizer
 """
-try:
-    from pathlib2 import Path
-except ImportError:
-    from pathlib import Path
+from collections import defaultdict
+from pathlib import Path
 import numpy
 import pytest
 
@@ -39,8 +37,9 @@ RADII = [
 
 @pytest.fixture
 def morphos():
-    return MorphologyDB(str(Path(__file__).parent \
-            / "circuit_1000n" / "morphologies" / "h5"))
+    return MorphologyDB(
+        Path(__file__).parent / "circuit_1000n" / "morphologies" / "h5",
+        defaultdict(int))
 
 
 def test_branch_lengths(morphos):

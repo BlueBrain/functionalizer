@@ -11,7 +11,7 @@ cdef struct NeuronInfo:
     char[2] t
     uint morphology
     uint electrophysiology
-    uint syn_class_index
+    uint syn_class
     double position[3]
     double rotation[3]
 
@@ -23,7 +23,7 @@ cdef class NeuronBuffer(StructBuffer):
         ("t", TYPES.String(2)),
         ("morphology", TYPES.UNSIGNED_INT),
         ("electrophysiology", TYPES.UNSIGNED_INT),
-        ("syn_class_index", TYPES.UNSIGNED_INT),
+        ("syn_class", TYPES.UNSIGNED_INT),
         ("position", TYPES.Array(TYPES.DOUBLE,3)),
         ("rotation", TYPES.Array(TYPES.DOUBLE, 3))
     ))
@@ -52,7 +52,7 @@ cdef class NeuronData:
         neurons[0].t = <char*>"aa"
         neurons[0].morphology = 3
         neurons[0].electrophysiology = 4
-        neurons[0].syn_class_index = 5
+        neurons[0].syn_class = 5
         neurons[0].position = [1,1,1]
         neurons[0].rotation = [2,2,2]
 
@@ -60,7 +60,7 @@ cdef class NeuronData:
         neurons[1].t = <char*>"bb"
         neurons[1].morphology = 31
         neurons[1].electrophysiology = 41
-        neurons[1].syn_class_index = 51
+        neurons[1].syn_class = 51
         neurons[1].position = [11,11,11]
         neurons[1].rotation = [21,21,21]
 

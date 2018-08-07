@@ -1,11 +1,10 @@
 """ A lightweight morphology reader for functionalities required by fzer
 """
 
-from os import path as osp
 import h5py
-import math
 import numpy
 from lazy_property import LazyProperty
+from pathlib import Path
 
 
 class _H5V1_Fields:
@@ -73,10 +72,10 @@ class Morphology(object):
     def __load_coordinates(self):
         """Load coordinates and calculate distances
         """
-        self.xs = self._morph_h5["/points"][:,0]
-        self.ys = self._morph_h5["/points"][:,1]
-        self.zs = self._morph_h5["/points"][:,2]
-        self.ds = self._morph_h5["/points"][:,3] / 0.5
+        self.xs = self._morph_h5["/points"][:, 0]
+        self.ys = self._morph_h5["/points"][:, 1]
+        self.zs = self._morph_h5["/points"][:, 2]
+        self.ds = self._morph_h5["/points"][:, 3] / 0.5
 
         soma = self.expand(self.cell_types) == NEURON_SECTION_TYPE.soma
         n = numpy.count_nonzero(soma)
@@ -157,6 +156,18 @@ class Morphology(object):
         """
         return self.segment_lengths(section)[:segment].sum()
 
+    def path(self, section):
+        """Get a list of all sections up to the soma
+
+        :param int section: the section to start with, included in the result
+        """
+        res = [section]
+        parent = self.parents[section]
+        while parent != -1:
+            res.append(parent)
+            parent = self.parents[parent]
+        return res
+
     def distance_of(self, section, segment):
         """Calculate the path distance of a point located at `section` and
         `segment` indices from the soma.
@@ -179,13 +190,21 @@ class Morphology(object):
 
 
 class MorphologyDB(object):
-    def __init__(self, db_path):
-        self.db_path = db_path
-        self._db = {}
+    """Database wrapper to handle morphology mapping
 
-    def __getitem__(self, morpho_name):
-        item = self._db.get(morpho_name)
+    :param str db_path: directory that contains the morphologies as .h5
+    :param list(str) mapping: a list of morphologies to associate with the indices
+    """
+    def __init__(self, db_path, mapping):
+        self.db_path = Path(db_path)
+        self._db = {}
+        self._mapping = mapping
+
+    def __getitem__(self, morpho):
+        if isinstance(morpho, int):
+            morpho = self._mapping[morpho]
+        item = self._db.get(morpho)
         if not item:
-            path = osp.join(self.db_path, morpho_name) + ".h5"
-            item = self._db[morpho_name] = Morphology(path)
+            path = str(self.db_path / (morpho + ".h5"))
+            item = self._db[morpho] = Morphology(path)
         return item

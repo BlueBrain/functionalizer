@@ -9,7 +9,7 @@ export CIRCUIT=\$BASE/circuit.mvd3
 export MORPHOS=\$BASE/morphologies/h5
 export RECIPE=\$BASE/builderRecipeAllPathways.xml
 export TOUCHES=\$BASE/touches/parquet/*.parquet
-salloc -Aproj16 -pinteractive -N1 --exclusive --mem=0 \\
+salloc -Aproj16 -pinteractive -Cnvme -N1 --exclusive --mem=0 \\
     sm_run -H \\
         spykfunc --${modes[$m]} \\
                  --output-dir=\$PWD \\
@@ -21,7 +21,7 @@ script=\$(mktemp)
 cat >\$script <<EOF
 import glob, sys, pyarrow.parquet as pq
 sort_cols = ['connected_neurons_post', 'connected_neurons_pre', 'delay']
-base, comp = [pq.ParquetDataset(glob.glob(d)).read().to_pandas() \
+base, comp = [pq.ParquetDataset(glob.glob(d)).read().to_pandas() \\
                 .sort_values(sort_cols).reset_index(drop=True)
               for d in sys.argv[1:]]
 print("comparison " + ("successful" if base.equals(comp) else "failed"))

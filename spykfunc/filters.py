@@ -44,8 +44,8 @@ class BoutonDistanceFilter(DataSetOperation):
         """Apply filter
         """
         # Use broadcast of Neuron version
-        new_circuit = circuit.where("(distance_soma >= %f AND dst_syn_class_index = %d) OR "
-                                    "(distance_soma >= %f AND dst_syn_class_index = %d)" % (
+        new_circuit = circuit.where("(distance_soma >= %f AND dst_syn_class_i = %d) OR "
+                                    "(distance_soma >= %f AND dst_syn_class_i = %d)" % (
                                         self._bouton_distance_obj.inhibitorySynapsesDistance,
                                         CellClass.INH.fzer_index,
                                         self._bouton_distance_obj.excitatorySynapsesDistance,
@@ -62,8 +62,8 @@ class BoutonDistanceReverseFilter(BoutonDistanceFilter):
 # -------------------------------------------------------------------------------------------------
 
     def apply(self, circuit, *args, **kw):
-        new_circuit = circuit.where("(distance_soma < %f AND dst_syn_class_index = %d) OR "
-                                    "(distance_soma < %f AND dst_syn_class_index = %d)" % (
+        new_circuit = circuit.where("(distance_soma < %f AND dst_syn_class_i = %d) OR "
+                                    "(distance_soma < %f AND dst_syn_class_i = %d)" % (
                                         self._bouton_distance_obj.inhibitorySynapsesDistance,
                                         self.synapse_classes_indexes[CellClass.CLASS_INH],
                                         self._bouton_distance_obj.excitatorySynapsesDistance,
@@ -99,8 +99,8 @@ class TouchRulesFilter(DataSetOperation):
         touches = circuit.withColumn("fail",
                                      circuit.src_layer_i * self._indices[1] +
                                      circuit.dst_layer_i * self._indices[2] +
-                                     circuit.src_morphology_i * self._indices[3] +
-                                     circuit.dst_morphology_i * self._indices[4] +
+                                     circuit.src_mtype_i * self._indices[3] +
+                                     circuit.dst_mtype_i * self._indices[4] +
                                      (circuit.post_section > 0).cast('integer')) \
             .join(F.broadcast(self._rules), "fail", "left_anti") \
             .drop("fail")
@@ -344,6 +344,7 @@ def _add_random_column(df, name, seed, key, primary, secondary):
 
     return df.sortWithinPartitions(primary) \
              .withColumn(name, _fixed_rand(primary, secondary))
+
 
 def _params_out_csv(df):
     debug_info = df.select("pathway_i", "total_touches", "structural_mean",

@@ -84,7 +84,7 @@ class NeuronStats(object):
         """
         touches_with_pathway = (
             circuit.dataframe
-            .select(to_pathway_i("n1.morphology_i", "n2.morphology_i"),
+            .select(to_pathway_i("n1.mtype_i", "n2.mtype_i"),
                     col("t.src"),
                     col("t.dst"))
         )

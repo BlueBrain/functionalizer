@@ -127,7 +127,7 @@ class Functionalizer(object):
         if self._config.no_morphos:
             logger.info("Running in no-morphologies mode. No ChC cells handling performed.")
         else:
-            expected = set(n.decode('utf-8') + '.h5' for n in fdata.morphology_names)
+            expected = set(n + '.h5' for n in fdata.morphologies)
             have = set(os.listdir(morpho_dir))
             missing = expected - have
             if len(missing) > 0:

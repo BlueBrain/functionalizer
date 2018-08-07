@@ -70,7 +70,7 @@ class Circuit(object):
     def morphologies(self):
         """:property: morphology DB
         """
-        return self.__neuron_data.morphologies
+        return self.__neuron_data.morphologyDB
 
     @property
     def morphology_types(self):

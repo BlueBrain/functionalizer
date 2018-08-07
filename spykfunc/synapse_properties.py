@@ -2,17 +2,13 @@
 Additional "Synapse property fields
 """
 from __future__ import absolute_import
-from pyspark.sql import functions as F
-from pyspark.sql import types as T
-import math
-import numpy
 import pandas
 import sparkmanager as sm
-
+from pyspark.sql import functions as F
+from pyspark.sql import types as T
 from .schema import touches_with_pathway, SYNAPSE_CLASS_MAP_SCHEMA as schema
 from .utils.spark import cache_broadcast_single_part
 from .random import RNGThreefry, gamma, poisson, truncated_normal
-
 
 
 def compute_additional_h5_fields(circuit, reduced, syn_class_matrix, syn_props_df, seed):
@@ -32,12 +28,12 @@ def compute_additional_h5_fields(circuit, reduced, syn_class_matrix, syn_props_d
 
     # Compute the index for the matrix as in a flat array
     connections = reduced.withColumn("syn_prop_index",
-                                     reduced.src_morphology_i * index_length[1] +
-                                     reduced.src_electrophysiology * index_length[2] +
-                                     reduced.src_syn_class_index * index_length[3] +
-                                     reduced.dst_morphology_i * index_length[4] +
-                                     reduced.dst_electrophysiology * index_length[5] +
-                                     reduced.dst_syn_class_index)
+                                     reduced.src_mtype_i * index_length[1] +
+                                     reduced.src_etype_i * index_length[2] +
+                                     reduced.src_syn_class_i * index_length[3] +
+                                     reduced.dst_mtype_i * index_length[4] +
+                                     reduced.dst_etype_i * index_length[5] +
+                                     reduced.dst_syn_class_i)
 
     # Convert the numpy matrix into a dataframe and join to get the right
     # property index
@@ -109,7 +105,7 @@ def compute_additional_h5_fields(circuit, reduced, syn_class_matrix, syn_props_d
         t.rand_f.alias("f"),
         t.rand_dtc.alias("dtc"),
         t.synapseType.alias("synapseType"),
-        F.col("c.src_morphology_i").alias("morphology"),
+        F.col("c.src_mtype_i").alias("morphology"),
         F.lit(0).alias("branch_order_dend"),  # TBD
         t.branch_order.alias("branch_order_axon"),
         t.rand_nrrp.alias("nrrp"),
@@ -131,7 +127,7 @@ def patch_ChC_SPAA_cells(circuit, morphology_db, pathways_to_patch):
         circuit.withColumn(
             "new_post_section",
             F.when(circuit.reposition,
-                   get_axon_section_id(circuit.dst_name))
+                   get_axon_section_id(circuit.dst_morphology_i))
              .otherwise(circuit.post_section)
         )
         .withColumn("new_post_segment",
@@ -188,7 +184,7 @@ def _create_axon_section_udf(morphology_db):
     """
 
     @F.udf(returnType=T.IntegerType())
-    def get_axon_section_id(name):
-        return morphology_db[name].first_axon_section
+    def get_axon_section_id(morpho):
+        return morphology_db[morpho].first_axon_section
 
     return get_axon_section_id

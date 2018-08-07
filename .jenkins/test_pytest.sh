@@ -5,4 +5,4 @@ module load nix/hpc/highfive
 
 cd $WORKSPACE
 git submodule update --init --recursive
-python setup.py test
+srun -Aproj16 -pinteractive -Cnvme --exclusive --mem=0 python setup.py test

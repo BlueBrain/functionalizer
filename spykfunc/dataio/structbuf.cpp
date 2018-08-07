@@ -3,13 +3,13 @@
 /* BEGIN: Cython Metadata
 {
     "distutils": {
-        "depends": [], 
-        "language": "c++", 
-        "name": "spykfunc.dataio.structbuf", 
+        "depends": [],
+        "language": "c++",
+        "name": "spykfunc.dataio.structbuf",
         "sources": [
             "spykfunc/dataio/structbuf.pyx"
         ]
-    }, 
+    },
     "module_name": "spykfunc.dataio.structbuf"
 }
 END: Cython Metadata */

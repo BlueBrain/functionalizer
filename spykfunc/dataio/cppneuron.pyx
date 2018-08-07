@@ -26,9 +26,10 @@ ctypedef unsigned int uint
 
 cdef struct NeuronInfo:
     uint id
+    uint mtype
+    uint etype
     uint morphology
-    uint electrophysiology
-    uint syn_class_index
+    uint syn_class
     double position[3]
     double rotation[4]
 
@@ -37,9 +38,10 @@ cdef struct NeuronInfo:
 cdef class NeuronBuffer(StructBuffer):
     block_t = StructType( (
         ("id", TYPES.UNSIGNED_INT),
+        ("mtype", TYPES.UNSIGNED_INT),
+        ("etype", TYPES.UNSIGNED_INT),
         ("morphology", TYPES.UNSIGNED_INT),
-        ("electrophysiology", TYPES.UNSIGNED_INT),
-        ("syn_class_index", TYPES.UNSIGNED_INT),
+        ("syn_class", TYPES.UNSIGNED_INT),
         ("position", TYPES.Array(TYPES.DOUBLE,3)),
         ("rotation", TYPES.Array(TYPES.DOUBLE,4))
     ))
@@ -71,12 +73,11 @@ cdef class NeuronData(NeuronDataI):
     cdef readonly bool globals_loaded
     cdef readonly vector[string] mtypeVec
     cdef readonly vector[string] etypeVec
+    cdef readonly vector[string] morphologyVec
     cdef readonly vector[string] synaClassVec
 
     #Neuron info - Depending on the range
     cdef readonly NeuronBuffer neurons
-    cdef readonly vector[string] neuronNames
-    cdef readonly object nameMap
     #The actual C-alloc'ed array
     cdef NeuronInfo *_neurons
 
@@ -91,7 +92,6 @@ cdef class NeuronData(NeuronDataI):
         # which can be particularly interesting for distributed loading
         self.globals_loaded = False
         self.nNeurons = nr_neurons
-        self.nameMap = defaultdict(list)
         # self.morphologies = {}
 
     def set_loader(self, NeuronLoaderI loader):
@@ -109,9 +109,6 @@ cdef class NeuronData(NeuronDataI):
     #     if morphos is None:
     #         morphos = self.nameMap.keys()
     #     return self._loader.load_morphologies(self, morphos)
-
-    def set_name_map(self, dict name_map):
-        self.nameMap = name_map
 
     def __dealloc__(self):
         # Dealloc data...
@@ -137,15 +134,18 @@ cdef class MVD_Morpho_Loader(NeuronLoaderI):
         cdef MVD3.MVD3File *f = new MVD3.MVD3File(self.mvd_filename)
 
         # --- Global info ---
-        #Nr
+        # Nr
         neuron_data_dst.nNeurons = f.getNbNeuron()
-        #ETypes
+        # ETypes
         cdef vector[string] list_etypes = f.listAllEtypes()
         neuron_data_dst.etypeVec.swap(list_etypes)
-        #MTypes
+        # MTypes
         cdef vector[string] list_mtypes = f.listAllMtypes()
         neuron_data_dst.mtypeVec.swap(list_mtypes)
-        #SynapseClasses
+        # Morphologies
+        cdef vector[string] list_morphologies = f.listAllMorphologies()
+        neuron_data_dst.morphologyVec.swap(list_morphologies)
+        # SynapseClasses
         cdef vector[string] list_syn_class = f.listAllSynapseClass()
         neuron_data_dst.synaClassVec.swap(list_syn_class)
         del f
@@ -162,9 +162,6 @@ cdef class MVD_Morpho_Loader(NeuronLoaderI):
         cdef size_t subset_count = mvd_range.count or total_neurons
         cdef size_t subset_offset = mvd_range.offset
 
-        # Neuron morphologies
-        neuron_data.neuronNames = f.getMorphologies(mvd_range)
-
         # # Neuron Positions and Rotations
         cdef MVD.Positions *pos = new MVD.Positions(f.getPositions(mvd_range))
         cdef MVD.Rotations *rot = new MVD.Rotations(f.getRotations(mvd_range))
@@ -172,6 +169,7 @@ cdef class MVD_Morpho_Loader(NeuronLoaderI):
         # Neuron Mtype, Etype and
         cdef vector[size_t] index_mtypes = f.getIndexMtypes(mvd_range)
         cdef vector[size_t] index_etypes = f.getIndexEtypes(mvd_range)
+        cdef vector[size_t] index_morphologies = f.getIndexMorphologies(mvd_range)
         cdef vector[size_t] index_syn_class = f.getIndexSynapseClass(mvd_range)
 
         # Populate structure
@@ -181,14 +179,12 @@ cdef class MVD_Morpho_Loader(NeuronLoaderI):
         cdef size_t cur_neuron
         for cur_neuron in range(subset_count):
             _neurons[cur_neuron].id = subset_offset + cur_neuron
-            _neurons[cur_neuron].morphology = index_mtypes[cur_neuron]
-            _neurons[cur_neuron].electrophysiology = index_etypes[cur_neuron]
-            _neurons[cur_neuron].syn_class_index = index_syn_class[cur_neuron]
+            _neurons[cur_neuron].mtype = index_mtypes[cur_neuron]
+            _neurons[cur_neuron].etype = index_etypes[cur_neuron]
+            _neurons[cur_neuron].morphology = index_morphologies[cur_neuron]
+            _neurons[cur_neuron].syn_class = index_syn_class[cur_neuron]
             memcpy(<void*>_neurons[cur_neuron].position, <void*>(pos.data()+cur_neuron*3), 3*sizeof(double))
             memcpy(<void*>_neurons[cur_neuron].rotation, <void*>(rot.data()+cur_neuron*4), 4*sizeof(double))
-
-            # names to multimap
-            neuron_data.nameMap[neuron_data.neuronNames[cur_neuron]].append(int(_neurons[cur_neuron].id))
 
         #Attach _neurons to object so that we can keep a reference to be later freed
         neuron_data._neurons = _neurons

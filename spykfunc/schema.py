@@ -17,19 +17,19 @@ LAYER_SCHEMA = T.StructType([
 ])
 
 MTYPE_NAMES_SCHEMA = T.StructType([
-    T.StructField("morphology_i", T.IntegerType(), False),
+    T.StructField("mtype_i", T.IntegerType(), False),
     T.StructField("mtype", T.StringType(), False),
 ])
 
 NEURON_SCHEMA = T.StructType([
     T.StructField("id", T.IntegerType(), False),
-    T.StructField("morphology_i", T.ShortType(), False),       # mtype
-    T.StructField("electrophysiology", T.ShortType(), False),  # etype
-    T.StructField("syn_class_index", T.ShortType(), False),
+    T.StructField("mtype_i", T.ShortType(), False),
+    T.StructField("etype_i", T.ShortType(), False),
+    T.StructField("morphology_i", T.ShortType(), False),
+    T.StructField("syn_class_i", T.ShortType(), False),
     T.StructField("position", T.ArrayType(T.DoubleType(), False), False),
     T.StructField("rotation", T.ArrayType(T.DoubleType(), False), False),
-    T.StructField("name", T.StringType(), False),
-    T.StructField("layer", T.ByteType(), False),
+    T.StructField("layer", T.ShortType(), False),
 ])
 
 TOUCH_SCHEMA = T.StructType([
@@ -45,6 +45,19 @@ TOUCH_SCHEMA = T.StructType([
     T.StructField("distance_soma", T.FloatType(), False),
     T.StructField("branch_order", T.ByteType(), False)
 ])
+
+GAP_JUNCTION_SCHEMA = T.StructType([
+    T.StructField("pre_neuron_id", T.IntegerType(), False),
+    T.StructField("pre_neuron_index", T.IntegerType(), False),
+    T.StructField("post_neuron_id", T.IntegerType(), False),
+    T.StructField("pre_section", T.ShortType(), False),
+    T.StructField("pre_segment", T.ShortType(), False),
+    T.StructField("post_section", T.ShortType(), False),
+    T.StructField("post_segment", T.ShortType(), False),
+    T.StructField("pre_offset", T.FloatType(), False),
+    T.StructField("post_offset", T.FloatType(), False),
+])
+
 
 MTYPE_SCHEMA = T.StructType([
     T.StructField("_i", T.ShortType(), False),
@@ -143,7 +156,7 @@ def touches_with_pathway(circuit):
     """
     return circuit.withColumn(
         "pathway_i",
-        to_pathway_i("src_morphology_i", "dst_morphology_i")
+        to_pathway_i("src_mtype_i", "dst_mtype_i")
     )
 
 
@@ -261,7 +274,7 @@ class NeuronFields(object):
     id = NeuronField("id")
     morphology = NeuronField("morphology")
     electrophysiology = NeuronField("electrophysiology")
-    syn_class_index = NeuronField("syn_class_index")
+    syn_class = NeuronField("syn_class")
     position = NeuronField("position")
     rotation = NeuronField("rotation")
     name = NeuronField("name")

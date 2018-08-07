@@ -3,13 +3,13 @@
 /* BEGIN: Cython Metadata
 {
     "distutils": {
-        "depends": [], 
-        "language": "c++", 
-        "name": "spykfunc.dataio.common", 
+        "depends": [],
+        "language": "c++",
+        "name": "spykfunc.dataio.common",
         "sources": [
             "spykfunc/dataio/common.pyx"
         ]
-    }, 
+    },
     "module_name": "spykfunc.dataio.common"
 }
 END: Cython Metadata */
