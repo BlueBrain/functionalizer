@@ -14,7 +14,7 @@ import shutil
 
 import numpy as np
 
-SPYKFUNC_VERSION = "0.10.1"
+SPYKFUNC_VERSION = "0.10.2"
 BUILD_TYPE = os.getenv('BUILD_TYPE', "RELEASE").upper()
 BASE_DIR = osp.dirname(__file__)
 EXAMPLES_DESTINATION = "share/spykfunc/examples"

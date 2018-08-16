@@ -4,6 +4,7 @@ This module ensures compatibility when running with/without a Hadoop
 cluster, since the underlying Spark API behaves differently in the presence
 of a Hadoop cluster.
 """
+from datetime import datetime
 import glob
 import lxml.etree
 import logging
@@ -25,6 +26,7 @@ class AutoClient(hdfs.InsecureClient):
     """
     def __init__(self):
         super(AutoClient, self).__init__(self._find_host())
+        self.status('/')  # attempt to access file system to verify connection
 
     @staticmethod
     def _find_host():
@@ -48,16 +50,49 @@ class AutoClient(hdfs.InsecureClient):
             raise RuntimeError("cannot determine HADOOP setup")
 
 
-try:
-    __client = AutoClient()
-    try:
-        __client.status('/')
-    except Exception as e:
-        L.exception(e)
-        raise
-except Exception as e:
-    L.warn("deactivating HADOOP setup")
-    __client = None
+class AttemptedInstance(object):
+    """Class to automatically instantiate objects
+
+    Only create the underlying object when requested, pass through all
+    attribute requests.
+    """
+    def __init__(self, cls):
+        self.__cls = cls
+        self.__obj = None
+
+    def __bool__(self):
+        self.__ensure_instance()
+        return (self.__obj is not False) and (self.__obj is not None)
+
+    def __getattr__(self, attr):
+        self.__ensure_instance()
+        return getattr(self.__obj, attr)
+
+    def __ensure_instance(self):
+        if self.__obj is not None:
+            return
+        try:
+            self.__obj = self.__cls()
+        except Exception as e:
+            L.warn("No HDFS cluster found, deactivating support")
+            self.__obj = False
+
+
+__client = AttemptedInstance(AutoClient)
+
+
+def autosense_hdfs(local_p, hdfs_p):
+    """Pick a local or HDFS path based on HDFS cluster presence.
+
+    The HDFS path may include `{date}`, which will be formatted with the
+    present date.
+
+    :param local_p: a local path
+    :param hdfs_p: a path to use with HDFS
+    """
+    if __client:
+        return hdfs_p.format(date=datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+    return local_p
 
 
 def adjust_for_spark(p, local=None):

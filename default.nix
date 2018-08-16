@@ -8,34 +8,28 @@
 
 with import <BBPpkgs> { };
 
-{
-  spykfunc = spykfunc.overrideDerivation (oldAttr: rec {
+rec {
+  spykfunc-dev = spykfunc.overrideDerivation (oldAttr: rec {
     name = "spykfunc-dev";
     src = ./.;
     makeFlags = [ "VERBOSE=1" ];
   });
 
-  spykfunc-py3 = spykfunc-py3.overrideDerivation (oldAttr: rec {
-    name = "spykfunc-dev-py3";
-    src = ./.;
-    makeFlags = [ "VERBOSE=1" ];
-  });
-
-  mod-spykfunc = modules.spykfunc.overrideDerivation (oldAttr: rec {
-    name = "spykfunc-dev";
+  mod-spykfunc-dev = envModuleGen rec {
+    name = "mod-spykfunc-dev";
     moduleFilePrefix = "dev";
-    packages = with python3Packages; [
-      spykfunc
+    packages = with python3Packages; ([
+      spykfunc-dev
       parquet-converters
-    ] ++ ( getPyModRec [ spykfunc ] ++ [ add-site-dir ] );
-  });
+    ] ++  getPyModRec [ spykfunc-dev ] ++ [ add-site-dir ] );
+    extraContent = ''
+      setenv HADOOP_HOME "${hadoop-bbp}"
+      setenv JAVA_HOME "${jre}"
+      setenv SPARK_HOME "${spark-bbp}"
 
-  mod-spykfunc-py3 = modules.spykfunc-py3.overrideDerivation (oldAttr: rec {
-    name = "spykfunc-dev-py3";
-    moduleFilePrefix = "dev";
-    packages = with python3Packages; [
-      spykfunc-py3
-      parquet-converters
-    ] ++ ( getPyModRec [ spykfunc-py3 ] ++ [ add-site-dir ] );
-  });
+      setenv PYSPARK_DRIVER_PYTHON " "
+      setenv PYSPARK_PYTHON "${python3Packages.python}/bin/${python3Packages.python.executable}"
+    '';
+    dependencies = [ modules.python36-full ];
+  };
 }

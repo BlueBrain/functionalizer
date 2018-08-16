@@ -205,7 +205,7 @@ class CheckpointResume:
         try:
             df = cls._do_checkpoint(df, name, params)
             if params.break_exec_plan:
-                df = cls._try_restore(name, params)
+                df = cls._try_restore(name, params, info=False)
             params.status.state = CheckpointStatus.COMPUTED
 
         except Exception as e:
@@ -218,18 +218,20 @@ class CheckpointResume:
 
     # --
     @staticmethod
-    def _try_restore(name, params):
+    def _try_restore(name, params, info=True):
         """ Tries to restore a dataframe, from table or raw parquet, according to the params object
 
         :param name: the name of the stage
-        :param params: The checkpoint_restore session params
+        :param params: the checkpoint_restore session params
+        :param bool info: log a message when restoring
         """
         df = None
 
         def try_except_restore(restore_f, source):
             CheckpointHandler.run_all(params.handlers, CheckpointHandler.BEFORE_LOAD)
             try:
-                params.logger.info("[SKIP %s] Checkpoint found. Restoring state...", name)
+                if info:
+                    params.logger.info("[SKIP %s] Checkpoint found. Restoring state...", name)
                 df = restore_f(source)
                 params.status.error = None
                 return df

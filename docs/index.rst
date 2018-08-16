@@ -89,7 +89,7 @@ both a Spark and a HDFS cluster:
    export CIRCUIT=/gpfs/bbp.cscs.ch/project/proj68/circuits/dev-11M/circuit.mvd3
    export MORPHOS=/gpfs/bbp.cscs.ch/project/proj59/entities/morphologies/2017.10.31/v1
    export RECIPE=/gpfs/bbp.cscs.ch/project/proj68/circuits/dev-11M/connectome/functional/recipe_patched/builderRecipeAllPathways.xml
-   export TOUCHES=/gpfs/bbp.cscs.ch/project/proj68/circuits/dev-11M/connectome/touches/parquet
+   export TOUCHES=/gpfs/bbp.cscs.ch/project/proj68/circuits/dev-11M/connectome/touches/parquet/*.parquet
 
    export OUTDIR=/gpfs/bbp.cscs.ch/project/proj68/circuits/dev-11M/connectome/functional/output.n64
    mkdir -p $OUTDIR
@@ -106,9 +106,24 @@ to start both the Spark and optional HDFS cluster.
 
 Its behavior is determined mostly by environment variables or command line
 flags.  E.g., the `-c` flag above is used to set the number of cores that
-Spark will use. Similarly, `-m` can be used to restrict the memory that
-Spark, and thus the Spark functionalizer, will use. To disable HDFS
-support, `-H` may be passed to `sm_run`.
+Spark will use.
+By default, 18 cores are assigned to an executor, and the `-c` flag to
+`sm_run` should be a multiple of 18.
+To decrease the amount of cores, make sure that `-c` is a multiple of
+the number `n` passed to `--spark-property spark.executor.cores=n`
+simultaneously.
+
+Similarly, `-m` can be used to restrict the memory that
+Spark, and thus the Spark functionalizer, will use.
+The corresponding setting for Spykfunc is `--spark-property
+spark.executor.memory=…`.
+
+By default, `sm_run` will start an HDFS cluster to save the execution
+state and coerce Spark to break the execution chain.
+For larger circuits, i.e., more than 2 million neurons, the runtime will be
+shortened dramatically compared to storing the checkpoints/execution state
+on GPFS.
+The HDFS cluster can be disabled by passing `-H` to `sm_run`.
 
 .. note::
 

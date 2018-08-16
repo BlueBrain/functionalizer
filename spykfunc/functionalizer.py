@@ -18,7 +18,7 @@ from . import _filtering
 from . import filters
 from . import utils
 from .utils.checkpointing import checkpoint_resume, CheckpointHandler
-from .utils.filesystem import adjust_for_spark
+from .utils.filesystem import adjust_for_spark, autosense_hdfs
 
 __all__ = ["Functionalizer", "session", "CheckpointPhases"]
 
@@ -31,7 +31,7 @@ class _SpykfuncOptions:
     output_dir = "spykfunc_output"
     properties = None
     name = "Functionalizer"
-    cache = "_mvd"
+    cache_dir = None
     no_morphos = False
     checkpoint_dir = None
 
@@ -42,7 +42,11 @@ class _SpykfuncOptions:
             if option is not None and hasattr(self, name):
                 setattr(self, name, option)
         if self.checkpoint_dir is None:
-            self.checkpoint_dir = os.path.join(self.output_dir, "_checkpoints")
+            local_p = os.path.join(self.output_dir, "_checkpoints")
+            hdfs_p = '/_spykfunc_{date}/checkpoints'
+            self.checkpoint_dir = autosense_hdfs(local_p, hdfs_p)
+        if self.cache_dir is None:
+            self.cache_dir = os.path.join(self.output_dir, "_mvd")
         if self.properties is None:
             self.properties = utils.Configuration(outdir=self.output_dir,
                                                   filename=filename,
@@ -117,7 +121,7 @@ class Functionalizer(object):
         self.recipe = Recipe(recipe_file)
 
         # Load Neurons data
-        fdata = NeuronDataSpark(MVD_Morpho_Loader(mvd_file, morpho_dir), self._config.cache)
+        fdata = NeuronDataSpark(MVD_Morpho_Loader(mvd_file, morpho_dir), self._config.cache_dir)
         fdata.load_mvd_neurons_morphologies()
 
         # Init the Enumeration to contain fzer CellClass index

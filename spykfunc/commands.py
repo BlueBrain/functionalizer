@@ -39,6 +39,8 @@ def _create_parser():
                         action="store_true", default=False)
     parser.add_argument("--name",
                         help="Name that will show up in the Spark logs. Defaults to 'Functionalizer'")
+    parser.add_argument("--cache-dir",
+                        help="Specify directory to cache circuits converted to parquet. Defaults to OUTPUT_DIR/_mvd")
     parser.add_argument("--checkpoint-dir",
                         help="Specify directory to store checkpoints. Defaults to OUTPUT_DIR/_checkpoints")
     parser.add_argument("--output-dir", default="spykfunc_output",  # see also `spykfunc/functionalizer.py`!

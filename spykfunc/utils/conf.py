@@ -12,8 +12,6 @@ except ImportError:
     from pathlib import Path
 from six import iteritems, text_type
 
-from .filesystem import adjust_for_spark
-
 
 class Configuration(dict):
     """Manage Spark and other configurations.
@@ -53,7 +51,7 @@ class Configuration(dict):
         self.setdefault("spark.eventLog.dir",
                         str(outdir.resolve() / "eventlog"))
         self.setdefault("spark.sql.warehouse.dir",
-                        adjust_for_spark(outdir.resolve() / "warehouse", local=True))
+                        str(outdir.resolve() / "warehouse"))
         for k in ["spark.eventLog.dir", "spark.sql.warehouse.dir"]:
             Path(self[k]).mkdir(parents=True, exist_ok=True)
 

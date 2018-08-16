@@ -3,6 +3,6 @@ node {
         [$class:'GitSCMSource',
          remote: 'ssh://bbpcode.epfl.ch/hpc/jenkins-pipeline'])
 
-    nix("mod-spykfunc-py3",
+    nix("mod-spykfunc-dev",
         "ssh://bbpcode.epfl.ch/building/Spykfunc")
 }

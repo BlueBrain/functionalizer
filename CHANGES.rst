@@ -2,6 +2,16 @@
 Changelog
 =========
 
+Version 0.10.2
+==============
+
+Changes:
+
+  - Save `_mvd` directory in the output directory by default
+  - Save checkpoints in HDFS automatically
+  - Documentation improvements
+  - Drop Python 2 support
+
 Version 0.10.1
 ==============
 
