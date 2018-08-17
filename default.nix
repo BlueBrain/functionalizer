@@ -1,13 +1,14 @@
 # Nix development environment
 #
-# build:
-# export NIX_PATH=BBPpkgs=path/to/bbp-nixpkgs
+# build module:
+#   official: nix-build -I BBPpkgs=https://goo.gl/wJkFfj -A mod-spykfunc-dev
+#   custom:   nix-build -I "BBPpkgs=path/to/bbp-nixpkgs" -A mod-spykfunc-dev
 #
-# cd [project] && nix-build ./ -A converter
+# development environment:
+#   official: nix-shell -I BBPpkgs=https://goo.gl/wJkFfj -A spykfunc-dev
+#   custom:   nix-shell -I "BBPpkgs=path/to/bbp-nixpkgs" -A spykfunc-dev
 #
-
 with import <BBPpkgs> { };
-
 rec {
   spykfunc-dev = spykfunc.overrideDerivation (oldAttr: rec {
     name = "spykfunc-dev";
@@ -15,21 +16,7 @@ rec {
     makeFlags = [ "VERBOSE=1" ];
   });
 
-  mod-spykfunc-dev = envModuleGen rec {
-    name = "mod-spykfunc-dev";
-    moduleFilePrefix = "dev";
-    packages = with python3Packages; ([
-      spykfunc-dev
-      parquet-converters
-    ] ++  getPyModRec [ spykfunc-dev ] ++ [ add-site-dir ] );
-    extraContent = ''
-      setenv HADOOP_HOME "${hadoop-bbp}"
-      setenv JAVA_HOME "${jre}"
-      setenv SPARK_HOME "${spark-bbp}"
-
-      setenv PYSPARK_DRIVER_PYTHON " "
-      setenv PYSPARK_PYTHON "${python3Packages.python}/bin/${python3Packages.python.executable}"
-    '';
-    dependencies = [ modules.python36-full ];
+  mod-spykfunc-dev = modules.spykfunc.override {
+    packages = with spykfunc-dev.pythonPackages; getPyModRec [ spykfunc-dev ] ++ [ add-site-dir parquet-converters ];
   };
 }
