@@ -7,7 +7,7 @@ for i in $(seq 1 2); do
 export BASE=\$DATADIR/cellular/circuit-${i}k/
 export CIRCUIT=\$BASE/circuit.mvd3
 export MORPHOS=\$BASE/morphologies/h5
-export RECIPE=\$BASE/builderRecipeAllPathways.xml
+export RECIPE=\$BASE/bioname/builderRecipeAllPathways.xml
 export TOUCHES=\$BASE/touches/parquet/*.parquet
 salloc -Aproj16 -pinteractive -Cnvme -N1 --exclusive --mem=0 \\
     sm_run -H \\
