@@ -62,11 +62,6 @@ class NeuronDataSpark(NeuronData):
             self.load_globals()
 
     @LazyProperty
-    def layers(self):
-        self.require_mvd_globals()
-        return sorted(set(MType(m).layer for m in self.mTypes))
-
-    @LazyProperty
     def mTypes(self):
         self.require_mvd_globals()
         return tuple(to_native_str(a) for a in self.mtypeVec)
@@ -114,6 +109,7 @@ class NeuronDataSpark(NeuronData):
         if os.path.exists(mvd_parquet):
             logger.info("Loading MVD from parquet")
             mvd = sm.read.parquet(adjust_for_spark(mvd_parquet, local=True)).cache()
+            self.layers = tuple(sorted(r.layer for r in mvd.select('layer').distinct().collect()))
             self.neuronDF = F.broadcast(mvd.drop(*self.NEURON_COLUMNS_TO_DROP))
             n_neurons = self.neuronDF.count()  # force materialize
         else:
@@ -132,6 +128,7 @@ class NeuronDataSpark(NeuronData):
             # Create DF
             logger.info("Creating data frame...")
             raw_mvd = sm.createDataFrame(neuronRDD, schema.NEURON_SCHEMA).cache()
+            self.layers = tuple(sorted(r.layer for r in raw_mvd.select('layer').distinct().collect()))
             layers = sm.createDataFrame(enumerate(self.layers), schema.LAYER_SCHEMA)
 
             # Evaluate (build partial NameMaps) and store
@@ -417,20 +414,19 @@ def neuron_loader_gen(data_class, loader_class, loader_params, n_neurons,
         loader_params['mvd_filename'] = loader_params['mvd_filename'].decode('utf-8')
         loader_params['morphology_dir'] = loader_params['morphology_dir'].decode('utf-8')
 
-    def _convert_entry(nrn, layer):
+    def _convert_entry(nrn):
         return (int(nrn[0]),                    # id  (0==schema.NeuronFields["id"], but lets avoid all those lookups
                 int(nrn[1]),                    # mtype_index
                 # mtype_name,                   # mtype (str no longer in df)
                 int(nrn[2]),                    # etype_index
                 int(nrn[3]),                    # morphology_index
                 int(nrn[4]),                    # syn_class_index
-                [float(x) for x in nrn[5]],     # position
-                [float(x) for x in nrn[6]],     # rotation
-                layer)
+                int(nrn[5]),                    # layer
+                [float(x) for x in nrn[6]],     # position
+                [float(x) for x in nrn[7]])     # rotation
 
     def load_neurons_par(part_nr):
         logging.debug("Going to read part %d/%d", part_nr, total_parts)
-        mtypes = mtype_bc.value
 
         # Recreates objects to store subset data, avoiding Spark to serialize them
         da = data_class(nr_neurons=n_neurons)
@@ -443,8 +439,7 @@ def neuron_loader_gen(data_class, loader_class, loader_params, n_neurons,
             return da.neurons
 
         # Dont alloc a full list, give back generator
-        # mtype_name = mtypes[nrn[1]].name
-        return (_convert_entry(nrn, mtypes[nrn[1]].layer) for nrn in da.neurons)
+        return (_convert_entry(nrn) for nrn in da.neurons)
     return load_neurons_par
 
 

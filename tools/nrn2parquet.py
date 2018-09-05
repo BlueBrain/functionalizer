@@ -42,6 +42,8 @@ parser.add_argument("--dump-configuration", action=_ConfDumpAction,
                          "flag and exit")
 parser.add_argument("--big-endian", action='store_true',
                     help="Convert from big endian to little endian")
+parser.add_argument("--coalesce", action='store_true',
+                    help="Output only a single partition")
 args = parser.parse_args()
 
 properties = utils.Configuration(outdir=args.output,
@@ -73,7 +75,8 @@ def h5datasets(fn):
         return [[fn, ds.name] for ds in f['/'].values() if ds.name.startswith('/a')]
 
 
-def h5conversion((fn, ds)):
+def h5conversion(row):
+    fn, ds = row
     with h5py.File(fn) as f:
         post_gid = int(ds[2:])
         return [(bytearray(row.tobytes()),) for row in numpy.insert(f[ds].value, 1, post_gid, axis=1)]
@@ -105,6 +108,9 @@ h5touches = h5floats.select(
     h5floats.data.getItem(17).cast("int").alias("branch_order_axon"),
     h5floats.data.getItem(18).cast("int").alias("ase"),
     h5floats.data.getItem(19).cast("int").alias("branch_type"))
+
+if args.coalesce:
+    h5touches = h5touches.coalesce(1)
 
 h5touches.write.parquet(os.path.join(args.output, "circuit.parquet"))
 print("converted {} touches".format(h5touches.count()))

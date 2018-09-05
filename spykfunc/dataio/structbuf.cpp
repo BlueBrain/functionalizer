@@ -4,6 +4,9 @@
 {
     "distutils": {
         "depends": [],
+        "extra_compile_args": [
+            "-std=c++11"
+        ],
         "language": "c++",
         "name": "spykfunc.dataio.structbuf",
         "sources": [

@@ -2,6 +2,14 @@
 Changelog
 =========
 
+Version 0.10.3
+==============
+
+Changes:
+
+  - Read the layers from circuit files rather than inferring them from
+    morphologies
+
 Version 0.10.2
 ==============
 

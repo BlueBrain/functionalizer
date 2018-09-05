@@ -201,7 +201,7 @@ class MorphologyDB(object):
         self._mapping = mapping
 
     def __getitem__(self, morpho):
-        if isinstance(morpho, int):
+        if not isinstance(morpho, str):
             morpho = self._mapping[morpho]
         item = self._db.get(morpho)
         if not item:

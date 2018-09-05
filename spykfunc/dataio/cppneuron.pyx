@@ -30,6 +30,7 @@ cdef struct NeuronInfo:
     uint etype
     uint morphology
     uint syn_class
+    uint layer
     double position[3]
     double rotation[4]
 
@@ -42,6 +43,7 @@ cdef class NeuronBuffer(StructBuffer):
         ("etype", TYPES.UNSIGNED_INT),
         ("morphology", TYPES.UNSIGNED_INT),
         ("syn_class", TYPES.UNSIGNED_INT),
+        ("layer", TYPES.UNSIGNED_INT),
         ("position", TYPES.Array(TYPES.DOUBLE,3)),
         ("rotation", TYPES.Array(TYPES.DOUBLE,4))
     ))
@@ -166,6 +168,8 @@ cdef class MVD_Morpho_Loader(NeuronLoaderI):
         cdef MVD.Positions *pos = new MVD.Positions(f.getPositions(mvd_range))
         cdef MVD.Rotations *rot = new MVD.Rotations(f.getRotations(mvd_range))
 
+        cdef vector[int] layers = f.getLayers(mvd_range)
+
         # Neuron Mtype, Etype and
         cdef vector[size_t] index_mtypes = f.getIndexMtypes(mvd_range)
         cdef vector[size_t] index_etypes = f.getIndexEtypes(mvd_range)
@@ -183,6 +187,7 @@ cdef class MVD_Morpho_Loader(NeuronLoaderI):
             _neurons[cur_neuron].etype = index_etypes[cur_neuron]
             _neurons[cur_neuron].morphology = index_morphologies[cur_neuron]
             _neurons[cur_neuron].syn_class = index_syn_class[cur_neuron]
+            _neurons[cur_neuron].layer = layers[cur_neuron]
             memcpy(<void*>_neurons[cur_neuron].position, <void*>(pos.data()+cur_neuron*3), 3*sizeof(double))
             memcpy(<void*>_neurons[cur_neuron].rotation, <void*>(rot.data()+cur_neuron*4), 4*sizeof(double))
 

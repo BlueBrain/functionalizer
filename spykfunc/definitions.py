@@ -59,12 +59,11 @@ class MType(object):
         mt = object.__new__(MType)
         mt.name = mtype_str
         _parts = mtype_str.strip().split("_")
-        assert len(_parts) >= 2 and _parts[0][0] == "L", "Invalid mtype"
-        mt.layer = int(_parts[0][1:])
+        assert len(_parts) >= 2, "Invalid mtype"
+        mt.layer = _parts[0]
         mt.morpho_type = _parts[1]
         if len(_parts) == 3:
-            assert _parts[2][0] == "L", "Invalid mtype"
-            mt.end_layer = int(_parts[2][1:])
+            mt.end_layer = _parts[2]
         else:
             mt.end_layer = None
         return mt
