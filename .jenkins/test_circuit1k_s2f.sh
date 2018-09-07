@@ -1,9 +1,12 @@
+part=$([ $(date +%H) -gt 8 -a $(date +%H) -lt 20 ] && echo interactive || echo prod)
+
 export BASE=$DATADIR/cellular/circuit-1k/
 export CIRCUIT=$BASE/circuit.mvd3
 export MORPHOS=$BASE/morphologies/h5
 export RECIPE=$BASE/bioname/builderRecipeAllPathways.xml
 export TOUCHES=$BASE/touches/parquet/*.parquet
-salloc -Aproj16 -pinteractive -Cnvme -N1 --exclusive --mem=0 \
+
+salloc -Aproj16 -p$part -Cnvme -N1 --exclusive --mem=0 \
     sm_run -H \
         spykfunc --s2f \
                  --output-dir=$PWD \
