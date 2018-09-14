@@ -2,6 +2,7 @@ from __future__ import division
 import os
 from pyspark.sql import functions as F
 
+import numpy
 import pandas
 import sparkmanager as sm
 
@@ -28,6 +29,201 @@ _KEY_ACTIVE = 0x102
 
 if _DEBUG:
     os.path.isdir("_debug") or os.makedirs("_debug")
+
+
+class SomaDistanceFilter(DataSetOperation):
+    """Filter touches based on distance from soma
+
+    Prevents the analysis/simulation of touches within the soma
+
+    :param morphos: the morphology database to use
+    """
+    def __init__(self, morphos):
+        self.__morphos = morphos
+
+    def apply(self, circuit, *args, **kwargs):
+        """Remove touches within the soma.
+        """
+        check_soma_axon_distance = self._create_soma_distance_filter_udf()
+        return circuit.withColumn('valid_touch',
+                                  check_soma_axon_distance(F.col('dst_morphology_i'),
+                                                           F.col('distance_soma'))) \
+                      .where(F.col('valid_touch')) \
+                      .drop('valid_touch')
+
+    def _create_soma_distance_filter_udf(self):
+        """Produce UDF to filter soma touches/gap junctions
+        """
+        @F.pandas_udf('boolean')
+        def check_soma_axon_distance(dst_morpho_i, distance_soma):
+            """
+            :param dst_morpho_i: Pandas series with the 
+            :param distance_soma: distances to the soma
+            """
+            res = pandas.Series(data=False, index=dst_morpho_i.index, dtype='bool_')
+            for idx, morpho in dst_morpho_i.iteritems():
+                res[idx] = distance_soma[idx] >= self.__morphos[morpho].soma_radius
+            return res
+        return check_soma_axon_distance
+
+
+class GapJunctionFilter(DataSetOperation):
+    """Implement filtering touches for gap junctions
+
+    :param morphos: the morphology database to use
+    """
+
+    DENDRITE_COLUMNS = ['src', 'dst', 'pre_section', 'pre_segment', 'post_section', 'post_segment']
+
+    def __init__(self, morphos):
+        self.__morphos = morphos
+
+    def apply(self, circuit, *args, **kwargs):
+        """Apply both the dendrite-soma and dendrite-dendrite filters.
+        """
+        circuit = self._add_group_column(circuit, 'groupid')
+        circuit = circuit.withColumnRenamed('rand_idx', 'pre_junction') \
+                         .withColumn('post_junction', F.col('pre_junction'))
+
+        trim_touches = self._create_soma_filter_udf(circuit)
+        match_dendrites = self._create_dendrite_match_udf(circuit)
+
+        somas = circuit.where("post_section == 0").groupby("groupid").apply(trim_touches)
+        dendrites = circuit.where("post_section > 0").groupby("groupid").apply(match_dendrites)
+        return somas.union(dendrites).drop('groupid').repartition("src", "dst")
+
+    @staticmethod
+    def _add_group_column(circuit, name):
+        """Add an additional column to the circuit for grouping on.
+        """
+        @F.pandas_udf('long')
+        def _calc_group_id(src, dst):
+            def _id(row):
+                """Directionally independent ordering
+                """
+                r = row // 100
+                return hash((r.min(), r.max()))
+            df = pandas.DataFrame({'src': src, 'dst': dst})
+            return df.apply(numpy.vectorize(_id, signature='(2)->()'), axis='columns', raw=True)
+        return circuit.withColumn(name, _calc_group_id(F.col("src"), F.col("dst")))
+
+    def _create_soma_filter_udf(self, circuit):
+        """Produce UDF to filter soma touches/gap junctions
+
+        Filter dendrite to soma gap junctions, removing junctions that are
+        on parent branches of the dendrite and closer than 3 times the soma
+        radius.
+
+        :param circuit: a dataframe whose schema to re-use for the UDF
+        """
+        @F.pandas_udf(circuit.schema, F.PandasUDFType.GROUPED_MAP)
+        def trim_touches(data):
+            """
+            :param data: a Pandas dataframe
+            """
+            if len(data) == 0:
+                return data
+            res = []
+
+            # Use internal grouping to allow for several src, dst pairs in
+            # one python batch
+            for _, group in data.groupby(["src", "dst"]):
+                mindex = group["src_morphology_i"].iloc[0]
+                morpho = self.__morphos[mindex]
+                min_dist = 3 * morpho.soma_radius
+
+                local_res = []
+                for row in group.itertuples():
+                    if len(local_res) > 0:
+                        path = set(morpho.path(row.pre_section))
+                        dist = morpho.distance_of(row.pre_section, row.pre_segment)
+                        drop = []
+                        for idx in local_res:
+                            if data.pre_section[idx] in path:
+                                odist = morpho.distance_of(data.pre_section[idx],
+                                                           data.pre_segment[idx])
+                                if dist - odist < min_dist:
+                                    drop.append(idx)
+                        for idx in drop:
+                            local_res.remove(idx)
+                    local_res.append(row.Index)
+                res.extend(local_res)
+            return data.loc[res]
+        return trim_touches
+
+    @staticmethod
+    def is_within(r, rs, data):
+        """Find element `r` in list `rs` with tolerances.
+
+        The first match is removed from the list.
+
+        :param r: the segments/sections to search for in `rs`
+        :param rs: a list segment/section coordinates
+        """
+        def is_close(a, b):
+            # FIXME why not the following, which seems to be more precise?
+            # abs(a.pre_seg - b.post_seg) <= 1 and abs(a.post_seg - b.pre_seg) <= 1:
+            return (data.at[a, 'pre_section'] == data.at[b, 'post_section']) and \
+                   (data.at[a, 'post_section'] == data.at[b, 'pre_section']) and \
+                   ((data.at[a, 'pre_segment'] == data.at[b, 'post_segment'] and
+                     data.at[a, 'post_segment'] == data.at[b, 'pre_segment']) or
+                    (abs(data.at[a, 'pre_segment'] - data.at[b, 'post_segment']) == 1 and
+                     abs(data.at[a, 'post_segment'] - data.at[b, 'pre_segment']) == 1))
+        for n, r2 in enumerate(rs):
+            if is_close(r, r2):
+                return rs.pop(n)
+        return None
+
+    @staticmethod
+    def update_position(data, i1, i2):
+        """Update the touch position of `i1` with info from `i2`
+        """
+        # FIXME according to the documentation of the
+        # C-functionalizer/comments there, this should be done the other
+        # way around?
+        data.at[i1, 'pre_section'] = data.at[i2, 'post_section']
+        data.at[i1, 'pre_segment'] = data.at[i2, 'post_segment']
+        data.at[i1, 'post_section'] = data.at[i2, 'pre_section']
+        data.at[i1, 'post_segment'] = data.at[i2, 'pre_segment']
+        data.at[i1, 'post_junction'] = data.at[i2, 'pre_junction']
+        data.at[i2, 'post_junction'] = data.at[i1, 'pre_junction']
+
+    def _create_dendrite_match_udf(self, circuit):
+        """Produce UDF to match dendrite touches/gap junctions
+
+        Filter dendrite to dendrite junctions, keeping only junctions that
+        have a match in both directions, with an optional segment offset of
+        one.
+
+        :param circuit: a dataframe whose schema to re-use for the UDF
+        """
+        @F.pandas_udf(circuit.schema, F.PandasUDFType.GROUPED_MAP)
+        def match_touches(data):
+            """
+            :param data: a Pandas dataframe
+            """
+            if len(data) == 0:
+                return data
+            import time
+            t = time.time()
+            data['accept'] = False
+            for (src, dst), group in data.groupby(["src", "dst"]):
+                if src > dst:
+                    continue
+                transposed = data[(data.src == dst) & (data.dst == src)]
+                to_match = list(transposed.index)
+                for r in group.index:
+                    o = self.is_within(r, to_match, data)
+                    if o:
+                        data.at[r, 'accept'] = True
+                        data.at[o, 'accept'] = True
+                        self.update_position(data, r, o)
+                        continue
+            dur = time.time() - t
+            conn = set(zip(data.src, data.dst))
+            print(f"Time spent on {len(data)} rows ({len(conn)} connections): {dur:0.2f} ({len(data) / dur:0.2f} rows/s)")
+            return data[data['accept']].drop(columns=['accept'])
+        return match_touches
 
 
 # -------------------------------------------------------------------------------------------------

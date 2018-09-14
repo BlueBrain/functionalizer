@@ -31,6 +31,19 @@ def fz_fixture(tmpdir_factory):
     return spykfunc.session(*ARGS, **kwargs)
 
 
+@pytest.fixture(scope='session', name='gj')
+def gj_fixture(tmpdir_factory):
+    tmpdir = tmpdir_factory.mktemp('gap_junctions')
+    cdir = tmpdir.join('check')
+    odir = tmpdir.join('out')
+    args = list(ARGS[:-1]) + [os.path.join(DATADIR, "gap_junctions/touches*.parquet")]
+    kwargs = {
+        'checkpoint-dir': str(cdir),
+        'output-dir': str(odir)
+    }
+    return spykfunc.session(*args, **kwargs)
+
+
 def pytest_addoption(parser):
     parser.addoption("--run-slow", action="store_true",
                      default=False, help="run slow tests")

@@ -48,7 +48,6 @@ TOUCH_SCHEMA = T.StructType([
 
 GAP_JUNCTION_SCHEMA = T.StructType([
     T.StructField("pre_neuron_id", T.IntegerType(), False),
-    T.StructField("pre_neuron_index", T.IntegerType(), False),
     T.StructField("post_neuron_id", T.IntegerType(), False),
     T.StructField("pre_section", T.ShortType(), False),
     T.StructField("pre_segment", T.ShortType(), False),
@@ -56,6 +55,8 @@ GAP_JUNCTION_SCHEMA = T.StructType([
     T.StructField("post_segment", T.ShortType(), False),
     T.StructField("pre_offset", T.FloatType(), False),
     T.StructField("post_offset", T.FloatType(), False),
+    T.StructField("pre_junction", T.IntegerType(), False),
+    T.StructField("post_junction", T.IntegerType(), False),
 ])
 
 
