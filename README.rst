@@ -48,12 +48,12 @@ two forms below:
 
 .. code:: shell
 
-   spykfunc --no-hdf5 builderRecipeAllPathways.xml circuit.mvd3 morphologies touches/*.parquet
-   spykfunc --no-hdf5 builderRecipeAllPathways.xml circuit.mvd3 morphologies "touches/*.parquet"
+   spykfunc builderRecipeAllPathways.xml circuit.mvd3 morphologies touches/*.parquet
+   spykfunc builderRecipeAllPathways.xml circuit.mvd3 morphologies "touches/*.parquet"
 
 Or run on only one or several files with:
 
 .. code:: shell
 
-   spykfunc --no-hdf5 builderRecipeAllPathways.xml circuit.mvd3 morphologies touches/touchesData.0.parquet
-   spykfunc --no-hdf5 builderRecipeAllPathways.xml circuit.mvd3 morphologies touches/touchesData.{0,1,2}.parquet
+   spykfunc builderRecipeAllPathways.xml circuit.mvd3 morphologies touches/touchesData.0.parquet
+   spykfunc builderRecipeAllPathways.xml circuit.mvd3 morphologies touches/touchesData.{0,1,2}.parquet

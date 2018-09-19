@@ -6,10 +6,11 @@ import numpy
 import pandas
 import sparkmanager as sm
 
+from fnmatch import filter as matchfilter
 from .circuit import Circuit
 from .definitions import CellClass, CheckpointPhases
 from .schema import pathway_i_to_str, touches_with_pathway
-from ._filtering import DataSetOperation
+from ._filtering import DatasetOperation
 from .utils import get_logger
 from .utils.checkpointing import checkpoint_resume, CheckpointHandler
 from .utils.spark import cache_broadcast_single_part
@@ -31,25 +32,25 @@ if _DEBUG:
     os.path.isdir("_debug") or os.makedirs("_debug")
 
 
-class SomaDistanceFilter(DataSetOperation):
+class SomaDistanceFilter(DatasetOperation):
     """Filter touches based on distance from soma
 
     Prevents the analysis/simulation of touches within the soma
 
     :param morphos: the morphology database to use
     """
-    def __init__(self, morphos):
+    def __init__(self, recipe, morphos, stats):
         self.__morphos = morphos
 
-    def apply(self, circuit, *args, **kwargs):
+    def apply(self, circuit):
         """Remove touches within the soma.
         """
         check_soma_axon_distance = self._create_soma_distance_filter_udf()
-        return circuit.withColumn('valid_touch',
-                                  check_soma_axon_distance(F.col('dst_morphology_i'),
-                                                           F.col('distance_soma'))) \
-                      .where(F.col('valid_touch')) \
-                      .drop('valid_touch')
+        return circuit.df.withColumn('valid_touch',
+                                     check_soma_axon_distance(F.col('dst_morphology_i'),
+                                                              F.col('distance_soma'))) \
+                         .where(F.col('valid_touch')) \
+                         .drop('valid_touch')
 
     def _create_soma_distance_filter_udf(self):
         """Produce UDF to filter soma touches/gap junctions
@@ -57,7 +58,7 @@ class SomaDistanceFilter(DataSetOperation):
         @F.pandas_udf('boolean')
         def check_soma_axon_distance(dst_morpho_i, distance_soma):
             """
-            :param dst_morpho_i: Pandas series with the 
+            :param dst_morpho_i: Pandas series with morphology indices
             :param distance_soma: distances to the soma
             """
             res = pandas.Series(data=False, index=dst_morpho_i.index, dtype='bool_')
@@ -67,7 +68,7 @@ class SomaDistanceFilter(DataSetOperation):
         return check_soma_axon_distance
 
 
-class GapJunctionFilter(DataSetOperation):
+class GapJunctionFilter(DatasetOperation):
     """Implement filtering touches for gap junctions
 
     :param morphos: the morphology database to use
@@ -75,21 +76,23 @@ class GapJunctionFilter(DataSetOperation):
 
     DENDRITE_COLUMNS = ['src', 'dst', 'pre_section', 'pre_segment', 'post_section', 'post_segment']
 
-    def __init__(self, morphos):
+    _checkpoint = True
+
+    def __init__(self, recipe, morphos, stats):
         self.__morphos = morphos
 
-    def apply(self, circuit, *args, **kwargs):
+    def apply(self, circuit):
         """Apply both the dendrite-soma and dendrite-dendrite filters.
         """
-        circuit = self._add_group_column(circuit, 'groupid')
-        circuit = circuit.withColumnRenamed('rand_idx', 'pre_junction') \
+        touches = self._add_group_column(circuit.df, 'groupid')
+        touches = touches.withColumnRenamed('rand_idx', 'pre_junction') \
                          .withColumn('post_junction', F.col('pre_junction'))
 
-        trim_touches = self._create_soma_filter_udf(circuit)
-        match_dendrites = self._create_dendrite_match_udf(circuit)
+        trim_touches = self._create_soma_filter_udf(touches)
+        match_dendrites = self._create_dendrite_match_udf(touches)
 
-        somas = circuit.where("post_section == 0").groupby("groupid").apply(trim_touches)
-        dendrites = circuit.where("post_section > 0").groupby("groupid").apply(match_dendrites)
+        somas = touches.where("post_section == 0").groupby("groupid").apply(trim_touches)
+        dendrites = touches.where("post_section > 0").groupby("groupid").apply(match_dendrites)
         return somas.union(dendrites).drop('groupid').repartition("src", "dst")
 
     @staticmethod
@@ -161,14 +164,10 @@ class GapJunctionFilter(DataSetOperation):
         :param rs: a list segment/section coordinates
         """
         def is_close(a, b):
-            # FIXME why not the following, which seems to be more precise?
-            # abs(a.pre_seg - b.post_seg) <= 1 and abs(a.post_seg - b.pre_seg) <= 1:
-            return (data.at[a, 'pre_section'] == data.at[b, 'post_section']) and \
-                   (data.at[a, 'post_section'] == data.at[b, 'pre_section']) and \
-                   ((data.at[a, 'pre_segment'] == data.at[b, 'post_segment'] and
-                     data.at[a, 'post_segment'] == data.at[b, 'pre_segment']) or
-                    (abs(data.at[a, 'pre_segment'] - data.at[b, 'post_segment']) == 1 and
-                     abs(data.at[a, 'post_segment'] - data.at[b, 'pre_segment']) == 1))
+            return (data.at[a, 'pre_section'] == data.at[b, 'post_section'] and
+                    data.at[a, 'post_section'] == data.at[b, 'pre_section'] and
+                    abs(data.at[a, 'pre_segment'] - data.at[b, 'post_segment']) <= 1 and
+                    abs(data.at[a, 'post_segment'] - data.at[b, 'pre_segment']) <= 1)
         for n, r2 in enumerate(rs):
             if is_close(r, r2):
                 return rs.pop(n)
@@ -204,8 +203,6 @@ class GapJunctionFilter(DataSetOperation):
             """
             if len(data) == 0:
                 return data
-            import time
-            t = time.time()
             data['accept'] = False
             for (src, dst), group in data.groupby(["src", "dst"]):
                 if src > dst:
@@ -219,35 +216,31 @@ class GapJunctionFilter(DataSetOperation):
                         data.at[o, 'accept'] = True
                         self.update_position(data, r, o)
                         continue
-            dur = time.time() - t
-            conn = set(zip(data.src, data.dst))
-            print(f"Time spent on {len(data)} rows ({len(conn)} connections): {dur:0.2f} ({len(data) / dur:0.2f} rows/s)")
             return data[data['accept']].drop(columns=['accept'])
         return match_touches
 
 
 # -------------------------------------------------------------------------------------------------
-class BoutonDistanceFilter(DataSetOperation):
+class BoutonDistanceFilter(DatasetOperation):
     """
     Class implementing filtering by Bouton Distance (min. distance to soma)
     """
 # -------------------------------------------------------------------------------------------------
 
-    def __init__(self, bouton_distance_obj):
-        self._bouton_distance_obj = bouton_distance_obj
+    def __init__(self, recipe, morphos, stats):
+        self.synapses_distance = recipe.synapses_distance
 
-    def apply(self, circuit, *args, **kw):
+    def apply(self, circuit):
         """Apply filter
         """
         # Use broadcast of Neuron version
-        new_circuit = circuit.where("(distance_soma >= %f AND dst_syn_class_i = %d) OR "
-                                    "(distance_soma >= %f AND dst_syn_class_i = %d)" % (
-                                        self._bouton_distance_obj.inhibitorySynapsesDistance,
-                                        CellClass.INH.fzer_index,
-                                        self._bouton_distance_obj.excitatorySynapsesDistance,
-                                        CellClass.EXC.fzer_index)
-                                    )
-        return new_circuit
+        return circuit.df.where("(distance_soma >= %f AND dst_syn_class_i = %d) OR "
+                                "(distance_soma >= %f AND dst_syn_class_i = %d)" % (
+                                    self.synapses_distance.inhibitorySynapsesDistance,
+                                    CellClass.INH.fzer_index,
+                                    self.synapses_distance.excitatorySynapsesDistance,
+                                    CellClass.EXC.fzer_index)
+                                )
 
 
 # -------------------------------------------------------------------------------------------------
@@ -257,68 +250,67 @@ class BoutonDistanceReverseFilter(BoutonDistanceFilter):
     """
 # -------------------------------------------------------------------------------------------------
 
-    def apply(self, circuit, *args, **kw):
-        new_circuit = circuit.where("(distance_soma < %f AND dst_syn_class_i = %d) OR "
-                                    "(distance_soma < %f AND dst_syn_class_i = %d)" % (
-                                        self._bouton_distance_obj.inhibitorySynapsesDistance,
-                                        self.synapse_classes_indexes[CellClass.CLASS_INH],
-                                        self._bouton_distance_obj.excitatorySynapsesDistance,
-                                        self.synapse_classes_indexes[CellClass.CLASS_EXC])
-                                    )
-        return new_circuit
+    def apply(self, circuit):
+        return circuit.df.where("(distance_soma < %f AND dst_syn_class_i = %d) OR "
+                                "(distance_soma < %f AND dst_syn_class_i = %d)" % (
+                                    self.synapses_distance.inhibitorySynapsesDistance,
+                                    self.synapse_classes_indexes[CellClass.CLASS_INH],
+                                    self.synapses_distance.excitatorySynapsesDistance,
+                                    self.synapse_classes_indexes[CellClass.CLASS_EXC])
+                                )
 
 
 # -------------------------------------------------------------------------------------------------
-class TouchRulesFilter(DataSetOperation):
+class TouchRulesFilter(DatasetOperation):
     """
     Class implementing TouchRules filter.
     """
-# -------------------------------------------------------------------------------------------------
 
-    def __init__(self, matrix):
-        """Create a new instance
+    _checkpoint = True
 
-        :param matrix: a matrix indicating
-        """
-        rdd = sm.parallelize(((i,) for i, v in enumerate(matrix.flatten()) if v == 0), 200)
-        self._rules = sm.createDataFrame(rdd, schema=["fail"])
-        self._indices = list(matrix.shape)
-        for i in reversed(range(len(self._indices) - 1)):
-            self._indices[i] *= self._indices[i + 1]
-
-    def apply(self, circuit, *args, **kw):
+    def apply(self, circuit):
         """ .apply() method (runner) of the filter
         """
+        indices = list(circuit.touch_rules.shape)
+        for i in reversed(range(len(indices) - 1)):
+            indices[i] *= indices[i + 1]
+
+        rdd = sm.parallelize(((i,)
+                              for i, v in enumerate(circuit.touch_rules.flatten())
+                              if v == 0), 200)
+        rules = sm.createDataFrame(rdd, schema=["fail"])
         # For each neuron we require: preLayer, preMType, postLayer, postMType, postBranchIsSoma
         # The first four fields are properties of the neurons, part of neuronDF, while postBranchIsSoma
         # is a property if the touch, checked by the index of the target neuron section (0->soma)
-        touches = circuit.withColumn("fail",
-                                     circuit.src_layer_i * self._indices[1] +
-                                     circuit.dst_layer_i * self._indices[2] +
-                                     circuit.src_mtype_i * self._indices[3] +
-                                     circuit.dst_mtype_i * self._indices[4] +
-                                     (circuit.post_section > 0).cast('integer')) \
-            .join(F.broadcast(self._rules), "fail", "left_anti") \
-            .drop("fail")
-        return touches
+        return circuit.df.withColumn("fail",
+                                     circuit.df.src_layer_i * indices[1] +
+                                     circuit.df.dst_layer_i * indices[2] +
+                                     circuit.df.src_mtype_i * indices[3] +
+                                     circuit.df.dst_mtype_i * indices[4] +
+                                     (circuit.df.post_section > 0).cast('integer')) \
+                         .join(F.broadcast(rules), "fail", "left_anti") \
+                         .drop("fail")
 
 
 # -------------------------------------------------------------------------------------------------
-class ReduceAndCut(DataSetOperation):
+class ReduceAndCut(DatasetOperation):
+    """Create and apply Reduce and Cut filter
     """
-    Class implementing ReduceAndCut
-    """
-# -------------------------------------------------------------------------------------------------
 
-    def __init__(self, conn_rules, stats, seed):
-        self.conn_rules = sm.broadcast(conn_rules)
+    _checkpoint = True
+    _checkpoint_buckets = ("src", "dst")
+
+    def __init__(self, recipe, morphos, stats):
+        self.recipe = recipe
         self.stats = stats
-        self.seed = seed
 
     # ---
-    def apply(self, circuit, *args, **kw):
-        full_touches = Circuit.only_touch_columns(touches_with_pathway(circuit))
-        mtypes = kw["mtypes"]
+    def apply(self, circuit):
+        full_touches = Circuit.only_touch_columns(touches_with_pathway(circuit.df))
+        mtypes = circuit.mtype_df
+        conn_rules = self._build_concrete_mtype_conn_rules(self.recipe.conn_rules,
+                                                           circuit.morphology_types)
+        self.conn_rules = sm.broadcast(conn_rules)
 
         # Get and broadcast Pathway stats
         # NOTE we cache and count to force evaluation in N tasks, while sorting in a single task
@@ -362,9 +354,37 @@ class ReduceAndCut(DataSetOperation):
         # Only the touch fields
         return Circuit.only_touch_columns(cut2AF_touches)
 
+    @staticmethod
+    def _build_concrete_mtype_conn_rules(src_conn_rules, mTypes):
+        """ Transform conn rules into concrete rule instances (without wildcards) and indexed by pathway
+        """
+        mtypes_rev = {mtype: i for i, mtype in enumerate(mTypes)}
+        conn_rules = {}
+
+        for rule in src_conn_rules:  # type: ConnectivityPathRule
+            srcs = matchfilter(mTypes, rule.source)
+            dsts = matchfilter(mTypes, rule.destination)
+            for src in srcs:
+                for dst in dsts:
+                    # key = src + ">" + dst
+                    # Key is now an int
+                    key = (mtypes_rev[src] << 16) + mtypes_rev[dst]
+                    if key in conn_rules:
+                        # logger.debug("Several rules applying to the same mtype connection: %s->%s [Rule: %s->%s]",
+                        #                src, dst, rule.source, rule.destination)
+                        prev_rule = conn_rules[key]
+                        # Overwrite if it is specific
+                        if (('*' in prev_rule.source and '*' not in rule.source) or
+                                ('*' in prev_rule.destination and '*' not in rule.destination)):
+                            conn_rules[key] = rule
+                    else:
+                        conn_rules[key] = rule
+
+        return conn_rules
+
     # ---
     @sm.assign_to_jobgroup
-    @checkpoint_resume("pathway_stats", bucket_cols="pathway_i", n_buckets=1)
+    @checkpoint_resume("pathway_stats", bucket_cols="pathway_i", n_buckets=1, child=True)
     def compute_reduce_cut_params(self, full_touches):
         """ Computes the pathway parameters, used by Reduce and Cut filters
         """
@@ -399,7 +419,8 @@ class ReduceAndCut(DataSetOperation):
     @sm.assign_to_jobgroup
     @checkpoint_resume(CheckpointPhases.FILTER_REDUCED_TOUCHES.name, bucket_cols=("src", "dst"),
                        # Even if we change to not break exec plan we always keep only touch cols
-                       handlers=[CheckpointHandler.before_save(Circuit.only_touch_columns)])
+                       handlers=[CheckpointHandler.before_save(Circuit.only_touch_columns)],
+                       child=True)
     def apply_reduce(self, all_touches, params_df):
         """ Applying reduce as a sampling
         """
@@ -411,7 +432,7 @@ class ReduceAndCut(DataSetOperation):
         logger.debug(" -> Cutting touches")
         return _add_random_column(
             all_touches.join(fractions, "pathway_i"),
-            "reduce_rand", self.seed, _KEY_REDUCE,
+            "reduce_rand", self.recipe.seeds.synapseSeed, _KEY_REDUCE,
             F.col("src"), F.col("rand_idx")
         ).where(F.col("pP_A") > F.col("reduce_rand")) \
          .drop("reduce_rand", "rand_idx", "pP_A") \
@@ -456,7 +477,7 @@ class ReduceAndCut(DataSetOperation):
         logger.debug(" -> Computing connections to cut according to survival_rate")
         _df = connection_survival_rate
         cut_connections = _add_random_column(
-            _df, "cut_rand", self.seed, _KEY_CUT,
+            _df, "cut_rand", self.recipe.seeds.synapseSeed, _KEY_CUT,
             F.col("src"), F.col("dst")
         ).where((_df.survival_rate > .0) & (_df.survival_rate > F.col("cut_rand"))) \
          .select("src", "dst", "pathway_i", "reduced_touch_counts_connection")
@@ -465,13 +486,13 @@ class ReduceAndCut(DataSetOperation):
 
     # ----
     @sm.assign_to_jobgroup
-    @checkpoint_resume("shall_keep_connections", bucket_cols=("src", "dst"))
+    @checkpoint_resume("shall_keep_connections", bucket_cols=("src", "dst"), child=True)
     def calc_cut_active_fraction(self, cut_touch_counts_connection, params_df, mtypes):
         """
         Performs the second part of the cut algorithm according to the active_fractions
         :param params_df: The parameters DF (pA, uA, active_fraction_legacy)
-        :param cut_touch_counts_connection: The DF with the cut touch counts per connection \
-               (built previously in an optimized way)
+        :param cut_touch_counts_connection: The DF with the cut touch counts per connection
+                                            (built previously in an optimized way)
         :return: The final cut touches
         """
 
@@ -514,7 +535,7 @@ class ReduceAndCut(DataSetOperation):
 
         shall_keep_connections = _add_random_column(
             cut_touch_counts_connection.join(active_fractions, "pathway_i"),
-            "active_rand", self.seed, _KEY_ACTIVE,
+            "active_rand", self.recipe.seeds.synapseSeed, _KEY_ACTIVE,
             F.col("src"), F.col("dst")
         ).where(F.col("active_rand") < F.col("active_fraction")) \
          .select("src", "dst")
@@ -568,23 +589,52 @@ def _write_csv(df, filename):
 
 
 # -------------------------------------------------------------------------------------------------
-class CumulativeDistanceFilter(DataSetOperation):
+class CumulativeDistanceFilter(DatasetOperation):
     """
     Filtering based on cumulative distances (By D. Keller - BLBLD-29)
     """
 # -------------------------------------------------------------------------------------------------
 
-    def __init__(self, recipe, stats):
+    def __init__(self, recipe, morphos, stats):
         self.recipe = recipe
         self.stats = stats
 
-    def apply(self, circuit, *args, **kw):
+    def apply(self, circuit):
         """Returns the touches of the circuit: NOOP
         """
-        return circuit.touches
+        return circuit
 
     def filterInhSynapsesBasedOnThresholdInPreSynapticData(self):
         pass
 
     def filterExcSynapsesBasedOnDistanceInPreSynapticData(self):
         pass
+
+
+class SynapseProperties(DatasetOperation):
+    """Assign synapse properties
+    """
+
+    _checkpoint = True
+    _morphologies = True
+
+    def __init__(self, recipe, morphos, stats):
+        self.recipe = recipe
+
+    def apply(self, circuit):
+        from .synapse_properties import patch_ChC_SPAA_cells
+        from .synapse_properties import compute_additional_h5_fields
+
+        if self._morphologies:
+            circuit.df = patch_ChC_SPAA_cells(circuit.df,
+                                              circuit.morphologies,
+                                              circuit.synapse_reposition_pathways)
+
+        extended_touches = compute_additional_h5_fields(
+            circuit.df,
+            circuit.reduced,
+            circuit.synapse_class_matrix,
+            circuit.synapse_class_properties,
+            self.recipe.seeds.synapseSeed
+        )
+        return extended_touches

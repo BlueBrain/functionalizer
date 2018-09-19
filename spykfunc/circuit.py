@@ -90,6 +90,16 @@ class Circuit(object):
         return tmp
 
     @property
+    def df(self):
+        """:property" shortcut for `dataframe`.
+        """
+        return self.dataframe
+
+    @df.setter
+    def df(self, df):
+        self.dataframe = df
+
+    @property
     def dataframe(self):
         """:property: return a dataframe representing the circuit
         """

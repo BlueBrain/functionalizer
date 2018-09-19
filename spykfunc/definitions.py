@@ -1,11 +1,12 @@
 from enum import Enum
 
 
-class RunningMode(Enum):
-    """Enumeration for running modes
+class RunningMode():
+    """Definintions for running modes
     """
-    S2S = 's2s'
-    S2F = 's2f'
+    STRUCTURAL = ('BoutonDistance', 'SynapseProperties')
+    FUNCTIONAL = ('BoutonDistance', 'TouchRules', 'ReduceAndCut', 'SynapseProperties')
+    GAP_JUNCTIONS = ('SomaDistance', 'GapJunction')
 
 
 class CellClass(Enum):

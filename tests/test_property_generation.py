@@ -10,11 +10,11 @@ from spykfunc.synapse_properties import compute_additional_h5_fields
 
 @pytest.mark.slow
 def test_property_assignment(fz):
-    fz.circuit = sm.read.parquet(os.path.join(DATADIR, "syn_prop_in.parquet"))
-    data = compute_additional_h5_fields(fz.circuit,
-                                        fz._circuit.reduced,
-                                        fz._circuit.synapse_class_matrix,
-                                        fz._circuit.synapse_class_properties,
+    fz.circuit.df = sm.read.parquet(os.path.join(DATADIR, "syn_prop_in.parquet"))
+    data = compute_additional_h5_fields(fz.circuit.df,
+                                        fz.circuit.reduced,
+                                        fz.circuit.synapse_class_matrix,
+                                        fz.circuit.synapse_class_properties,
                                         123)
     have = data.select("pre_gid", "post_gid", "synapseType")
     want = sm.read.parquet(os.path.join(DATADIR, "syn_prop_out.parquet")) \

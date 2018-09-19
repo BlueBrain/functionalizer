@@ -2,7 +2,6 @@
 """
 from __future__ import print_function
 import io
-import subprocess
 import sys
 
 import jprops

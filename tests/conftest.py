@@ -25,6 +25,7 @@ def fz_fixture(tmpdir_factory):
     cdir = tmpdir.join('check')
     odir = tmpdir.join('out')
     kwargs = {
+        'functional': None,
         'checkpoint-dir': str(cdir),
         'output-dir': str(odir)
     }
@@ -38,6 +39,7 @@ def gj_fixture(tmpdir_factory):
     odir = tmpdir.join('out')
     args = list(ARGS[:-1]) + [os.path.join(DATADIR, "gap_junctions/touches*.parquet")]
     kwargs = {
+        'gap-junctions': None,
         'checkpoint-dir': str(cdir),
         'output-dir': str(odir)
     }

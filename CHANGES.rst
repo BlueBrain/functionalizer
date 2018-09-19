@@ -2,6 +2,16 @@
 Changelog
 =========
 
+Version 0.11.0
+==============
+
+Changes:
+
+  - Initial support for gap-junctions
+  - Control filters run with `--filters` command-line option
+  - One of `--structural`, `--functional`, or `--gap-junctions` has to be
+    passed to the executable to define filters
+
 Version 0.10.3
 ==============
 

@@ -62,7 +62,6 @@ To check the current filtered touches:
 
 In the end Export your touches, which will incur computing their properties
 
-   >>> # Note: By default it exports to NRN format in Hdf5. You can optionally export to parquet
    >>> fz.export_results()
    [INFO] spykfunc.functionalizer: Computing touch synaptical properties
    [INFO] spykfunc.functionalizer: Exporting touches...

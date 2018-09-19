@@ -4,20 +4,19 @@
 from __future__ import absolute_import
 import os
 import time
-from fnmatch import filter as matchfilter
 import sparkmanager as sm
 
+from . import filters
+from . import utils
+from ._filtering import DatasetOperation
 from .circuit import Circuit
 from .recipe import Recipe
 from .data_loader import NeuronDataSpark
 from .data_export import NeuronExporter
 from .dataio.cppneuron import MVD_Morpho_Loader
 from .stats import NeuronStats
-from .definitions import CellClass, CheckpointPhases, RunningMode
-from . import _filtering
-from . import filters
-from . import utils
-from .utils.checkpointing import checkpoint_resume, CheckpointHandler
+from .definitions import CellClass, CheckpointPhases
+from .utils.checkpointing import checkpoint_resume
 from .utils.filesystem import adjust_for_spark, autosense_hdfs
 
 __all__ = ["Functionalizer", "session", "CheckpointPhases"]
@@ -32,6 +31,7 @@ class _SpykfuncOptions:
     properties = None
     name = "Functionalizer"
     cache_dir = None
+    filters = None
     no_morphos = False
     checkpoint_dir = None
 
@@ -51,13 +51,15 @@ class _SpykfuncOptions:
             self.properties = utils.Configuration(outdir=self.output_dir,
                                                   filename=filename,
                                                   overrides=options_dict.get('overrides'))
+        if self.filters is None:
+            raise AttributeError("Need to have filters specified!")
 
 
 class Functionalizer(object):
     """ Functionalizer Session class
     """
 
-    _circuit = None
+    circuit = None
     """:property: ciruit containing neuron and touch data"""
 
     recipe = None
@@ -69,11 +71,8 @@ class Functionalizer(object):
     exporter = None
     """:property: The :py:class:`~spykfunc.data_export.NeuronExporter` object"""
 
-    _assign_to_circuit = utils.assign_to_property('circuit')
-    """:property: Handler functions used in decorators"""
-
     # ==========
-    def __init__(self, only_s2s=False, **options):
+    def __init__(self, **options):
         # Create config
         self._config = _SpykfuncOptions(options)
         checkpoint_resume.directory = self._config.checkpoint_dir
@@ -93,11 +92,7 @@ class Functionalizer(object):
             ("int2binary", "spykfunc.udfs.IntArraySerializer"),
         ])
 
-        self._mode = RunningMode.S2S if only_s2s else RunningMode.S2F
         self.neuron_stats = NeuronStats()
-
-        if only_s2s:
-            logger.info("Running S2S only")
 
     # -------------------------------------------------------------------------
     # Data loading and Init
@@ -130,6 +125,7 @@ class Functionalizer(object):
         # Verify required morphologies are available
         if self._config.no_morphos:
             logger.info("Running in no-morphologies mode. No ChC cells handling performed.")
+            filters.SynapseProperties._morphologies = False
         else:
             expected = set(n + '.h5' for n in fdata.morphologies)
             have = set(os.listdir(morpho_dir))
@@ -146,8 +142,8 @@ class Functionalizer(object):
             .withColumnRenamed("pre_neuron_index", "rand_idx") \
             .withColumnRenamed("post_neuron_id", "dst")
 
-        self._circuit = Circuit(fdata, touches, self.recipe)
-        self.neuron_stats.circuit = self._circuit
+        self.circuit = Circuit(fdata, touches, self.recipe)
+        self.neuron_stats.circuit = self.circuit
 
         # Grow suffle partitions with size of touches DF
         # Min: 100 reducers
@@ -172,60 +168,35 @@ class Functionalizer(object):
         """
         return self._config.output_dir
 
-    # ----
-    @property
-    def circuit(self):
-        """:property: The current touch set with neuron data as Dataframe.
-
-        .. note::
-
-           Setting the circuit with touch-data only will trigger a join the
-           next time the circuit is accessed.
-        """
-        return self._circuit.dataframe
-
-    @circuit.setter
-    def circuit(self, circuit):
-        self._circuit.dataframe = circuit
-
     @property
     def touches(self):
         """:property: The current touch set without additional neuron data as Dataframe.
         """
-        return self._circuit.touches
-
-    # ----
-    @property
-    def dataQ(self):
-        """
-        :property: A :py:class:`~spykfunc._filtering.DataSetQ` object, offering a high-level query API on
-        the current Neuron-Touch Graph
-        """
-        return _filtering.DataSetQ(self._circuit.dataframe)
+        return self.circuit.touches
 
     # -------------------------------------------------------------------------
     # Main entry point of Filter Execution
     # -------------------------------------------------------------------------
-    @_assign_to_circuit
-    def process_filters(self, overwrite=False):
+    def process_filters(self, filters=None, overwrite=False):
         """Runs all functionalizer filters in order, according to the classic functionalizer:
            (1.1) Soma-axon distance
            (1.2) Touch rules (s2f only)
            (2.1) Reduce (s2f only)
            (2.2) Cut (s2f only)
         """
+        self._ensure_data_loaded()
+
         checkpoint_resume.overwrite = overwrite
 
-        self._ensure_data_loaded()
+        filters = DatasetOperation.initialize(filters or self._config.filters,
+                                              self.recipe,
+                                              self.circuit.morphologies,
+                                              self.neuron_stats)
+
         logger.info("Starting Filtering...")
-
-        self.filter_by_rules(mode=self._mode)
-
-        if self._mode == RunningMode.S2F:
-            self.run_reduce_and_cut()
-
-        # Filter helpers write result to self._circuit (@_assign_to_circuit)
-        return self.touches
+        for f in filters:
+            self.circuit = f(self.circuit)
+        return self.circuit
 
     # -------------------------------------------------------------------------
     # Exporting results
@@ -237,9 +208,6 @@ class Functionalizer(object):
         :param format_parquet: If True will export the touches in parquet format (rather than hdf5)
         :param output_path: Changes the default export directory
         """
-        logger.info("Computing touch synaptical properties")
-        extended_touches = self._assign_synpse_properties(overwrite=overwrite, mode=self._mode)
-
         logger.info("Exporting touches...")
         exporter = self.exporter
         if format_hdf5 is None:
@@ -247,125 +215,26 @@ class Functionalizer(object):
 
         if format_hdf5:
             # Calc the number of NRN output files to target ~32 MB part ~1M touches
-            n_parts = extended_touches.rdd.getNumPartitions()
+            n_parts = self.circuit.touches.rdd.getNumPartitions()
             if n_parts <= 32:
                 # Small circuit. We directly count and target 1M touches per output file
-                total_t = extended_touches.count()
+                total_t = self.circuit.touches.count()
                 n_parts = (total_t // (1024 * 1024)) or 1
-            else:
-                # Main settings define large parquet to be read in partitions of 32 or 64MB.
-                # However, in s2s that might still be too much.
-                if self._mode == RunningMode.S2S:
-                    n_parts = n_parts * 2
-            exporter.export_hdf5(extended_touches,
-                                 self._circuit.neuron_count,
+            exporter.export_hdf5(self.circuit.touches,
+                                 self.circuit.neuron_count,
                                  create_efferent=False,
                                  n_partitions=n_parts)
         else:
-            exporter.export_syn2_parquet(extended_touches)
+            exporter.export_syn2_parquet(self.circuit.touches)
         logger.info("Data export complete")
-
-    # ---
-    @checkpoint_resume(CheckpointPhases.SYNAPSE_PROPS.name,
-                       handlers=[CheckpointHandler.before_save(Circuit.only_touch_columns)])
-    def _assign_synpse_properties(self, **kwargs):
-        self._ensure_data_loaded()
-        from .synapse_properties import patch_ChC_SPAA_cells
-        from .synapse_properties import compute_additional_h5_fields
-
-        if not self._config.no_morphos:
-            self.ciruit = patch_ChC_SPAA_cells(self.circuit,
-                                               self._circuit.morphologies,
-                                               self._circuit.synapse_reposition_pathways)
-
-        extended_touches = compute_additional_h5_fields(
-            self.circuit,
-            self._circuit.reduced,
-            self._circuit.synapse_class_matrix,
-            self._circuit.synapse_class_properties,
-            self.recipe.seeds.synapseSeed
-        )
-        return extended_touches
-
-    # -------------------------------------------------------------------------
-
-    # ----
-    @sm.assign_to_jobgroup
-    @_assign_to_circuit
-    @checkpoint_resume(CheckpointPhases.FILTER_RULES.name,
-                       handlers=[CheckpointHandler.before_save(Circuit.only_touch_columns)])
-    def filter_by_rules(self, mode):
-        """Creates a TouchRules filter according to recipe and applies it to the current touch set
-        """
-        logger.info("Filtering by boutonDistance...")
-        self._ensure_data_loaded()
-        distance_filter = filters.BoutonDistanceFilter(self.recipe.synapses_distance)
-        result = distance_filter.apply(self.circuit)
-        if mode == RunningMode.S2F:
-            logger.info("Filtering by touchRules...")
-            touch_rules_filter = filters.TouchRulesFilter(self._circuit.touch_rules)
-            result = touch_rules_filter.apply(result)
-        return result
-
-    # ----
-    @sm.assign_to_jobgroup
-    @_assign_to_circuit
-    @checkpoint_resume(CheckpointPhases.REDUCE_AND_CUT.name,
-                       handlers=[CheckpointHandler.before_save(Circuit.only_touch_columns)],
-                       bucket_cols=("src", "dst"))
-    def run_reduce_and_cut(self):
-        """Create and apply Reduce and Cut filter
-        """
-        self._ensure_data_loaded()
-        # Index and distribute mtype rules across the cluster
-        mtype_conn_rules = self._build_concrete_mtype_conn_rules(self.recipe.conn_rules,
-                                                                 self._circuit.morphology_types)
-
-        # cumulative_distance_f = filters.CumulativeDistanceFilter(distributed_conn_rules, self.neuron_stats)
-        # self.touchDF = cumulative_distance_f.apply(self.circuit)
-
-        logger.info("Applying Reduce and Cut...")
-        rc = filters.ReduceAndCut(mtype_conn_rules,
-                                  self.neuron_stats,
-                                  self.recipe.seeds.synapseSeed)
-        return rc.apply(self.circuit, mtypes=self._circuit.mtype_df)
 
     # -------------------------------------------------------------------------
     # Helper functions
     # -------------------------------------------------------------------------
     def _ensure_data_loaded(self):
         """ Ensures required data is available"""
-        if self.recipe is None or self._circuit is None:
+        if self.recipe is None or self.circuit is None:
             raise RuntimeError("No touches available. Please load data first.")
-
-    # ---
-    @staticmethod
-    def _build_concrete_mtype_conn_rules(src_conn_rules, mTypes):
-        """ Transform conn rules into concrete rule instances (without wildcards) and indexed by pathway
-        """
-        mtypes_rev = {mtype: i for i, mtype in enumerate(mTypes)}
-        conn_rules = {}
-
-        for rule in src_conn_rules:  # type: ConnectivityPathRule
-            srcs = matchfilter(mTypes, rule.source)
-            dsts = matchfilter(mTypes, rule.destination)
-            for src in srcs:
-                for dst in dsts:
-                    # key = src + ">" + dst
-                    # Key is now an int
-                    key = (mtypes_rev[src] << 16) + mtypes_rev[dst]
-                    if key in conn_rules:
-                        # logger.debug("Several rules applying to the same mtype connection: %s->%s [Rule: %s->%s]",
-                        #                src, dst, rule.source, rule.destination)
-                        prev_rule = conn_rules[key]
-                        # Overwrite if it is specific
-                        if (('*' in prev_rule.source and '*' not in rule.source) or
-                                ('*' in prev_rule.destination and '*' not in rule.destination)):
-                            conn_rules[key] = rule
-                    else:
-                        conn_rules[key] = rule
-
-        return conn_rules
 
 
 # -------------------------------------------
@@ -379,6 +248,6 @@ def session(options):
                     by the arg parser: :py:data:`commands.arg_parser`.
     """
     args = vars(options)
-    fzer = Functionalizer(options.s2s, **args)
+    fzer = Functionalizer(**args)
     fzer.init_data(options.recipe_file, options.mvd_file, options.morpho_dir, options.touch_files)
     return fzer

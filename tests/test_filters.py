@@ -4,11 +4,11 @@
 import os
 import pandas as pd
 import pytest
-import spykfunc
 import pyspark.sql.functions as F
-from spykfunc.definitions import RunningMode
 from conftest import ARGS
 import sparkmanager as sm
+
+import spykfunc
 
 NUM_AFTER_DISTANCE = 2264809
 NUM_AFTER_TOUCH = 2218004
@@ -24,26 +24,26 @@ class TestFilters(object):
     def test_neuron_columns(self, fz):
         """Test that non-essential columns are not broadcasted
         """
-        assert 'layer' not in fz._circuit.neurons.columns
-        assert 'morphology' not in fz._circuit.neurons.columns
+        assert 'layer' not in fz.circuit.neurons.columns
+        assert 'morphology' not in fz.circuit.neurons.columns
 
     def test_distance(self, fz):
         """Test the distance rules: deterministic
         """
-        fz.filter_by_rules(mode=RunningMode.S2S)
-        assert fz.circuit.count() == NUM_AFTER_DISTANCE
+        fz.process_filters(filters=['BoutonDistance'])
+        assert fz.circuit.df.count() == NUM_AFTER_DISTANCE
 
     def test_touch_filter(self, fz):
         """Test the bouton touch filter: deterministic
         """
-        fz.filter_by_rules(mode=RunningMode.S2F)
-        assert fz.circuit.count() == NUM_AFTER_TOUCH
+        fz.process_filters(filters=['BoutonDistance', 'TouchRules'])
+        assert fz.circuit.df.count() == NUM_AFTER_TOUCH
 
     def test_reduce_and_cut(self, fz):
         """Test the reduce and cut filter: not deterministic
         """
-        fz.run_reduce_and_cut()
-        assert fz.circuit.count() == NUM_AFTER_FILTER
+        fz.process_filters(filters=['BoutonDistance', 'TouchRules', 'ReduceAndCut'])
+        assert fz.circuit.df.count() == NUM_AFTER_FILTER
 
     def test_resume(self, fz, tmpdir_factory):
         """Make sure that resuming "works"
@@ -52,24 +52,23 @@ class TestFilters(object):
         cdir = tmpdir.join('check')
         odir = tmpdir.join('out')
         kwargs = {
+            'functional': None,
             'checkpoint-dir': str(cdir),
             'output-dir': str(odir)
         }
         fz2 = spykfunc.session(*ARGS, **kwargs)
         fz2.process_filters()
-        original = fz.circuit.count()
-        count = fz2.circuit.count()
+        original = fz.circuit.touches.count()
+        count = fz2.circuit.touches.count()
         assert count == original
 
     def test_checkpoint_schema(self, fz, tmpdir_factory):
         """To conserve space, only touch columns should be written to disk
         """
         basedir = tmpdir_factory.getbasetemp().join('filters0').join('check')
-        files = [
-            'filter_reduced_touches.ptable',
-            'filter_rules_RunningMode.S2F.parquet',
-            'filter_rules_RunningMode.S2S.parquet'
-        ]
+        files = [f
+                 for f in os.listdir(str(basedir))
+                 if f.endswith('.ptable') or f.endswith('.parquet')]
         for fn in files:
             df = sm.read.load(str(basedir.join(fn)))
             assert all('src_' not in s and 'dst_' not in s for s in df.schema.names)
@@ -81,18 +80,20 @@ class TestFilters(object):
         cdir = tmpdir.join('check')
         odir = tmpdir.join('out')
         kwargs = {
+            'functional': None,
             'checkpoint-dir': str(cdir),
             'output-dir': str(odir)
         }
         fz2 = spykfunc.session(*ARGS, **kwargs)
         fz2.process_filters(overwrite=True)
-        original = fz.circuit.count()
-        count = fz2.circuit.count()
+        original = fz.circuit.touches.count()
+        count = fz2.circuit.touches.count()
         assert count == original
 
     def test_writeout(self, fz):
         """Simple test that saving results works.
         """
+        fz.process_filters()
         fz.export_results()
 
         cols = ["u_syn", "depression_time", "facilitation_time",
@@ -121,4 +122,5 @@ class TestFilters(object):
     def test_writeout_hdf5(self, fz):
         """Simple test for h5 export.
         """
+        fz.process_filters()
         fz.export_results(format_hdf5=True)

@@ -24,11 +24,12 @@ script=\$(mktemp)
 cat >\$script <<EOF
 import glob, sys, pyarrow.parquet as pq
 sort_cols = ['connected_neurons_post', 'connected_neurons_pre', 'delay']
-base, comp = [pq.ParquetDataset(glob.glob(d)).read().to_pandas() \\
+base, comp = [pq.ParquetDataset(glob.glob(d)).read().to_pandas() \\\\
                 .sort_values(sort_cols).reset_index(drop=True)
               for d in sys.argv[1:]]
-print("comparison " + ("successful" if base.equals(comp) else "failed"))
-sys.exit(0 if base.equals(comp) else 1)
+eq = (base == comp).eq(True).all().all()
+print("comparison " + ("successful" if eq else "failed"))
+sys.exit(0 if eq else 1)
 EOF
 
 python \$script circuit.parquet \$DATADIR/cellular/circuit-${i}k/touches/${labels[$m]}/circuit.parquet

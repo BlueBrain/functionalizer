@@ -60,15 +60,10 @@ def session(recipe, mvd_file, morphologies, touch_files, **opts):
     else:
         args += tuple(touch_files)
 
-    # Extract options that dont take arguments
-    if opts.pop("s2s", False):
-        args += ("--s2s",)
-    if opts.pop("format-hdf5", False):
-        args += ("--format-hdf5",)
-    if opts.pop("no-morphos", False):
-        args += ("--no-morphos",)
-
     for opt, opt_val in opts.items():
-        args += ("--" + opt.replace("_", "-"), opt_val)
+        if opt_val is None:
+            args += ("--" + opt.replace("_", "-"),)
+        else:
+            args += ("--" + opt.replace("_", "-"), opt_val)
     opts = arg_parser.parse_args(args)
     return session(opts)

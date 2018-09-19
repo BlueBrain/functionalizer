@@ -102,10 +102,11 @@ class CheckpointResume:
     def __call__(self, name, dest=None, overwrite=False, break_exec_plan=True,
                  bucket_cols=False, n_buckets=True,  # True -> Same nr partitions
                  handlers=None, filename_suffix="",
-                 logger=None, status=None):
+                 logger=None, status=None, child=None):
         """ Decorator for checkpointing_resume routines
 
         :param name: The name of the checkpoint, preferably no whitespaces
+        :param child: Will look for the attribute `_checkpoint_name` of the first argument and prepend it to name
         :param dest: The destination path for data files
         :param overwrite: If True will not attempt to resume and forces reevaluating df. Default: False
         :param break_exec_plan: If True (default) will reload the saved data to break the execution plan
@@ -115,8 +116,6 @@ class CheckpointResume:
             NOTE: The number of buckets will multiply the number of output files if the df is not properly
             partitioned. Use this option (and bucket_cols) with caution, consider repartition() before
         :param handlers: A list of CheckpointHandler functions to run on respective Checkpointing phases
-        :param filename_suffix: A suffix to be appended to the checkpoint data file. This might be used to distinguish
-            among checkpoints produced in slightly different conditions
         :param logger: A logger object. Defaults to spykfunc master logger
         :param status: A CheckPointStatus object can be passed if checkpointing process information is desirable
         :return: The checkpointed dataframe, built from the created files unless break_exec_plan was set False
@@ -147,12 +146,6 @@ class CheckpointResume:
                 # locals() gets all params as keywords, inc positional
                 all_args = dict(zip(signature(f).parameters.keys(), args))
                 all_args.update(kw)
-                # The code commented below allows and removes options that didn't make part of the signature
-                # However if the signature has kwargs it will introduce an unexpected behavior
-                # mode = all_kw['mode'] if 'mode' in signature(f).parameters \
-                #    else kw.pop('mode', None)
-                if 'mode' in all_args:
-                    _params.filename_suffix = all_args['mode']
 
                 _params.overwrite = all_args.get('overwrite', self.overwrite)
                 # If True then change the global default, so subsequent steps are recomputed
@@ -164,7 +157,12 @@ class CheckpointResume:
                     _params.logger.error("Checkpoints dir has not been set. Assuming _checkpoints.")
                     _params.dest = "_checkpoints"
 
-                return self._run(self._Runnable(f, args, kw), name, _params)
+                if child and hasattr(args[0], '_checkpoint_name'):
+                    new_name = f"{args[0]._checkpoint_name}_{name}"
+                else:
+                    new_name = name
+
+                return self._run(self._Runnable(f, args, kw), new_name, _params)
 
             return new_f
         return decorator

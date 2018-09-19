@@ -20,6 +20,44 @@ DEFAULT_N_NEURONS_FILE = 200
 logger = utils.get_logger(__name__)
 
 
+FIELD_MAPPINGS = [
+    [
+        ("post_gid", "connected_neurons_post"),
+        ("pre_gid", "connected_neurons_pre"),
+        ("axonal_delay", "delay"),
+        ("post_section", "morpho_section_id_post"),
+        ("post_segment", "morpho_segment_id_post"),
+        ("post_offset", "morpho_offset_segment_post"),
+        ("pre_section", "morpho_section_id_pre"),
+        ("pre_segment", "morpho_segment_id_pre"),
+        ("pre_offset", "morpho_offset_segment_pre"),
+        ("gsyn", "conductance"),
+        ("u", "u_syn"),
+        ("d", "depression_time"),
+        ("f", "facilitation_time"),
+        ("dtc", "decay_time"),
+        ("synapseType", "syn_type_id"),
+        ("morphology", "morpho_type_id_pre"),
+        # ("branch_order_dend", "morpho_branch_order_dend"),  # N/A
+        # ("branch_order_axon", "morpho_branch_order_axon"),  # Irrelevant
+        ("nrrp", "n_rrp_vesicles")
+        # ("branch_type", "morpho_section_type_post")  # N/A
+    ],
+    [
+        ("src", "connected_neurons_pre"),
+        ("dst", "connected_neurons_post"),
+        ("post_section", "morpho_section_id_post"),
+        ("post_segment", "morpho_segment_id_post"),
+        ("post_offset", "morpho_offset_segment_post"),
+        ("pre_section", "morpho_section_id_pre"),
+        ("pre_segment", "morpho_segment_id_pre"),
+        ("pre_offset", "morpho_offset_segment_pre"),
+        ("post_junction", "junction_id_post"),
+        ("pre_junction", "junction_id_pre"),
+    ]
+]
+
+
 class NeuronExporter(object):
     def __init__(self, output_path):
         self.output_path = path.realpath(output_path)
@@ -49,14 +87,14 @@ class NeuronExporter(object):
         return None
 
     # ---
-    def export_syn2_parquet(self, extended_touches_df, filename="circuit.parquet"):
+    def export_syn2_parquet(self, df, filename="circuit.parquet"):
         """ Exports the results to parquet, following the transitional SYN2 spec
         with support for legacy NRN fields, e.g.: morpho_segment_id_post
         """
         output_path = os.path.join(self.output_path, filename)
         # Sorting will always incur a shuffle, so we sort by post-pre, as accessed in most cases
-        sorted_df = extended_touches_df.sort("post_gid", "pre_gid")
-        df_output = sorted_df.select(*self.get_syn2_parquet_fields(sorted_df))
+        df_output = df.select(*self.get_syn2_parquet_fields(df)) \
+                      .sort("connected_neurons_post", "connected_neurons_pre")
         df_output.write.parquet(adjust_for_spark(output_path, local=True), mode="overwrite")
 
     # ---
@@ -157,28 +195,9 @@ class NeuronExporter(object):
     @staticmethod
     def get_syn2_parquet_fields(df):
         # Transitional SYN2 spec fields
-        return (
-            df.post_gid.alias("connected_neurons_post"),
-            df.pre_gid.alias("connected_neurons_pre"),
-            df.axonal_delay.alias("delay"),
-            df.post_section.alias("morpho_section_id_post"),
-            df.post_segment.alias("morpho_segment_id_post"),
-            df.post_offset.alias("morpho_offset_segment_post"),
-            df.pre_section.alias("morpho_section_id_pre"),
-            df.pre_segment.alias("morpho_segment_id_pre"),
-            df.pre_offset.alias("morpho_offset_segment_pre"),
-            df.gsyn.alias("conductance"),
-            df.u.alias("u_syn"),
-            df.d.alias("depression_time"),
-            df.f.alias("facilitation_time"),
-            df.dtc.alias("decay_time"),
-            df.synapseType.alias("syn_type_id"),
-            df.morphology.alias("morpho_type_id_pre"),
-            # df.branch_order_dend.alias("morpho_branch_order_dend"),  # N/A
-            # df.branch_order_axon.alias("morpho_branch_order_axon"),  # Irrelevant
-            df.nrrp.alias("n_rrp_vesicles")
-            # df.branch_type.alias("morpho_section_type_post")  # N/A
-        )
+        for mapping in FIELD_MAPPINGS:
+            if all(hasattr(df, f) for f, _ in mapping):
+                return [getattr(df, f).alias(a) for f, a in mapping]
 
     # ---
     @staticmethod
@@ -186,14 +205,18 @@ class NeuronExporter(object):
         # Select fields and cast to Float
         return (
             df.pre_gid.cast(T.FloatType()).alias("gid"),
-            df.axonal_delay,
+            df.axonal_delay.cast(T.FloatType()),
             df.post_section.cast(T.FloatType()).alias("post_section"),
             df.post_segment.cast(T.FloatType()).alias("post_segment"),
-            df.post_offset,
+            df.post_offset.cast(T.FloatType()),
             df.pre_section.cast(T.FloatType()).alias("pre_section"),
             df.pre_segment.cast(T.FloatType()).alias("pre_segment"),
-            df.pre_offset,
-            "gsyn", "u", "d", "f", "dtc",
+            df.pre_offset.cast(T.FloatType()),
+            df.gsyn.cast(T.FloatType()),
+            df.u.cast(T.FloatType()),
+            df.d.cast(T.FloatType()),
+            df.f.cast(T.FloatType()),
+            df.dtc.cast(T.FloatType()),
             df.synapseType.cast(T.FloatType()).alias("synapseType"),
             df.morphology.cast(T.FloatType()).alias("morphology"),
             df.branch_order_dend.cast(T.FloatType()).alias("branch_order_dend"),
