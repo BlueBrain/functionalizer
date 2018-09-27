@@ -11,6 +11,7 @@ Changes:
   - Control filters run with `--filters` command-line option
   - One of `--structural`, `--functional`, or `--gap-junctions` has to be
     passed to the executable to define filters
+  - Save neuron ids as 64 bit integers in the final export
 
 Version 0.10.3
 ==============

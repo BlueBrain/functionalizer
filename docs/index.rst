@@ -176,6 +176,25 @@ obtained by executing `sm_run` without any arguments:
 
 
 
+SLURM Allocation Size
+=====================
+
+To be able to estimate the size of a SLURM allocation on BB5, the following
+graph may be of use:
+
+.. figure:: disk_scaling.png
+   :alt: Weak scaling of the required disk space
+
+   Disk space needed for shuffle data as of summer 2018.
+
+Since the nodes in UC4 each have 2TB of local SSD space available, and
+compression is enabled by default, the shuffle data alone will require
+about 10 nodes when functionalizing 11 million neurons (S2S, compressed).
+It is recommended to allow for additional space due to the checkpoints that
+Spykfunc will save during the execution, maybe 3-5 times the size of the
+input data (drawn dash-dotted), here 32 nodes should suffice to
+successfully functionalize 11 million neurons.
+
 Output Conversion
 =================
 

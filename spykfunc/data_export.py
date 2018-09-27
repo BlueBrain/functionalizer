@@ -22,38 +22,38 @@ logger = utils.get_logger(__name__)
 
 FIELD_MAPPINGS = [
     [
-        ("post_gid", "connected_neurons_post"),
-        ("pre_gid", "connected_neurons_pre"),
-        ("axonal_delay", "delay"),
-        ("post_section", "morpho_section_id_post"),
-        ("post_segment", "morpho_segment_id_post"),
-        ("post_offset", "morpho_offset_segment_post"),
-        ("pre_section", "morpho_section_id_pre"),
-        ("pre_segment", "morpho_segment_id_pre"),
-        ("pre_offset", "morpho_offset_segment_pre"),
-        ("gsyn", "conductance"),
-        ("u", "u_syn"),
-        ("d", "depression_time"),
-        ("f", "facilitation_time"),
-        ("dtc", "decay_time"),
-        ("synapseType", "syn_type_id"),
-        ("morphology", "morpho_type_id_pre"),
-        # ("branch_order_dend", "morpho_branch_order_dend"),  # N/A
-        # ("branch_order_axon", "morpho_branch_order_axon"),  # Irrelevant
-        ("nrrp", "n_rrp_vesicles")
-        # ("branch_type", "morpho_section_type_post")  # N/A
+        ("post_gid", "connected_neurons_post", T.LongType()),
+        ("pre_gid", "connected_neurons_pre", T.LongType()),
+        ("axonal_delay", "delay", None),
+        ("post_section", "morpho_section_id_post", None),
+        ("post_segment", "morpho_segment_id_post", None),
+        ("post_offset", "morpho_offset_segment_post", None),
+        ("pre_section", "morpho_section_id_pre", None),
+        ("pre_segment", "morpho_segment_id_pre", None),
+        ("pre_offset", "morpho_offset_segment_pre", None),
+        ("gsyn", "conductance", None),
+        ("u", "u_syn", None),
+        ("d", "depression_time", None),
+        ("f", "facilitation_time", None),
+        ("dtc", "decay_time", None),
+        ("synapseType", "syn_type_id", None),
+        ("morphology", "morpho_type_id_pre", None),
+        # ("branch_order_dend", "morpho_branch_order_dend", None),  # N/A
+        # ("branch_order_axon", "morpho_branch_order_axon", None),  # Irrelevant
+        ("nrrp", "n_rrp_vesicles", None)
+        # ("branch_type", "morpho_section_type_post", None)  # N/A
     ],
     [
-        ("src", "connected_neurons_pre"),
-        ("dst", "connected_neurons_post"),
-        ("post_section", "morpho_section_id_post"),
-        ("post_segment", "morpho_segment_id_post"),
-        ("post_offset", "morpho_offset_segment_post"),
-        ("pre_section", "morpho_section_id_pre"),
-        ("pre_segment", "morpho_segment_id_pre"),
-        ("pre_offset", "morpho_offset_segment_pre"),
-        ("post_junction", "junction_id_post"),
-        ("pre_junction", "junction_id_pre"),
+        ("src", "connected_neurons_pre", T.LongType()),
+        ("dst", "connected_neurons_post", T.LongType()),
+        ("post_section", "morpho_section_id_post", None),
+        ("post_segment", "morpho_segment_id_post", None),
+        ("post_offset", "morpho_offset_segment_post", None),
+        ("pre_section", "morpho_section_id_pre", None),
+        ("pre_segment", "morpho_segment_id_pre", None),
+        ("pre_offset", "morpho_offset_segment_pre", None),
+        ("post_junction", "junction_id_post", None),
+        ("pre_junction", "junction_id_pre", None),
     ]
 ]
 
@@ -196,8 +196,15 @@ class NeuronExporter(object):
     def get_syn2_parquet_fields(df):
         # Transitional SYN2 spec fields
         for mapping in FIELD_MAPPINGS:
-            if all(hasattr(df, f) for f, _ in mapping):
-                return [getattr(df, f).alias(a) for f, a in mapping]
+            if all(hasattr(df, f) for f, _, _ in mapping):
+                for field, alias, cast in mapping:
+                    if cast:
+                        yield getattr(df, field).cast(cast).alias(alias)
+                    else:
+                        yield getattr(df, field).alias(alias)
+                break
+        else:
+            raise AttributeError("cannot determine field mapping from filter output")
 
     # ---
     @staticmethod
