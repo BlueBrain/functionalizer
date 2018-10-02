@@ -173,7 +173,6 @@ def setup_package():
             'lxml',
             'numpy',
             'pathlib2;python_version<"3.4"',
-            'progress',
             'pyarrow',
             'py4j',
             'sparkmanager>=0.5.0',
