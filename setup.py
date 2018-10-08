@@ -14,7 +14,6 @@ import shutil
 
 import numpy as np
 
-SPYKFUNC_VERSION = "0.11.0"
 BUILD_TYPE = os.getenv('BUILD_TYPE', "RELEASE").upper()
 BASE_DIR = osp.dirname(__file__)
 EXAMPLES_DESTINATION = "share/spykfunc/examples"
@@ -141,9 +140,9 @@ def setup_package():
 
     setup(
         # name and other metadata are in setup.cfg
-        version=SPYKFUNC_VERSION,
         name="spykfunc",
         summary="A PySpark implementation of the BBP Functionalizer",
+        use_scm_version=True,
         packages=[
             'spykfunc',
             'spykfunc.dataio',
@@ -172,17 +171,19 @@ def setup_package():
             'lazy-property',
             'lxml',
             'numpy',
+            'pandas',
             'pathlib2;python_version<"3.4"',
+            'progress',
             'pyarrow',
             'py4j',
             'sparkmanager>=0.5.0',
         ],
-        setup_requires=maybe_sphinx + maybe_cython,
+        setup_requires=['setuptools_scm'] + maybe_sphinx + maybe_cython,
         tests_require=['mock', 'pytest', 'pytest-cov'],
         extras_require={
             # Dependencies if the user wants a dev env
             'dev': ['cython<0.26', 'flake8'],
-            'plot': ['pandas', 'seaborn', 'requests', 'bb5']
+            'plot': ['seaborn', 'requests', 'bb5']
         },
         cmdclass={'test': PyTest,
                   'install': Install},
