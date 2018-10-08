@@ -220,12 +220,12 @@ class GapJunctionFilter(DatasetOperation):
         return match_touches
 
 
-# -------------------------------------------------------------------------------------------------
 class BoutonDistanceFilter(DatasetOperation):
+    """Filter synapses based on the distance from the soma.
+
+    This filter reads distances for inhibitory and excitatory synapses from
+    the recipe definition and filters out all synapses closer to the soma.
     """
-    Class implementing filtering by Bouton Distance (min. distance to soma)
-    """
-# -------------------------------------------------------------------------------------------------
 
     def __init__(self, recipe, morphos, stats):
         self.synapses_distance = recipe.synapses_distance
@@ -248,7 +248,8 @@ class BoutonDistanceReverseFilter(BoutonDistanceFilter):
     """
     Reverse version of Bouton Distance filter, only keeping outliers.
     """
-# -------------------------------------------------------------------------------------------------
+
+    _visible = False
 
     def apply(self, circuit):
         return circuit.df.where("(distance_soma < %f AND dst_syn_class_i = %d) OR "

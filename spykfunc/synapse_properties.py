@@ -126,9 +126,9 @@ def patch_ChC_SPAA_cells(circuit, morphology_db, pathways_to_patch):
     patched_circuit = (
         circuit.withColumn(
             "new_post_section",
-            F.when(circuit.reposition,
-                   get_axon_section_id(circuit.dst_morphology_i))
-             .otherwise(circuit.post_section)
+             get_axon_section_id(circuit.reposition,
+                                 circuit.post_section,
+                                 circuit.dst_morphology_i)
         )
         .withColumn("new_post_segment",
                     F.when(circuit.reposition, 0).otherwise(circuit.post_segment))
@@ -179,12 +179,20 @@ def _create_axon_section_udf(morphology_db):
     """ Creates a UDF for a given morphologyDB that looks up
         the first axon section in a morphology given its name
 
-    :param morphology_db: The morphology db
-    :return: The first section index in the morphology
+    :param morphology_db: the morphology db
+    :return: a UDF to shift the post section of some morphology types
     """
 
-    @F.udf(returnType=T.IntegerType())
-    def get_axon_section_id(morpho):
-        return morphology_db[morpho].first_axon_section
+    @F.pandas_udf('integer')
+    def shift_axon_section_id(reposition, defaults, morphos):
+        """Shift the axon sections for morphologies flagged.
 
-    return get_axon_section_id
+        :param reposition: flag to indicate if a shift is needed
+        :param defaults: post section to use when no shift is required
+        :param morphos: morphology types to get the axon section for
+        """
+        for i, (shift, morpho) in enumerate(zip(reposition, morphos)):
+            if shift:
+                defaults[i] = morphology_db[morpho].first_axon_section
+        return defaults
+    return shift_axon_section_id

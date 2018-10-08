@@ -23,6 +23,13 @@ logger = get_logger(__name__)
 # ---------------------------------------------------
 class __DatasetOperationType(type):
     """Forced unification of classes
+
+    The structure of the constructor and application function to circuits
+    is pre-defined to be able to construct and apply filters automatically.
+
+    Classes implementing this type are automatically added to a registry,
+    with a trailing "Filter" stripped of their name.  Set the attribute
+    `_visible` to `False` to exclude a filter from appearing in the list.
     """
     __filters = dict()
 
@@ -45,7 +52,8 @@ class __DatasetOperationType(type):
                 spec.args == ['self', 'recipe', 'morphos', 'stats']):
             raise AttributeError(f'class {cls} does not implement "__init__(recipe, morphos, stats)" properly')
         type.__init__(cls, name, bases, attrs)
-        cls.__filters[name.replace('Filter', '')] = cls
+        if attrs.get('_visible', True):
+            cls.__filters[name.replace('Filter', '')] = cls
 
     @classmethod
     def initialize(cls, names, *args):
@@ -96,6 +104,8 @@ class DatasetOperation(object, metaclass=__DatasetOperationType):
 
     _checkpoint = False
     _checkpoint_buckets = None
+
+    _visible = False
 
     def __init__(self, recipe, morphos, stats):
         """Empty constructor supposed to be overriden
