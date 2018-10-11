@@ -12,6 +12,10 @@ Changes:
   - One of `--structural`, `--functional`, or `--gap-junctions` has to be
     passed to the executable to define filters
   - Save neuron ids as 64 bit integers in the final export
+  - Add the following information to `report.json`:
+    * the largest shuffle size
+    * the number of rows seen last
+    * the largest number of rows seen
 
 Version 0.10.3
 ==============

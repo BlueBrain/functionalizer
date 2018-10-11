@@ -176,7 +176,7 @@ def setup_package():
             'progress',
             'pyarrow',
             'py4j',
-            'sparkmanager>=0.5.0',
+            'sparkmanager>=0.7.0',
         ],
         setup_requires=['setuptools_scm'] + maybe_sphinx + maybe_cython,
         tests_require=['mock', 'pytest', 'pytest-cov'],

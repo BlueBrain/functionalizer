@@ -7,7 +7,7 @@ from pyspark.sql.column import _to_seq
 from pyspark.sql import DataFrame
 import sparkmanager as sm
 from . import get_logger
-from .filesystem import exists, isdir
+from .filesystem import exists, isdir, size
 
 
 class CheckpointStatus:
@@ -202,6 +202,7 @@ class CheckpointResume:
 
         try:
             df = cls._do_checkpoint(df, name, params)
+            sm.record({'checkpoints_size': size(params.dest)})
             if params.break_exec_plan:
                 df = cls._try_restore(name, params, info=False)
             params.status.state = CheckpointStatus.COMPUTED

@@ -134,6 +134,16 @@ def exists(p):
         raise
 
 
+def size(p):
+    """Return the size of a directory in HDFS
+
+    Deactivated for other file systems due to performance concerns.
+    """
+    if p.startswith("file://") or not __client:
+        return 0
+    return __client.content(p).get("spaceConsumed")
+
+
 def isdir(p):
     """Check if a path exists and is a directory.
     """
