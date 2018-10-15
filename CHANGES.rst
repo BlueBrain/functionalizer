@@ -16,6 +16,7 @@ Changes:
     * the largest shuffle size
     * the number of rows seen last
     * the largest number of rows seen
+  - Documented filters
 
 Version 0.10.3
 ==============

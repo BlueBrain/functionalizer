@@ -1,8 +1,8 @@
 API
----
+===
 
 Overview and Examples
-`````````````````````
+---------------------
 
 .. code::
 
@@ -71,10 +71,8 @@ Spykfunc module
 ```````````````
 
 .. automodule:: spykfunc
-    :members:
-    :special-members:
-    :undoc-members:
     :show-inheritance:
+    :members:
 
 
 Functionalizer
@@ -86,11 +84,14 @@ Functionalizer
     :show-inheritance:
 
 
-DataSetQ
-````````
+Synapse Filters
+```````````````
 
 .. automodule:: spykfunc._filtering
-    :members: DataSetQ
+    :members: DatasetOperation
     :undoc-members:
     :show-inheritance:
 
+.. automodule:: spykfunc.filters
+    :members: SomaDistanceFilter, GapJunctionFilter, BoutonDistanceFilter, TouchRulesFilter, ReduceAndCut, SynapseProperties
+    :show-inheritance:

@@ -101,7 +101,15 @@ class NeuronStats(object):
 
     @staticmethod
     def get_pathway_touch_stats_from_touch_counts(neurons_touch_counts):
-        """For every pathway (src-dst mtype) calc the number of touches, connections, and the mean (touches/connection)
+        """Gather statistics for touches
+
+        For every pathway (src-dst mtype) calculate:
+
+         * the number of touches
+         * the number of connections (unique src-dst)
+         * the mean (touches/connection)
+
+        :param neurons_touch_counts: a touch dataframe with a pathway column
         """
         # Group by pathway
         return (

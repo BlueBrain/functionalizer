@@ -35,9 +35,7 @@ if _DEBUG:
 class SomaDistanceFilter(DatasetOperation):
     """Filter touches based on distance from soma
 
-    Prevents the analysis/simulation of touches within the soma
-
-    :param morphos: the morphology database to use
+    Removes all touches that are located within the soma.
     """
     def __init__(self, recipe, morphos, stats):
         self.__morphos = morphos
@@ -69,9 +67,17 @@ class SomaDistanceFilter(DatasetOperation):
 
 
 class GapJunctionFilter(DatasetOperation):
-    """Implement filtering touches for gap junctions
+    """Synchronize gap junctions
 
-    :param morphos: the morphology database to use
+    Ensures that:
+
+     * Dendro-dentro touches are present as src-dst and the corresponding
+       dst-src pair.  The sections of the touches have to be aligned
+       exactly, while the segment may deviate to neighboring ones.
+
+     * Dendro-somatic touches: the structure of the neuron morphology is
+       traversed and from all touches that are within a distance of 3 soma
+       radii on the same branch only the "parent" ones are kept.
     """
 
     DENDRITE_COLUMNS = ['src', 'dst', 'pre_section', 'pre_segment', 'post_section', 'post_segment']
@@ -263,8 +269,13 @@ class BoutonDistanceReverseFilter(BoutonDistanceFilter):
 
 # -------------------------------------------------------------------------------------------------
 class TouchRulesFilter(DatasetOperation):
-    """
-    Class implementing TouchRules filter.
+    """Filter touches based on recipe rules
+
+    Defined in the recipe as `TouchRules`, restrict connections between
+    mtypes, types (dendrite/soma), and layers.  Any touches not allowed are
+    removed.
+
+    This filter is deterministic.
     """
 
     _checkpoint = True
@@ -295,7 +306,42 @@ class TouchRulesFilter(DatasetOperation):
 
 # -------------------------------------------------------------------------------------------------
 class ReduceAndCut(DatasetOperation):
-    """Create and apply Reduce and Cut filter
+    """Reduce and cut touch distributions
+
+    Goes through the touches and matches up distributions present and
+    expected by random sampling. Steps:
+
+      1. Pathway statistics are determined and reduction factors are
+         calculated
+
+         Calulate `pP_A`, `pMu_A`, bouton reduction factor, and legacy
+         active fraction based on the number of touches per pathway and
+         pathway count.
+
+      2. Reduction factors are applied to the touches
+
+         Based on `pP_A` calculated previously, with random numbers drawn
+         for sampling.
+
+      3. Survival rates of the remaining touches are calculated
+
+         Trim src-dst connections based on the survival of the previous
+         step, and relying on `pMu_A`, calculates a survival rate and keeps
+         "surviving" connections by sampling.
+
+      4. Active connection fractions are deduced from survival rates and
+         applied
+
+         Using the `bouton_reduction_factor` from the `ConnectionRules`
+         part of the recipe to determine the overall fraction of the
+         touches that every mtype--mtype connection class is allowed to
+         have active.
+
+    To calculate random numbers, a seed derived from the `synapseSeed` in
+    the recipe is used.
+
+    The internal implementation uses Pandas UDFs calling into
+    Cython/Highfive for the random number generation.
     """
 
     _checkpoint = True
@@ -305,8 +351,10 @@ class ReduceAndCut(DatasetOperation):
         self.recipe = recipe
         self.stats = stats
 
-    # ---
     def apply(self, circuit):
+        """Filter the circuit according to the logic described in the
+        class.
+        """
         full_touches = Circuit.only_touch_columns(touches_with_pathway(circuit.df))
         mtypes = circuit.mtype_df
         conn_rules = self._build_concrete_mtype_conn_rules(self.recipe.conn_rules,
@@ -387,7 +435,13 @@ class ReduceAndCut(DatasetOperation):
     @sm.assign_to_jobgroup
     @checkpoint_resume("pathway_stats", bucket_cols="pathway_i", n_buckets=1, child=True)
     def compute_reduce_cut_params(self, full_touches):
-        """ Computes the pathway parameters, used by Reduce and Cut filters
+        """Computes pathway parameters for reduce and cut
+
+        Based on the number of touches per pathway and the total number of
+        connections (unique pathways).
+
+        :param full_touches: touches with a pathway column
+        :return: a dataframe containing reduce and cut parameters
         """
         # First obtain the pathway (morpho-morpho) stats dataframe
         _n_parts = max(full_touches.rdd.getNumPartitions() // 20, 100)
@@ -614,6 +668,27 @@ class CumulativeDistanceFilter(DatasetOperation):
 
 class SynapseProperties(DatasetOperation):
     """Assign synapse properties
+
+    This "filter" augments touches with properties of synapses by
+
+      * shifting the post-section of synapses for ChC and SpAA cells to the
+        soma according to the `SynapsesReposition` rules of the recipe.
+      * adding the fields
+
+        - `gsyn` following a Gamma-distribution,
+        - `d` following a Gamma-distribution,
+        - `f` following a Gamma-distribution,
+        - `u` following a truncated Normal-distribution,
+        - `dtc` following a truncated Normal-distribution,
+        - `nrrp` following a Poisson-distribution
+
+        as specified by the `SynapsesClassification` part of the recipe.
+
+    To draw from the distributions, a seed derived from the `synapseSeed`
+    in the recipe is used.
+
+    The internal implementation uses Pandas UDFs calling into
+    Cython/Highfive for the random number generation.
     """
 
     _checkpoint = True
