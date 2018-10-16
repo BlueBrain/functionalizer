@@ -182,7 +182,6 @@ def _create_axon_section_udf(morphology_db):
     :param morphology_db: the morphology db
     :return: a UDF to shift the post section of some morphology types
     """
-
     @F.pandas_udf('integer')
     def shift_axon_section_id(reposition, defaults, morphos):
         """Shift the axon sections for morphologies flagged.
@@ -193,6 +192,6 @@ def _create_axon_section_udf(morphology_db):
         """
         for i, (shift, morpho) in enumerate(zip(reposition, morphos)):
             if shift:
-                defaults[i] = morphology_db[morpho].first_axon_section
+                defaults.iat[i] = morphology_db[morpho].first_axon_section
         return defaults
     return shift_axon_section_id
