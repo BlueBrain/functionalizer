@@ -189,6 +189,59 @@ class Morphology(object):
         return int(self.__section_type_index(NEURON_SECTION_TYPE.axon)[0])
 
 
+class MorphologyCache(object):
+    """Shallow object that just caches Morphology values
+
+    Will trigger a full load in memory if `distance_of` or `path` is called.
+
+    :param path: The full path to the H5 morphology file
+    """
+
+    def __init__(self, path):
+        self._path = path
+
+    def path(self, section):
+        """Get a list of all sections up to the soma
+
+        :param int section: the section to start with, included in the result
+        """
+        return self.morphology.path(section)
+
+    def distance_of(self, section, segment):
+        """Calculate the path distance of a point located at `section` and
+        `segment` indices from the soma.
+
+        :param int section: section index
+        :param int segment: segment index
+        :returns: the distance
+        :rtype: float
+        """
+        return self.morphology.distance_of(section, segment)
+
+    @LazyProperty
+    def morphology(self):
+        """:property: Underlying morphology
+
+        Loads the morphology and caches it in memory.
+        """
+        return self.__load()
+
+    @LazyProperty
+    def first_axon_section(self):
+        """:property: First axon section of the neuron
+        """
+        return self.__load().first_axon_section
+
+    @LazyProperty
+    def soma_radius(self):
+        """:property: Returns the radius of the soma
+        """
+        return self.__load().soma_radius
+
+    def __load(self):
+        return Morphology(self._path)
+
+
 class MorphologyDB(object):
     """Database wrapper to handle morphology mapping
 
@@ -206,5 +259,5 @@ class MorphologyDB(object):
         item = self._db.get(morpho)
         if not item:
             path = str(self.db_path / (morpho + ".h5"))
-            item = self._db[morpho] = Morphology(path)
+            item = self._db[morpho] = MorphologyCache(path)
         return item
