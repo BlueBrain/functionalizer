@@ -63,7 +63,9 @@ def test_dendrite_sync(gj):
 
     for pair, expected in DENDRO_DATA:
         df = circuit.where(query.format(pair)).toPandas()
+        print(df)
         df = match_touches.func(df)
+        print(df)
         assert len(df) == expected
 
 

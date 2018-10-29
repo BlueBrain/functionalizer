@@ -16,7 +16,7 @@ _RC_params_schema = T.StructType([
 ])
 
 
-def reduce_cut_parameter_udef(conn_rules_map, debug=False):
+def reduce_cut_parameter_udf(conn_rules_map, debug=False):
     # Defaults
     activeFraction_default = 0.5
     boutonReductionFactor_default = 0.04

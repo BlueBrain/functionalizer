@@ -7,15 +7,15 @@ import pandas
 import sparkmanager as sm
 
 from fnmatch import filter as matchfilter
-from .circuit import Circuit
-from .definitions import CellClass, CheckpointPhases
-from .schema import pathway_i_to_str, touches_with_pathway
-from ._filtering import DatasetOperation
-from .utils import get_logger
-from .utils.checkpointing import checkpoint_resume, CheckpointHandler
-from .utils.spark import cache_broadcast_single_part
-from .filter_udfs import reduce_cut_parameter_udef
-from .random import RNGThreefry, uniform
+from ..circuit import Circuit
+from ..definitions import CellClass, CheckpointPhases
+from ..schema import pathway_i_to_str, touches_with_pathway
+from .._filtering import DatasetOperation
+from ..utils import get_logger
+from ..utils.checkpointing import checkpoint_resume, CheckpointHandler
+from ..utils.spark import cache_broadcast_single_part
+from .udfs import reduce_cut_parameter_udf, match_dendrites
+from ..random import RNGThreefry, uniform
 
 logger = get_logger(__name__)
 
@@ -37,33 +37,35 @@ class SomaDistanceFilter(DatasetOperation):
 
     Removes all touches that are located within the soma.
     """
+
     def __init__(self, recipe, morphos, stats):
         self.__morphos = morphos
 
     def apply(self, circuit):
         """Remove touches within the soma.
         """
-        check_soma_axon_distance = self._create_soma_distance_filter_udf()
-        return circuit.df.withColumn('valid_touch',
-                                     check_soma_axon_distance(F.col('dst_morphology_i'),
-                                                              F.col('distance_soma'))) \
-                         .where(F.col('valid_touch')) \
-                         .drop('valid_touch')
+        soma_radius = self._create_soma_radius_udf()
+        radii = circuit.neurons.select('morphology_i') \
+                               .distinct() \
+                               .withColumn('radius_soma',
+                                           soma_radius(F.col('morphology_i'))) \
+                               .withColumnRenamed('morphology_i', 'dst_morphology_i')
+        _n_parts = max(radii.rdd.getNumPartitions() // 20, 100)
+        radii = cache_broadcast_single_part(radii, parallelism=_n_parts)
+        return circuit.df.join(radii, 'dst_morphology_i') \
+                         .where(F.col('distance_soma') >= F.col('radius_soma')) \
+                         .drop('radius_soma')
 
-    def _create_soma_distance_filter_udf(self):
-        """Produce UDF to filter soma touches/gap junctions
+    def _create_soma_radius_udf(self):
+        """Produce a UDF to calculate soma radii
         """
-        @F.pandas_udf('boolean')
-        def check_soma_axon_distance(dst_morpho_i, distance_soma):
-            """
-            :param dst_morpho_i: Pandas series with morphology indices
-            :param distance_soma: distances to the soma
-            """
-            res = pandas.Series(data=False, index=dst_morpho_i.index, dtype='bool_')
-            for idx, morpho in dst_morpho_i.iteritems():
-                res[idx] = distance_soma[idx] >= self.__morphos[morpho].soma_radius
-            return res
-        return check_soma_axon_distance
+        @F.pandas_udf('float')
+        def soma_radius(morphos):
+            def r(idx):
+                return self.__morphos[idx].soma_radius()
+            f = numpy.vectorize(r)
+            return pandas.Series(data=f(morphos.values), dtype='float')
+        return soma_radius
 
 
 class GapJunctionFilter(DatasetOperation):
@@ -90,31 +92,26 @@ class GapJunctionFilter(DatasetOperation):
     def apply(self, circuit):
         """Apply both the dendrite-soma and dendrite-dendrite filters.
         """
-        touches = self._add_group_column(circuit.df, 'groupid')
-        touches = touches.withColumnRenamed('rand_idx', 'pre_junction') \
-                         .withColumn('post_junction', F.col('pre_junction'))
+        touches = circuit.df.withColumnRenamed('rand_idx', 'pre_junction') \
+                            .withColumn('post_junction', F.col('pre_junction'))
 
-        trim_touches = self._create_soma_filter_udf(touches)
-        match_dendrites = self._create_dendrite_match_udf(touches)
+        trim = self._create_soma_filter_udf(touches)
+        match = self._create_dendrite_match_udf(touches)
 
-        somas = touches.where("post_section == 0").groupby("groupid").apply(trim_touches)
-        dendrites = touches.where("post_section > 0").groupby("groupid").apply(match_dendrites)
-        return somas.union(dendrites).drop('groupid').repartition("src", "dst")
+        somas = touches.where("post_section == 0") \
+                       .groupby(F.shiftRight(F.col("src"), 4)) \
+                       .apply(trim)
+        dendrites = touches.where("post_section > 0") \
+                           .groupby(F.least(F.col("src"),
+                                            F.col("dst")),
+                                    F.shiftRight(F.greatest(F.col("src"),
+                                                            F.col("dst")),
+                                                 15)) \
+                           .apply(match)
+        # dendrites = dendrites.groupby("groupid").apply(match).drop("groupid")
 
-    @staticmethod
-    def _add_group_column(circuit, name):
-        """Add an additional column to the circuit for grouping on.
-        """
-        @F.pandas_udf('long')
-        def _calc_group_id(src, dst):
-            def _id(row):
-                """Directionally independent ordering
-                """
-                r = row // 100
-                return hash((r.min(), r.max()))
-            df = pandas.DataFrame({'src': src, 'dst': dst})
-            return df.apply(numpy.vectorize(_id, signature='(2)->()'), axis='columns', raw=True)
-        return circuit.withColumn(name, _calc_group_id(F.col("src"), F.col("dst")))
+        return somas.union(dendrites) \
+                    .repartition("src", "dst")
 
     def _create_soma_filter_udf(self, circuit):
         """Produce UDF to filter soma touches/gap junctions
@@ -132,66 +129,39 @@ class GapJunctionFilter(DatasetOperation):
             """
             if len(data) == 0:
                 return data
-            res = []
 
-            # Use internal grouping to allow for several src, dst pairs in
-            # one python batch
-            for _, group in data.groupby(["src", "dst"]):
-                mindex = group["src_morphology_i"].iloc[0]
-                morpho = self.__morphos[mindex]
-                min_dist = 3 * morpho.soma_radius
+            src = data.src.values
+            dst = data.dst.values
+            sec = data.pre_section.values
+            seg = data.pre_segment.values
 
-                local_res = []
-                for row in group.itertuples():
-                    if len(local_res) > 0:
-                        path = set(morpho.path(row.pre_section))
-                        dist = morpho.distance_of(row.pre_section, row.pre_segment)
-                        drop = []
-                        for idx in local_res:
-                            if data.pre_section[idx] in path:
-                                odist = morpho.distance_of(data.pre_section[idx],
-                                                           data.pre_segment[idx])
-                                if dist - odist < min_dist:
-                                    drop.append(idx)
-                        for idx in drop:
-                            local_res.remove(idx)
-                    local_res.append(row.Index)
-                res.extend(local_res)
-            return data.loc[res]
+            morphos = data.src_morphology_i.values
+            activated = numpy.zeros_like(src, dtype=bool)
+            distances = numpy.zeros_like(src, dtype=float)
+
+            connections = numpy.stack((src, dst, morphos)).T
+            unique_conns = numpy.unique(connections, axis=0)
+            unique_morphos = numpy.unique(connections[:, 2])
+
+            for m in unique_morphos:
+                morpho = self.__morphos[m]
+                mdist = 3 * morpho.soma_radius(cache=True)
+                idxs = numpy.where(unique_conns[:, 2] == m)[0]
+                conns = unique_conns[idxs]
+                for conn in conns:
+                    idx = numpy.where((connections[:, 0] == conn[0]) &
+                                      (connections[:, 1] == conn[1]))[0]
+                    for i in idx:
+                        path, dist = morpho.path_and_distance_of(sec[i], seg[i])
+                        distances[i] = dist
+                        for j in idx:
+                            if i == j:
+                                break
+                            if activated[j] and sec[j] in path and abs(distances[i] - distances[j]) < mdist:
+                                activated[j] = False
+                        activated[i] = True
+            return data[activated]
         return trim_touches
-
-    @staticmethod
-    def is_within(r, rs, data):
-        """Find element `r` in list `rs` with tolerances.
-
-        The first match is removed from the list.
-
-        :param r: the segments/sections to search for in `rs`
-        :param rs: a list segment/section coordinates
-        """
-        def is_close(a, b):
-            return (data.at[a, 'pre_section'] == data.at[b, 'post_section'] and
-                    data.at[a, 'post_section'] == data.at[b, 'pre_section'] and
-                    abs(data.at[a, 'pre_segment'] - data.at[b, 'post_segment']) <= 1 and
-                    abs(data.at[a, 'post_segment'] - data.at[b, 'pre_segment']) <= 1)
-        for n, r2 in enumerate(rs):
-            if is_close(r, r2):
-                return rs.pop(n)
-        return None
-
-    @staticmethod
-    def update_position(data, i1, i2):
-        """Update the touch position of `i1` with info from `i2`
-        """
-        # FIXME according to the documentation of the
-        # C-functionalizer/comments there, this should be done the other
-        # way around?
-        data.at[i1, 'pre_section'] = data.at[i2, 'post_section']
-        data.at[i1, 'pre_segment'] = data.at[i2, 'post_segment']
-        data.at[i1, 'post_section'] = data.at[i2, 'pre_section']
-        data.at[i1, 'post_segment'] = data.at[i2, 'pre_segment']
-        data.at[i1, 'post_junction'] = data.at[i2, 'pre_junction']
-        data.at[i2, 'post_junction'] = data.at[i1, 'pre_junction']
 
     def _create_dendrite_match_udf(self, circuit):
         """Produce UDF to match dendrite touches/gap junctions
@@ -209,20 +179,15 @@ class GapJunctionFilter(DatasetOperation):
             """
             if len(data) == 0:
                 return data
-            data['accept'] = False
-            for (src, dst), group in data.groupby(["src", "dst"]):
-                if src > dst:
-                    continue
-                transposed = data[(data.src == dst) & (data.dst == src)]
-                to_match = list(transposed.index)
-                for r in group.index:
-                    o = self.is_within(r, to_match, data)
-                    if o:
-                        data.at[r, 'accept'] = True
-                        data.at[o, 'accept'] = True
-                        self.update_position(data, r, o)
-                        continue
-            return data[data['accept']].drop(columns=['accept'])
+            accept = match_dendrites(data.src.values,
+                                     data.dst.values,
+                                     data.pre_section.values,
+                                     data.pre_segment.values,
+                                     data.pre_junction.values,
+                                     data.post_section.values,
+                                     data.post_segment.values,
+                                     data.post_junction.values).astype(bool)
+            return data[accept]
         return match_touches
 
 
@@ -450,7 +415,7 @@ class ReduceAndCut(DatasetOperation):
             .coalesce(_n_parts))
 
         # param create udf
-        rc_param_maker = reduce_cut_parameter_udef(self.conn_rules)
+        rc_param_maker = reduce_cut_parameter_udf(self.conn_rules)
 
         # Run UDF
         params_df = pathway_stats.select(
@@ -698,8 +663,8 @@ class SynapseProperties(DatasetOperation):
         self.recipe = recipe
 
     def apply(self, circuit):
-        from .synapse_properties import patch_ChC_SPAA_cells
-        from .synapse_properties import compute_additional_h5_fields
+        from ..synapse_properties import patch_ChC_SPAA_cells
+        from ..synapse_properties import compute_additional_h5_fields
 
         if self._morphologies:
             circuit.df = patch_ChC_SPAA_cells(circuit.df,

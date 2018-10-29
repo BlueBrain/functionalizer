@@ -3,7 +3,6 @@
 
 import h5py
 import numpy
-from lazy_property import LazyProperty
 from pathlib import Path
 
 
@@ -34,178 +33,176 @@ class Morphology(object):
     :param path: the filename associated with the morphology
     """
     def __init__(self, path):
-        self._morph_h5 = h5py.File(path, 'r')
-        self._segment_distances = None
+        self._path = path
 
-    @property
-    def offsets(self):
-        return self._morph_h5["/structure"][:, _H5V1_Fields.START_OFFSET]
+        structure = self._h5get('/structure')
 
-    @property
-    def cell_types(self):
-        """the cell types of branch indices
-        """
-        return self._morph_h5["/structure"][:, _H5V1_Fields.TYPE]
+        self.cell_types = structure[:, _H5V1_Fields.TYPE]
+        self.offsets = structure[:, _H5V1_Fields.START_OFFSET]
+        self.parents = structure[:, _H5V1_Fields.PARENT]
 
-    @property
-    def parents(self):
-        """the parents of branch indices
-        """
-        return self._morph_h5["/structure"][:, _H5V1_Fields.PARENT]
+        self.first_axon_section = int(
+            numpy.flatnonzero(self.cell_types == NEURON_SECTION_TYPE.axon)[0]
+        )
 
-    def expand(self, b):
+        self.__branch_lengths = None
+        self.__paths = None
+        self.__r = None
+        self.__section_lengths = None
+        self.__segment_distances = None
+
+    def _h5get(self, name):
+        with h5py.File(self._path, 'r') as f:
+            ds = f[name]
+            offset = ds.id.get_offset()
+            assert ds.chunks is None
+            assert ds.compression is None
+            assert offset > 0
+            dtype = ds.dtype
+            shape = ds.shape
+        return numpy.memmap(self._path, mode='r', shape=shape, offset=offset, dtype=dtype).copy()
+
+    def expand(self, b, dim):
         """Expand an array to match offsets
 
         Single elements will be copied such that offsets loaded from H5 are
         obeyed, and multiplicity is equal to the difference in offsets.
 
         :param b: the array
+        :param dim: the extend
         """
-        assert self.xs is not None
-        vals = numpy.zeros_like(self.xs, dtype=b.dtype)
+        vals = numpy.zeros(shape=(dim,), dtype=b.dtype)
         for i in range(len(self.offsets) - 1):
             vals[self.offsets[i]:self.offsets[i + 1]] = b[i]
         vals[self.offsets[-1]:-1] = b[-1]
         return vals
 
-    @LazyProperty
-    def __load_coordinates(self):
+    def __load_coordinates(self, radius_only=False):
         """Load coordinates and calculate distances
         """
-        self.xs = self._morph_h5["/points"][:, 0]
-        self.ys = self._morph_h5["/points"][:, 1]
-        self.zs = self._morph_h5["/points"][:, 2]
-        self.ds = self._morph_h5["/points"][:, 3] / 0.5
+        if radius_only and self.__r:
+            return self.__r
+        elif self.__branch_lengths is not None:
+            return self.__r
+        points = self._h5get('/points')
+        xs = points[:, 0]
+        ys = points[:, 1]
+        zs = points[:, 2]
 
-        soma = self.expand(self.cell_types) == NEURON_SECTION_TYPE.soma
+        soma = self.expand(self.cell_types, points.shape[0]) == NEURON_SECTION_TYPE.soma
         n = numpy.count_nonzero(soma)
-        soma_x = self.xs[soma].sum() / n
-        soma_y = self.ys[soma].sum() / n
-        soma_z = self.zs[soma].sum() / n
+        soma_x = xs[soma].sum() / n
+        soma_y = ys[soma].sum() / n
+        soma_z = zs[soma].sum() / n
 
-        self.__r = numpy.sqrt(numpy.power(self.xs[soma] - soma_x, 2) +
-                              numpy.power(self.ys[soma] - soma_y, 2) +
-                              numpy.power(self.zs[soma] - soma_z, 2)).max()
+        self.__r = numpy.sqrt(numpy.power(xs[soma] - soma_x, 2) +
+                              numpy.power(ys[soma] - soma_y, 2) +
+                              numpy.power(zs[soma] - soma_z, 2)).max()
+        if radius_only:
+            return self.__r
 
-        self.xs[soma] = soma_x
-        self.ys[soma] = soma_y
-        self.zs[soma] = soma_z
-        self.ds[soma] = self.__r
+        xs[soma] = soma_x
+        ys[soma] = soma_y
+        zs[soma] = soma_z
 
-        self.__segments = numpy.sqrt(numpy.power(self.xs - numpy.roll(self.xs, -1), 2) +
-                                     numpy.power(self.ys - numpy.roll(self.ys, -1), 2) +
-                                     numpy.power(self.zs - numpy.roll(self.zs, -1), 2))
-
+        segments = numpy.sqrt(numpy.power(xs - numpy.roll(xs, -1), 2) +
+                              numpy.power(ys - numpy.roll(ys, -1), 2) +
+                              numpy.power(zs - numpy.roll(zs, -1), 2))
         # Fix soma segments and the last one
-        self.__segments[soma] = 0
-        self.__segments[-1] = 0
+        segments[soma] = 0
+        segments[-1] = 0
 
-        return True
+        n = self.offsets.size
 
-    @LazyProperty
+        self.__branch_lengths = numpy.zeros_like(self.offsets, dtype=float)
+        self.__paths = numpy.zeros(shape=(n, n), dtype=int)
+        self.__section_lengths = numpy.full(shape=(n,), fill_value=-1, dtype=float)
+        self.__segment_distances = numpy.zeros_like(segments, dtype=float)
+        for sec in range(self.offsets.size):
+            lower = self.offsets[sec]
+            if sec + 1 < self.offsets.size:
+                upper = self.offsets[sec + 1]
+            else:
+                upper = segments.size
+            self.__segment_distances[lower:upper] = numpy.cumsum(segments[lower:upper])
+            if upper >= 2 and self.cell_types[sec] != NEURON_SECTION_TYPE.soma:
+                self.__branch_lengths[sec] = self.__segment_distances[upper - 2]
+        return self.__r
+
+    @property
     def branch_lengths(self):
-        """Return the branch lengths
+        """:property: returns the branch lengths for all sections
         """
-        vals = numpy.zeros_like(self.cell_types, dtype=float)
-        for i in range(self.offsets.size):
-            vals[i] = self.segment_lengths(i)[:-1].sum()
-        vals[self.cell_types == NEURON_SECTION_TYPE.soma] = 0
-        return vals
+        self.__load_coordinates()
+        return self.__branch_lengths
 
-    def segment_lengths(self, section):
-        """Get the segment lengths of a section
+    def segment_distances(self, section, segment):
+        """Get the cumulative segment lengths of a section
 
         :param int section: index of the section to get the segment lengths
                             for
         """
-        assert self.__load_coordinates
+        self.__load_coordinates()
+        lower = self.offsets[section]
         if section + 1 < self.offsets.size:
             upper = self.offsets[section + 1]
         else:
-            upper = self.__segments.size
-        return self.__segments[self.offsets[section]:upper]
+            upper = self.__segment_distances.size
+        segment += upper if segment < 0 else lower
+        return self.__segment_distances[segment]
 
-    @property
-    def soma_radius(self):
+    def soma_radius(self, cache=False):
         """Returns the radius of the soma
         """
-        assert self.__load_coordinates
-        return self.__r
+        return self.__load_coordinates(radius_only=not cache)
 
-    def __section_lengths(self, section):
+    def _section_lengths(self, section):
         """Calculates distance from soma assuming complete sections
 
         :param int section: a partial section up to which the distance
                             should be calculated (i.e. this section is not
                             included in the length)
         """
-        soma_distance = 0
-        full_section = self.parents[section]
-        while full_section != -1:
-            parent = self.parents[full_section]
-            if parent != -1:
-                soma_distance += self.branch_lengths[full_section]
-            full_section = parent
-        return soma_distance
-
-    def __partial_section_length(self, section, segment):
-        """Return the partial sum of segment lengths in a section
-
-        :param int section: the section index to integrate
-        :param int segment: the first segment index that is not included in the sum
-        """
-        return self.segment_lengths(section)[:segment].sum()
+        self.__load_coordinates()
+        if self.__section_lengths[section] < 0.:
+            path = self.path(section)
+            size = path[0]
+            self.__paths[section, :] = path
+            # the first value in the
+            self.__section_lengths[section] = self.branch_lengths[path[2:size]].sum()
+        soma_distance = self.__section_lengths[section]
+        size = self.__paths[section, 0]
+        path = self.__paths[section, 1:size]
+        return path, soma_distance
 
     def path(self, section):
         """Get a list of all sections up to the soma
 
-        :param int section: the section to start with, included in the result
+        :param int section: the section to start with, included in the result if not the soma
+        :returns: a numpy array containing the path starting with index 1,
+                  and the size of the path
         """
-        res = [section]
-        parent = self.parents[section]
-        while parent != -1:
-            res.append(parent)
-            parent = self.parents[parent]
+        res = numpy.zeros_like(self.parents)
+        idx = 1
+        while section != -1:
+            res[idx] = section
+            section = self.parents[section]
+            idx += 1
+        res[0] = idx
         return res
 
-    def distance_of(self, section, segment):
+    def path_and_distance_of(self, section, segment):
         """Calculate the path distance of a point located at `section` and
         `segment` indices from the soma.
 
         :param int section: section index
         :param int segment: segment index
         :returns: the distance
-        :rtype: float
         """
-        return self.__section_lengths(section) + self.__partial_section_length(section, segment)
-
-    def __section_type_index(self, section_type):
-        return numpy.flatnonzero(self.cell_types == section_type)
-
-    @LazyProperty
-    def first_axon_section(self):
-        """First axon section of the neuron
-        """
-        return int(self.__section_type_index(NEURON_SECTION_TYPE.axon)[0])
-
-
-class MorphologyCache(object):
-    """Shallow object that just caches Morphology values
-
-    Will trigger a full load in memory if `distance_of` or `path` is called.
-
-    :param path: The full path to the H5 morphology file
-    """
-
-    def __init__(self, path):
-        self._path = path
-
-    def path(self, section):
-        """Get a list of all sections up to the soma
-
-        :param int section: the section to start with, included in the result
-        """
-        return self.morphology.path(section)
+        path, dist = self._section_lengths(section)
+        if segment > 0:
+            dist += self.segment_distances(section, segment - 1)
+        return path, dist
 
     def distance_of(self, section, segment):
         """Calculate the path distance of a point located at `section` and
@@ -216,30 +213,7 @@ class MorphologyCache(object):
         :returns: the distance
         :rtype: float
         """
-        return self.morphology.distance_of(section, segment)
-
-    @LazyProperty
-    def morphology(self):
-        """:property: Underlying morphology
-
-        Loads the morphology and caches it in memory.
-        """
-        return self.__load()
-
-    @LazyProperty
-    def first_axon_section(self):
-        """:property: First axon section of the neuron
-        """
-        return self.__load().first_axon_section
-
-    @LazyProperty
-    def soma_radius(self):
-        """:property: Returns the radius of the soma
-        """
-        return self.__load().soma_radius
-
-    def __load(self):
-        return Morphology(self._path)
+        return self.path_and_distance_of(section, segment)[1]
 
 
 class MorphologyDB(object):
@@ -256,8 +230,9 @@ class MorphologyDB(object):
     def __getitem__(self, morpho):
         if not isinstance(morpho, str):
             morpho = self._mapping[morpho]
+        path = str(self.db_path / (morpho + ".h5"))
+        return Morphology(path)
         item = self._db.get(morpho)
         if not item:
-            path = str(self.db_path / (morpho + ".h5"))
-            item = self._db[morpho] = MorphologyCache(path)
+            item = self._db[morpho] = Morphology(path)
         return item

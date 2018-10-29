@@ -82,6 +82,9 @@ ext_mods = {
         library_dirs=[],
         libraries=['hdf5']
     ),
+    'spykfunc.filters.udfs.matching': dict(
+        include_dirs=[np.get_include()],
+    ),
     'spykfunc.random.threefry': dict(
         include_dirs=[osp.join(BASE_DIR, 'deps/hadoken/include'),
                       np.get_include()],
@@ -146,6 +149,8 @@ def setup_package():
         packages=[
             'spykfunc',
             'spykfunc.dataio',
+            'spykfunc.filters',
+            'spykfunc.filters.udfs',
             'spykfunc.random',
             'spykfunc.tools',
             'spykfunc.tools.analysis',
