@@ -1,6 +1,6 @@
 [submodule "deps/hadoken"]
 	path = deps/hadoken
-	url = git@github.com:adevress/hadoken.git
+	url = https://github.com/adevress/hadoken.git
 [submodule "deps/mvd-tool"]
 	path = deps/mvd-tool
 	url = https://github.com/BlueBrain/MVDTool.git
