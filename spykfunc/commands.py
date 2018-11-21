@@ -3,7 +3,7 @@
 import sys
 import argparse
 from . import utils
-from ._filtering import DatasetOperation
+from .filters import DatasetOperation
 from . import filters # noqa
 from .definitions import RunningMode as RM
 

@@ -180,7 +180,6 @@ def setup_package():
             'pathlib2;python_version<"3.4"',
             'progress',
             'pyarrow',
-            'py4j',
             'sparkmanager>=0.7.0',
         ],
         setup_requires=['setuptools_scm'] + maybe_sphinx + maybe_cython,

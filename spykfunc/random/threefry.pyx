@@ -70,59 +70,42 @@ cdef class RNGThreefry:
         return res
 
 cpdef np.ndarray[float] gamma(RNGThreefry rng,
-                              np.ndarray[int] src, np.ndarray[int] dst,
+                              np.ndarray[long] key,
                               np.ndarray[float] m, np.ndarray[float] sd):
-    cdef RNGThreefry r = rng
-    cdef int i, last = -1, n = len(src)
+    cdef int i, n = len(key)
     cdef np.ndarray[float] res = np.empty(n, dtype=np.float32)
-    assert len(dst) == len(m) == len(sd) == n
+    assert len(m) == len(sd) == n
     for i in range(n):
-        if last != src[i]:
-            last = src[i]
-            r = rng.derivate(last)
-        res[i] = r.derivate(dst[i]).gamma(m[i], sd[i])
+        res[i] = rng.derivate(key[i]).gamma(m[i], sd[i])
     return res
 
 cpdef np.ndarray[float] truncated_normal(RNGThreefry rng,
-                                         np.ndarray[int] src, np.ndarray[int] dst,
+                                         np.ndarray[long] key,
                                          np.ndarray[float] m, np.ndarray[float] sd):
-    cdef RNGThreefry r = rng
-    cdef int i, last = -1, n = len(src)
+    cdef int i, n = len(key)
     cdef np.ndarray[float] res = np.empty(n, dtype=np.float32)
-    assert len(dst) == len(m) == len(sd) == n
+    assert len(m) == len(sd) == n
     for i in range(n):
-        if last != src[i]:
-            last = src[i]
-            r = rng.derivate(last)
-        res[i] = r.derivate(dst[i]).truncated_normal(m[i], sd[i])
+        res[i] = rng.derivate(key[i]).truncated_normal(m[i], sd[i])
     return res
 
 cpdef np.ndarray[float] uniform(RNGThreefry rng,
-                                np.ndarray[int] key, np.ndarray[int] subkey):
-    cdef RNGThreefry r = rng
-    cdef int i, last = -1, n = len(key)
+                                np.ndarray[long] key):
+    cdef int i, n = len(key)
     cdef np.ndarray[float] res = np.empty(n, dtype=np.float32)
-    assert len(key) == len(subkey) == n
     for i in range(n):
-        if last != key[i]:
-            last = key[i]
-            r = rng.derivate(last)
-        res[i] = r.derivate(subkey[i]).uniform()
+        res[i] = rng.derivate(key[i]).uniform()
     return res
 
 cpdef np.ndarray[float] poisson(RNGThreefry rng,
-                                 np.ndarray[int] src, np.ndarray[int] dst,
+                                 np.ndarray[long] key,
                                  np.ndarray[short] k):
-    cdef RNGThreefry r = rng
-    cdef int i, last = -1, n = len(src)
+    cdef int i, n = len(key)
     cdef np.ndarray[float] res = np.empty(n, dtype=np.float32)
-    assert len(dst) == len(k) == n
+    assert len(k) == n
     for i in range(n):
-        if last != src[i]:
-            last = src[i]
-            r = rng.derivate(last)
         if k[i] > 1:
-            res[i] = r.derivate(dst[i]).poisson(k[i] - 1)
+            res[i] = rng.derivate(key[i]).poisson(k[i] - 1)
         else:
             res[i] = 1
     return res

@@ -2,6 +2,7 @@
 Additional "Synapse property fields
 """
 from __future__ import absolute_import
+import numpy
 import pandas
 import sparkmanager as sm
 from pyspark.sql import functions as F
@@ -168,7 +169,7 @@ def _add_connection_properties(connections, seed):
 
     connections = connections.sortWithinPartitions("src")
     for n, f in add:
-        args = [F.col("src"), F.col("dst"), F.col(n)]
+        args = [F.col("synapse_id"), F.col(n)]
         if n != "nrrp":
             args.append(F.col(n + "SD"))
         connections = connections.withColumn("rand_" + n, f(*args))
@@ -190,8 +191,9 @@ def _create_axon_section_udf(morphology_db):
         :param defaults: post section to use when no shift is required
         :param morphos: morphology types to get the axon section for
         """
+        sections = numpy.array(defaults.values, copy=True)
         for i, (shift, morpho) in enumerate(zip(reposition, morphos)):
             if shift:
-                defaults.iat[i] = morphology_db[morpho].first_axon_section
-        return defaults
+                sections[i] = morphology_db[morpho].first_axon_section
+        return pandas.Series(data=sections)
     return shift_axon_section_id

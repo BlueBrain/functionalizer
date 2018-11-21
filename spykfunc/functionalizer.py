@@ -8,7 +8,7 @@ import sparkmanager as sm
 
 from . import filters
 from . import utils
-from ._filtering import DatasetOperation
+from .filters import DatasetOperation
 from .circuit import Circuit
 from .recipe import Recipe
 from .data_loader import NeuronDataSpark
@@ -139,7 +139,6 @@ class Functionalizer(object):
         # 'Load' touches
         touches = fdata.load_touch_parquet(*touch_files) \
             .withColumnRenamed("pre_neuron_id", "src") \
-            .withColumnRenamed("pre_neuron_index", "rand_idx") \
             .withColumnRenamed("post_neuron_id", "dst")
 
         self.circuit = Circuit(fdata, touches, self.recipe)

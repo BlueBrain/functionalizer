@@ -57,7 +57,7 @@ def test_dendrite_sync(gj):
     """
     query = "(src in {0} and dst in {0}) and post_section > 0"
     fltr = GapJunctionFilter(None, gj.circuit.morphologies, None)
-    circuit = gj.circuit.df.withColumnRenamed('rand_idx', 'pre_junction') \
+    circuit = gj.circuit.df.withColumnRenamed('synapse_id', 'pre_junction') \
                            .withColumn('post_junction', F.col('pre_junction'))
     match_touches = fltr._create_dendrite_match_udf(circuit)
 

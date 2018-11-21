@@ -117,7 +117,9 @@ class Circuit(object):
         """
         if self.__reduced:
             return self.__reduced
-        self.__reduced = self._touches.alias("t").groupBy("src", "dst").count() \
+        self.__reduced = self._touches.alias("t") \
+                                      .groupBy("src", "dst") \
+                                      .agg(F.min("synapse_id").alias("synapse_id")) \
                                       .join(F.broadcast(self.prefixed("src")), "src") \
                                       .join(F.broadcast(self.prefixed("dst")), "dst")
         return self.__reduced

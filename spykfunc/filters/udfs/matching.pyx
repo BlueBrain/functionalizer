@@ -25,38 +25,35 @@ cdef long __is_within(long r,
     :param unmatched: the status of the segment/section indices in `rs`
     :param {pre,post}_{sec,seg}: touch data
     """
-    cdef long i, s
+    cdef long i, s, fuzzy = -1
     assert rs.size == unmatched.size
     for i in range(rs.size):
         if not unmatched[i]:
             continue
         s = rs[i]
-        if (pre_sec[r] == post_sec[s] and
-            pre_sec[s] == post_sec[r] and
-            pre_seg[r] == post_seg[s] and
-            pre_seg[s] == post_seg[r]):
-            unmatched[i] = False
-            return s
-    for i in range(rs.size):
-        if not unmatched[i]:
-            continue
-        s = rs[i]
-        if (pre_sec[r] == post_sec[s] and
-            pre_sec[s] == post_sec[r] and
-            abs(pre_seg[r] - post_seg[s]) <= 1 and
-            abs(pre_seg[s] - post_seg[r]) <= 1):
-            unmatched[i] = False
-            return s
-    return -1
+        if pre_sec[r] == post_sec[s] and \
+                pre_sec[s] == post_sec[r]:
+            if pre_seg[r] == post_seg[s] and \
+                    pre_seg[s] == post_seg[r]:
+                unmatched[i] = False
+                return s
+            elif fuzzy < 0 and \
+                    abs(pre_seg[r] - post_seg[s]) <= 1 and \
+                    abs(pre_seg[s] - post_seg[r]) <= 1:
+                fuzzy = i
+    if fuzzy < 0:
+        return fuzzy
+    unmatched[fuzzy] = False
+    return rs[fuzzy]
 
 cpdef np.ndarray[uint8] match_dendrites(np.ndarray[int] src,
                                         np.ndarray[int] dst,
                                         np.ndarray[short] pre_sec,
                                         np.ndarray[short] pre_seg,
-                                        np.ndarray[int] pre_jct,
+                                        np.ndarray[long] pre_jct,
                                         np.ndarray[short] post_sec,
                                         np.ndarray[short] post_seg,
-                                        np.ndarray[int] post_jct):
+                                        np.ndarray[long] post_jct):
     cdef np.ndarray[int, ndim=2] connections = np.stack((src, dst)).T
     cdef np.ndarray[int, ndim=2] uniques = np.unique(connections, axis=0)
     cdef np.ndarray[uint8] accept = np.zeros_like(src, dtype=np.uint8)

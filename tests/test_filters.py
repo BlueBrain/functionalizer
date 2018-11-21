@@ -12,7 +12,7 @@ import spykfunc
 
 NUM_AFTER_DISTANCE = 2264809
 NUM_AFTER_TOUCH = 2218004
-NUM_AFTER_FILTER = 169778
+NUM_AFTER_FILTER = 166727
 
 
 @pytest.mark.slow
@@ -31,6 +31,7 @@ class TestFilters(object):
         """Test the distance rules: deterministic
         """
         fz.process_filters(filters=['BoutonDistance'])
+        fz.circuit.df.show()
         assert fz.circuit.df.count() == NUM_AFTER_DISTANCE
 
     def test_touch_filter(self, fz):
@@ -110,11 +111,11 @@ class TestFilters(object):
         assert conns.where("count > 1").count() == 0, \
             "can only have one property setting per connection"
 
-        props = df.where((F.col("connected_neurons_pre") == 432) &
-                         (F.col("connected_neurons_post") == 179)) \
+        props = df.where((F.col("connected_neurons_pre") == 56) &
+                         (F.col("connected_neurons_post") == 36)) \
                   .select(*cols).toPandas()
-        want = pd.DataFrame([(0.155061, 289.549713, 12.866484,
-                              0.825946, 7.958006, 1.0)],
+        want = pd.DataFrame([(0.51636, 693.155029, 13.12169,
+                              0.15601, 1.70221, 1.0)],
                             dtype='float32',
                             columns=cols)
         assert props.drop_duplicates().round(5).equals(want.round(5))
