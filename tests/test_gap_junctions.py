@@ -22,6 +22,13 @@ SOMA_DATA = [
     (810, 983, [(43, 67), (147, 42), (152, 49)])
 ]
 
+SOMA_DATA_BIDIRECTIONAL = [
+    (872, 998, []),
+    (858, 998, [(129, 4)]),
+    (812, 968, [(132, 18)]),
+    (810, 983, [])
+]
+
 
 @pytest.mark.slow
 def test_soma_distance(gj):
@@ -40,15 +47,42 @@ def test_soma_distance(gj):
 @pytest.mark.slow
 def test_soma_filter(gj):
     """Verify filter results based on the 1000 neuron test circuit.
+
+    Matches the selection of dendro-soma touches.
     """
     query = "src == {} and dst == {} and post_section == 0"
     fltr = GapJunctionFilter(None, gj.circuit.morphologies, None)
-    trim_touches = fltr._create_soma_filter_udf(gj.circuit.df)
+    circuit = gj.circuit.df.withColumnRenamed('synapse_id', 'pre_junction') \
+                           .withColumn('post_junction', F.col('pre_junction'))
+    trim_touches = fltr._create_soma_filter_udf(circuit)
 
     for src, dst, expected in SOMA_DATA:
-        df = gj.circuit.df.where(query.format(src, dst)).toPandas()
+        df = circuit.where(query.format(src, dst)).toPandas()
         df = trim_touches.func(df)
         assert set(expected) == set(zip(df.pre_section, df.pre_segment))
+
+@pytest.mark.slow
+def test_soma_filter_bidirectional(gj):
+    """Verify filter results based on the 1000 neuron test circuit.
+
+    Ensures that dendro-soma touches are bi-directional.
+    """
+    query = "src in ({0}, {1}) and dst in ({0}, {1}) and (post_section == 0 or pre_section == 0)"
+    fltr = GapJunctionFilter(None, gj.circuit.morphologies, None)
+    circuit = gj.circuit.df.withColumnRenamed('synapse_id', 'pre_junction') \
+                           .withColumn('post_junction', F.col('pre_junction'))
+    match_touches = fltr._create_dendrite_match_udf(circuit)
+    trim_touches = fltr._create_soma_filter_udf(circuit)
+
+    for src, dst, expected in SOMA_DATA_BIDIRECTIONAL:
+        df = circuit.where(query.format(src, dst)).toPandas()
+        # with pandas.option_context('display.max_rows', None, 'display.max_columns', None):
+        #     print(df)
+        df = match_touches.func(df)
+        # with pandas.option_context('display.max_rows', None, 'display.max_columns', None):
+        #     print(df)
+        df = trim_touches.func(df)
+        assert 2 * len(expected) == len(df)
 
 
 @pytest.mark.slow
@@ -63,9 +97,7 @@ def test_dendrite_sync(gj):
 
     for pair, expected in DENDRO_DATA:
         df = circuit.where(query.format(pair)).toPandas()
-        print(df)
         df = match_touches.func(df)
-        print(df)
         assert len(df) == expected
 
 

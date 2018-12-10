@@ -2,6 +2,17 @@
 Changelog
 =========
 
+Version 0.12.0
+==============
+
+Changes:
+
+  - Switched to new unique seeding for random numbers: **breaks
+    backwards-compatibility on a bitwise comparison**
+  - Improved `gap-junctions` support:
+    * unique junction ID ready to consume by Neurodamus
+    * added bi-directionality to dendro-somatic touches
+
 Version 0.11.0
 ==============
 

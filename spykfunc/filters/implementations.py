@@ -74,9 +74,9 @@ class GapJunctionFilter(DatasetOperation):
 
     Ensures that:
 
-     * Dendro-dentro touches are present as src-dst and the corresponding
-       dst-src pair.  The sections of the touches have to be aligned
-       exactly, while the segment may deviate to neighboring ones.
+     * Dendro-dentro and dendro-soma touches are present as src-dst and the
+       corresponding dst-src pair.  The sections of the touches have to be
+       aligned exactly, while the segment may deviate to neighboring ones.
 
      * Dendro-somatic touches: the structure of the neuron morphology is
        traversed and from all touches that are within a distance of 3 soma
@@ -99,17 +99,16 @@ class GapJunctionFilter(DatasetOperation):
         trim = self._create_soma_filter_udf(touches)
         match = self._create_dendrite_match_udf(touches)
 
-        somas = touches.where("post_section == 0") \
+        touches = touches.groupby(F.least(F.col("src"),
+                                          F.col("dst")),
+                                  F.shiftRight(F.greatest(F.col("src"),
+                                                          F.col("dst")),
+                                               15)) \
+                         .apply(match)
+        dendrites = touches.where("post_section > 0 and pre_section > 0")
+        somas = touches.where("post_section == 0 or pre_section == 0") \
                        .groupby(F.shiftRight(F.col("src"), 4)) \
                        .apply(trim)
-        dendrites = touches.where("post_section > 0") \
-                           .groupby(F.least(F.col("src"),
-                                            F.col("dst")),
-                                    F.shiftRight(F.greatest(F.col("src"),
-                                                            F.col("dst")),
-                                                 15)) \
-                           .apply(match)
-        # dendrites = dendrites.groupby("groupid").apply(match).drop("groupid")
 
         return somas.union(dendrites) \
                     .repartition("src", "dst")
@@ -135,6 +134,10 @@ class GapJunctionFilter(DatasetOperation):
             dst = data.dst.values
             sec = data.pre_section.values
             seg = data.pre_segment.values
+            soma = data.post_section.values
+
+            jid1 = data.pre_junction.values
+            jid2 = data.post_junction.values
 
             morphos = data.src_morphology_i.values
             activated = numpy.zeros_like(src, dtype=bool)
@@ -145,22 +148,32 @@ class GapJunctionFilter(DatasetOperation):
             unique_morphos = numpy.unique(connections[:, 2])
 
             for m in unique_morphos:
+                # Work one morphology at a time to conserve memory
                 morpho = self.__morphos[m]
                 mdist = 3 * morpho.soma_radius(cache=True)
+
+                # Resolve from indices matching morphology to connections
                 idxs = numpy.where(unique_conns[:, 2] == m)[0]
                 conns = unique_conns[idxs]
                 for conn in conns:
+                    # Indices where the connections match
                     idx = numpy.where((connections[:, 0] == conn[0]) &
                                       (connections[:, 1] == conn[1]))[0]
+                    # Match up gap-junctions that are reverted at the end
+                    if len(idx) == 0 or soma[idx[0]] != 0:
+                        continue
                     for i in idx:
                         path, dist = morpho.path_and_distance_of(sec[i], seg[i])
                         distances[i] = dist
                         for j in idx:
                             if i == j:
                                 break
-                            if activated[j] and sec[j] in path and abs(distances[i] - distances[j]) < mdist:
+                            if activated[j] and sec[j] in path and \
+                                    abs(distances[i] - distances[j]) < mdist:
                                 activated[j] = False
                         activated[i] = True
+            # Activate reciprocal connections
+            activated[numpy.isin(jid1, jid2[activated])] = True
             return data[activated]
         return trim_touches
 
