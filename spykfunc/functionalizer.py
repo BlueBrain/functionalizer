@@ -127,11 +127,13 @@ class Functionalizer(object):
             logger.info("Running in no-morphologies mode. No ChC cells handling performed.")
             filters.SynapseProperties._morphologies = False
         else:
-            expected = set(n + '.h5' for n in fdata.morphologies)
-            have = set(os.listdir(morpho_dir))
-            missing = expected - have
-            if len(missing) > 0:
-                logger.error("Some morphologies could not be located. Missing:\n\t" + " ".join(missing) + "\n"
+            expected = set(os.path.basename(fn) + '.h5' for fn in fdata.morphologies)
+            directories = set(os.path.dirname(fn) for fn in fdata.morphologies)
+            for dirname in directories:
+                expected.difference_update(set(os.listdir(os.path.join(morpho_dir, dirname))))
+            if len(expected) > 0:
+                logger.error("Some morphologies could not be located. Missing:\n\t" +
+                             " ".join(expected) + "\n"
                              "Please provide a valid morphology path or restart with --no-morphos")
                 raise ValueError("Morphologies missing")
             logger.debug("All morphology files found")

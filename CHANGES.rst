@@ -2,6 +2,14 @@
 Changelog
 =========
 
+Version 0.12.1
+==============
+
+Changes:
+
+  - Fix the morphology output to use floats consistently
+  - Add ability to process morphologies stored in nested directories
+
 Version 0.12.0
 ==============
 

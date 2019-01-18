@@ -71,10 +71,11 @@ class NeuronDataSpark(NeuronData):
         self.require_mvd_globals()
         return tuple(to_native_str(a) for a in self.etypeVec)
 
-    @LazyProperty
+    @property
     def morphologies(self):
         self.require_mvd_globals()
-        return tuple(to_native_str(a) for a in self.morphologyVec)
+        for m in self.morphologyVec:
+            yield to_native_str(m)
 
     @LazyProperty
     def cellClasses(self):
