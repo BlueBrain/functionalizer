@@ -2,6 +2,14 @@
 Changelog
 =========
 
+Version 0.12.2
+==============
+
+Changes:
+
+  - Support post- and pre- neuron ordering of the output.
+  - Reordering of the command line options and help
+
 Version 0.12.1
 ==============
 

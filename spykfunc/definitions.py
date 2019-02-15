@@ -1,7 +1,12 @@
 from enum import Enum
 
 
-class RunningMode():
+class SortBy(Enum):
+    POST = ("connected_neurons_post", "connected_neurons_pre")
+    PRE = ("connected_neurons_pre", "connected_neurons_post")
+
+
+class RunningMode(Enum):
     """Definintions for running modes
     """
     STRUCTURAL = ('BoutonDistance', 'SynapseProperties')

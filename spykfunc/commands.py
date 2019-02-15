@@ -5,7 +5,7 @@ import argparse
 from . import utils
 from .filters import DatasetOperation
 from . import filters # noqa
-from .definitions import RunningMode as RM
+from .definitions import RunningMode as RM, SortBy
 
 
 # ------------------------------------
@@ -55,58 +55,66 @@ def _create_parser():
                         help="the touch files (parquets); "
                              "a litertal blob expression is also accepted.",
                         nargs="+")
-    group = parser.add_mutually_exclusive_group(required=True)
+    gfilter = parser.add_argument_group("filter options")
+    group = gfilter.add_mutually_exclusive_group(required=True)
     group.add_argument("--s2s", "--structural", dest="filters",
                        help="structural pruning only with filters:\ni|" +
-                            ", ".join(RM.STRUCTURAL),
-                       action="store_const", const=RM.STRUCTURAL)
+                            ", ".join(RM.STRUCTURAL.value),
+                       action="store_const", const=RM.STRUCTURAL.value)
     group.add_argument("--s2f", "--functional", dest="filters",
                        help="functional pruning and filtering using:\ni|" +
-                            ", ".join(RM.FUNCTIONAL),
-                       action="store_const", const=RM.FUNCTIONAL)
+                            ", ".join(RM.FUNCTIONAL.value),
+                       action="store_const", const=RM.FUNCTIONAL.value)
     group.add_argument("--gap-junctions", dest="filters",
                        help="run filters for gap-junctions:\ni|" +
-                            ", ".join(RM.GAP_JUNCTIONS),
-                       action="store_const", const=RM.GAP_JUNCTIONS)
+                            ", ".join(RM.GAP_JUNCTIONS.value),
+                       action="store_const", const=RM.GAP_JUNCTIONS.value)
     group.add_argument("--filters", dest="filters",
                        help="run a list of custom filters (comma-separated), available:\ni|" +
                             ", ".join(DatasetOperation.modules()),
                        action=_SplitAction)
-    parser.add_argument("--format-hdf5",
-                        help="write/convert result to HDF5 (nrn.h5) rather than parquet",
-                        action="store_true", default=False)
-    parser.add_argument("--name",
-                        help="name that will show up in the Spark logs, "
-                             "defaults to 'Functionalizer'")
-    parser.add_argument("--cache-dir",
-                        help="specify directory to cache circuits converted to parquet, "
-                             "defaults to OUTPUT_DIR/_mvd")
-    parser.add_argument("--checkpoint-dir",
-                        help="specify directory to store checkpoints, "
-                             "defaults to OUTPUT_DIR/_checkpoints")
-    parser.add_argument("--output-dir", default="spykfunc_output",  # see also `spykfunc/functionalizer.py`!
-                        help="specify output directory, defaults to ./spykfunc_output")
-    parser.add_argument("-c", "--configuration",
-                        help="a configuration file to use; "
-                             "see `--dump-configuration` for default settings")
-    parser.add_argument("-p", "--spark-property", dest='overrides', action='append', default=[],
-                        help="override single properties of the configuration, i.e.,\ni|"
-                             "`--spark-property spark.master=spark://1.2.3.4:7077`\n"
-                             "may be specified multiple times.")
-    parser.add_argument("--dump-configuration", action=_ConfDumpAction,
-                        help="show the configuration including modifications via options prior "
-                             "to this flag and exit")
-    parser.add_argument("--overwrite",
-                        help="overwrite the result of selected intermediate steps, "
-                             "forcing their recomputation; "
-                             "possible values: F (for filtered, implies E) "
-                             "or E (for extended with synapse properties)",
-                        choices=("F", "E"), const="F", nargs="?", default="")
-    parser.add_argument("--no-morphos",
-                        help="run spykfunc without morphologies; "
-                             "note: ChC cells wont be patched and "
-                             "branch_type field won't be part of the result",
-                        action="store_true", default=False)
+    gfilter.add_argument("--no-morphos",
+                         help="run spykfunc without morphologies; "
+                              "note: ChC cells wont be patched and "
+                              "branch_type field won't be part of the result",
+                         action="store_true", default=False)
+    goutput = parser.add_argument_group("output options")
+    goutput.add_argument("--cache-dir",
+                         help="specify directory to cache circuits converted to parquet, "
+                              "defaults to OUTPUT_DIR/_mvd")
+    goutput.add_argument("--checkpoint-dir",
+                         help="specify directory to store checkpoints, "
+                              "defaults to OUTPUT_DIR/_checkpoints")
+    goutput.add_argument("--output-dir", default="spykfunc_output",  # see also `spykfunc/functionalizer.py`!
+                         help="specify output directory, defaults to ./spykfunc_output")
+    goutput.add_argument("--output-hdf5",
+                         help="write/convert result to HDF5 (nrn.h5) rather than parquet",
+                         action="store_true", default=False, dest="format_hdf5")
+    goutput.add_argument("--output-order",
+                         help="which sorting to apply to the output, "
+                              "defaults to post-view.",
+                         choices=[v.name.lower() for v in SortBy],
+                         default="post", dest="order")
+    goutput.add_argument("--overwrite",
+                         help="overwrite the result of selected intermediate steps, "
+                              "forcing their recomputation; "
+                              "possible values: F (for filtered, implies E) "
+                              "or E (for extended with synapse properties)",
+                         choices=("F", "E"), const="F", nargs="?", default="")
+    gadv = parser.add_argument_group("advanced options")
+    gadv.add_argument("--name",
+                      help="name that will show up in the Spark logs, "
+                           "defaults to 'Functionalizer'")
+    gadv.add_argument("-c", "--configuration",
+                      help="a configuration file to use; "
+                           "see `--dump-configuration` for default settings")
+    gadv.add_argument("-p", "--spark-property", dest='overrides', action='append', default=[],
+                      help="override single properties of the configuration, i.e.,\ni|"
+                           "`--spark-property spark.master=spark://1.2.3.4:7077`\n"
+                           "may be specified multiple times.")
+    gadv.add_argument("--dump-configuration", action=_ConfDumpAction,
+                      help="show the configuration including modifications via options prior "
+                           "to this flag and exit")
     return parser
 
 
@@ -134,7 +142,8 @@ def spykfunc():
     try:
         fuzer = session(options)
         fuzer.process_filters(overwrite="F" in options.overwrite.upper())
-        fuzer.export_results(overwrite="E" in options.overwrite.upper())
+        fuzer.export_results(overwrite="E" in options.overwrite.upper(),
+                             order=getattr(SortBy, options.order.upper()))
     except Exception:
         logger.error(utils.format_cur_exception())
         return 1

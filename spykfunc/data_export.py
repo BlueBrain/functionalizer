@@ -11,6 +11,7 @@ from pyspark import StorageLevel
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
 from . import utils
+from .definitions import SortBy
 from .utils import spark_udef as spark_udef_utils
 from .utils.filesystem import adjust_for_spark
 from . import tools
@@ -87,14 +88,16 @@ class NeuronExporter(object):
         return None
 
     # ---
-    def export_syn2_parquet(self, df, filename="circuit.parquet"):
+    def export_syn2_parquet(self, df,
+                                  filename="circuit.parquet",
+                                  order: SortBy=SortBy.POST):
         """ Exports the results to parquet, following the transitional SYN2 spec
         with support for legacy NRN fields, e.g.: morpho_segment_id_post
         """
         output_path = os.path.join(self.output_path, filename)
         # Sorting will always incur a shuffle, so we sort by post-pre, as accessed in most cases
         df_output = df.select(*self.get_syn2_parquet_fields(df)) \
-                      .sort("connected_neurons_post", "connected_neurons_pre")
+                      .sort(*(order.value))
         df_output.write.parquet(adjust_for_spark(output_path, local=True), mode="overwrite")
 
     # ---

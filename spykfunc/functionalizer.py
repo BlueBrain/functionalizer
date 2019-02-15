@@ -12,7 +12,7 @@ from .filters import DatasetOperation
 from .circuit import Circuit
 from .recipe import Recipe
 from .data_loader import NeuronDataSpark
-from .data_export import NeuronExporter
+from .data_export import NeuronExporter, SortBy
 from .dataio.cppneuron import MVD_Morpho_Loader
 from .stats import NeuronStats
 from .definitions import CellClass, CheckpointPhases
@@ -203,11 +203,15 @@ class Functionalizer(object):
     # Exporting results
     # -------------------------------------------------------------------------
     @sm.assign_to_jobgroup
-    def export_results(self, format_hdf5=None, output_path=None, overwrite=False):
+    def export_results(self, format_hdf5=None,
+                             output_path=None,
+                             overwrite=False,
+                             order: SortBy=SortBy.POST):
         """ Exports the current touches to storage, appending the synapse property fields
 
         :param format_parquet: If True will export the touches in parquet format (rather than hdf5)
         :param output_path: Changes the default export directory
+        :param order: How to sort the output
         """
         logger.info("Exporting touches...")
         exporter = self.exporter
@@ -226,7 +230,7 @@ class Functionalizer(object):
                                  create_efferent=False,
                                  n_partitions=n_parts)
         else:
-            exporter.export_syn2_parquet(self.circuit.touches)
+            exporter.export_syn2_parquet(self.circuit.touches, order=order)
         logger.info("Data export complete")
 
     # -------------------------------------------------------------------------
