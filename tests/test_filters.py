@@ -2,6 +2,7 @@
 """
 
 import os
+import numpy as np
 import pandas as pd
 import pytest
 import pyspark.sql.functions as F
@@ -99,6 +100,7 @@ class TestFilters(object):
 
         cols = ["u_syn", "depression_time", "facilitation_time",
                 "conductance", "decay_time", "n_rrp_vesicles"]
+        dtypes = ["float32"] * 5 + ["int16"]
 
         df = sm.read.load(os.path.join(fz.output_directory, "circuit.parquet"))
         props = df.groupBy("connected_neurons_pre",
@@ -115,9 +117,10 @@ class TestFilters(object):
                          (F.col("connected_neurons_post") == 36)) \
                   .select(*cols).toPandas()
         want = pd.DataFrame([(0.51636, 693.155029, 13.12169,
-                              0.15601, 1.70221, 1.0)],
-                            dtype='float32',
+                              0.15601, 1.70221, 1)],
                             columns=cols)
+        for col, dtype in zip(cols, dtypes):
+            want[col] = want[col].astype(dtype)
         assert props.drop_duplicates().round(5).equals(want.round(5))
 
     def test_writeout_hdf5(self, fz):

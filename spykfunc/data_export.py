@@ -41,7 +41,7 @@ FIELD_MAPPINGS = [
         ("morphology", "morpho_type_id_pre", None),
         # ("branch_order_dend", "morpho_branch_order_dend", None),  # N/A
         # ("branch_order_axon", "morpho_branch_order_axon", None),  # Irrelevant
-        ("nrrp", "n_rrp_vesicles", None)
+        ("nrrp", "n_rrp_vesicles", T.ShortType())
         # ("branch_type", "morpho_section_type_post", None)  # N/A
     ],
     [

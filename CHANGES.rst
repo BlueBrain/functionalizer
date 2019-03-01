@@ -2,6 +2,13 @@
 Changelog
 =========
 
+Version 0.13.0
+==============
+
+Changes:
+
+  - Fix range of n:sub:`rrp` to integers ≥1
+
 Version 0.12.2
 ==============
 

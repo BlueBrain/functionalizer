@@ -31,7 +31,7 @@ cdef extern from "boost/random.hpp" namespace "boost::random":
 
     cdef cppclass poisson_distribution[U, T]:
         poisson_distribution(T) except +
-        T operator()(random_engine_mapper_64&)
+        U operator()(random_engine_mapper_64&)
 
     cdef cppclass uniform_real_distribution[T]:
         uniform_real_distribution(T, T) except +

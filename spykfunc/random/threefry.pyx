@@ -57,9 +57,9 @@ cdef class RNGThreefry:
         del dist
         return sd * res + m
 
-    cpdef double poisson(self, int m):
+    cpdef int poisson(self, int m):
         cdef b_poisson* dist = new b_poisson(m)
-        cdef double res = deref(dist)(deref(self.engine))
+        cdef int res = deref(dist)(deref(self.engine))
         del dist
         return res
 
@@ -97,15 +97,15 @@ cpdef np.ndarray[float] uniform(RNGThreefry rng,
         res[i] = rng.derivate(key[i]).uniform()
     return res
 
-cpdef np.ndarray[float] poisson(RNGThreefry rng,
-                                 np.ndarray[long] key,
-                                 np.ndarray[short] k):
+cpdef np.ndarray[int] poisson(RNGThreefry rng,
+                              np.ndarray[long] key,
+                              np.ndarray[short] k):
     cdef int i, n = len(key)
-    cdef np.ndarray[float] res = np.empty(n, dtype=np.float32)
+    cdef np.ndarray[int] res = np.empty(n, dtype=np.int32)
     assert len(k) == n
     for i in range(n):
-        if k[i] > 1:
-            res[i] = rng.derivate(key[i]).poisson(k[i] - 1)
+        if k[i] >= 1:
+            res[i] = 1 + rng.derivate(key[i]).poisson(k[i] - 1)
         else:
             res[i] = 1
     return res
