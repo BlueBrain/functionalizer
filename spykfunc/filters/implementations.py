@@ -22,15 +22,11 @@ logger = get_logger(__name__)
 
 # Control variable that outputs intermediate calculations, and makes processing slower
 _DEBUG = False
-_DEBUG_CSV_OUT = False
 _MB = 1024 * 1024
 
 _KEY_REDUCE = 0x100
 _KEY_CUT = 0x101
 _KEY_ACTIVE = 0x102
-
-if _DEBUG:
-    os.path.isdir("_debug") or os.makedirs("_debug")
 
 
 class SomaDistanceFilter(DatasetOperation):
@@ -347,7 +343,7 @@ class ReduceAndCut(DatasetOperation):
         params_df = F.broadcast(_params)
 
         # Params ouput for validation
-        _params_out_csv(params_df)
+        _params_out_csv(params_df, mtypes)
 
         #
         # Reduce
@@ -506,8 +502,10 @@ class ReduceAndCut(DatasetOperation):
             .drop("sigma", "pMu_A")
         )
 
-        _dbg_df = connection_survival_rate.select("src", "dst", "reduced_touch_counts_connection", "survival_rate")
-        _write_csv(_dbg_df, "connection_survival_rate.csv")
+        # Deactivated due to large output size.
+        # _dbg_df = connection_survival_rate.select("pathway_i", "reduced_touch_counts_connection", "survival_rate")
+        # _write_csv(pathway_i_to_str(_dbg_df.groupBy("pathway_i").count(), mtypes),
+        #            "connection_survival_rate.csv")
 
         logger.debug(" -> Computing connections to cut according to survival_rate")
         _df = connection_survival_rate
@@ -515,7 +513,7 @@ class ReduceAndCut(DatasetOperation):
             _df, "cut_rand", self.recipe.seeds.synapseSeed, _KEY_CUT,
             F.col("synapse_id"),
         ).where((_df.survival_rate > .0) & (_df.survival_rate > F.col("cut_rand"))) \
-         .select("src", "dst", "pathway_i", "reduced_touch_counts_connection")
+         .select("src", "dst", "synapse_id", "pathway_i", "reduced_touch_counts_connection")
         # Much smaller data volume but we cant coealesce
         return cut_connections
 
@@ -571,7 +569,7 @@ class ReduceAndCut(DatasetOperation):
         shall_keep_connections = _add_random_column(
             cut_touch_counts_connection.join(active_fractions, "pathway_i"),
             "active_rand", self.recipe.seeds.synapseSeed, _KEY_ACTIVE,
-            F.col("pathway_i"),
+            F.col("synapse_id"),
         ).where(F.col("active_rand") < F.col("active_fraction")) \
          .select("src", "dst")
 
@@ -596,10 +594,10 @@ def _add_random_column(df, name, seed, key, derivative):
     return df.withColumn(name, _fixed_rand(derivative.cast(T.LongType())))
 
 
-def _params_out_csv(df):
+def _params_out_csv(df, mtypes):
     debug_info = df.select("pathway_i", "total_touches", "structural_mean",
                            "pP_A", "pMu_A", "active_fraction_legacy", "_debug")
-    _write_csv(debug_info, "pathway_params.csv")
+    _write_csv(pathway_i_to_str(debug_info, mtypes), "pathway_params.csv")
 
 
 def _touch_counts_out_csv(df, filename, mtypes):
@@ -616,9 +614,30 @@ def _connection_counts_out_csv(df, filename, mtypes):
     ), filename)
 
 
-def _write_csv(df, filename):
-    if _DEBUG_CSV_OUT:
-        df.coalesce(1).write.csv("_debug/" + filename, header=True, mode="overwrite")
+if _DEBUG:
+    class CSVWriter:
+        """Helper class to debug via CSV dumps
+        """
+        def __init__(self):
+            if not os.path.isdir("_debug"):
+                os.makedirs("_debug")
+            self._stage = 1
+
+        def __call__(self, df, filename):
+            """Write out a CSV file of a dataframe
+            """
+            end = "" if filename.endswith(".csv") else ".csv"
+            filename = f"_debug/{self._stage:02d}_{filename}{end}"
+
+            data = df.toPandas()
+            data.to_csv(filename, index=False)
+
+            self._stage += 1
+
+    _write_csv = CSVWriter()
+else:
+    def _write_csv(df, filename):
+        pass
 
 
 # -------------------------------------------------------------------------------------------------

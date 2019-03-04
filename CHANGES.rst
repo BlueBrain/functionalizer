@@ -2,6 +2,13 @@
 Changelog
 =========
 
+Version 0.13.1
+==============
+
+Changes:
+
+  - Fix random number generation for determining active connections
+
 Version 0.13.0
 ==============
 
