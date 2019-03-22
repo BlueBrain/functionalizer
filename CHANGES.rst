@@ -2,6 +2,14 @@
 Changelog
 =========
 
+Version 0.13.2
+==============
+
+Changes:
+
+  - Ensure that properties drawn from a truncated gaussian are always
+    positive: truncate the normal distribution at ±1σ and 0.
+
 Version 0.13.1
 ==============
 

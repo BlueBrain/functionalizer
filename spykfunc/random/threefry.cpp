@@ -4,8 +4,8 @@
 {
     "distutils": {
         "depends": [
-            "/gpfs/bbp.cscs.ch/apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-numpy-1.15.2-n2g6z6uli4/lib/python3.6/site-packages/numpy/core/include/numpy/arrayobject.h",
-            "/gpfs/bbp.cscs.ch/apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-numpy-1.15.2-n2g6z6uli4/lib/python3.6/site-packages/numpy/core/include/numpy/ufuncobject.h",
+            "/gpfs/bbp.cscs.ch/apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-numpy-1.15.2-4yfsf3diu7/lib/python3.6/site-packages/numpy/core/include/numpy/arrayobject.h",
+            "/gpfs/bbp.cscs.ch/apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-numpy-1.15.2-4yfsf3diu7/lib/python3.6/site-packages/numpy/core/include/numpy/ufuncobject.h",
             "deps/hadoken/include/hadoken/random/random.hpp"
         ],
         "extra_compile_args": [
@@ -13,7 +13,7 @@
         ],
         "include_dirs": [
             "deps/hadoken/include",
-            "/gpfs/bbp.cscs.ch/apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-numpy-1.15.2-n2g6z6uli4/lib/python3.6/site-packages/numpy/core/include"
+            "/gpfs/bbp.cscs.ch/apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-numpy-1.15.2-4yfsf3diu7/lib/python3.6/site-packages/numpy/core/include"
         ],
         "language": "c++",
         "name": "spykfunc.random.threefry",
@@ -926,7 +926,7 @@ typedef struct {
 } __Pyx_BufFmt_Context;
 
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":776
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":776
  * # in Cython to enable them only on the right systems.
  * 
  * ctypedef npy_int8       int8_t             # <<<<<<<<<<<<<<
@@ -935,7 +935,7 @@ typedef struct {
  */
 typedef npy_int8 __pyx_t_5numpy_int8_t;
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":777
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":777
  * 
  * ctypedef npy_int8       int8_t
  * ctypedef npy_int16      int16_t             # <<<<<<<<<<<<<<
@@ -944,7 +944,7 @@ typedef npy_int8 __pyx_t_5numpy_int8_t;
  */
 typedef npy_int16 __pyx_t_5numpy_int16_t;
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":778
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":778
  * ctypedef npy_int8       int8_t
  * ctypedef npy_int16      int16_t
  * ctypedef npy_int32      int32_t             # <<<<<<<<<<<<<<
@@ -953,7 +953,7 @@ typedef npy_int16 __pyx_t_5numpy_int16_t;
  */
 typedef npy_int32 __pyx_t_5numpy_int32_t;
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":779
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":779
  * ctypedef npy_int16      int16_t
  * ctypedef npy_int32      int32_t
  * ctypedef npy_int64      int64_t             # <<<<<<<<<<<<<<
@@ -962,7 +962,7 @@ typedef npy_int32 __pyx_t_5numpy_int32_t;
  */
 typedef npy_int64 __pyx_t_5numpy_int64_t;
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":783
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":783
  * #ctypedef npy_int128     int128_t
  * 
  * ctypedef npy_uint8      uint8_t             # <<<<<<<<<<<<<<
@@ -971,7 +971,7 @@ typedef npy_int64 __pyx_t_5numpy_int64_t;
  */
 typedef npy_uint8 __pyx_t_5numpy_uint8_t;
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":784
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":784
  * 
  * ctypedef npy_uint8      uint8_t
  * ctypedef npy_uint16     uint16_t             # <<<<<<<<<<<<<<
@@ -980,7 +980,7 @@ typedef npy_uint8 __pyx_t_5numpy_uint8_t;
  */
 typedef npy_uint16 __pyx_t_5numpy_uint16_t;
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":785
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":785
  * ctypedef npy_uint8      uint8_t
  * ctypedef npy_uint16     uint16_t
  * ctypedef npy_uint32     uint32_t             # <<<<<<<<<<<<<<
@@ -989,7 +989,7 @@ typedef npy_uint16 __pyx_t_5numpy_uint16_t;
  */
 typedef npy_uint32 __pyx_t_5numpy_uint32_t;
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":786
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":786
  * ctypedef npy_uint16     uint16_t
  * ctypedef npy_uint32     uint32_t
  * ctypedef npy_uint64     uint64_t             # <<<<<<<<<<<<<<
@@ -998,7 +998,7 @@ typedef npy_uint32 __pyx_t_5numpy_uint32_t;
  */
 typedef npy_uint64 __pyx_t_5numpy_uint64_t;
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":790
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":790
  * #ctypedef npy_uint128    uint128_t
  * 
  * ctypedef npy_float32    float32_t             # <<<<<<<<<<<<<<
@@ -1007,7 +1007,7 @@ typedef npy_uint64 __pyx_t_5numpy_uint64_t;
  */
 typedef npy_float32 __pyx_t_5numpy_float32_t;
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":791
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":791
  * 
  * ctypedef npy_float32    float32_t
  * ctypedef npy_float64    float64_t             # <<<<<<<<<<<<<<
@@ -1016,7 +1016,7 @@ typedef npy_float32 __pyx_t_5numpy_float32_t;
  */
 typedef npy_float64 __pyx_t_5numpy_float64_t;
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":800
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":800
  * # The int types are mapped a bit surprising --
  * # numpy.int corresponds to 'l' and numpy.long to 'q'
  * ctypedef npy_long       int_t             # <<<<<<<<<<<<<<
@@ -1025,7 +1025,7 @@ typedef npy_float64 __pyx_t_5numpy_float64_t;
  */
 typedef npy_long __pyx_t_5numpy_int_t;
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":801
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":801
  * # numpy.int corresponds to 'l' and numpy.long to 'q'
  * ctypedef npy_long       int_t
  * ctypedef npy_longlong   long_t             # <<<<<<<<<<<<<<
@@ -1034,7 +1034,7 @@ typedef npy_long __pyx_t_5numpy_int_t;
  */
 typedef npy_longlong __pyx_t_5numpy_long_t;
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":802
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":802
  * ctypedef npy_long       int_t
  * ctypedef npy_longlong   long_t
  * ctypedef npy_longlong   longlong_t             # <<<<<<<<<<<<<<
@@ -1043,7 +1043,7 @@ typedef npy_longlong __pyx_t_5numpy_long_t;
  */
 typedef npy_longlong __pyx_t_5numpy_longlong_t;
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":804
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":804
  * ctypedef npy_longlong   longlong_t
  * 
  * ctypedef npy_ulong      uint_t             # <<<<<<<<<<<<<<
@@ -1052,7 +1052,7 @@ typedef npy_longlong __pyx_t_5numpy_longlong_t;
  */
 typedef npy_ulong __pyx_t_5numpy_uint_t;
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":805
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":805
  * 
  * ctypedef npy_ulong      uint_t
  * ctypedef npy_ulonglong  ulong_t             # <<<<<<<<<<<<<<
@@ -1061,7 +1061,7 @@ typedef npy_ulong __pyx_t_5numpy_uint_t;
  */
 typedef npy_ulonglong __pyx_t_5numpy_ulong_t;
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":806
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":806
  * ctypedef npy_ulong      uint_t
  * ctypedef npy_ulonglong  ulong_t
  * ctypedef npy_ulonglong  ulonglong_t             # <<<<<<<<<<<<<<
@@ -1070,7 +1070,7 @@ typedef npy_ulonglong __pyx_t_5numpy_ulong_t;
  */
 typedef npy_ulonglong __pyx_t_5numpy_ulonglong_t;
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":808
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":808
  * ctypedef npy_ulonglong  ulonglong_t
  * 
  * ctypedef npy_intp       intp_t             # <<<<<<<<<<<<<<
@@ -1079,7 +1079,7 @@ typedef npy_ulonglong __pyx_t_5numpy_ulonglong_t;
  */
 typedef npy_intp __pyx_t_5numpy_intp_t;
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":809
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":809
  * 
  * ctypedef npy_intp       intp_t
  * ctypedef npy_uintp      uintp_t             # <<<<<<<<<<<<<<
@@ -1088,7 +1088,7 @@ typedef npy_intp __pyx_t_5numpy_intp_t;
  */
 typedef npy_uintp __pyx_t_5numpy_uintp_t;
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":811
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":811
  * ctypedef npy_uintp      uintp_t
  * 
  * ctypedef npy_double     float_t             # <<<<<<<<<<<<<<
@@ -1097,7 +1097,7 @@ typedef npy_uintp __pyx_t_5numpy_uintp_t;
  */
 typedef npy_double __pyx_t_5numpy_float_t;
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":812
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":812
  * 
  * ctypedef npy_double     float_t
  * ctypedef npy_double     double_t             # <<<<<<<<<<<<<<
@@ -1106,7 +1106,7 @@ typedef npy_double __pyx_t_5numpy_float_t;
  */
 typedef npy_double __pyx_t_5numpy_double_t;
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":813
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":813
  * ctypedef npy_double     float_t
  * ctypedef npy_double     double_t
  * ctypedef npy_longdouble longdouble_t             # <<<<<<<<<<<<<<
@@ -1142,7 +1142,7 @@ static CYTHON_INLINE __pyx_t_double_complex __pyx_t_double_complex_from_parts(do
 /*--- Type declarations ---*/
 struct __pyx_obj_8spykfunc_6random_8threefry_RNGThreefry;
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":815
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":815
  * ctypedef npy_longdouble longdouble_t
  * 
  * ctypedef npy_cfloat      cfloat_t             # <<<<<<<<<<<<<<
@@ -1151,7 +1151,7 @@ struct __pyx_obj_8spykfunc_6random_8threefry_RNGThreefry;
  */
 typedef npy_cfloat __pyx_t_5numpy_cfloat_t;
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":816
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":816
  * 
  * ctypedef npy_cfloat      cfloat_t
  * ctypedef npy_cdouble     cdouble_t             # <<<<<<<<<<<<<<
@@ -1160,7 +1160,7 @@ typedef npy_cfloat __pyx_t_5numpy_cfloat_t;
  */
 typedef npy_cdouble __pyx_t_5numpy_cdouble_t;
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":817
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":817
  * ctypedef npy_cfloat      cfloat_t
  * ctypedef npy_cdouble     cdouble_t
  * ctypedef npy_clongdouble clongdouble_t             # <<<<<<<<<<<<<<
@@ -1169,7 +1169,7 @@ typedef npy_cdouble __pyx_t_5numpy_cdouble_t;
  */
 typedef npy_clongdouble __pyx_t_5numpy_clongdouble_t;
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":819
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":819
  * ctypedef npy_clongdouble clongdouble_t
  * 
  * ctypedef npy_cdouble     complex_t             # <<<<<<<<<<<<<<
@@ -3953,6 +3953,7 @@ static PyArrayObject *__pyx_f_8spykfunc_6random_8threefry_truncated_normal(struc
   int __pyx_v_i;
   int __pyx_v_n;
   PyArrayObject *__pyx_v_res = 0;
+  struct __pyx_obj_8spykfunc_6random_8threefry_RNGThreefry *__pyx_v_derivative = 0;
   __Pyx_LocalBuf_ND __pyx_pybuffernd_key;
   __Pyx_Buffer __pyx_pybuffer_key;
   __Pyx_LocalBuf_ND __pyx_pybuffernd_m;
@@ -3979,9 +3980,11 @@ static PyArrayObject *__pyx_f_8spykfunc_6random_8threefry_truncated_normal(struc
   int __pyx_t_14;
   Py_ssize_t __pyx_t_15;
   Py_ssize_t __pyx_t_16;
-  PyObject *__pyx_t_17 = NULL;
-  float __pyx_t_18;
+  Py_ssize_t __pyx_t_17;
+  Py_ssize_t __pyx_t_18;
   Py_ssize_t __pyx_t_19;
+  Py_ssize_t __pyx_t_20;
+  Py_ssize_t __pyx_t_21;
   __Pyx_RefNannySetupContext("truncated_normal", 0);
   __pyx_pybuffer_res.pybuffer.buf = NULL;
   __pyx_pybuffer_res.refcount = 0;
@@ -4020,7 +4023,7 @@ static PyArrayObject *__pyx_f_8spykfunc_6random_8threefry_truncated_normal(struc
  *                                          np.ndarray[float] m, np.ndarray[float] sd):
  *     cdef int i, n = len(key)             # <<<<<<<<<<<<<<
  *     cdef np.ndarray[float] res = np.empty(n, dtype=np.float32)
- *     assert len(m) == len(sd) == n
+ *     cdef RNGThreefry derivative
  */
   __pyx_t_1 = PyObject_Length(((PyObject *)__pyx_v_key)); if (unlikely(__pyx_t_1 == ((Py_ssize_t)-1))) __PYX_ERR(1, 85, __pyx_L1_error)
   __pyx_v_n = __pyx_t_1;
@@ -4029,8 +4032,8 @@ static PyArrayObject *__pyx_f_8spykfunc_6random_8threefry_truncated_normal(struc
  *                                          np.ndarray[float] m, np.ndarray[float] sd):
  *     cdef int i, n = len(key)
  *     cdef np.ndarray[float] res = np.empty(n, dtype=np.float32)             # <<<<<<<<<<<<<<
+ *     cdef RNGThreefry derivative
  *     assert len(m) == len(sd) == n
- *     for i in range(n):
  */
   __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 86, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
@@ -4072,49 +4075,49 @@ static PyArrayObject *__pyx_f_8spykfunc_6random_8threefry_truncated_normal(struc
   __pyx_v_res = ((PyArrayObject *)__pyx_t_6);
   __pyx_t_6 = 0;
 
-  /* "spykfunc/random/threefry.pyx":87
- *     cdef int i, n = len(key)
+  /* "spykfunc/random/threefry.pyx":88
  *     cdef np.ndarray[float] res = np.empty(n, dtype=np.float32)
+ *     cdef RNGThreefry derivative
  *     assert len(m) == len(sd) == n             # <<<<<<<<<<<<<<
  *     for i in range(n):
- *         res[i] = rng.derivate(key[i]).truncated_normal(m[i], sd[i])
+ *         derivative = rng.derivate(key[i])
  */
   #ifndef CYTHON_WITHOUT_ASSERTIONS
   if (unlikely(!Py_OptimizeFlag)) {
-    __pyx_t_1 = PyObject_Length(((PyObject *)__pyx_v_m)); if (unlikely(__pyx_t_1 == ((Py_ssize_t)-1))) __PYX_ERR(1, 87, __pyx_L1_error)
-    __pyx_t_8 = PyObject_Length(((PyObject *)__pyx_v_sd)); if (unlikely(__pyx_t_8 == ((Py_ssize_t)-1))) __PYX_ERR(1, 87, __pyx_L1_error)
+    __pyx_t_1 = PyObject_Length(((PyObject *)__pyx_v_m)); if (unlikely(__pyx_t_1 == ((Py_ssize_t)-1))) __PYX_ERR(1, 88, __pyx_L1_error)
+    __pyx_t_8 = PyObject_Length(((PyObject *)__pyx_v_sd)); if (unlikely(__pyx_t_8 == ((Py_ssize_t)-1))) __PYX_ERR(1, 88, __pyx_L1_error)
     __pyx_t_9 = (__pyx_t_1 == __pyx_t_8);
     if (__pyx_t_9) {
       __pyx_t_9 = (__pyx_t_8 == __pyx_v_n);
     }
     if (unlikely(!(__pyx_t_9 != 0))) {
       PyErr_SetNone(PyExc_AssertionError);
-      __PYX_ERR(1, 87, __pyx_L1_error)
+      __PYX_ERR(1, 88, __pyx_L1_error)
     }
   }
   #endif
 
-  /* "spykfunc/random/threefry.pyx":88
- *     cdef np.ndarray[float] res = np.empty(n, dtype=np.float32)
+  /* "spykfunc/random/threefry.pyx":89
+ *     cdef RNGThreefry derivative
  *     assert len(m) == len(sd) == n
  *     for i in range(n):             # <<<<<<<<<<<<<<
- *         res[i] = rng.derivate(key[i]).truncated_normal(m[i], sd[i])
- *     return res
+ *         derivative = rng.derivate(key[i])
+ *         res[i] = derivative.truncated_normal(m[i], sd[i])
  */
   __pyx_t_10 = __pyx_v_n;
   __pyx_t_11 = __pyx_t_10;
   for (__pyx_t_12 = 0; __pyx_t_12 < __pyx_t_11; __pyx_t_12+=1) {
     __pyx_v_i = __pyx_t_12;
 
-    /* "spykfunc/random/threefry.pyx":89
+    /* "spykfunc/random/threefry.pyx":90
  *     assert len(m) == len(sd) == n
  *     for i in range(n):
- *         res[i] = rng.derivate(key[i]).truncated_normal(m[i], sd[i])             # <<<<<<<<<<<<<<
- *     return res
- * 
+ *         derivative = rng.derivate(key[i])             # <<<<<<<<<<<<<<
+ *         res[i] = derivative.truncated_normal(m[i], sd[i])
+ *         while res[i] < 0:
  */
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_rng), __pyx_n_s_derivate); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 89, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_rng), __pyx_n_s_derivate); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 90, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
     __pyx_t_13 = __pyx_v_i;
     __pyx_t_14 = -1;
     if (__pyx_t_13 < 0) {
@@ -4123,29 +4126,37 @@ static PyArrayObject *__pyx_f_8spykfunc_6random_8threefry_truncated_normal(struc
     } else if (unlikely(__pyx_t_13 >= __pyx_pybuffernd_key.diminfo[0].shape)) __pyx_t_14 = 0;
     if (unlikely(__pyx_t_14 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_14);
-      __PYX_ERR(1, 89, __pyx_L1_error)
+      __PYX_ERR(1, 90, __pyx_L1_error)
     }
-    __pyx_t_3 = __Pyx_PyInt_From_long((*__Pyx_BufPtrStrided1d(long *, __pyx_pybuffernd_key.rcbuffer->pybuffer.buf, __pyx_t_13, __pyx_pybuffernd_key.diminfo[0].strides))); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 89, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_5 = NULL;
-    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_4))) {
-      __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_4);
-      if (likely(__pyx_t_5)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
-        __Pyx_INCREF(__pyx_t_5);
+    __pyx_t_4 = __Pyx_PyInt_From_long((*__Pyx_BufPtrStrided1d(long *, __pyx_pybuffernd_key.rcbuffer->pybuffer.buf, __pyx_t_13, __pyx_pybuffernd_key.diminfo[0].strides))); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 90, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
+    __pyx_t_3 = NULL;
+    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
+      __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_2);
+      if (likely(__pyx_t_3)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
+        __Pyx_INCREF(__pyx_t_3);
         __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_4, function);
+        __Pyx_DECREF_SET(__pyx_t_2, function);
       }
     }
-    __pyx_t_2 = (__pyx_t_5) ? __Pyx_PyObject_Call2Args(__pyx_t_4, __pyx_t_5, __pyx_t_3) : __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_3);
-    __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 89, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_2);
+    __pyx_t_6 = (__pyx_t_3) ? __Pyx_PyObject_Call2Args(__pyx_t_2, __pyx_t_3, __pyx_t_4) : __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_4);
+    __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_truncated_normal); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 89, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
+    if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 90, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    if (!(likely(((__pyx_t_6) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_6, __pyx_ptype_8spykfunc_6random_8threefry_RNGThreefry))))) __PYX_ERR(1, 90, __pyx_L1_error)
+    __Pyx_XDECREF_SET(__pyx_v_derivative, ((struct __pyx_obj_8spykfunc_6random_8threefry_RNGThreefry *)__pyx_t_6));
+    __pyx_t_6 = 0;
+
+    /* "spykfunc/random/threefry.pyx":91
+ *     for i in range(n):
+ *         derivative = rng.derivate(key[i])
+ *         res[i] = derivative.truncated_normal(m[i], sd[i])             # <<<<<<<<<<<<<<
+ *         while res[i] < 0:
+ *             res[i] = derivative.truncated_normal(m[i], sd[i])
+ */
     __pyx_t_15 = __pyx_v_i;
     __pyx_t_14 = -1;
     if (__pyx_t_15 < 0) {
@@ -4154,10 +4165,8 @@ static PyArrayObject *__pyx_f_8spykfunc_6random_8threefry_truncated_normal(struc
     } else if (unlikely(__pyx_t_15 >= __pyx_pybuffernd_m.diminfo[0].shape)) __pyx_t_14 = 0;
     if (unlikely(__pyx_t_14 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_14);
-      __PYX_ERR(1, 89, __pyx_L1_error)
+      __PYX_ERR(1, 91, __pyx_L1_error)
     }
-    __pyx_t_2 = PyFloat_FromDouble((*__Pyx_BufPtrStrided1d(float *, __pyx_pybuffernd_m.rcbuffer->pybuffer.buf, __pyx_t_15, __pyx_pybuffernd_m.diminfo[0].strides))); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 89, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_2);
     __pyx_t_16 = __pyx_v_i;
     __pyx_t_14 = -1;
     if (__pyx_t_16 < 0) {
@@ -4166,77 +4175,85 @@ static PyArrayObject *__pyx_f_8spykfunc_6random_8threefry_truncated_normal(struc
     } else if (unlikely(__pyx_t_16 >= __pyx_pybuffernd_sd.diminfo[0].shape)) __pyx_t_14 = 0;
     if (unlikely(__pyx_t_14 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_14);
-      __PYX_ERR(1, 89, __pyx_L1_error)
+      __PYX_ERR(1, 91, __pyx_L1_error)
     }
-    __pyx_t_3 = PyFloat_FromDouble((*__Pyx_BufPtrStrided1d(float *, __pyx_pybuffernd_sd.rcbuffer->pybuffer.buf, __pyx_t_16, __pyx_pybuffernd_sd.diminfo[0].strides))); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 89, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_5 = NULL;
-    __pyx_t_14 = 0;
-    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_4))) {
-      __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_4);
-      if (likely(__pyx_t_5)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_4);
-        __Pyx_INCREF(__pyx_t_5);
-        __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_4, function);
-        __pyx_t_14 = 1;
-      }
-    }
-    #if CYTHON_FAST_PYCALL
-    if (PyFunction_Check(__pyx_t_4)) {
-      PyObject *__pyx_temp[3] = {__pyx_t_5, __pyx_t_2, __pyx_t_3};
-      __pyx_t_6 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-__pyx_t_14, 2+__pyx_t_14); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 89, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __Pyx_GOTREF(__pyx_t_6);
-      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    } else
-    #endif
-    #if CYTHON_FAST_PYCCALL
-    if (__Pyx_PyFastCFunction_Check(__pyx_t_4)) {
-      PyObject *__pyx_temp[3] = {__pyx_t_5, __pyx_t_2, __pyx_t_3};
-      __pyx_t_6 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-__pyx_t_14, 2+__pyx_t_14); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 89, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __Pyx_GOTREF(__pyx_t_6);
-      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    } else
-    #endif
-    {
-      __pyx_t_17 = PyTuple_New(2+__pyx_t_14); if (unlikely(!__pyx_t_17)) __PYX_ERR(1, 89, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_17);
-      if (__pyx_t_5) {
-        __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_17, 0, __pyx_t_5); __pyx_t_5 = NULL;
-      }
-      __Pyx_GIVEREF(__pyx_t_2);
-      PyTuple_SET_ITEM(__pyx_t_17, 0+__pyx_t_14, __pyx_t_2);
-      __Pyx_GIVEREF(__pyx_t_3);
-      PyTuple_SET_ITEM(__pyx_t_17, 1+__pyx_t_14, __pyx_t_3);
-      __pyx_t_2 = 0;
-      __pyx_t_3 = 0;
-      __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_17, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 89, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_6);
-      __Pyx_DECREF(__pyx_t_17); __pyx_t_17 = 0;
-    }
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __pyx_t_18 = __pyx_PyFloat_AsFloat(__pyx_t_6); if (unlikely((__pyx_t_18 == (float)-1) && PyErr_Occurred())) __PYX_ERR(1, 89, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __pyx_t_19 = __pyx_v_i;
+    __pyx_t_17 = __pyx_v_i;
     __pyx_t_14 = -1;
-    if (__pyx_t_19 < 0) {
-      __pyx_t_19 += __pyx_pybuffernd_res.diminfo[0].shape;
-      if (unlikely(__pyx_t_19 < 0)) __pyx_t_14 = 0;
-    } else if (unlikely(__pyx_t_19 >= __pyx_pybuffernd_res.diminfo[0].shape)) __pyx_t_14 = 0;
+    if (__pyx_t_17 < 0) {
+      __pyx_t_17 += __pyx_pybuffernd_res.diminfo[0].shape;
+      if (unlikely(__pyx_t_17 < 0)) __pyx_t_14 = 0;
+    } else if (unlikely(__pyx_t_17 >= __pyx_pybuffernd_res.diminfo[0].shape)) __pyx_t_14 = 0;
     if (unlikely(__pyx_t_14 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_14);
-      __PYX_ERR(1, 89, __pyx_L1_error)
+      __PYX_ERR(1, 91, __pyx_L1_error)
     }
-    *__Pyx_BufPtrStrided1d(float *, __pyx_pybuffernd_res.rcbuffer->pybuffer.buf, __pyx_t_19, __pyx_pybuffernd_res.diminfo[0].strides) = __pyx_t_18;
+    *__Pyx_BufPtrStrided1d(float *, __pyx_pybuffernd_res.rcbuffer->pybuffer.buf, __pyx_t_17, __pyx_pybuffernd_res.diminfo[0].strides) = ((struct __pyx_vtabstruct_8spykfunc_6random_8threefry_RNGThreefry *)__pyx_v_derivative->__pyx_vtab)->truncated_normal(__pyx_v_derivative, (*__Pyx_BufPtrStrided1d(float *, __pyx_pybuffernd_m.rcbuffer->pybuffer.buf, __pyx_t_15, __pyx_pybuffernd_m.diminfo[0].strides)), (*__Pyx_BufPtrStrided1d(float *, __pyx_pybuffernd_sd.rcbuffer->pybuffer.buf, __pyx_t_16, __pyx_pybuffernd_sd.diminfo[0].strides)), 0);
+
+    /* "spykfunc/random/threefry.pyx":92
+ *         derivative = rng.derivate(key[i])
+ *         res[i] = derivative.truncated_normal(m[i], sd[i])
+ *         while res[i] < 0:             # <<<<<<<<<<<<<<
+ *             res[i] = derivative.truncated_normal(m[i], sd[i])
+ *     return res
+ */
+    while (1) {
+      __pyx_t_18 = __pyx_v_i;
+      __pyx_t_14 = -1;
+      if (__pyx_t_18 < 0) {
+        __pyx_t_18 += __pyx_pybuffernd_res.diminfo[0].shape;
+        if (unlikely(__pyx_t_18 < 0)) __pyx_t_14 = 0;
+      } else if (unlikely(__pyx_t_18 >= __pyx_pybuffernd_res.diminfo[0].shape)) __pyx_t_14 = 0;
+      if (unlikely(__pyx_t_14 != -1)) {
+        __Pyx_RaiseBufferIndexError(__pyx_t_14);
+        __PYX_ERR(1, 92, __pyx_L1_error)
+      }
+      __pyx_t_9 = (((*__Pyx_BufPtrStrided1d(float *, __pyx_pybuffernd_res.rcbuffer->pybuffer.buf, __pyx_t_18, __pyx_pybuffernd_res.diminfo[0].strides)) < 0.0) != 0);
+      if (!__pyx_t_9) break;
+
+      /* "spykfunc/random/threefry.pyx":93
+ *         res[i] = derivative.truncated_normal(m[i], sd[i])
+ *         while res[i] < 0:
+ *             res[i] = derivative.truncated_normal(m[i], sd[i])             # <<<<<<<<<<<<<<
+ *     return res
+ * 
+ */
+      __pyx_t_19 = __pyx_v_i;
+      __pyx_t_14 = -1;
+      if (__pyx_t_19 < 0) {
+        __pyx_t_19 += __pyx_pybuffernd_m.diminfo[0].shape;
+        if (unlikely(__pyx_t_19 < 0)) __pyx_t_14 = 0;
+      } else if (unlikely(__pyx_t_19 >= __pyx_pybuffernd_m.diminfo[0].shape)) __pyx_t_14 = 0;
+      if (unlikely(__pyx_t_14 != -1)) {
+        __Pyx_RaiseBufferIndexError(__pyx_t_14);
+        __PYX_ERR(1, 93, __pyx_L1_error)
+      }
+      __pyx_t_20 = __pyx_v_i;
+      __pyx_t_14 = -1;
+      if (__pyx_t_20 < 0) {
+        __pyx_t_20 += __pyx_pybuffernd_sd.diminfo[0].shape;
+        if (unlikely(__pyx_t_20 < 0)) __pyx_t_14 = 0;
+      } else if (unlikely(__pyx_t_20 >= __pyx_pybuffernd_sd.diminfo[0].shape)) __pyx_t_14 = 0;
+      if (unlikely(__pyx_t_14 != -1)) {
+        __Pyx_RaiseBufferIndexError(__pyx_t_14);
+        __PYX_ERR(1, 93, __pyx_L1_error)
+      }
+      __pyx_t_21 = __pyx_v_i;
+      __pyx_t_14 = -1;
+      if (__pyx_t_21 < 0) {
+        __pyx_t_21 += __pyx_pybuffernd_res.diminfo[0].shape;
+        if (unlikely(__pyx_t_21 < 0)) __pyx_t_14 = 0;
+      } else if (unlikely(__pyx_t_21 >= __pyx_pybuffernd_res.diminfo[0].shape)) __pyx_t_14 = 0;
+      if (unlikely(__pyx_t_14 != -1)) {
+        __Pyx_RaiseBufferIndexError(__pyx_t_14);
+        __PYX_ERR(1, 93, __pyx_L1_error)
+      }
+      *__Pyx_BufPtrStrided1d(float *, __pyx_pybuffernd_res.rcbuffer->pybuffer.buf, __pyx_t_21, __pyx_pybuffernd_res.diminfo[0].strides) = ((struct __pyx_vtabstruct_8spykfunc_6random_8threefry_RNGThreefry *)__pyx_v_derivative->__pyx_vtab)->truncated_normal(__pyx_v_derivative, (*__Pyx_BufPtrStrided1d(float *, __pyx_pybuffernd_m.rcbuffer->pybuffer.buf, __pyx_t_19, __pyx_pybuffernd_m.diminfo[0].strides)), (*__Pyx_BufPtrStrided1d(float *, __pyx_pybuffernd_sd.rcbuffer->pybuffer.buf, __pyx_t_20, __pyx_pybuffernd_sd.diminfo[0].strides)), 0);
+    }
   }
 
-  /* "spykfunc/random/threefry.pyx":90
- *     for i in range(n):
- *         res[i] = rng.derivate(key[i]).truncated_normal(m[i], sd[i])
+  /* "spykfunc/random/threefry.pyx":94
+ *         while res[i] < 0:
+ *             res[i] = derivative.truncated_normal(m[i], sd[i])
  *     return res             # <<<<<<<<<<<<<<
  * 
  * cpdef np.ndarray[float] uniform(RNGThreefry rng,
@@ -4261,7 +4278,6 @@ static PyArrayObject *__pyx_f_8spykfunc_6random_8threefry_truncated_normal(struc
   __Pyx_XDECREF(__pyx_t_4);
   __Pyx_XDECREF(__pyx_t_5);
   __Pyx_XDECREF(__pyx_t_6);
-  __Pyx_XDECREF(__pyx_t_17);
   { PyObject *__pyx_type, *__pyx_value, *__pyx_tb;
     __Pyx_PyThreadState_declare
     __Pyx_PyThreadState_assign
@@ -4281,6 +4297,7 @@ static PyArrayObject *__pyx_f_8spykfunc_6random_8threefry_truncated_normal(struc
   __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_sd.rcbuffer->pybuffer);
   __pyx_L2:;
   __Pyx_XDECREF((PyObject *)__pyx_v_res);
+  __Pyx_XDECREF((PyObject *)__pyx_v_derivative);
   __Pyx_XGIVEREF((PyObject *)__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
@@ -4446,7 +4463,7 @@ static PyObject *__pyx_pf_8spykfunc_6random_8threefry_2truncated_normal(CYTHON_U
   return __pyx_r;
 }
 
-/* "spykfunc/random/threefry.pyx":92
+/* "spykfunc/random/threefry.pyx":96
  *     return res
  * 
  * cpdef np.ndarray[float] uniform(RNGThreefry rng,             # <<<<<<<<<<<<<<
@@ -4490,60 +4507,60 @@ static PyArrayObject *__pyx_f_8spykfunc_6random_8threefry_uniform(struct __pyx_o
   __pyx_pybuffernd_key.rcbuffer = &__pyx_pybuffer_key;
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_key.rcbuffer->pybuffer, (PyObject*)__pyx_v_key, &__Pyx_TypeInfo_long, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(1, 92, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_key.rcbuffer->pybuffer, (PyObject*)__pyx_v_key, &__Pyx_TypeInfo_long, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(1, 96, __pyx_L1_error)
   }
   __pyx_pybuffernd_key.diminfo[0].strides = __pyx_pybuffernd_key.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_key.diminfo[0].shape = __pyx_pybuffernd_key.rcbuffer->pybuffer.shape[0];
 
-  /* "spykfunc/random/threefry.pyx":94
+  /* "spykfunc/random/threefry.pyx":98
  * cpdef np.ndarray[float] uniform(RNGThreefry rng,
  *                                 np.ndarray[long] key):
  *     cdef int i, n = len(key)             # <<<<<<<<<<<<<<
  *     cdef np.ndarray[float] res = np.empty(n, dtype=np.float32)
  *     for i in range(n):
  */
-  __pyx_t_1 = PyObject_Length(((PyObject *)__pyx_v_key)); if (unlikely(__pyx_t_1 == ((Py_ssize_t)-1))) __PYX_ERR(1, 94, __pyx_L1_error)
+  __pyx_t_1 = PyObject_Length(((PyObject *)__pyx_v_key)); if (unlikely(__pyx_t_1 == ((Py_ssize_t)-1))) __PYX_ERR(1, 98, __pyx_L1_error)
   __pyx_v_n = __pyx_t_1;
 
-  /* "spykfunc/random/threefry.pyx":95
+  /* "spykfunc/random/threefry.pyx":99
  *                                 np.ndarray[long] key):
  *     cdef int i, n = len(key)
  *     cdef np.ndarray[float] res = np.empty(n, dtype=np.float32)             # <<<<<<<<<<<<<<
  *     for i in range(n):
  *         res[i] = rng.derivate(key[i]).uniform()
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 95, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 99, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_empty); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 95, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_empty); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 99, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_n); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 95, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_n); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 99, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 95, __pyx_L1_error)
+  __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 99, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_GIVEREF(__pyx_t_2);
   PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_2);
   __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 95, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 99, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_np); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 95, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_np); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 99, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_float32); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 95, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_float32); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 99, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_dtype, __pyx_t_6) < 0) __PYX_ERR(1, 95, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_dtype, __pyx_t_6) < 0) __PYX_ERR(1, 99, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, __pyx_t_2); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 95, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, __pyx_t_2); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 99, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (!(likely(((__pyx_t_6) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_6, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(1, 95, __pyx_L1_error)
+  if (!(likely(((__pyx_t_6) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_6, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(1, 99, __pyx_L1_error)
   __pyx_t_7 = ((PyArrayObject *)__pyx_t_6);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_res.rcbuffer->pybuffer, (PyObject*)__pyx_t_7, &__Pyx_TypeInfo_float, PyBUF_FORMAT| PyBUF_STRIDES| PyBUF_WRITABLE, 1, 0, __pyx_stack) == -1)) {
       __pyx_v_res = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_res.rcbuffer->pybuffer.buf = NULL;
-      __PYX_ERR(1, 95, __pyx_L1_error)
+      __PYX_ERR(1, 99, __pyx_L1_error)
     } else {__pyx_pybuffernd_res.diminfo[0].strides = __pyx_pybuffernd_res.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_res.diminfo[0].shape = __pyx_pybuffernd_res.rcbuffer->pybuffer.shape[0];
     }
   }
@@ -4551,7 +4568,7 @@ static PyArrayObject *__pyx_f_8spykfunc_6random_8threefry_uniform(struct __pyx_o
   __pyx_v_res = ((PyArrayObject *)__pyx_t_6);
   __pyx_t_6 = 0;
 
-  /* "spykfunc/random/threefry.pyx":96
+  /* "spykfunc/random/threefry.pyx":100
  *     cdef int i, n = len(key)
  *     cdef np.ndarray[float] res = np.empty(n, dtype=np.float32)
  *     for i in range(n):             # <<<<<<<<<<<<<<
@@ -4563,14 +4580,14 @@ static PyArrayObject *__pyx_f_8spykfunc_6random_8threefry_uniform(struct __pyx_o
   for (__pyx_t_10 = 0; __pyx_t_10 < __pyx_t_9; __pyx_t_10+=1) {
     __pyx_v_i = __pyx_t_10;
 
-    /* "spykfunc/random/threefry.pyx":97
+    /* "spykfunc/random/threefry.pyx":101
  *     cdef np.ndarray[float] res = np.empty(n, dtype=np.float32)
  *     for i in range(n):
  *         res[i] = rng.derivate(key[i]).uniform()             # <<<<<<<<<<<<<<
  *     return res
  * 
  */
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_rng), __pyx_n_s_derivate); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 97, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_rng), __pyx_n_s_derivate); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 101, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __pyx_t_11 = __pyx_v_i;
     __pyx_t_12 = -1;
@@ -4580,9 +4597,9 @@ static PyArrayObject *__pyx_f_8spykfunc_6random_8threefry_uniform(struct __pyx_o
     } else if (unlikely(__pyx_t_11 >= __pyx_pybuffernd_key.diminfo[0].shape)) __pyx_t_12 = 0;
     if (unlikely(__pyx_t_12 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_12);
-      __PYX_ERR(1, 97, __pyx_L1_error)
+      __PYX_ERR(1, 101, __pyx_L1_error)
     }
-    __pyx_t_3 = __Pyx_PyInt_From_long((*__Pyx_BufPtrStrided1d(long *, __pyx_pybuffernd_key.rcbuffer->pybuffer.buf, __pyx_t_11, __pyx_pybuffernd_key.diminfo[0].strides))); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 97, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyInt_From_long((*__Pyx_BufPtrStrided1d(long *, __pyx_pybuffernd_key.rcbuffer->pybuffer.buf, __pyx_t_11, __pyx_pybuffernd_key.diminfo[0].strides))); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 101, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __pyx_t_5 = NULL;
     if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_4))) {
@@ -4597,10 +4614,10 @@ static PyArrayObject *__pyx_f_8spykfunc_6random_8threefry_uniform(struct __pyx_o
     __pyx_t_2 = (__pyx_t_5) ? __Pyx_PyObject_Call2Args(__pyx_t_4, __pyx_t_5, __pyx_t_3) : __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_3);
     __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 97, __pyx_L1_error)
+    if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 101, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_uniform); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 97, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_uniform); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 101, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __pyx_t_2 = NULL;
@@ -4615,10 +4632,10 @@ static PyArrayObject *__pyx_f_8spykfunc_6random_8threefry_uniform(struct __pyx_o
     }
     __pyx_t_6 = (__pyx_t_2) ? __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_2) : __Pyx_PyObject_CallNoArg(__pyx_t_4);
     __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 97, __pyx_L1_error)
+    if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 101, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __pyx_t_13 = __pyx_PyFloat_AsFloat(__pyx_t_6); if (unlikely((__pyx_t_13 == (float)-1) && PyErr_Occurred())) __PYX_ERR(1, 97, __pyx_L1_error)
+    __pyx_t_13 = __pyx_PyFloat_AsFloat(__pyx_t_6); if (unlikely((__pyx_t_13 == (float)-1) && PyErr_Occurred())) __PYX_ERR(1, 101, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __pyx_t_14 = __pyx_v_i;
     __pyx_t_12 = -1;
@@ -4628,12 +4645,12 @@ static PyArrayObject *__pyx_f_8spykfunc_6random_8threefry_uniform(struct __pyx_o
     } else if (unlikely(__pyx_t_14 >= __pyx_pybuffernd_res.diminfo[0].shape)) __pyx_t_12 = 0;
     if (unlikely(__pyx_t_12 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_12);
-      __PYX_ERR(1, 97, __pyx_L1_error)
+      __PYX_ERR(1, 101, __pyx_L1_error)
     }
     *__Pyx_BufPtrStrided1d(float *, __pyx_pybuffernd_res.rcbuffer->pybuffer.buf, __pyx_t_14, __pyx_pybuffernd_res.diminfo[0].strides) = __pyx_t_13;
   }
 
-  /* "spykfunc/random/threefry.pyx":98
+  /* "spykfunc/random/threefry.pyx":102
  *     for i in range(n):
  *         res[i] = rng.derivate(key[i]).uniform()
  *     return res             # <<<<<<<<<<<<<<
@@ -4645,7 +4662,7 @@ static PyArrayObject *__pyx_f_8spykfunc_6random_8threefry_uniform(struct __pyx_o
   __pyx_r = ((PyArrayObject *)__pyx_v_res);
   goto __pyx_L0;
 
-  /* "spykfunc/random/threefry.pyx":92
+  /* "spykfunc/random/threefry.pyx":96
  *     return res
  * 
  * cpdef np.ndarray[float] uniform(RNGThreefry rng,             # <<<<<<<<<<<<<<
@@ -4711,11 +4728,11 @@ static PyObject *__pyx_pw_8spykfunc_6random_8threefry_5uniform(PyObject *__pyx_s
         case  1:
         if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_key)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("uniform", 1, 2, 2, 1); __PYX_ERR(1, 92, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("uniform", 1, 2, 2, 1); __PYX_ERR(1, 96, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "uniform") < 0)) __PYX_ERR(1, 92, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "uniform") < 0)) __PYX_ERR(1, 96, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 2) {
       goto __pyx_L5_argtuple_error;
@@ -4728,14 +4745,14 @@ static PyObject *__pyx_pw_8spykfunc_6random_8threefry_5uniform(PyObject *__pyx_s
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("uniform", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(1, 92, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("uniform", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(1, 96, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("spykfunc.random.threefry.uniform", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_rng), __pyx_ptype_8spykfunc_6random_8threefry_RNGThreefry, 1, "rng", 0))) __PYX_ERR(1, 92, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_key), __pyx_ptype_5numpy_ndarray, 1, "key", 0))) __PYX_ERR(1, 93, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_rng), __pyx_ptype_8spykfunc_6random_8threefry_RNGThreefry, 1, "rng", 0))) __PYX_ERR(1, 96, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_key), __pyx_ptype_5numpy_ndarray, 1, "key", 0))) __PYX_ERR(1, 97, __pyx_L1_error)
   __pyx_r = __pyx_pf_8spykfunc_6random_8threefry_4uniform(__pyx_self, __pyx_v_rng, __pyx_v_key);
 
   /* function exit code */
@@ -4760,11 +4777,11 @@ static PyObject *__pyx_pf_8spykfunc_6random_8threefry_4uniform(CYTHON_UNUSED PyO
   __pyx_pybuffernd_key.rcbuffer = &__pyx_pybuffer_key;
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_key.rcbuffer->pybuffer, (PyObject*)__pyx_v_key, &__Pyx_TypeInfo_long, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(1, 92, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_key.rcbuffer->pybuffer, (PyObject*)__pyx_v_key, &__Pyx_TypeInfo_long, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(1, 96, __pyx_L1_error)
   }
   __pyx_pybuffernd_key.diminfo[0].strides = __pyx_pybuffernd_key.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_key.diminfo[0].shape = __pyx_pybuffernd_key.rcbuffer->pybuffer.shape[0];
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = ((PyObject *)__pyx_f_8spykfunc_6random_8threefry_uniform(__pyx_v_rng, __pyx_v_key, 0)); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 92, __pyx_L1_error)
+  __pyx_t_1 = ((PyObject *)__pyx_f_8spykfunc_6random_8threefry_uniform(__pyx_v_rng, __pyx_v_key, 0)); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 96, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -4790,7 +4807,7 @@ static PyObject *__pyx_pf_8spykfunc_6random_8threefry_4uniform(CYTHON_UNUSED PyO
   return __pyx_r;
 }
 
-/* "spykfunc/random/threefry.pyx":100
+/* "spykfunc/random/threefry.pyx":104
  *     return res
  * 
  * cpdef np.ndarray[int] poisson(RNGThreefry rng,             # <<<<<<<<<<<<<<
@@ -4844,65 +4861,65 @@ static PyArrayObject *__pyx_f_8spykfunc_6random_8threefry_poisson(struct __pyx_o
   __pyx_pybuffernd_k.rcbuffer = &__pyx_pybuffer_k;
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_key.rcbuffer->pybuffer, (PyObject*)__pyx_v_key, &__Pyx_TypeInfo_long, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(1, 100, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_key.rcbuffer->pybuffer, (PyObject*)__pyx_v_key, &__Pyx_TypeInfo_long, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(1, 104, __pyx_L1_error)
   }
   __pyx_pybuffernd_key.diminfo[0].strides = __pyx_pybuffernd_key.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_key.diminfo[0].shape = __pyx_pybuffernd_key.rcbuffer->pybuffer.shape[0];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_k.rcbuffer->pybuffer, (PyObject*)__pyx_v_k, &__Pyx_TypeInfo_short, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(1, 100, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_k.rcbuffer->pybuffer, (PyObject*)__pyx_v_k, &__Pyx_TypeInfo_short, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(1, 104, __pyx_L1_error)
   }
   __pyx_pybuffernd_k.diminfo[0].strides = __pyx_pybuffernd_k.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_k.diminfo[0].shape = __pyx_pybuffernd_k.rcbuffer->pybuffer.shape[0];
 
-  /* "spykfunc/random/threefry.pyx":103
+  /* "spykfunc/random/threefry.pyx":107
  *                               np.ndarray[long] key,
  *                               np.ndarray[short] k):
  *     cdef int i, n = len(key)             # <<<<<<<<<<<<<<
  *     cdef np.ndarray[int] res = np.empty(n, dtype=np.int32)
  *     assert len(k) == n
  */
-  __pyx_t_1 = PyObject_Length(((PyObject *)__pyx_v_key)); if (unlikely(__pyx_t_1 == ((Py_ssize_t)-1))) __PYX_ERR(1, 103, __pyx_L1_error)
+  __pyx_t_1 = PyObject_Length(((PyObject *)__pyx_v_key)); if (unlikely(__pyx_t_1 == ((Py_ssize_t)-1))) __PYX_ERR(1, 107, __pyx_L1_error)
   __pyx_v_n = __pyx_t_1;
 
-  /* "spykfunc/random/threefry.pyx":104
+  /* "spykfunc/random/threefry.pyx":108
  *                               np.ndarray[short] k):
  *     cdef int i, n = len(key)
  *     cdef np.ndarray[int] res = np.empty(n, dtype=np.int32)             # <<<<<<<<<<<<<<
  *     assert len(k) == n
  *     for i in range(n):
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 104, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 108, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_empty); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 104, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_empty); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 108, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_n); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 104, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_n); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 108, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 104, __pyx_L1_error)
+  __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 108, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_GIVEREF(__pyx_t_2);
   PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_2);
   __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 104, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 108, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_np); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 104, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_5, __pyx_n_s_np); if (unlikely(!__pyx_t_5)) __PYX_ERR(1, 108, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_int32); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 104, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_int32); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 108, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_dtype, __pyx_t_6) < 0) __PYX_ERR(1, 104, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_dtype, __pyx_t_6) < 0) __PYX_ERR(1, 108, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, __pyx_t_2); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 104, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, __pyx_t_2); if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 108, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (!(likely(((__pyx_t_6) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_6, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(1, 104, __pyx_L1_error)
+  if (!(likely(((__pyx_t_6) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_6, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(1, 108, __pyx_L1_error)
   __pyx_t_7 = ((PyArrayObject *)__pyx_t_6);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_res.rcbuffer->pybuffer, (PyObject*)__pyx_t_7, &__Pyx_TypeInfo_int, PyBUF_FORMAT| PyBUF_STRIDES| PyBUF_WRITABLE, 1, 0, __pyx_stack) == -1)) {
       __pyx_v_res = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_res.rcbuffer->pybuffer.buf = NULL;
-      __PYX_ERR(1, 104, __pyx_L1_error)
+      __PYX_ERR(1, 108, __pyx_L1_error)
     } else {__pyx_pybuffernd_res.diminfo[0].strides = __pyx_pybuffernd_res.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_res.diminfo[0].shape = __pyx_pybuffernd_res.rcbuffer->pybuffer.shape[0];
     }
   }
@@ -4910,7 +4927,7 @@ static PyArrayObject *__pyx_f_8spykfunc_6random_8threefry_poisson(struct __pyx_o
   __pyx_v_res = ((PyArrayObject *)__pyx_t_6);
   __pyx_t_6 = 0;
 
-  /* "spykfunc/random/threefry.pyx":105
+  /* "spykfunc/random/threefry.pyx":109
  *     cdef int i, n = len(key)
  *     cdef np.ndarray[int] res = np.empty(n, dtype=np.int32)
  *     assert len(k) == n             # <<<<<<<<<<<<<<
@@ -4919,15 +4936,15 @@ static PyArrayObject *__pyx_f_8spykfunc_6random_8threefry_poisson(struct __pyx_o
  */
   #ifndef CYTHON_WITHOUT_ASSERTIONS
   if (unlikely(!Py_OptimizeFlag)) {
-    __pyx_t_1 = PyObject_Length(((PyObject *)__pyx_v_k)); if (unlikely(__pyx_t_1 == ((Py_ssize_t)-1))) __PYX_ERR(1, 105, __pyx_L1_error)
+    __pyx_t_1 = PyObject_Length(((PyObject *)__pyx_v_k)); if (unlikely(__pyx_t_1 == ((Py_ssize_t)-1))) __PYX_ERR(1, 109, __pyx_L1_error)
     if (unlikely(!((__pyx_t_1 == __pyx_v_n) != 0))) {
       PyErr_SetNone(PyExc_AssertionError);
-      __PYX_ERR(1, 105, __pyx_L1_error)
+      __PYX_ERR(1, 109, __pyx_L1_error)
     }
   }
   #endif
 
-  /* "spykfunc/random/threefry.pyx":106
+  /* "spykfunc/random/threefry.pyx":110
  *     cdef np.ndarray[int] res = np.empty(n, dtype=np.int32)
  *     assert len(k) == n
  *     for i in range(n):             # <<<<<<<<<<<<<<
@@ -4939,7 +4956,7 @@ static PyArrayObject *__pyx_f_8spykfunc_6random_8threefry_poisson(struct __pyx_o
   for (__pyx_t_10 = 0; __pyx_t_10 < __pyx_t_9; __pyx_t_10+=1) {
     __pyx_v_i = __pyx_t_10;
 
-    /* "spykfunc/random/threefry.pyx":107
+    /* "spykfunc/random/threefry.pyx":111
  *     assert len(k) == n
  *     for i in range(n):
  *         if k[i] >= 1:             # <<<<<<<<<<<<<<
@@ -4954,19 +4971,19 @@ static PyArrayObject *__pyx_f_8spykfunc_6random_8threefry_poisson(struct __pyx_o
     } else if (unlikely(__pyx_t_11 >= __pyx_pybuffernd_k.diminfo[0].shape)) __pyx_t_12 = 0;
     if (unlikely(__pyx_t_12 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_12);
-      __PYX_ERR(1, 107, __pyx_L1_error)
+      __PYX_ERR(1, 111, __pyx_L1_error)
     }
     __pyx_t_13 = (((*__Pyx_BufPtrStrided1d(short *, __pyx_pybuffernd_k.rcbuffer->pybuffer.buf, __pyx_t_11, __pyx_pybuffernd_k.diminfo[0].strides)) >= 1) != 0);
     if (__pyx_t_13) {
 
-      /* "spykfunc/random/threefry.pyx":108
+      /* "spykfunc/random/threefry.pyx":112
  *     for i in range(n):
  *         if k[i] >= 1:
  *             res[i] = 1 + rng.derivate(key[i]).poisson(k[i] - 1)             # <<<<<<<<<<<<<<
  *         else:
  *             res[i] = 1
  */
-      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_rng), __pyx_n_s_derivate); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 108, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_rng), __pyx_n_s_derivate); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 112, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __pyx_t_14 = __pyx_v_i;
       __pyx_t_12 = -1;
@@ -4976,9 +4993,9 @@ static PyArrayObject *__pyx_f_8spykfunc_6random_8threefry_poisson(struct __pyx_o
       } else if (unlikely(__pyx_t_14 >= __pyx_pybuffernd_key.diminfo[0].shape)) __pyx_t_12 = 0;
       if (unlikely(__pyx_t_12 != -1)) {
         __Pyx_RaiseBufferIndexError(__pyx_t_12);
-        __PYX_ERR(1, 108, __pyx_L1_error)
+        __PYX_ERR(1, 112, __pyx_L1_error)
       }
-      __pyx_t_3 = __Pyx_PyInt_From_long((*__Pyx_BufPtrStrided1d(long *, __pyx_pybuffernd_key.rcbuffer->pybuffer.buf, __pyx_t_14, __pyx_pybuffernd_key.diminfo[0].strides))); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 108, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyInt_From_long((*__Pyx_BufPtrStrided1d(long *, __pyx_pybuffernd_key.rcbuffer->pybuffer.buf, __pyx_t_14, __pyx_pybuffernd_key.diminfo[0].strides))); if (unlikely(!__pyx_t_3)) __PYX_ERR(1, 112, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __pyx_t_5 = NULL;
       if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_4))) {
@@ -4993,10 +5010,10 @@ static PyArrayObject *__pyx_f_8spykfunc_6random_8threefry_poisson(struct __pyx_o
       __pyx_t_2 = (__pyx_t_5) ? __Pyx_PyObject_Call2Args(__pyx_t_4, __pyx_t_5, __pyx_t_3) : __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_3);
       __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 108, __pyx_L1_error)
+      if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 112, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_poisson); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 108, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_poisson); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 112, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       __pyx_t_15 = __pyx_v_i;
@@ -5007,9 +5024,9 @@ static PyArrayObject *__pyx_f_8spykfunc_6random_8threefry_poisson(struct __pyx_o
       } else if (unlikely(__pyx_t_15 >= __pyx_pybuffernd_k.diminfo[0].shape)) __pyx_t_12 = 0;
       if (unlikely(__pyx_t_12 != -1)) {
         __Pyx_RaiseBufferIndexError(__pyx_t_12);
-        __PYX_ERR(1, 108, __pyx_L1_error)
+        __PYX_ERR(1, 112, __pyx_L1_error)
       }
-      __pyx_t_2 = __Pyx_PyInt_From_long(((*__Pyx_BufPtrStrided1d(short *, __pyx_pybuffernd_k.rcbuffer->pybuffer.buf, __pyx_t_15, __pyx_pybuffernd_k.diminfo[0].strides)) - 1)); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 108, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyInt_From_long(((*__Pyx_BufPtrStrided1d(short *, __pyx_pybuffernd_k.rcbuffer->pybuffer.buf, __pyx_t_15, __pyx_pybuffernd_k.diminfo[0].strides)) - 1)); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 112, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
       __pyx_t_3 = NULL;
       if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_4))) {
@@ -5024,13 +5041,13 @@ static PyArrayObject *__pyx_f_8spykfunc_6random_8threefry_poisson(struct __pyx_o
       __pyx_t_6 = (__pyx_t_3) ? __Pyx_PyObject_Call2Args(__pyx_t_4, __pyx_t_3, __pyx_t_2) : __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_2);
       __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-      if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 108, __pyx_L1_error)
+      if (unlikely(!__pyx_t_6)) __PYX_ERR(1, 112, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __pyx_t_4 = __Pyx_PyInt_AddCObj(__pyx_int_1, __pyx_t_6, 1, 0); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 108, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyInt_AddCObj(__pyx_int_1, __pyx_t_6, 1, 0); if (unlikely(!__pyx_t_4)) __PYX_ERR(1, 112, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-      __pyx_t_12 = __Pyx_PyInt_As_int(__pyx_t_4); if (unlikely((__pyx_t_12 == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 108, __pyx_L1_error)
+      __pyx_t_12 = __Pyx_PyInt_As_int(__pyx_t_4); if (unlikely((__pyx_t_12 == (int)-1) && PyErr_Occurred())) __PYX_ERR(1, 112, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       __pyx_t_16 = __pyx_v_i;
       __pyx_t_17 = -1;
@@ -5040,11 +5057,11 @@ static PyArrayObject *__pyx_f_8spykfunc_6random_8threefry_poisson(struct __pyx_o
       } else if (unlikely(__pyx_t_16 >= __pyx_pybuffernd_res.diminfo[0].shape)) __pyx_t_17 = 0;
       if (unlikely(__pyx_t_17 != -1)) {
         __Pyx_RaiseBufferIndexError(__pyx_t_17);
-        __PYX_ERR(1, 108, __pyx_L1_error)
+        __PYX_ERR(1, 112, __pyx_L1_error)
       }
       *__Pyx_BufPtrStrided1d(int *, __pyx_pybuffernd_res.rcbuffer->pybuffer.buf, __pyx_t_16, __pyx_pybuffernd_res.diminfo[0].strides) = __pyx_t_12;
 
-      /* "spykfunc/random/threefry.pyx":107
+      /* "spykfunc/random/threefry.pyx":111
  *     assert len(k) == n
  *     for i in range(n):
  *         if k[i] >= 1:             # <<<<<<<<<<<<<<
@@ -5054,7 +5071,7 @@ static PyArrayObject *__pyx_f_8spykfunc_6random_8threefry_poisson(struct __pyx_o
       goto __pyx_L5;
     }
 
-    /* "spykfunc/random/threefry.pyx":110
+    /* "spykfunc/random/threefry.pyx":114
  *             res[i] = 1 + rng.derivate(key[i]).poisson(k[i] - 1)
  *         else:
  *             res[i] = 1             # <<<<<<<<<<<<<<
@@ -5069,14 +5086,14 @@ static PyArrayObject *__pyx_f_8spykfunc_6random_8threefry_poisson(struct __pyx_o
       } else if (unlikely(__pyx_t_18 >= __pyx_pybuffernd_res.diminfo[0].shape)) __pyx_t_12 = 0;
       if (unlikely(__pyx_t_12 != -1)) {
         __Pyx_RaiseBufferIndexError(__pyx_t_12);
-        __PYX_ERR(1, 110, __pyx_L1_error)
+        __PYX_ERR(1, 114, __pyx_L1_error)
       }
       *__Pyx_BufPtrStrided1d(int *, __pyx_pybuffernd_res.rcbuffer->pybuffer.buf, __pyx_t_18, __pyx_pybuffernd_res.diminfo[0].strides) = 1;
     }
     __pyx_L5:;
   }
 
-  /* "spykfunc/random/threefry.pyx":111
+  /* "spykfunc/random/threefry.pyx":115
  *         else:
  *             res[i] = 1
  *     return res             # <<<<<<<<<<<<<<
@@ -5086,7 +5103,7 @@ static PyArrayObject *__pyx_f_8spykfunc_6random_8threefry_poisson(struct __pyx_o
   __pyx_r = ((PyArrayObject *)__pyx_v_res);
   goto __pyx_L0;
 
-  /* "spykfunc/random/threefry.pyx":100
+  /* "spykfunc/random/threefry.pyx":104
  *     return res
  * 
  * cpdef np.ndarray[int] poisson(RNGThreefry rng,             # <<<<<<<<<<<<<<
@@ -5157,17 +5174,17 @@ static PyObject *__pyx_pw_8spykfunc_6random_8threefry_7poisson(PyObject *__pyx_s
         case  1:
         if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_key)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("poisson", 1, 3, 3, 1); __PYX_ERR(1, 100, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("poisson", 1, 3, 3, 1); __PYX_ERR(1, 104, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_k)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("poisson", 1, 3, 3, 2); __PYX_ERR(1, 100, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("poisson", 1, 3, 3, 2); __PYX_ERR(1, 104, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "poisson") < 0)) __PYX_ERR(1, 100, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "poisson") < 0)) __PYX_ERR(1, 104, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 3) {
       goto __pyx_L5_argtuple_error;
@@ -5182,15 +5199,15 @@ static PyObject *__pyx_pw_8spykfunc_6random_8threefry_7poisson(PyObject *__pyx_s
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("poisson", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(1, 100, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("poisson", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(1, 104, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("spykfunc.random.threefry.poisson", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_rng), __pyx_ptype_8spykfunc_6random_8threefry_RNGThreefry, 1, "rng", 0))) __PYX_ERR(1, 100, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_key), __pyx_ptype_5numpy_ndarray, 1, "key", 0))) __PYX_ERR(1, 101, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_k), __pyx_ptype_5numpy_ndarray, 1, "k", 0))) __PYX_ERR(1, 102, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_rng), __pyx_ptype_8spykfunc_6random_8threefry_RNGThreefry, 1, "rng", 0))) __PYX_ERR(1, 104, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_key), __pyx_ptype_5numpy_ndarray, 1, "key", 0))) __PYX_ERR(1, 105, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_k), __pyx_ptype_5numpy_ndarray, 1, "k", 0))) __PYX_ERR(1, 106, __pyx_L1_error)
   __pyx_r = __pyx_pf_8spykfunc_6random_8threefry_6poisson(__pyx_self, __pyx_v_rng, __pyx_v_key, __pyx_v_k);
 
   /* function exit code */
@@ -5221,16 +5238,16 @@ static PyObject *__pyx_pf_8spykfunc_6random_8threefry_6poisson(CYTHON_UNUSED PyO
   __pyx_pybuffernd_k.rcbuffer = &__pyx_pybuffer_k;
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_key.rcbuffer->pybuffer, (PyObject*)__pyx_v_key, &__Pyx_TypeInfo_long, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(1, 100, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_key.rcbuffer->pybuffer, (PyObject*)__pyx_v_key, &__Pyx_TypeInfo_long, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(1, 104, __pyx_L1_error)
   }
   __pyx_pybuffernd_key.diminfo[0].strides = __pyx_pybuffernd_key.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_key.diminfo[0].shape = __pyx_pybuffernd_key.rcbuffer->pybuffer.shape[0];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_k.rcbuffer->pybuffer, (PyObject*)__pyx_v_k, &__Pyx_TypeInfo_short, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(1, 100, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_k.rcbuffer->pybuffer, (PyObject*)__pyx_v_k, &__Pyx_TypeInfo_short, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) __PYX_ERR(1, 104, __pyx_L1_error)
   }
   __pyx_pybuffernd_k.diminfo[0].strides = __pyx_pybuffernd_k.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_k.diminfo[0].shape = __pyx_pybuffernd_k.rcbuffer->pybuffer.shape[0];
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = ((PyObject *)__pyx_f_8spykfunc_6random_8threefry_poisson(__pyx_v_rng, __pyx_v_key, __pyx_v_k, 0)); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 100, __pyx_L1_error)
+  __pyx_t_1 = ((PyObject *)__pyx_f_8spykfunc_6random_8threefry_poisson(__pyx_v_rng, __pyx_v_key, __pyx_v_k, 0)); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 104, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -5258,7 +5275,7 @@ static PyObject *__pyx_pf_8spykfunc_6random_8threefry_6poisson(CYTHON_UNUSED PyO
   return __pyx_r;
 }
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":258
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":258
  *         # experimental exception made for __getbuffer__ and __releasebuffer__
  *         # -- the details of this may change.
  *         def __getbuffer__(ndarray self, Py_buffer* info, int flags):             # <<<<<<<<<<<<<<
@@ -5307,7 +5324,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
   __pyx_v_info->obj = Py_None; __Pyx_INCREF(Py_None);
   __Pyx_GIVEREF(__pyx_v_info->obj);
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":265
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":265
  * 
  *             cdef int i, ndim
  *             cdef int endian_detector = 1             # <<<<<<<<<<<<<<
@@ -5316,7 +5333,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
   __pyx_v_endian_detector = 1;
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":266
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":266
  *             cdef int i, ndim
  *             cdef int endian_detector = 1
  *             cdef bint little_endian = ((<char*>&endian_detector)[0] != 0)             # <<<<<<<<<<<<<<
@@ -5325,7 +5342,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
   __pyx_v_little_endian = ((((char *)(&__pyx_v_endian_detector))[0]) != 0);
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":268
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":268
  *             cdef bint little_endian = ((<char*>&endian_detector)[0] != 0)
  * 
  *             ndim = PyArray_NDIM(self)             # <<<<<<<<<<<<<<
@@ -5334,7 +5351,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
   __pyx_v_ndim = PyArray_NDIM(__pyx_v_self);
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":270
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":270
  *             ndim = PyArray_NDIM(self)
  * 
  *             if ((flags & pybuf.PyBUF_C_CONTIGUOUS == pybuf.PyBUF_C_CONTIGUOUS)             # <<<<<<<<<<<<<<
@@ -5348,7 +5365,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
     goto __pyx_L4_bool_binop_done;
   }
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":271
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":271
  * 
  *             if ((flags & pybuf.PyBUF_C_CONTIGUOUS == pybuf.PyBUF_C_CONTIGUOUS)
  *                 and not PyArray_CHKFLAGS(self, NPY_ARRAY_C_CONTIGUOUS)):             # <<<<<<<<<<<<<<
@@ -5359,7 +5376,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
   __pyx_t_1 = __pyx_t_2;
   __pyx_L4_bool_binop_done:;
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":270
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":270
  *             ndim = PyArray_NDIM(self)
  * 
  *             if ((flags & pybuf.PyBUF_C_CONTIGUOUS == pybuf.PyBUF_C_CONTIGUOUS)             # <<<<<<<<<<<<<<
@@ -5368,7 +5385,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
   if (unlikely(__pyx_t_1)) {
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":272
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":272
  *             if ((flags & pybuf.PyBUF_C_CONTIGUOUS == pybuf.PyBUF_C_CONTIGUOUS)
  *                 and not PyArray_CHKFLAGS(self, NPY_ARRAY_C_CONTIGUOUS)):
  *                 raise ValueError(u"ndarray is not C contiguous")             # <<<<<<<<<<<<<<
@@ -5381,7 +5398,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __PYX_ERR(2, 272, __pyx_L1_error)
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":270
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":270
  *             ndim = PyArray_NDIM(self)
  * 
  *             if ((flags & pybuf.PyBUF_C_CONTIGUOUS == pybuf.PyBUF_C_CONTIGUOUS)             # <<<<<<<<<<<<<<
@@ -5390,7 +5407,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
   }
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":274
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":274
  *                 raise ValueError(u"ndarray is not C contiguous")
  * 
  *             if ((flags & pybuf.PyBUF_F_CONTIGUOUS == pybuf.PyBUF_F_CONTIGUOUS)             # <<<<<<<<<<<<<<
@@ -5404,7 +5421,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
     goto __pyx_L7_bool_binop_done;
   }
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":275
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":275
  * 
  *             if ((flags & pybuf.PyBUF_F_CONTIGUOUS == pybuf.PyBUF_F_CONTIGUOUS)
  *                 and not PyArray_CHKFLAGS(self, NPY_ARRAY_F_CONTIGUOUS)):             # <<<<<<<<<<<<<<
@@ -5415,7 +5432,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
   __pyx_t_1 = __pyx_t_2;
   __pyx_L7_bool_binop_done:;
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":274
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":274
  *                 raise ValueError(u"ndarray is not C contiguous")
  * 
  *             if ((flags & pybuf.PyBUF_F_CONTIGUOUS == pybuf.PyBUF_F_CONTIGUOUS)             # <<<<<<<<<<<<<<
@@ -5424,7 +5441,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
   if (unlikely(__pyx_t_1)) {
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":276
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":276
  *             if ((flags & pybuf.PyBUF_F_CONTIGUOUS == pybuf.PyBUF_F_CONTIGUOUS)
  *                 and not PyArray_CHKFLAGS(self, NPY_ARRAY_F_CONTIGUOUS)):
  *                 raise ValueError(u"ndarray is not Fortran contiguous")             # <<<<<<<<<<<<<<
@@ -5437,7 +5454,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __PYX_ERR(2, 276, __pyx_L1_error)
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":274
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":274
  *                 raise ValueError(u"ndarray is not C contiguous")
  * 
  *             if ((flags & pybuf.PyBUF_F_CONTIGUOUS == pybuf.PyBUF_F_CONTIGUOUS)             # <<<<<<<<<<<<<<
@@ -5446,7 +5463,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
   }
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":278
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":278
  *                 raise ValueError(u"ndarray is not Fortran contiguous")
  * 
  *             info.buf = PyArray_DATA(self)             # <<<<<<<<<<<<<<
@@ -5455,7 +5472,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
   __pyx_v_info->buf = PyArray_DATA(__pyx_v_self);
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":279
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":279
  * 
  *             info.buf = PyArray_DATA(self)
  *             info.ndim = ndim             # <<<<<<<<<<<<<<
@@ -5464,7 +5481,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
   __pyx_v_info->ndim = __pyx_v_ndim;
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":280
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":280
  *             info.buf = PyArray_DATA(self)
  *             info.ndim = ndim
  *             if sizeof(npy_intp) != sizeof(Py_ssize_t):             # <<<<<<<<<<<<<<
@@ -5474,7 +5491,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
   __pyx_t_1 = (((sizeof(npy_intp)) != (sizeof(Py_ssize_t))) != 0);
   if (__pyx_t_1) {
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":283
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":283
  *                 # Allocate new buffer for strides and shape info.
  *                 # This is allocated as one block, strides first.
  *                 info.strides = <Py_ssize_t*>PyObject_Malloc(sizeof(Py_ssize_t) * 2 * <size_t>ndim)             # <<<<<<<<<<<<<<
@@ -5483,7 +5500,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
     __pyx_v_info->strides = ((Py_ssize_t *)PyObject_Malloc((((sizeof(Py_ssize_t)) * 2) * ((size_t)__pyx_v_ndim))));
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":284
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":284
  *                 # This is allocated as one block, strides first.
  *                 info.strides = <Py_ssize_t*>PyObject_Malloc(sizeof(Py_ssize_t) * 2 * <size_t>ndim)
  *                 info.shape = info.strides + ndim             # <<<<<<<<<<<<<<
@@ -5492,7 +5509,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
     __pyx_v_info->shape = (__pyx_v_info->strides + __pyx_v_ndim);
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":285
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":285
  *                 info.strides = <Py_ssize_t*>PyObject_Malloc(sizeof(Py_ssize_t) * 2 * <size_t>ndim)
  *                 info.shape = info.strides + ndim
  *                 for i in range(ndim):             # <<<<<<<<<<<<<<
@@ -5504,7 +5521,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
     for (__pyx_t_6 = 0; __pyx_t_6 < __pyx_t_5; __pyx_t_6+=1) {
       __pyx_v_i = __pyx_t_6;
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":286
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":286
  *                 info.shape = info.strides + ndim
  *                 for i in range(ndim):
  *                     info.strides[i] = PyArray_STRIDES(self)[i]             # <<<<<<<<<<<<<<
@@ -5513,7 +5530,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
       (__pyx_v_info->strides[__pyx_v_i]) = (PyArray_STRIDES(__pyx_v_self)[__pyx_v_i]);
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":287
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":287
  *                 for i in range(ndim):
  *                     info.strides[i] = PyArray_STRIDES(self)[i]
  *                     info.shape[i] = PyArray_DIMS(self)[i]             # <<<<<<<<<<<<<<
@@ -5523,7 +5540,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       (__pyx_v_info->shape[__pyx_v_i]) = (PyArray_DIMS(__pyx_v_self)[__pyx_v_i]);
     }
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":280
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":280
  *             info.buf = PyArray_DATA(self)
  *             info.ndim = ndim
  *             if sizeof(npy_intp) != sizeof(Py_ssize_t):             # <<<<<<<<<<<<<<
@@ -5533,7 +5550,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
     goto __pyx_L9;
   }
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":289
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":289
  *                     info.shape[i] = PyArray_DIMS(self)[i]
  *             else:
  *                 info.strides = <Py_ssize_t*>PyArray_STRIDES(self)             # <<<<<<<<<<<<<<
@@ -5543,7 +5560,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
   /*else*/ {
     __pyx_v_info->strides = ((Py_ssize_t *)PyArray_STRIDES(__pyx_v_self));
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":290
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":290
  *             else:
  *                 info.strides = <Py_ssize_t*>PyArray_STRIDES(self)
  *                 info.shape = <Py_ssize_t*>PyArray_DIMS(self)             # <<<<<<<<<<<<<<
@@ -5554,7 +5571,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
   }
   __pyx_L9:;
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":291
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":291
  *                 info.strides = <Py_ssize_t*>PyArray_STRIDES(self)
  *                 info.shape = <Py_ssize_t*>PyArray_DIMS(self)
  *             info.suboffsets = NULL             # <<<<<<<<<<<<<<
@@ -5563,7 +5580,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
   __pyx_v_info->suboffsets = NULL;
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":292
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":292
  *                 info.shape = <Py_ssize_t*>PyArray_DIMS(self)
  *             info.suboffsets = NULL
  *             info.itemsize = PyArray_ITEMSIZE(self)             # <<<<<<<<<<<<<<
@@ -5572,7 +5589,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
   __pyx_v_info->itemsize = PyArray_ITEMSIZE(__pyx_v_self);
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":293
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":293
  *             info.suboffsets = NULL
  *             info.itemsize = PyArray_ITEMSIZE(self)
  *             info.readonly = not PyArray_ISWRITEABLE(self)             # <<<<<<<<<<<<<<
@@ -5581,7 +5598,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
   __pyx_v_info->readonly = (!(PyArray_ISWRITEABLE(__pyx_v_self) != 0));
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":296
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":296
  * 
  *             cdef int t
  *             cdef char* f = NULL             # <<<<<<<<<<<<<<
@@ -5590,7 +5607,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
   __pyx_v_f = NULL;
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":297
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":297
  *             cdef int t
  *             cdef char* f = NULL
  *             cdef dtype descr = <dtype>PyArray_DESCR(self)             # <<<<<<<<<<<<<<
@@ -5603,7 +5620,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
   __pyx_v_descr = ((PyArray_Descr *)__pyx_t_3);
   __pyx_t_3 = 0;
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":300
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":300
  *             cdef int offset
  * 
  *             info.obj = self             # <<<<<<<<<<<<<<
@@ -5616,7 +5633,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
   __Pyx_DECREF(__pyx_v_info->obj);
   __pyx_v_info->obj = ((PyObject *)__pyx_v_self);
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":302
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":302
  *             info.obj = self
  * 
  *             if not PyDataType_HASFIELDS(descr):             # <<<<<<<<<<<<<<
@@ -5626,7 +5643,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
   __pyx_t_1 = ((!(PyDataType_HASFIELDS(__pyx_v_descr) != 0)) != 0);
   if (__pyx_t_1) {
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":303
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":303
  * 
  *             if not PyDataType_HASFIELDS(descr):
  *                 t = descr.type_num             # <<<<<<<<<<<<<<
@@ -5636,7 +5653,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
     __pyx_t_4 = __pyx_v_descr->type_num;
     __pyx_v_t = __pyx_t_4;
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":304
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":304
  *             if not PyDataType_HASFIELDS(descr):
  *                 t = descr.type_num
  *                 if ((descr.byteorder == c'>' and little_endian) or             # <<<<<<<<<<<<<<
@@ -5656,7 +5673,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
     }
     __pyx_L15_next_or:;
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":305
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":305
  *                 t = descr.type_num
  *                 if ((descr.byteorder == c'>' and little_endian) or
  *                     (descr.byteorder == c'<' and not little_endian)):             # <<<<<<<<<<<<<<
@@ -5673,7 +5690,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
     __pyx_t_1 = __pyx_t_2;
     __pyx_L14_bool_binop_done:;
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":304
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":304
  *             if not PyDataType_HASFIELDS(descr):
  *                 t = descr.type_num
  *                 if ((descr.byteorder == c'>' and little_endian) or             # <<<<<<<<<<<<<<
@@ -5682,7 +5699,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
     if (unlikely(__pyx_t_1)) {
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":306
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":306
  *                 if ((descr.byteorder == c'>' and little_endian) or
  *                     (descr.byteorder == c'<' and not little_endian)):
  *                     raise ValueError(u"Non-native byte order not supported")             # <<<<<<<<<<<<<<
@@ -5695,7 +5712,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       __PYX_ERR(2, 306, __pyx_L1_error)
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":304
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":304
  *             if not PyDataType_HASFIELDS(descr):
  *                 t = descr.type_num
  *                 if ((descr.byteorder == c'>' and little_endian) or             # <<<<<<<<<<<<<<
@@ -5704,7 +5721,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
     }
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":307
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":307
  *                     (descr.byteorder == c'<' and not little_endian)):
  *                     raise ValueError(u"Non-native byte order not supported")
  *                 if   t == NPY_BYTE:        f = "b"             # <<<<<<<<<<<<<<
@@ -5717,7 +5734,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       case NPY_UBYTE:
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":308
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":308
  *                     raise ValueError(u"Non-native byte order not supported")
  *                 if   t == NPY_BYTE:        f = "b"
  *                 elif t == NPY_UBYTE:       f = "B"             # <<<<<<<<<<<<<<
@@ -5728,7 +5745,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       case NPY_SHORT:
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":309
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":309
  *                 if   t == NPY_BYTE:        f = "b"
  *                 elif t == NPY_UBYTE:       f = "B"
  *                 elif t == NPY_SHORT:       f = "h"             # <<<<<<<<<<<<<<
@@ -5739,7 +5756,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       case NPY_USHORT:
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":310
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":310
  *                 elif t == NPY_UBYTE:       f = "B"
  *                 elif t == NPY_SHORT:       f = "h"
  *                 elif t == NPY_USHORT:      f = "H"             # <<<<<<<<<<<<<<
@@ -5750,7 +5767,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       case NPY_INT:
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":311
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":311
  *                 elif t == NPY_SHORT:       f = "h"
  *                 elif t == NPY_USHORT:      f = "H"
  *                 elif t == NPY_INT:         f = "i"             # <<<<<<<<<<<<<<
@@ -5761,7 +5778,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       case NPY_UINT:
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":312
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":312
  *                 elif t == NPY_USHORT:      f = "H"
  *                 elif t == NPY_INT:         f = "i"
  *                 elif t == NPY_UINT:        f = "I"             # <<<<<<<<<<<<<<
@@ -5772,7 +5789,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       case NPY_LONG:
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":313
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":313
  *                 elif t == NPY_INT:         f = "i"
  *                 elif t == NPY_UINT:        f = "I"
  *                 elif t == NPY_LONG:        f = "l"             # <<<<<<<<<<<<<<
@@ -5783,7 +5800,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       case NPY_ULONG:
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":314
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":314
  *                 elif t == NPY_UINT:        f = "I"
  *                 elif t == NPY_LONG:        f = "l"
  *                 elif t == NPY_ULONG:       f = "L"             # <<<<<<<<<<<<<<
@@ -5794,7 +5811,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       case NPY_LONGLONG:
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":315
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":315
  *                 elif t == NPY_LONG:        f = "l"
  *                 elif t == NPY_ULONG:       f = "L"
  *                 elif t == NPY_LONGLONG:    f = "q"             # <<<<<<<<<<<<<<
@@ -5805,7 +5822,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       case NPY_ULONGLONG:
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":316
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":316
  *                 elif t == NPY_ULONG:       f = "L"
  *                 elif t == NPY_LONGLONG:    f = "q"
  *                 elif t == NPY_ULONGLONG:   f = "Q"             # <<<<<<<<<<<<<<
@@ -5816,7 +5833,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       case NPY_FLOAT:
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":317
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":317
  *                 elif t == NPY_LONGLONG:    f = "q"
  *                 elif t == NPY_ULONGLONG:   f = "Q"
  *                 elif t == NPY_FLOAT:       f = "f"             # <<<<<<<<<<<<<<
@@ -5827,7 +5844,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       case NPY_DOUBLE:
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":318
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":318
  *                 elif t == NPY_ULONGLONG:   f = "Q"
  *                 elif t == NPY_FLOAT:       f = "f"
  *                 elif t == NPY_DOUBLE:      f = "d"             # <<<<<<<<<<<<<<
@@ -5838,7 +5855,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       case NPY_LONGDOUBLE:
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":319
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":319
  *                 elif t == NPY_FLOAT:       f = "f"
  *                 elif t == NPY_DOUBLE:      f = "d"
  *                 elif t == NPY_LONGDOUBLE:  f = "g"             # <<<<<<<<<<<<<<
@@ -5849,7 +5866,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       case NPY_CFLOAT:
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":320
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":320
  *                 elif t == NPY_DOUBLE:      f = "d"
  *                 elif t == NPY_LONGDOUBLE:  f = "g"
  *                 elif t == NPY_CFLOAT:      f = "Zf"             # <<<<<<<<<<<<<<
@@ -5860,7 +5877,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       case NPY_CDOUBLE:
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":321
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":321
  *                 elif t == NPY_LONGDOUBLE:  f = "g"
  *                 elif t == NPY_CFLOAT:      f = "Zf"
  *                 elif t == NPY_CDOUBLE:     f = "Zd"             # <<<<<<<<<<<<<<
@@ -5871,7 +5888,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       case NPY_CLONGDOUBLE:
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":322
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":322
  *                 elif t == NPY_CFLOAT:      f = "Zf"
  *                 elif t == NPY_CDOUBLE:     f = "Zd"
  *                 elif t == NPY_CLONGDOUBLE: f = "Zg"             # <<<<<<<<<<<<<<
@@ -5882,7 +5899,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       case NPY_OBJECT:
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":323
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":323
  *                 elif t == NPY_CDOUBLE:     f = "Zd"
  *                 elif t == NPY_CLONGDOUBLE: f = "Zg"
  *                 elif t == NPY_OBJECT:      f = "O"             # <<<<<<<<<<<<<<
@@ -5893,7 +5910,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
       default:
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":325
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":325
  *                 elif t == NPY_OBJECT:      f = "O"
  *                 else:
  *                     raise ValueError(u"unknown dtype code in numpy.pxd (%d)" % t)             # <<<<<<<<<<<<<<
@@ -5914,7 +5931,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
       break;
     }
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":326
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":326
  *                 else:
  *                     raise ValueError(u"unknown dtype code in numpy.pxd (%d)" % t)
  *                 info.format = f             # <<<<<<<<<<<<<<
@@ -5923,7 +5940,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
     __pyx_v_info->format = __pyx_v_f;
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":327
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":327
  *                     raise ValueError(u"unknown dtype code in numpy.pxd (%d)" % t)
  *                 info.format = f
  *                 return             # <<<<<<<<<<<<<<
@@ -5933,7 +5950,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
     __pyx_r = 0;
     goto __pyx_L0;
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":302
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":302
  *             info.obj = self
  * 
  *             if not PyDataType_HASFIELDS(descr):             # <<<<<<<<<<<<<<
@@ -5942,7 +5959,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
   }
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":329
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":329
  *                 return
  *             else:
  *                 info.format = <char*>PyObject_Malloc(_buffer_format_string_len)             # <<<<<<<<<<<<<<
@@ -5952,7 +5969,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
   /*else*/ {
     __pyx_v_info->format = ((char *)PyObject_Malloc(0xFF));
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":330
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":330
  *             else:
  *                 info.format = <char*>PyObject_Malloc(_buffer_format_string_len)
  *                 info.format[0] = c'^' # Native data types, manual alignment             # <<<<<<<<<<<<<<
@@ -5961,7 +5978,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
     (__pyx_v_info->format[0]) = '^';
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":331
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":331
  *                 info.format = <char*>PyObject_Malloc(_buffer_format_string_len)
  *                 info.format[0] = c'^' # Native data types, manual alignment
  *                 offset = 0             # <<<<<<<<<<<<<<
@@ -5970,7 +5987,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
  */
     __pyx_v_offset = 0;
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":332
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":332
  *                 info.format[0] = c'^' # Native data types, manual alignment
  *                 offset = 0
  *                 f = _util_dtypestring(descr, info.format + 1,             # <<<<<<<<<<<<<<
@@ -5980,7 +5997,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
     __pyx_t_9 = __pyx_f_5numpy__util_dtypestring(__pyx_v_descr, (__pyx_v_info->format + 1), (__pyx_v_info->format + 0xFF), (&__pyx_v_offset)); if (unlikely(__pyx_t_9 == ((char *)NULL))) __PYX_ERR(2, 332, __pyx_L1_error)
     __pyx_v_f = __pyx_t_9;
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":335
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":335
  *                                       info.format + _buffer_format_string_len,
  *                                       &offset)
  *                 f[0] = c'\0' # Terminate format string             # <<<<<<<<<<<<<<
@@ -5990,7 +6007,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
     (__pyx_v_f[0]) = '\x00';
   }
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":258
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":258
  *         # experimental exception made for __getbuffer__ and __releasebuffer__
  *         # -- the details of this may change.
  *         def __getbuffer__(ndarray self, Py_buffer* info, int flags):             # <<<<<<<<<<<<<<
@@ -6022,7 +6039,7 @@ static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, P
   return __pyx_r;
 }
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":337
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":337
  *                 f[0] = c'\0' # Terminate format string
  * 
  *         def __releasebuffer__(ndarray self, Py_buffer* info):             # <<<<<<<<<<<<<<
@@ -6046,7 +6063,7 @@ static void __pyx_pf_5numpy_7ndarray_2__releasebuffer__(PyArrayObject *__pyx_v_s
   int __pyx_t_1;
   __Pyx_RefNannySetupContext("__releasebuffer__", 0);
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":338
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":338
  * 
  *         def __releasebuffer__(ndarray self, Py_buffer* info):
  *             if PyArray_HASFIELDS(self):             # <<<<<<<<<<<<<<
@@ -6056,7 +6073,7 @@ static void __pyx_pf_5numpy_7ndarray_2__releasebuffer__(PyArrayObject *__pyx_v_s
   __pyx_t_1 = (PyArray_HASFIELDS(__pyx_v_self) != 0);
   if (__pyx_t_1) {
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":339
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":339
  *         def __releasebuffer__(ndarray self, Py_buffer* info):
  *             if PyArray_HASFIELDS(self):
  *                 PyObject_Free(info.format)             # <<<<<<<<<<<<<<
@@ -6065,7 +6082,7 @@ static void __pyx_pf_5numpy_7ndarray_2__releasebuffer__(PyArrayObject *__pyx_v_s
  */
     PyObject_Free(__pyx_v_info->format);
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":338
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":338
  * 
  *         def __releasebuffer__(ndarray self, Py_buffer* info):
  *             if PyArray_HASFIELDS(self):             # <<<<<<<<<<<<<<
@@ -6074,7 +6091,7 @@ static void __pyx_pf_5numpy_7ndarray_2__releasebuffer__(PyArrayObject *__pyx_v_s
  */
   }
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":340
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":340
  *             if PyArray_HASFIELDS(self):
  *                 PyObject_Free(info.format)
  *             if sizeof(npy_intp) != sizeof(Py_ssize_t):             # <<<<<<<<<<<<<<
@@ -6084,7 +6101,7 @@ static void __pyx_pf_5numpy_7ndarray_2__releasebuffer__(PyArrayObject *__pyx_v_s
   __pyx_t_1 = (((sizeof(npy_intp)) != (sizeof(Py_ssize_t))) != 0);
   if (__pyx_t_1) {
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":341
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":341
  *                 PyObject_Free(info.format)
  *             if sizeof(npy_intp) != sizeof(Py_ssize_t):
  *                 PyObject_Free(info.strides)             # <<<<<<<<<<<<<<
@@ -6093,7 +6110,7 @@ static void __pyx_pf_5numpy_7ndarray_2__releasebuffer__(PyArrayObject *__pyx_v_s
  */
     PyObject_Free(__pyx_v_info->strides);
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":340
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":340
  *             if PyArray_HASFIELDS(self):
  *                 PyObject_Free(info.format)
  *             if sizeof(npy_intp) != sizeof(Py_ssize_t):             # <<<<<<<<<<<<<<
@@ -6102,7 +6119,7 @@ static void __pyx_pf_5numpy_7ndarray_2__releasebuffer__(PyArrayObject *__pyx_v_s
  */
   }
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":337
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":337
  *                 f[0] = c'\0' # Terminate format string
  * 
  *         def __releasebuffer__(ndarray self, Py_buffer* info):             # <<<<<<<<<<<<<<
@@ -6114,7 +6131,7 @@ static void __pyx_pf_5numpy_7ndarray_2__releasebuffer__(PyArrayObject *__pyx_v_s
   __Pyx_RefNannyFinishContext();
 }
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":821
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":821
  * ctypedef npy_cdouble     complex_t
  * 
  * cdef inline object PyArray_MultiIterNew1(a):             # <<<<<<<<<<<<<<
@@ -6128,7 +6145,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew1(PyObject *__
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("PyArray_MultiIterNew1", 0);
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":822
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":822
  * 
  * cdef inline object PyArray_MultiIterNew1(a):
  *     return PyArray_MultiIterNew(1, <void*>a)             # <<<<<<<<<<<<<<
@@ -6142,7 +6159,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew1(PyObject *__
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":821
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":821
  * ctypedef npy_cdouble     complex_t
  * 
  * cdef inline object PyArray_MultiIterNew1(a):             # <<<<<<<<<<<<<<
@@ -6161,7 +6178,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew1(PyObject *__
   return __pyx_r;
 }
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":824
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":824
  *     return PyArray_MultiIterNew(1, <void*>a)
  * 
  * cdef inline object PyArray_MultiIterNew2(a, b):             # <<<<<<<<<<<<<<
@@ -6175,7 +6192,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew2(PyObject *__
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("PyArray_MultiIterNew2", 0);
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":825
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":825
  * 
  * cdef inline object PyArray_MultiIterNew2(a, b):
  *     return PyArray_MultiIterNew(2, <void*>a, <void*>b)             # <<<<<<<<<<<<<<
@@ -6189,7 +6206,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew2(PyObject *__
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":824
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":824
  *     return PyArray_MultiIterNew(1, <void*>a)
  * 
  * cdef inline object PyArray_MultiIterNew2(a, b):             # <<<<<<<<<<<<<<
@@ -6208,7 +6225,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew2(PyObject *__
   return __pyx_r;
 }
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":827
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":827
  *     return PyArray_MultiIterNew(2, <void*>a, <void*>b)
  * 
  * cdef inline object PyArray_MultiIterNew3(a, b, c):             # <<<<<<<<<<<<<<
@@ -6222,7 +6239,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew3(PyObject *__
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("PyArray_MultiIterNew3", 0);
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":828
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":828
  * 
  * cdef inline object PyArray_MultiIterNew3(a, b, c):
  *     return PyArray_MultiIterNew(3, <void*>a, <void*>b, <void*> c)             # <<<<<<<<<<<<<<
@@ -6236,7 +6253,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew3(PyObject *__
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":827
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":827
  *     return PyArray_MultiIterNew(2, <void*>a, <void*>b)
  * 
  * cdef inline object PyArray_MultiIterNew3(a, b, c):             # <<<<<<<<<<<<<<
@@ -6255,7 +6272,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew3(PyObject *__
   return __pyx_r;
 }
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":830
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":830
  *     return PyArray_MultiIterNew(3, <void*>a, <void*>b, <void*> c)
  * 
  * cdef inline object PyArray_MultiIterNew4(a, b, c, d):             # <<<<<<<<<<<<<<
@@ -6269,7 +6286,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew4(PyObject *__
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("PyArray_MultiIterNew4", 0);
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":831
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":831
  * 
  * cdef inline object PyArray_MultiIterNew4(a, b, c, d):
  *     return PyArray_MultiIterNew(4, <void*>a, <void*>b, <void*>c, <void*> d)             # <<<<<<<<<<<<<<
@@ -6283,7 +6300,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew4(PyObject *__
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":830
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":830
  *     return PyArray_MultiIterNew(3, <void*>a, <void*>b, <void*> c)
  * 
  * cdef inline object PyArray_MultiIterNew4(a, b, c, d):             # <<<<<<<<<<<<<<
@@ -6302,7 +6319,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew4(PyObject *__
   return __pyx_r;
 }
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":833
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":833
  *     return PyArray_MultiIterNew(4, <void*>a, <void*>b, <void*>c, <void*> d)
  * 
  * cdef inline object PyArray_MultiIterNew5(a, b, c, d, e):             # <<<<<<<<<<<<<<
@@ -6316,7 +6333,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew5(PyObject *__
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("PyArray_MultiIterNew5", 0);
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":834
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":834
  * 
  * cdef inline object PyArray_MultiIterNew5(a, b, c, d, e):
  *     return PyArray_MultiIterNew(5, <void*>a, <void*>b, <void*>c, <void*> d, <void*> e)             # <<<<<<<<<<<<<<
@@ -6330,7 +6347,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew5(PyObject *__
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":833
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":833
  *     return PyArray_MultiIterNew(4, <void*>a, <void*>b, <void*>c, <void*> d)
  * 
  * cdef inline object PyArray_MultiIterNew5(a, b, c, d, e):             # <<<<<<<<<<<<<<
@@ -6349,7 +6366,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyArray_MultiIterNew5(PyObject *__
   return __pyx_r;
 }
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":836
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":836
  *     return PyArray_MultiIterNew(5, <void*>a, <void*>b, <void*>c, <void*> d, <void*> e)
  * 
  * cdef inline tuple PyDataType_SHAPE(dtype d):             # <<<<<<<<<<<<<<
@@ -6363,7 +6380,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyDataType_SHAPE(PyArray_Descr *__
   int __pyx_t_1;
   __Pyx_RefNannySetupContext("PyDataType_SHAPE", 0);
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":837
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":837
  * 
  * cdef inline tuple PyDataType_SHAPE(dtype d):
  *     if PyDataType_HASSUBARRAY(d):             # <<<<<<<<<<<<<<
@@ -6373,7 +6390,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyDataType_SHAPE(PyArray_Descr *__
   __pyx_t_1 = (PyDataType_HASSUBARRAY(__pyx_v_d) != 0);
   if (__pyx_t_1) {
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":838
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":838
  * cdef inline tuple PyDataType_SHAPE(dtype d):
  *     if PyDataType_HASSUBARRAY(d):
  *         return <tuple>d.subarray.shape             # <<<<<<<<<<<<<<
@@ -6385,7 +6402,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyDataType_SHAPE(PyArray_Descr *__
     __pyx_r = ((PyObject*)__pyx_v_d->subarray->shape);
     goto __pyx_L0;
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":837
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":837
  * 
  * cdef inline tuple PyDataType_SHAPE(dtype d):
  *     if PyDataType_HASSUBARRAY(d):             # <<<<<<<<<<<<<<
@@ -6394,7 +6411,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyDataType_SHAPE(PyArray_Descr *__
  */
   }
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":840
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":840
  *         return <tuple>d.subarray.shape
  *     else:
  *         return ()             # <<<<<<<<<<<<<<
@@ -6408,7 +6425,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyDataType_SHAPE(PyArray_Descr *__
     goto __pyx_L0;
   }
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":836
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":836
  *     return PyArray_MultiIterNew(5, <void*>a, <void*>b, <void*>c, <void*> d, <void*> e)
  * 
  * cdef inline tuple PyDataType_SHAPE(dtype d):             # <<<<<<<<<<<<<<
@@ -6423,7 +6440,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_PyDataType_SHAPE(PyArray_Descr *__
   return __pyx_r;
 }
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":842
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":842
  *         return ()
  * 
  * cdef inline char* _util_dtypestring(dtype descr, char* f, char* end, int* offset) except NULL:             # <<<<<<<<<<<<<<
@@ -6452,7 +6469,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
   char *__pyx_t_9;
   __Pyx_RefNannySetupContext("_util_dtypestring", 0);
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":847
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":847
  * 
  *     cdef dtype child
  *     cdef int endian_detector = 1             # <<<<<<<<<<<<<<
@@ -6461,7 +6478,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
  */
   __pyx_v_endian_detector = 1;
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":848
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":848
  *     cdef dtype child
  *     cdef int endian_detector = 1
  *     cdef bint little_endian = ((<char*>&endian_detector)[0] != 0)             # <<<<<<<<<<<<<<
@@ -6470,7 +6487,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
  */
   __pyx_v_little_endian = ((((char *)(&__pyx_v_endian_detector))[0]) != 0);
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":851
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":851
  *     cdef tuple fields
  * 
  *     for childname in descr.names:             # <<<<<<<<<<<<<<
@@ -6493,7 +6510,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
     __Pyx_XDECREF_SET(__pyx_v_childname, __pyx_t_3);
     __pyx_t_3 = 0;
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":852
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":852
  * 
  *     for childname in descr.names:
  *         fields = descr.fields[childname]             # <<<<<<<<<<<<<<
@@ -6510,7 +6527,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
     __Pyx_XDECREF_SET(__pyx_v_fields, ((PyObject*)__pyx_t_3));
     __pyx_t_3 = 0;
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":853
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":853
  *     for childname in descr.names:
  *         fields = descr.fields[childname]
  *         child, new_offset = fields             # <<<<<<<<<<<<<<
@@ -6545,7 +6562,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
     __Pyx_XDECREF_SET(__pyx_v_new_offset, __pyx_t_4);
     __pyx_t_4 = 0;
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":855
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":855
  *         child, new_offset = fields
  * 
  *         if (end - f) - <int>(new_offset - offset[0]) < 15:             # <<<<<<<<<<<<<<
@@ -6562,7 +6579,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
     __pyx_t_6 = ((((__pyx_v_end - __pyx_v_f) - ((int)__pyx_t_5)) < 15) != 0);
     if (unlikely(__pyx_t_6)) {
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":856
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":856
  * 
  *         if (end - f) - <int>(new_offset - offset[0]) < 15:
  *             raise RuntimeError(u"Format string allocated too short, see comment in numpy.pxd")             # <<<<<<<<<<<<<<
@@ -6575,7 +6592,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       __PYX_ERR(2, 856, __pyx_L1_error)
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":855
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":855
  *         child, new_offset = fields
  * 
  *         if (end - f) - <int>(new_offset - offset[0]) < 15:             # <<<<<<<<<<<<<<
@@ -6584,7 +6601,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
  */
     }
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":858
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":858
  *             raise RuntimeError(u"Format string allocated too short, see comment in numpy.pxd")
  * 
  *         if ((child.byteorder == c'>' and little_endian) or             # <<<<<<<<<<<<<<
@@ -6604,7 +6621,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
     }
     __pyx_L8_next_or:;
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":859
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":859
  * 
  *         if ((child.byteorder == c'>' and little_endian) or
  *             (child.byteorder == c'<' and not little_endian)):             # <<<<<<<<<<<<<<
@@ -6621,7 +6638,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
     __pyx_t_6 = __pyx_t_7;
     __pyx_L7_bool_binop_done:;
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":858
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":858
  *             raise RuntimeError(u"Format string allocated too short, see comment in numpy.pxd")
  * 
  *         if ((child.byteorder == c'>' and little_endian) or             # <<<<<<<<<<<<<<
@@ -6630,7 +6647,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
  */
     if (unlikely(__pyx_t_6)) {
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":860
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":860
  *         if ((child.byteorder == c'>' and little_endian) or
  *             (child.byteorder == c'<' and not little_endian)):
  *             raise ValueError(u"Non-native byte order not supported")             # <<<<<<<<<<<<<<
@@ -6643,7 +6660,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       __PYX_ERR(2, 860, __pyx_L1_error)
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":858
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":858
  *             raise RuntimeError(u"Format string allocated too short, see comment in numpy.pxd")
  * 
  *         if ((child.byteorder == c'>' and little_endian) or             # <<<<<<<<<<<<<<
@@ -6652,7 +6669,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
  */
     }
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":870
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":870
  * 
  *         # Output padding bytes
  *         while offset[0] < new_offset:             # <<<<<<<<<<<<<<
@@ -6668,7 +6685,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       if (!__pyx_t_6) break;
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":871
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":871
  *         # Output padding bytes
  *         while offset[0] < new_offset:
  *             f[0] = 120 # "x"; pad byte             # <<<<<<<<<<<<<<
@@ -6677,7 +6694,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
  */
       (__pyx_v_f[0]) = 0x78;
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":872
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":872
  *         while offset[0] < new_offset:
  *             f[0] = 120 # "x"; pad byte
  *             f += 1             # <<<<<<<<<<<<<<
@@ -6686,7 +6703,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
  */
       __pyx_v_f = (__pyx_v_f + 1);
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":873
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":873
  *             f[0] = 120 # "x"; pad byte
  *             f += 1
  *             offset[0] += 1             # <<<<<<<<<<<<<<
@@ -6697,7 +6714,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
       (__pyx_v_offset[__pyx_t_8]) = ((__pyx_v_offset[__pyx_t_8]) + 1);
     }
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":875
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":875
  *             offset[0] += 1
  * 
  *         offset[0] += child.itemsize             # <<<<<<<<<<<<<<
@@ -6707,7 +6724,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
     __pyx_t_8 = 0;
     (__pyx_v_offset[__pyx_t_8]) = ((__pyx_v_offset[__pyx_t_8]) + __pyx_v_child->elsize);
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":877
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":877
  *         offset[0] += child.itemsize
  * 
  *         if not PyDataType_HASFIELDS(child):             # <<<<<<<<<<<<<<
@@ -6717,7 +6734,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
     __pyx_t_6 = ((!(PyDataType_HASFIELDS(__pyx_v_child) != 0)) != 0);
     if (__pyx_t_6) {
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":878
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":878
  * 
  *         if not PyDataType_HASFIELDS(child):
  *             t = child.type_num             # <<<<<<<<<<<<<<
@@ -6729,7 +6746,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
       __Pyx_XDECREF_SET(__pyx_v_t, __pyx_t_4);
       __pyx_t_4 = 0;
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":879
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":879
  *         if not PyDataType_HASFIELDS(child):
  *             t = child.type_num
  *             if end - f < 5:             # <<<<<<<<<<<<<<
@@ -6739,7 +6756,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
       __pyx_t_6 = (((__pyx_v_end - __pyx_v_f) < 5) != 0);
       if (unlikely(__pyx_t_6)) {
 
-        /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":880
+        /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":880
  *             t = child.type_num
  *             if end - f < 5:
  *                 raise RuntimeError(u"Format string allocated too short.")             # <<<<<<<<<<<<<<
@@ -6752,7 +6769,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
         __PYX_ERR(2, 880, __pyx_L1_error)
 
-        /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":879
+        /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":879
  *         if not PyDataType_HASFIELDS(child):
  *             t = child.type_num
  *             if end - f < 5:             # <<<<<<<<<<<<<<
@@ -6761,7 +6778,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
  */
       }
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":883
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":883
  * 
  *             # Until ticket #99 is fixed, use integers to avoid warnings
  *             if   t == NPY_BYTE:        f[0] =  98 #"b"             # <<<<<<<<<<<<<<
@@ -6779,7 +6796,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":884
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":884
  *             # Until ticket #99 is fixed, use integers to avoid warnings
  *             if   t == NPY_BYTE:        f[0] =  98 #"b"
  *             elif t == NPY_UBYTE:       f[0] =  66 #"B"             # <<<<<<<<<<<<<<
@@ -6797,7 +6814,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":885
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":885
  *             if   t == NPY_BYTE:        f[0] =  98 #"b"
  *             elif t == NPY_UBYTE:       f[0] =  66 #"B"
  *             elif t == NPY_SHORT:       f[0] = 104 #"h"             # <<<<<<<<<<<<<<
@@ -6815,7 +6832,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":886
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":886
  *             elif t == NPY_UBYTE:       f[0] =  66 #"B"
  *             elif t == NPY_SHORT:       f[0] = 104 #"h"
  *             elif t == NPY_USHORT:      f[0] =  72 #"H"             # <<<<<<<<<<<<<<
@@ -6833,7 +6850,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":887
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":887
  *             elif t == NPY_SHORT:       f[0] = 104 #"h"
  *             elif t == NPY_USHORT:      f[0] =  72 #"H"
  *             elif t == NPY_INT:         f[0] = 105 #"i"             # <<<<<<<<<<<<<<
@@ -6851,7 +6868,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":888
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":888
  *             elif t == NPY_USHORT:      f[0] =  72 #"H"
  *             elif t == NPY_INT:         f[0] = 105 #"i"
  *             elif t == NPY_UINT:        f[0] =  73 #"I"             # <<<<<<<<<<<<<<
@@ -6869,7 +6886,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":889
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":889
  *             elif t == NPY_INT:         f[0] = 105 #"i"
  *             elif t == NPY_UINT:        f[0] =  73 #"I"
  *             elif t == NPY_LONG:        f[0] = 108 #"l"             # <<<<<<<<<<<<<<
@@ -6887,7 +6904,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":890
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":890
  *             elif t == NPY_UINT:        f[0] =  73 #"I"
  *             elif t == NPY_LONG:        f[0] = 108 #"l"
  *             elif t == NPY_ULONG:       f[0] = 76  #"L"             # <<<<<<<<<<<<<<
@@ -6905,7 +6922,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":891
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":891
  *             elif t == NPY_LONG:        f[0] = 108 #"l"
  *             elif t == NPY_ULONG:       f[0] = 76  #"L"
  *             elif t == NPY_LONGLONG:    f[0] = 113 #"q"             # <<<<<<<<<<<<<<
@@ -6923,7 +6940,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":892
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":892
  *             elif t == NPY_ULONG:       f[0] = 76  #"L"
  *             elif t == NPY_LONGLONG:    f[0] = 113 #"q"
  *             elif t == NPY_ULONGLONG:   f[0] = 81  #"Q"             # <<<<<<<<<<<<<<
@@ -6941,7 +6958,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":893
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":893
  *             elif t == NPY_LONGLONG:    f[0] = 113 #"q"
  *             elif t == NPY_ULONGLONG:   f[0] = 81  #"Q"
  *             elif t == NPY_FLOAT:       f[0] = 102 #"f"             # <<<<<<<<<<<<<<
@@ -6959,7 +6976,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":894
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":894
  *             elif t == NPY_ULONGLONG:   f[0] = 81  #"Q"
  *             elif t == NPY_FLOAT:       f[0] = 102 #"f"
  *             elif t == NPY_DOUBLE:      f[0] = 100 #"d"             # <<<<<<<<<<<<<<
@@ -6977,7 +6994,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":895
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":895
  *             elif t == NPY_FLOAT:       f[0] = 102 #"f"
  *             elif t == NPY_DOUBLE:      f[0] = 100 #"d"
  *             elif t == NPY_LONGDOUBLE:  f[0] = 103 #"g"             # <<<<<<<<<<<<<<
@@ -6995,7 +7012,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":896
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":896
  *             elif t == NPY_DOUBLE:      f[0] = 100 #"d"
  *             elif t == NPY_LONGDOUBLE:  f[0] = 103 #"g"
  *             elif t == NPY_CFLOAT:      f[0] = 90; f[1] = 102; f += 1 # Zf             # <<<<<<<<<<<<<<
@@ -7015,7 +7032,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":897
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":897
  *             elif t == NPY_LONGDOUBLE:  f[0] = 103 #"g"
  *             elif t == NPY_CFLOAT:      f[0] = 90; f[1] = 102; f += 1 # Zf
  *             elif t == NPY_CDOUBLE:     f[0] = 90; f[1] = 100; f += 1 # Zd             # <<<<<<<<<<<<<<
@@ -7035,7 +7052,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":898
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":898
  *             elif t == NPY_CFLOAT:      f[0] = 90; f[1] = 102; f += 1 # Zf
  *             elif t == NPY_CDOUBLE:     f[0] = 90; f[1] = 100; f += 1 # Zd
  *             elif t == NPY_CLONGDOUBLE: f[0] = 90; f[1] = 103; f += 1 # Zg             # <<<<<<<<<<<<<<
@@ -7055,7 +7072,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":899
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":899
  *             elif t == NPY_CDOUBLE:     f[0] = 90; f[1] = 100; f += 1 # Zd
  *             elif t == NPY_CLONGDOUBLE: f[0] = 90; f[1] = 103; f += 1 # Zg
  *             elif t == NPY_OBJECT:      f[0] = 79 #"O"             # <<<<<<<<<<<<<<
@@ -7073,7 +7090,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
         goto __pyx_L15;
       }
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":901
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":901
  *             elif t == NPY_OBJECT:      f[0] = 79 #"O"
  *             else:
  *                 raise ValueError(u"unknown dtype code in numpy.pxd (%d)" % t)             # <<<<<<<<<<<<<<
@@ -7092,7 +7109,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
       }
       __pyx_L15:;
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":902
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":902
  *             else:
  *                 raise ValueError(u"unknown dtype code in numpy.pxd (%d)" % t)
  *             f += 1             # <<<<<<<<<<<<<<
@@ -7101,7 +7118,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
  */
       __pyx_v_f = (__pyx_v_f + 1);
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":877
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":877
  *         offset[0] += child.itemsize
  * 
  *         if not PyDataType_HASFIELDS(child):             # <<<<<<<<<<<<<<
@@ -7111,7 +7128,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
       goto __pyx_L13;
     }
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":906
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":906
  *             # Cython ignores struct boundary information ("T{...}"),
  *             # so don't output it
  *             f = _util_dtypestring(child, f, end, offset)             # <<<<<<<<<<<<<<
@@ -7124,7 +7141,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
     }
     __pyx_L13:;
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":851
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":851
  *     cdef tuple fields
  * 
  *     for childname in descr.names:             # <<<<<<<<<<<<<<
@@ -7134,7 +7151,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
   }
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":907
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":907
  *             # so don't output it
  *             f = _util_dtypestring(child, f, end, offset)
  *     return f             # <<<<<<<<<<<<<<
@@ -7144,7 +7161,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
   __pyx_r = __pyx_v_f;
   goto __pyx_L0;
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":842
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":842
  *         return ()
  * 
  * cdef inline char* _util_dtypestring(dtype descr, char* f, char* end, int* offset) except NULL:             # <<<<<<<<<<<<<<
@@ -7169,7 +7186,7 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *__pyx
   return __pyx_r;
 }
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1022
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1022
  *     int _import_umath() except -1
  * 
  * cdef inline void set_array_base(ndarray arr, object base):             # <<<<<<<<<<<<<<
@@ -7181,7 +7198,7 @@ static CYTHON_INLINE void __pyx_f_5numpy_set_array_base(PyArrayObject *__pyx_v_a
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("set_array_base", 0);
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1023
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1023
  * 
  * cdef inline void set_array_base(ndarray arr, object base):
  *     Py_INCREF(base) # important to do this before stealing the reference below!             # <<<<<<<<<<<<<<
@@ -7190,7 +7207,7 @@ static CYTHON_INLINE void __pyx_f_5numpy_set_array_base(PyArrayObject *__pyx_v_a
  */
   Py_INCREF(__pyx_v_base);
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1024
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1024
  * cdef inline void set_array_base(ndarray arr, object base):
  *     Py_INCREF(base) # important to do this before stealing the reference below!
  *     PyArray_SetBaseObject(arr, base)             # <<<<<<<<<<<<<<
@@ -7199,7 +7216,7 @@ static CYTHON_INLINE void __pyx_f_5numpy_set_array_base(PyArrayObject *__pyx_v_a
  */
   (void)(PyArray_SetBaseObject(__pyx_v_arr, __pyx_v_base));
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1022
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1022
  *     int _import_umath() except -1
  * 
  * cdef inline void set_array_base(ndarray arr, object base):             # <<<<<<<<<<<<<<
@@ -7211,7 +7228,7 @@ static CYTHON_INLINE void __pyx_f_5numpy_set_array_base(PyArrayObject *__pyx_v_a
   __Pyx_RefNannyFinishContext();
 }
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1026
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1026
  *     PyArray_SetBaseObject(arr, base)
  * 
  * cdef inline object get_array_base(ndarray arr):             # <<<<<<<<<<<<<<
@@ -7226,7 +7243,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_get_array_base(PyArrayObject *__py
   int __pyx_t_1;
   __Pyx_RefNannySetupContext("get_array_base", 0);
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1027
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1027
  * 
  * cdef inline object get_array_base(ndarray arr):
  *     base = PyArray_BASE(arr)             # <<<<<<<<<<<<<<
@@ -7235,7 +7252,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_get_array_base(PyArrayObject *__py
  */
   __pyx_v_base = PyArray_BASE(__pyx_v_arr);
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1028
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1028
  * cdef inline object get_array_base(ndarray arr):
  *     base = PyArray_BASE(arr)
  *     if base is NULL:             # <<<<<<<<<<<<<<
@@ -7245,7 +7262,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_get_array_base(PyArrayObject *__py
   __pyx_t_1 = ((__pyx_v_base == NULL) != 0);
   if (__pyx_t_1) {
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1029
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1029
  *     base = PyArray_BASE(arr)
  *     if base is NULL:
  *         return None             # <<<<<<<<<<<<<<
@@ -7256,7 +7273,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_get_array_base(PyArrayObject *__py
     __pyx_r = Py_None; __Pyx_INCREF(Py_None);
     goto __pyx_L0;
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1028
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1028
  * cdef inline object get_array_base(ndarray arr):
  *     base = PyArray_BASE(arr)
  *     if base is NULL:             # <<<<<<<<<<<<<<
@@ -7265,7 +7282,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_get_array_base(PyArrayObject *__py
  */
   }
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1030
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1030
  *     if base is NULL:
  *         return None
  *     return <object>base             # <<<<<<<<<<<<<<
@@ -7277,7 +7294,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_get_array_base(PyArrayObject *__py
   __pyx_r = ((PyObject *)__pyx_v_base);
   goto __pyx_L0;
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1026
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1026
  *     PyArray_SetBaseObject(arr, base)
  * 
  * cdef inline object get_array_base(ndarray arr):             # <<<<<<<<<<<<<<
@@ -7292,7 +7309,7 @@ static CYTHON_INLINE PyObject *__pyx_f_5numpy_get_array_base(PyArrayObject *__py
   return __pyx_r;
 }
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1034
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1034
  * # Versions of the import_* functions which are more suitable for
  * # Cython code.
  * cdef inline int import_array() except -1:             # <<<<<<<<<<<<<<
@@ -7313,7 +7330,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_array(void) {
   PyObject *__pyx_t_8 = NULL;
   __Pyx_RefNannySetupContext("import_array", 0);
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1035
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1035
  * # Cython code.
  * cdef inline int import_array() except -1:
  *     try:             # <<<<<<<<<<<<<<
@@ -7329,7 +7346,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_array(void) {
     __Pyx_XGOTREF(__pyx_t_3);
     /*try:*/ {
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1036
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1036
  * cdef inline int import_array() except -1:
  *     try:
  *         _import_array()             # <<<<<<<<<<<<<<
@@ -7338,7 +7355,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_array(void) {
  */
       __pyx_t_4 = _import_array(); if (unlikely(__pyx_t_4 == ((int)-1))) __PYX_ERR(2, 1036, __pyx_L3_error)
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1035
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1035
  * # Cython code.
  * cdef inline int import_array() except -1:
  *     try:             # <<<<<<<<<<<<<<
@@ -7352,7 +7369,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_array(void) {
     goto __pyx_L8_try_end;
     __pyx_L3_error:;
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1037
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1037
  *     try:
  *         _import_array()
  *     except Exception:             # <<<<<<<<<<<<<<
@@ -7367,7 +7384,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_array(void) {
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_GOTREF(__pyx_t_7);
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1038
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1038
  *         _import_array()
  *     except Exception:
  *         raise ImportError("numpy.core.multiarray failed to import")             # <<<<<<<<<<<<<<
@@ -7383,7 +7400,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_array(void) {
     goto __pyx_L5_except_error;
     __pyx_L5_except_error:;
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1035
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1035
  * # Cython code.
  * cdef inline int import_array() except -1:
  *     try:             # <<<<<<<<<<<<<<
@@ -7398,7 +7415,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_array(void) {
     __pyx_L8_try_end:;
   }
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1034
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1034
  * # Versions of the import_* functions which are more suitable for
  * # Cython code.
  * cdef inline int import_array() except -1:             # <<<<<<<<<<<<<<
@@ -7421,7 +7438,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_array(void) {
   return __pyx_r;
 }
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1040
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1040
  *         raise ImportError("numpy.core.multiarray failed to import")
  * 
  * cdef inline int import_umath() except -1:             # <<<<<<<<<<<<<<
@@ -7442,7 +7459,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_umath(void) {
   PyObject *__pyx_t_8 = NULL;
   __Pyx_RefNannySetupContext("import_umath", 0);
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1041
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1041
  * 
  * cdef inline int import_umath() except -1:
  *     try:             # <<<<<<<<<<<<<<
@@ -7458,7 +7475,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_umath(void) {
     __Pyx_XGOTREF(__pyx_t_3);
     /*try:*/ {
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1042
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1042
  * cdef inline int import_umath() except -1:
  *     try:
  *         _import_umath()             # <<<<<<<<<<<<<<
@@ -7467,7 +7484,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_umath(void) {
  */
       __pyx_t_4 = _import_umath(); if (unlikely(__pyx_t_4 == ((int)-1))) __PYX_ERR(2, 1042, __pyx_L3_error)
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1041
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1041
  * 
  * cdef inline int import_umath() except -1:
  *     try:             # <<<<<<<<<<<<<<
@@ -7481,7 +7498,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_umath(void) {
     goto __pyx_L8_try_end;
     __pyx_L3_error:;
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1043
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1043
  *     try:
  *         _import_umath()
  *     except Exception:             # <<<<<<<<<<<<<<
@@ -7496,7 +7513,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_umath(void) {
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_GOTREF(__pyx_t_7);
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1044
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1044
  *         _import_umath()
  *     except Exception:
  *         raise ImportError("numpy.core.umath failed to import")             # <<<<<<<<<<<<<<
@@ -7512,7 +7529,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_umath(void) {
     goto __pyx_L5_except_error;
     __pyx_L5_except_error:;
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1041
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1041
  * 
  * cdef inline int import_umath() except -1:
  *     try:             # <<<<<<<<<<<<<<
@@ -7527,7 +7544,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_umath(void) {
     __pyx_L8_try_end:;
   }
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1040
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1040
  *         raise ImportError("numpy.core.multiarray failed to import")
  * 
  * cdef inline int import_umath() except -1:             # <<<<<<<<<<<<<<
@@ -7550,7 +7567,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_umath(void) {
   return __pyx_r;
 }
 
-/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1046
+/* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1046
  *         raise ImportError("numpy.core.umath failed to import")
  * 
  * cdef inline int import_ufunc() except -1:             # <<<<<<<<<<<<<<
@@ -7571,7 +7588,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_ufunc(void) {
   PyObject *__pyx_t_8 = NULL;
   __Pyx_RefNannySetupContext("import_ufunc", 0);
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1047
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1047
  * 
  * cdef inline int import_ufunc() except -1:
  *     try:             # <<<<<<<<<<<<<<
@@ -7587,7 +7604,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_ufunc(void) {
     __Pyx_XGOTREF(__pyx_t_3);
     /*try:*/ {
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1048
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1048
  * cdef inline int import_ufunc() except -1:
  *     try:
  *         _import_umath()             # <<<<<<<<<<<<<<
@@ -7596,7 +7613,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_ufunc(void) {
  */
       __pyx_t_4 = _import_umath(); if (unlikely(__pyx_t_4 == ((int)-1))) __PYX_ERR(2, 1048, __pyx_L3_error)
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1047
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1047
  * 
  * cdef inline int import_ufunc() except -1:
  *     try:             # <<<<<<<<<<<<<<
@@ -7610,7 +7627,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_ufunc(void) {
     goto __pyx_L8_try_end;
     __pyx_L3_error:;
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1049
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1049
  *     try:
  *         _import_umath()
  *     except Exception:             # <<<<<<<<<<<<<<
@@ -7624,7 +7641,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_ufunc(void) {
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_GOTREF(__pyx_t_7);
 
-      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1050
+      /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1050
  *         _import_umath()
  *     except Exception:
  *         raise ImportError("numpy.core.umath failed to import")             # <<<<<<<<<<<<<<
@@ -7638,7 +7655,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_ufunc(void) {
     goto __pyx_L5_except_error;
     __pyx_L5_except_error:;
 
-    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1047
+    /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1047
  * 
  * cdef inline int import_ufunc() except -1:
  *     try:             # <<<<<<<<<<<<<<
@@ -7653,7 +7670,7 @@ static CYTHON_INLINE int __pyx_f_5numpy_import_ufunc(void) {
     __pyx_L8_try_end:;
   }
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1046
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1046
  *         raise ImportError("numpy.core.umath failed to import")
  * 
  * cdef inline int import_ufunc() except -1:             # <<<<<<<<<<<<<<
@@ -7911,7 +7928,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__2);
   __Pyx_GIVEREF(__pyx_tuple__2);
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":272
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":272
  *             if ((flags & pybuf.PyBUF_C_CONTIGUOUS == pybuf.PyBUF_C_CONTIGUOUS)
  *                 and not PyArray_CHKFLAGS(self, NPY_ARRAY_C_CONTIGUOUS)):
  *                 raise ValueError(u"ndarray is not C contiguous")             # <<<<<<<<<<<<<<
@@ -7922,7 +7939,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__3);
   __Pyx_GIVEREF(__pyx_tuple__3);
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":276
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":276
  *             if ((flags & pybuf.PyBUF_F_CONTIGUOUS == pybuf.PyBUF_F_CONTIGUOUS)
  *                 and not PyArray_CHKFLAGS(self, NPY_ARRAY_F_CONTIGUOUS)):
  *                 raise ValueError(u"ndarray is not Fortran contiguous")             # <<<<<<<<<<<<<<
@@ -7933,7 +7950,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__4);
   __Pyx_GIVEREF(__pyx_tuple__4);
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":306
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":306
  *                 if ((descr.byteorder == c'>' and little_endian) or
  *                     (descr.byteorder == c'<' and not little_endian)):
  *                     raise ValueError(u"Non-native byte order not supported")             # <<<<<<<<<<<<<<
@@ -7944,7 +7961,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__5);
   __Pyx_GIVEREF(__pyx_tuple__5);
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":856
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":856
  * 
  *         if (end - f) - <int>(new_offset - offset[0]) < 15:
  *             raise RuntimeError(u"Format string allocated too short, see comment in numpy.pxd")             # <<<<<<<<<<<<<<
@@ -7955,7 +7972,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__6);
   __Pyx_GIVEREF(__pyx_tuple__6);
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":860
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":860
  *         if ((child.byteorder == c'>' and little_endian) or
  *             (child.byteorder == c'<' and not little_endian)):
  *             raise ValueError(u"Non-native byte order not supported")             # <<<<<<<<<<<<<<
@@ -7966,7 +7983,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__5);
   __Pyx_GIVEREF(__pyx_tuple__5);
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":880
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":880
  *             t = child.type_num
  *             if end - f < 5:
  *                 raise RuntimeError(u"Format string allocated too short.")             # <<<<<<<<<<<<<<
@@ -7977,7 +7994,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__7);
   __Pyx_GIVEREF(__pyx_tuple__7);
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1038
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1038
  *         _import_array()
  *     except Exception:
  *         raise ImportError("numpy.core.multiarray failed to import")             # <<<<<<<<<<<<<<
@@ -7988,7 +8005,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__8);
   __Pyx_GIVEREF(__pyx_tuple__8);
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1044
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1044
  *         _import_umath()
  *     except Exception:
  *         raise ImportError("numpy.core.umath failed to import")             # <<<<<<<<<<<<<<
@@ -7999,7 +8016,7 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__9);
   __Pyx_GIVEREF(__pyx_tuple__9);
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1050
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1050
  *         _import_umath()
  *     except Exception:
  *         raise ImportError("numpy.core.umath failed to import")             # <<<<<<<<<<<<<<
@@ -8351,7 +8368,7 @@ if (!__Pyx_RefNanny) {
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_test, __pyx_t_1) < 0) __PYX_ERR(1, 1, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-v3tsvw772i/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1046
+  /* "../../../../apps/hpc/jenkins/deploy/serial-libraries/2018-12-19/linux-rhel7-x86_64/gcc-6.4.0/py-cython-0.29-67tnsjz4kf/lib/python3.6/site-packages/Cython/Includes/numpy/__init__.pxd":1046
  *         raise ImportError("numpy.core.umath failed to import")
  * 
  * cdef inline int import_ufunc() except -1:             # <<<<<<<<<<<<<<

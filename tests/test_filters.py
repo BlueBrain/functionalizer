@@ -116,7 +116,7 @@ class TestFilters(object):
         props = df.where((F.col("connected_neurons_pre") == 56) &
                          (F.col("connected_neurons_post") == 36)) \
                   .select(*cols).toPandas()
-        want = pd.DataFrame([(0.51636, 693.155029, 13.12169,
+        want = pd.DataFrame([(0.40889, 693.155029, 13.12169,
                               0.15601, 1.70221, 1)],
                             columns=cols)
         for col, dtype in zip(cols, dtypes):

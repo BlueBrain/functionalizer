@@ -84,9 +84,13 @@ cpdef np.ndarray[float] truncated_normal(RNGThreefry rng,
                                          np.ndarray[float] m, np.ndarray[float] sd):
     cdef int i, n = len(key)
     cdef np.ndarray[float] res = np.empty(n, dtype=np.float32)
+    cdef RNGThreefry derivative
     assert len(m) == len(sd) == n
     for i in range(n):
-        res[i] = rng.derivate(key[i]).truncated_normal(m[i], sd[i])
+        derivative = rng.derivate(key[i])
+        res[i] = derivative.truncated_normal(m[i], sd[i])
+        while res[i] < 0:
+            res[i] = derivative.truncated_normal(m[i], sd[i])
     return res
 
 cpdef np.ndarray[float] uniform(RNGThreefry rng,
