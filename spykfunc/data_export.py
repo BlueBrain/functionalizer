@@ -21,41 +21,50 @@ DEFAULT_N_NEURONS_FILE = 200
 logger = utils.get_logger(__name__)
 
 
+MAPPING_DEFAULT = [
+    ("post_gid", "connected_neurons_post", T.LongType()),
+    ("pre_gid", "connected_neurons_pre", T.LongType()),
+    ("axonal_delay", "delay", None),
+    ("gsyn", "conductance", None),
+    ("u", "u_syn", None),
+    ("d", "depression_time", None),
+    ("f", "facilitation_time", None),
+    ("dtc", "decay_time", None),
+    ("synapseType", "syn_type_id", None),
+    ("morphology", "morpho_type_id_pre", None),
+    # ("branch_order_dend", "morpho_branch_order_dend", None),  # N/A
+    # ("branch_order_axon", "morpho_branch_order_axon", None),  # Irrelevant
+    ("nrrp", "n_rrp_vesicles", T.ShortType()),
+]
+
+MAPPING_ADDONS_INDICES = [
+    ("post_section", "morpho_section_id_post", None),
+    ("post_segment", "morpho_segment_id_post", None),
+    ("post_offset", "morpho_offset_segment_post", T.FloatType()),
+    ("pre_section", "morpho_section_id_pre", None),
+    ("pre_segment", "morpho_segment_id_pre", None),
+    ("pre_offset", "morpho_offset_segment_pre", T.FloatType()),
+]
+
+MAPPING_ADDONS_V2 = [
+    ("branch_type", "morpho_section_type_post", None),
+    ("spine_length", "morpho_spine_length", None),
+    ("pre_position", "position_contour_pre", None),
+    ("post_position", "position_center_post", None),
+]
+
+MAPPING_GAP_JUNCTIONS = [
+    ("src", "connected_neurons_pre", T.LongType()),
+    ("dst", "connected_neurons_post", T.LongType()),
+    ("post_junction", "junction_id_post", None),
+    ("pre_junction", "junction_id_pre", None),
+]
+
+# Longest mapping first, to avoid matching subsets.
 FIELD_MAPPINGS = [
-    [
-        ("post_gid", "connected_neurons_post", T.LongType()),
-        ("pre_gid", "connected_neurons_pre", T.LongType()),
-        ("axonal_delay", "delay", None),
-        ("post_section", "morpho_section_id_post", None),
-        ("post_segment", "morpho_segment_id_post", None),
-        ("post_offset", "morpho_offset_segment_post", T.FloatType()),
-        ("pre_section", "morpho_section_id_pre", None),
-        ("pre_segment", "morpho_segment_id_pre", None),
-        ("pre_offset", "morpho_offset_segment_pre", T.FloatType()),
-        ("gsyn", "conductance", None),
-        ("u", "u_syn", None),
-        ("d", "depression_time", None),
-        ("f", "facilitation_time", None),
-        ("dtc", "decay_time", None),
-        ("synapseType", "syn_type_id", None),
-        ("morphology", "morpho_type_id_pre", None),
-        # ("branch_order_dend", "morpho_branch_order_dend", None),  # N/A
-        # ("branch_order_axon", "morpho_branch_order_axon", None),  # Irrelevant
-        ("nrrp", "n_rrp_vesicles", T.ShortType())
-        # ("branch_type", "morpho_section_type_post", None)  # N/A
-    ],
-    [
-        ("src", "connected_neurons_pre", T.LongType()),
-        ("dst", "connected_neurons_post", T.LongType()),
-        ("post_section", "morpho_section_id_post", None),
-        ("post_segment", "morpho_segment_id_post", None),
-        ("post_offset", "morpho_offset_segment_post", T.FloatType()),
-        ("pre_section", "morpho_section_id_pre", None),
-        ("pre_segment", "morpho_segment_id_pre", None),
-        ("pre_offset", "morpho_offset_segment_pre", T.FloatType()),
-        ("post_junction", "junction_id_post", None),
-        ("pre_junction", "junction_id_pre", None),
-    ]
+    MAPPING_DEFAULT + MAPPING_ADDONS_INDICES + MAPPING_ADDONS_V2,
+    MAPPING_DEFAULT + MAPPING_ADDONS_INDICES,
+    MAPPING_GAP_JUNCTIONS + MAPPING_ADDONS_INDICES
 ]
 
 

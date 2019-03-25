@@ -195,7 +195,8 @@ def setup_package():
             'console_scripts': [
                 'spykfunc = spykfunc.commands:spykfunc',
                 'spykfunc_plot = spykfunc.tools.scaling:run [plot]',
-                'parquet-compare = spykfunc.tools.parquet_compare:run',
+                'parquet-compare = spykfunc.tools.compare:run',
+                'parquet-coalesce = spykfunc.tools.coalesce:run',
             ],
         },
     )

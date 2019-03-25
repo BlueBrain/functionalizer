@@ -4,6 +4,7 @@ node {
          remote: 'ssh://bbpcode.epfl.ch/hpc/jenkins-pipeline',
          changelog: false])
 
-    nix("mod-spykfunc-dev",
-        "ssh://bbpcode.epfl.ch/building/Spykfunc")
+    spack("spykfunc",
+          "ssh://bbpcode.epfl.ch/building/Spykfunc",
+          test: "")
 }

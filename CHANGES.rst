@@ -2,6 +2,29 @@
 Changelog
 =========
 
+Version 0.14.0
+==============
+
+Changes:
+
+  - Allow touch rules to filter for more than soma, !soma. The following
+    values are valid in the `TouchRule` XML nodes (for the attribute
+    `type`):
+    - `*` accepts everything
+    - `soma` matches soma branches (type 0)
+    - `dendrite` matches everything that is not a soma (this reproduces the
+      old behavior. Since TouchDetector does not consider touches towards
+      axons in normal operation, this matches dendrites only normally)
+    - `basal` matches branches of type 2 (basal dendrites)
+    - `apical` matches branches of type 3 (apical dendrites)
+    Note that the notations correspond to the convention used for
+    morphologies saved as H5.
+  - Output touch positions: contour for efferent, center position for
+    afferent side.
+  - Output section type for the afferent side of touches.
+  - Output spine length
+  - Compare statistical properties of the resulting circuits in the CI
+
 Version 0.13.2
 ==============
 

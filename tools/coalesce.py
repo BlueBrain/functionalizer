@@ -8,18 +8,25 @@ import tempfile
 
 import sparkmanager as sm
 
-try:
-    infiles, outfile = sys.argv[1:]
-except ValueError:
-    print(f"usage: {os.path.basename(sys.argv[0])} directory parquetfile")
-    sys.exit(1)
+def run():
+    """Entry point.
+    """
+    try:
+        infiles, outfile = sys.argv[1:]
+    except ValueError:
+        print(f"usage: {os.path.basename(sys.argv[0])} directory parquetfile")
+        sys.exit(1)
 
-tmpname = tempfile.mktemp()
+    tmpname = tempfile.mktemp()
 
-sm.create("foo")
-sm.read.load(infiles).coalesce(1).write.parquet(tmpname)
+    sm.create("foo")
+    sm.read.load(infiles).coalesce(1).write.parquet(tmpname)
 
-filename, = glob.glob(f"{tmpname}/*.parquet")
+    filename, = glob.glob(f"{tmpname}/*.parquet")
 
-shutil.move(filename, outfile)
-shutil.rmtree(tmpname)
+    shutil.move(filename, outfile)
+    shutil.rmtree(tmpname)
+
+
+if __name__ == '__main__':
+    run()

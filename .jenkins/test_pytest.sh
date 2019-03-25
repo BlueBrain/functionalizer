@@ -1,14 +1,9 @@
 script=$(mktemp)
 cat >$script <<EOF
-# Dependencies to build test environment
-module load nix/boost
-module load nix/hdf5
-module load nix/hpc/highfive
-
 cd $WORKSPACE
-git submodule update --init --recursive
 export SPARK_LOCAL_DIRS=/nvme/\$(whoami)/\$SLURM_JOBID/spark-local
 export SPARK_WORKER_DIR=/nvme/\$(whoami)/\$SLURM_JOBID/spark-worker
+export PYTHONPATH=$PWD:$PYTHONPATH
 python setup.py test
 EOF
 

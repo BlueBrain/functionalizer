@@ -89,6 +89,17 @@ def compute_additional_h5_fields(circuit, reduced, syn_class_matrix, syn_props_d
          ).cast(T.ShortType())
     )
 
+    # Optional columns
+    optional = []
+    for col in ('pre_position', 'post_position', 'spine_length'):
+        if hasattr(t, col):
+            optional.append(getattr(t, col).alias(col))
+    for col in ('branch_type',):
+        if hasattr(t, col):
+            optional.append(getattr(t, col).alias(col))
+        else:
+            optional.append(F.lit(0).alias(col))
+
     # Select fields
     return t.select(
         F.col("c.src").alias("pre_gid"),
@@ -110,7 +121,7 @@ def compute_additional_h5_fields(circuit, reduced, syn_class_matrix, syn_props_d
         F.lit(0).alias("branch_order_dend"),  # TBD
         t.branch_order.alias("branch_order_axon"),
         t.rand_nrrp.alias("nrrp"),
-        F.lit(0).alias("branch_type"),  # TBD (0 soma, 1 axon, 2 basel dendrite, 3 apical dendrite)
+        *optional
     )
 
 

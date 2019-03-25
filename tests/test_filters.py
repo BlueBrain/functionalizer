@@ -116,12 +116,14 @@ class TestFilters(object):
         props = df.where((F.col("connected_neurons_pre") == 56) &
                          (F.col("connected_neurons_post") == 36)) \
                   .select(*cols).toPandas()
-        want = pd.DataFrame([(0.40889, 693.155029, 13.12169,
-                              0.15601, 1.70221, 1)],
+        want = pd.DataFrame([(0.17273, 693.155029, 13.12169,
+                              0.15601, 1.73666, 1)],
                             columns=cols)
         for col, dtype in zip(cols, dtypes):
             want[col] = want[col].astype(dtype)
-        assert props.drop_duplicates().round(5).equals(want.round(5))
+        have = props.drop_duplicates().round(5)
+        want = want.round(5)
+        assert have.equals(want)
 
     def test_writeout_hdf5(self, fz):
         """Simple test for h5 export.

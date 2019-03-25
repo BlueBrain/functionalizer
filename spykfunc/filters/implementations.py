@@ -90,7 +90,8 @@ class GapJunctionFilter(DatasetOperation):
         """Apply both the dendrite-soma and dendrite-dendrite filters.
         """
         touches = circuit.df.withColumnRenamed('synapse_id', 'pre_junction') \
-                            .withColumn('post_junction', F.col('pre_junction'))
+                            .withColumn('post_junction', F.col('pre_junction')) \
+                            .drop('pre_position', 'post_position')
 
         trim = self._create_soma_filter_udf(touches)
         match = self._create_dendrite_match_udf(touches)
@@ -266,17 +267,29 @@ class TouchRulesFilter(DatasetOperation):
                               for i, v in enumerate(circuit.touch_rules.flatten())
                               if v == 0), 200)
         rules = sm.createDataFrame(rdd, schema=["fail"])
-        # For each neuron we require: preLayer, preMType, postLayer, postMType, postBranchIsSoma
-        # The first four fields are properties of the neurons, part of neuronDF, while postBranchIsSoma
-        # is a property if the touch, checked by the index of the target neuron section (0->soma)
-        return circuit.df.withColumn("fail",
-                                     circuit.df.src_layer_i * indices[1] +
-                                     circuit.df.dst_layer_i * indices[2] +
-                                     circuit.df.src_mtype_i * indices[3] +
-                                     circuit.df.dst_mtype_i * indices[4] +
-                                     (circuit.df.post_section > 0).cast('integer')) \
-                         .join(F.broadcast(rules), "fail", "left_anti") \
-                         .drop("fail")
+        # For each neuron we require:
+        # - preLayer
+        # - preMType
+        # - postLayer
+        # - postMType
+        # - postBranchType
+        #
+        # The first four fields are properties of the neurons, part of
+        # neuronDF, while postBranchType is a property if the touch,
+        # historically checked by the index of the target neuron
+        # section (0->soma)
+        touches = circuit.df
+        if not hasattr(circuit.df, 'branch_type'):
+            touches = touches.withColumn('branch_type',
+                                         (touches.post_section > 0).cast('integer'))
+        return touches.withColumn("fail",
+                                  touches.src_layer_i * indices[1] +
+                                  touches.dst_layer_i * indices[2] +
+                                  touches.src_mtype_i * indices[3] +
+                                  touches.dst_mtype_i * indices[4] +
+                                  touches.branch_type) \
+                      .join(F.broadcast(rules), "fail", "left_anti") \
+                      .drop("fail")
 
 
 # -------------------------------------------------------------------------------------------------

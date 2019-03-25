@@ -160,8 +160,23 @@ class NeuronDataSpark(NeuronData):
 
     # ---
     def load_touch_parquet(self, *files):
+        def compatible(s1: T.StructType, s2: T.StructType) -> bool:
+            """Test schema compatibility
+            """
+            if len(s1.fields) != len(s2.fields):
+                return False
+            for f1, f2 in zip(s1.fields, s2.fields):
+                if f1.name != f2.name:
+                    return False
+            return True
         files = [adjust_for_spark(f) for f in files]
-        return sm.read.schema(schema.TOUCH_SCHEMA).parquet(*files)
+        have = sm.read.load(files[0]).schema
+        try:
+            want, = [s for s in schema.TOUCH_SCHEMAS if compatible(s, have)]
+        except ValueError:
+            logger.error("Incompatible schema of input files")
+            raise RuntimeError("Incompatible schema of input files")
+        return sm.read.schema(want).parquet(*files)
 
     # ---
     def load_touch_bin(self, touch_file):
@@ -270,10 +285,19 @@ class NeuronDataSpark(NeuronData):
         mtype = self.mTypes
         mtype_rev = {name: i for i, name in enumerate(mtype)}
 
+        # dendrite mapping here is for historical purposes only, when we
+        # distinguished only between soma and !soma.
+        type_map = {
+            '*': [0, 1, 2, 3],
+            'soma': [0],
+            'dendrite': [1, 2, 3],
+            'basal': [2],
+            'apical': [3]
+        }
+
         touch_rule_matrix = np.zeros(
             shape=(len(layers_rev), len(layers_rev),
-                   len(mtype_rev), len(mtype_rev), 2
-                   ),
+                   len(mtype_rev), len(mtype_rev), 4),
             dtype="uint8"
         )
 
@@ -286,11 +310,12 @@ class NeuronDataSpark(NeuronData):
                 t1s = [mtype_rev[m] for m in fnmatch.filter(mtype, rule.fromMType)]
             if rule.toMType:
                 t2s = [mtype_rev[m] for m in fnmatch.filter(mtype, rule.toMType)]
-            r = (0 if rule.type == "soma" else 1) if rule.type else slice(None)
+            rs = type_map[rule.type] if rule.type else [slice(None)]
 
             for t1 in t1s:
                 for t2 in t2s:
-                    touch_rule_matrix[l1, l2, t1, t2, r] = 1
+                    for r in rs:
+                        touch_rule_matrix[l1, l2, t1, t2, r] = 1
         return touch_rule_matrix
 
     # ---
