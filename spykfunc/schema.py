@@ -47,14 +47,12 @@ TOUCH_SCHEMA_V1 = T.StructType([
 ])
 
 TOUCH_SCHEMA_V2 = T.StructType(TOUCH_SCHEMA_V1.fields + [
-    T.StructField("pre_position", T.StructType([
-        T.StructField("x", T.FloatType(), False),
-        T.StructField("y", T.FloatType(), False),
-        T.StructField("z", T.FloatType(), False)])),
-    T.StructField("post_position", T.StructType([
-        T.StructField("x", T.FloatType(), False),
-        T.StructField("y", T.FloatType(), False),
-        T.StructField("z", T.FloatType(), False)])),
+    T.StructField("pre_position_x", T.FloatType(), False),
+    T.StructField("pre_position_y", T.FloatType(), False),
+    T.StructField("pre_position_z", T.FloatType(), False),
+    T.StructField("post_position_x", T.FloatType(), False),
+    T.StructField("post_position_y", T.FloatType(), False),
+    T.StructField("post_position_z", T.FloatType(), False),
     T.StructField("spine_length", T.FloatType(), False),
     T.StructField("branch_type", T.ShortType(), False),
 ])

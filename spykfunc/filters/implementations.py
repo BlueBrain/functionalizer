@@ -90,8 +90,7 @@ class GapJunctionFilter(DatasetOperation):
         """Apply both the dendrite-soma and dendrite-dendrite filters.
         """
         touches = circuit.df.withColumnRenamed('synapse_id', 'pre_junction') \
-                            .withColumn('post_junction', F.col('pre_junction')) \
-                            .drop('pre_position', 'post_position')
+                            .withColumn('post_junction', F.col('pre_junction'))
 
         trim = self._create_soma_filter_udf(touches)
         match = self._create_dendrite_match_udf(touches)

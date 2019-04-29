@@ -49,8 +49,12 @@ MAPPING_ADDONS_INDICES = [
 MAPPING_ADDONS_V2 = [
     ("branch_type", "morpho_section_type_post", None),
     ("spine_length", "morpho_spine_length", None),
-    ("pre_position", "position_contour_pre", None),
-    ("post_position", "position_center_post", None),
+    ("pre_position_x", "position_contour_pre_x", None),
+    ("pre_position_y", "position_contour_pre_y", None),
+    ("pre_position_z", "position_contour_pre_z", None),
+    ("post_position_x", "position_center_post_x", None),
+    ("post_position_y", "position_center_post_y", None),
+    ("post_position_z", "position_center_post_z", None),
 ]
 
 MAPPING_GAP_JUNCTIONS = [
