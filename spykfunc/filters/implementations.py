@@ -355,7 +355,7 @@ class ReduceAndCut(DatasetOperation):
         params_df = F.broadcast(_params)
 
         # Params ouput for validation
-        _params_out_csv(params_df, mtypes)
+        _params_out_csv(params_df, "pathway_params", mtypes)
 
         #
         # Reduce
@@ -505,6 +505,8 @@ class ReduceAndCut(DatasetOperation):
             .select("pathway_i", "pMu_A")
             .withColumn("sigma", params_df.pMu_A / 4)
         )
+        # Debug
+        _params_out_csv(params_df_sigma, "survival_params", mtypes)
 
         connection_survival_rate = (
             reduced_touch_counts_connection
@@ -606,10 +608,15 @@ def _add_random_column(df, name, seed, key, derivative):
     return df.withColumn(name, _fixed_rand(derivative.cast(T.LongType())))
 
 
-def _params_out_csv(df, mtypes):
-    debug_info = df.select("pathway_i", "total_touches", "structural_mean",
-                           "pP_A", "pMu_A", "active_fraction_legacy", "_debug")
-    _write_csv(pathway_i_to_str(debug_info, mtypes), "pathway_params.csv")
+def _params_out_csv(df, filename, mtypes):
+    of_interest = ("pathway_i", "total_touches", "structural_mean",
+                   "pP_A", "pMu_A", "active_fraction_legacy", "_debug")
+    cols = []
+    for col in of_interest:
+        if hasattr(df, col):
+            cols.append(col)
+    debug_info = df.select(*cols)
+    _write_csv(pathway_i_to_str(debug_info, mtypes), filename)
 
 
 def _touch_counts_out_csv(df, filename, mtypes):
@@ -626,30 +633,36 @@ def _connection_counts_out_csv(df, filename, mtypes):
     ), filename)
 
 
-if _DEBUG:
-    class CSVWriter:
-        """Helper class to debug via CSV dumps
+class CSVWriter:
+    """Helper class to debug via CSV dumps
+    """
+    def __init__(self):
+        if not os.path.isdir("_debug"):
+            os.makedirs("_debug")
+        self._stage = 1
+
+    def __call__(self, df, filename):
+        """Write out a CSV file of a dataframe
         """
-        def __init__(self):
-            if not os.path.isdir("_debug"):
-                os.makedirs("_debug")
-            self._stage = 1
+        end = "" if filename.endswith(".csv") else ".csv"
+        filename = f"_debug/{self._stage:02d}_{filename}{end}"
 
-        def __call__(self, df, filename):
-            """Write out a CSV file of a dataframe
-            """
-            end = "" if filename.endswith(".csv") else ".csv"
-            filename = f"_debug/{self._stage:02d}_{filename}{end}"
+        data = df.toPandas()
+        data.to_csv(filename, index=False)
 
-            data = df.toPandas()
-            data.to_csv(filename, index=False)
+        self._stage += 1
 
-            self._stage += 1
 
+def _write_csv(df, filename):
+    pass
+
+
+def enable_debug():
+    global _DEBUG
+    global _write_csv
+    logger.info("Activating debug output...")
+    _DEBUG = True
     _write_csv = CSVWriter()
-else:
-    def _write_csv(df, filename):
-        pass
 
 
 # -------------------------------------------------------------------------------------------------

@@ -102,6 +102,9 @@ def _create_parser():
                               "or E (for extended with synapse properties)",
                          choices=("F", "E"), const="F", nargs="?", default="")
     gadv = parser.add_argument_group("advanced options")
+    gadv.add_argument("--debug",
+                      help="enable additional debug output, may slow down execution",
+                      default=False, action="store_true")
     gadv.add_argument("--name",
                       help="name that will show up in the Spark logs, "
                            "defaults to 'Functionalizer'")

@@ -34,6 +34,7 @@ class _SpykfuncOptions:
     filters = None
     no_morphos = False
     checkpoint_dir = None
+    debug = False
 
     def __init__(self, options_dict):
         filename = options_dict.get('configuration', None)
@@ -76,6 +77,9 @@ class Functionalizer(object):
         # Create config
         self._config = _SpykfuncOptions(options)
         checkpoint_resume.directory = self._config.checkpoint_dir
+
+        if self._config.debug:
+            filters.enable_debug()
 
         # Create Spark session with the static config
         report_file = os.path.join(self._config.output_dir, 'report.json')

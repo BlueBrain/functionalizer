@@ -24,6 +24,7 @@ Changes:
   - Output section type for the afferent side of touches.
   - Output spine length
   - Compare statistical properties of the resulting circuits in the CI
+  - Added a `--debug` command line flag to produce additional output
 
 Version 0.13.2
 ==============
