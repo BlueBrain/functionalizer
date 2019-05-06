@@ -338,6 +338,9 @@ class ReduceAndCut(DatasetOperation):
         self.recipe = recipe
         self.stats = stats
 
+        if len(self.recipe.conn_rules) == 0:
+            raise RuntimeError("No connection rules loaded. Please check the recipe.")
+
     def apply(self, circuit):
         """Filter the circuit according to the logic described in the
         class.
