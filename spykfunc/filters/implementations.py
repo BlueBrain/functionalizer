@@ -70,13 +70,13 @@ class GapJunctionFilter(DatasetOperation):
 
     Ensures that:
 
-     * Dendro-dentro and dendro-soma touches are present as src-dst and the
-       corresponding dst-src pair.  The sections of the touches have to be
-       aligned exactly, while the segment may deviate to neighboring ones.
+    * Dendro-dentro and dendro-soma touches are present as src-dst and the
+      corresponding dst-src pair.  The sections of the touches have to be
+      aligned exactly, while the segment may deviate to neighboring ones.
 
-     * Dendro-somatic touches: the structure of the neuron morphology is
-       traversed and from all touches that are within a distance of 3 soma
-       radii on the same branch only the "parent" ones are kept.
+    * Dendro-somatic touches: the structure of the neuron morphology is
+      traversed and from all touches that are within a distance of 3 soma
+      radii on the same branch only the "parent" ones are kept.
     """
 
     DENDRITE_COLUMNS = ['src', 'dst', 'pre_section', 'pre_segment', 'post_section', 'post_segment']
@@ -298,31 +298,31 @@ class ReduceAndCut(DatasetOperation):
     Goes through the touches and matches up distributions present and
     expected by random sampling. Steps:
 
-      1. Pathway statistics are determined and reduction factors are
-         calculated
+    1. Pathway statistics are determined and reduction factors are
+       calculated
 
-         Calulate `pP_A`, `pMu_A`, bouton reduction factor, and legacy
-         active fraction based on the number of touches per pathway and
-         pathway count.
+       Calulate `pP_A`, `pMu_A`, bouton reduction factor, and legacy
+       active fraction based on the number of touches per pathway and
+       pathway count.
 
-      2. Reduction factors are applied to the touches
+    2. Reduction factors are applied to the touches
 
-         Based on `pP_A` calculated previously, with random numbers drawn
-         for sampling.
+       Based on `pP_A` calculated previously, with random numbers drawn
+       for sampling.
 
-      3. Survival rates of the remaining touches are calculated
+    3. Survival rates of the remaining touches are calculated
 
-         Trim src-dst connections based on the survival of the previous
-         step, and relying on `pMu_A`, calculates a survival rate and keeps
-         "surviving" connections by sampling.
+       Trim src-dst connections based on the survival of the previous
+       step, and relying on `pMu_A`, calculates a survival rate and keeps
+       "surviving" connections by sampling.
 
-      4. Active connection fractions are deduced from survival rates and
-         applied
+    4. Active connection fractions are deduced from survival rates and
+       applied
 
-         Using the `bouton_reduction_factor` from the `ConnectionRules`
-         part of the recipe to determine the overall fraction of the
-         touches that every mtype--mtype connection class is allowed to
-         have active.
+       Using the `bouton_reduction_factor` from the `ConnectionRules`
+       part of the recipe to determine the overall fraction of the
+       touches that every mtype--mtype connection class is allowed to
+       have active.
 
     To calculate random numbers, a seed derived from the `synapseSeed` in
     the recipe is used.
@@ -538,12 +538,14 @@ class ReduceAndCut(DatasetOperation):
     @sm.assign_to_jobgroup
     @checkpoint_resume("shall_keep_connections", bucket_cols=("src", "dst"), child=True)
     def calc_cut_active_fraction(self, cut_touch_counts_connection, params_df, mtypes):
-        """
-        Performs the second part of the cut algorithm according to the active_fractions
-        :param params_df: The parameters DF (pA, uA, active_fraction_legacy)
-        :param cut_touch_counts_connection: The DF with the cut touch counts per connection
-                                            (built previously in an optimized way)
-        :return: The final cut touches
+        """Cut according to the active_fractions
+
+        Args:
+            params_df: the parameters DF (pA, uA, active_fraction_legacy)
+            cut_touch_counts_connection: the DF with the cut touch counts
+                per connection (built previously in an optimized way)
+        Returns:
+            The final cut touches
         """
 
         logger.debug("Computing Pathway stats")
@@ -696,18 +698,18 @@ class SynapseProperties(DatasetOperation):
 
     This "filter" augments touches with properties of synapses by
 
-      * shifting the post-section of synapses for ChC and SpAA cells to the
-        soma according to the `SynapsesReposition` rules of the recipe.
-      * adding the fields
+    * shifting the post-section of synapses for ChC and SpAA cells to the
+      soma according to the `SynapsesReposition` rules of the recipe.
+    * adding the fields
 
-        - `gsyn` following a Gamma-distribution,
-        - `d` following a Gamma-distribution,
-        - `f` following a Gamma-distribution,
-        - `u` following a truncated Normal-distribution,
-        - `dtc` following a truncated Normal-distribution,
-        - `nrrp` following a Poisson-distribution
+      - `gsyn` following a Gamma-distribution,
+      - `d` following a Gamma-distribution,
+      - `f` following a Gamma-distribution,
+      - `u` following a truncated Normal-distribution,
+      - `dtc` following a truncated Normal-distribution,
+      - `nrrp` following a Poisson-distribution
 
-        as specified by the `SynapsesClassification` part of the recipe.
+      as specified by the `SynapsesClassification` part of the recipe.
 
     To draw from the distributions, a seed derived from the `synapseSeed`
     in the recipe is used.

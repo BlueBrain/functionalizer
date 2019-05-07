@@ -71,7 +71,6 @@ Spykfunc module
 ```````````````
 
 .. automodule:: spykfunc
-    :show-inheritance:
     :members:
 
 
@@ -80,18 +79,10 @@ Functionalizer
 
 .. automodule:: spykfunc.functionalizer
     :members: Functionalizer, session
-    :undoc-members:
-    :show-inheritance:
 
 
 Synapse Filters
 ```````````````
 
-.. automodule:: spykfunc._filtering
-    :members: DatasetOperation
-    :undoc-members:
-    :show-inheritance:
-
 .. automodule:: spykfunc.filters
     :members: SomaDistanceFilter, GapJunctionFilter, BoutonDistanceFilter, TouchRulesFilter, ReduceAndCut, SynapseProperties
-    :show-inheritance:

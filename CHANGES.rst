@@ -6,10 +6,10 @@ Version 0.14.0
 ==============
 
 Changes:
-
   - Allow touch rules to filter for more than soma, !soma. The following
     values are valid in the `TouchRule` XML nodes (for the attribute
     `type`):
+
     - `*` accepts everything
     - `soma` matches soma branches (type 0)
     - `dendrite` matches everything that is not a soma (this reproduces the
@@ -17,6 +17,7 @@ Changes:
       axons in normal operation, this matches dendrites only normally)
     - `basal` matches branches of type 2 (basal dendrites)
     - `apical` matches branches of type 3 (apical dendrites)
+
     Note that the notations correspond to the convention used for
     morphologies saved as H5.
   - Output touch positions: contour for efferent, center position for
@@ -30,7 +31,6 @@ Version 0.13.2
 ==============
 
 Changes:
-
   - Ensure that properties drawn from a truncated gaussian are always
     positive: truncate the normal distribution at ±1σ and 0.
 
@@ -38,21 +38,11 @@ Version 0.13.1
 ==============
 
 Changes:
-
   - Fix random number generation for determining active connections
 
-Version 0.13.0
 ==============
 
 Changes:
-
-  - Fix range of n:sub:`rrp` to integers ≥1
-
-Version 0.12.2
-==============
-
-Changes:
-
   - Support post- and pre- neuron ordering of the output.
   - Reordering of the command line options and help
 
@@ -60,7 +50,6 @@ Version 0.12.1
 ==============
 
 Changes:
-
   - Fix the morphology output to use floats consistently
   - Add ability to process morphologies stored in nested directories
 
@@ -68,7 +57,6 @@ Version 0.12.0
 ==============
 
 Changes:
-
   - Switched to new unique seeding for random numbers: **breaks
     backwards-compatibility on a bitwise comparison**
   - Improved `gap-junctions` support:
@@ -79,7 +67,6 @@ Version 0.11.0
 ==============
 
 Changes:
-
   - Initial support for gap-junctions
   - Control filters run with `--filters` command-line option
   - One of `--structural`, `--functional`, or `--gap-junctions` has to be
@@ -95,7 +82,6 @@ Version 0.10.3
 ==============
 
 Changes:
-
   - Read the layers from circuit files rather than inferring them from
     morphologies
 
@@ -103,7 +89,6 @@ Version 0.10.2
 ==============
 
 Changes:
-
   - Save `_mvd` directory in the output directory by default
   - Save checkpoints in HDFS automatically
   - Documentation improvements
@@ -113,7 +98,6 @@ Version 0.10.1
 ==============
 
 Changes:
-
   - Add `parquet-compare` to compare output
   - Add missing package directory
 
@@ -121,7 +105,6 @@ Version 0.10.0
 ==============
 
 Changes:
-
   - Circuits are now reproducible by using the seed specified in the recipe
     for sampling and filtering of touches
   - The default output has been renamed from `nrn.parquet` to
@@ -131,7 +114,6 @@ Version 0.9.1
 =============
 
 Changes:
-
   - Allow to build both `py2` and `py3` versions from the source tree with
     nix
   - Make the synapse repositioning in the recipe optional
@@ -140,14 +122,12 @@ Version 0.9
 ===========
 
 Changes include, but are not limited to:
-
   - Proper seeding of random numbers to guarantee reproducibility
 
 Version 0.8
 ===========
 
 Changes include, but are not limited to:
-
   - Provide a module to run the software
   - Perform synapse shifts
 

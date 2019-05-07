@@ -10,13 +10,14 @@ can then be exported to a circuit format as expected by the simulator,
 typically `syn2`, but also `nrn_*.h5`.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    Getting Started <usage>
+   Changelog <changes>
+   API Reference <api>
+
    License <license>
    Authors <authors>
-   Changelog <changes>
-   Module and Filter Reference <api>
 
 
 Indices and tables

@@ -7,20 +7,20 @@ the examples directory in the source.
 In the most simple case you just want to run Spykfunc from the command line, which will
 apply the same filters as Functionalizer in one of three modi:
 
- * **Structural** runs basic filtering only via
-   :class:`~spykfunc.filters.BoutonDistanceFilter` and
-   :class:`~spykfunc.filters.SynapseProperties`.
+* **Structural** runs basic filtering only via
+  :class:`~spykfunc.filters.BoutonDistanceFilter` and
+  :class:`~spykfunc.filters.SynapseProperties`.
 
- * **Functional** produces a circuit ready for simulation by the means of
-   :class:`~spykfunc.filters.BoutonDistanceFilter`,
-   :class:`~spykfunc.filters.TouchRulesFilter`,
-   :class:`~spykfunc.filters.ReduceAndCut`, and
-   :class:`~spykfunc.filters.SynapseProperties`.
+* **Functional** produces a circuit ready for simulation by the means of
+  :class:`~spykfunc.filters.BoutonDistanceFilter`,
+  :class:`~spykfunc.filters.TouchRulesFilter`,
+  :class:`~spykfunc.filters.ReduceAndCut`, and
+  :class:`~spykfunc.filters.SynapseProperties`.
 
- * **Gap-Junctions** uses
-   :class:`~spykfunc.filters.SomaDistance` and
-   :class:`~spykfunc.filters.GapJunction` to produce a circuit based on gap
-   junctions.
+* **Gap-Junctions** uses
+  :class:`~spykfunc.filters.SomaDistance` and
+  :class:`~spykfunc.filters.GapJunction` to produce a circuit based on gap
+  junctions.
 
 Custom lists of filters can be run with the ``--filters`` command line
 option, separated only by commas (``,``).  Note that any trailing `Filter`
