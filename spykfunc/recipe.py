@@ -366,6 +366,7 @@ class Recipe(object):
             self.seeds = Seeds(**infos)
         else:
             self.seeds = Seeds()
+        logger.info(f"Using {self.seeds}")
 
     # -------
     @classmethod
