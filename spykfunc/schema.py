@@ -47,6 +47,8 @@ TOUCH_SCHEMA_V1 = T.StructType([
 ])
 
 TOUCH_SCHEMA_V2 = T.StructType(TOUCH_SCHEMA_V1.fields + [
+    T.StructField("pre_section_fraction", T.FloatType(), False),
+    T.StructField("post_section_fraction", T.FloatType(), False),
     T.StructField("pre_position_x", T.FloatType(), False),
     T.StructField("pre_position_y", T.FloatType(), False),
     T.StructField("pre_position_z", T.FloatType(), False),

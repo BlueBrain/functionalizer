@@ -91,7 +91,9 @@ def compute_additional_h5_fields(circuit, reduced, syn_class_matrix, syn_props_d
 
     # Optional columns
     optional = []
-    for col in ('pre_position_x', 'post_position_x',
+    for col in ('pre_section_fraction',
+                'post_section_fraction',
+                'pre_position_x', 'post_position_x',
                 'pre_position_y', 'post_position_y',
                 'pre_position_z', 'post_position_z',
                 'spine_length'):

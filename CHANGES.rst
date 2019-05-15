@@ -2,6 +2,12 @@
 Changelog
 =========
 
+Version 0.14.1
+==============
+
+Changes:
+  - Add the fractional position along sections to the output.
+
 Version 0.14.0
 ==============
 
