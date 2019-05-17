@@ -5,9 +5,13 @@ Query interface for Neuron dataframe / graph
 """
 
 from abc import abstractmethod
+from glob import glob
 import hashlib
+import importlib
 import inspect
+import os
 from pathlib import Path
+import sys
 
 import sparkmanager as sm
 
@@ -16,6 +20,28 @@ from spykfunc.utils import get_logger
 from spykfunc.utils.checkpointing import checkpoint_resume, CheckpointHandler
 
 logger = get_logger(__name__)
+
+
+def load(*dirnames: str) -> None:
+    """Load plugins from a list of directories
+
+    If no directories are given, load a default set of plugins.
+
+    Args:
+        dirnames: A list of directories to load plugins from.
+    """
+    if not dirnames:
+        dirnames = [os.path.join(os.path.dirname(__file__), "implementations")]
+    for dirname in dirnames:
+        filenames = glob(f"{dirname}/*.py")
+        for filename in filenames:
+            modulename = os.path.realpath(filename[:-3])
+            relative = min(
+                [os.path.relpath(modulename, p) for p in sys.path],
+                key=len
+            )
+            modulename = relative.replace(os.sep, ".")
+            importlib.import_module(modulename)
 
 
 # ---------------------------------------------------

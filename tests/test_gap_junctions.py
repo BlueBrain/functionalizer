@@ -5,7 +5,7 @@ import pandas
 import pytest
 
 from pyspark.sql import functions as F
-from spykfunc.filters import GapJunctionFilter, SomaDistanceFilter
+from spykfunc.filters import DatasetOperation
 
 
 # (src, dst), num_connections
@@ -38,7 +38,10 @@ def test_soma_distance(gj):
     """
     circuit = copy.copy(gj.circuit)
     circuit.df = circuit.df.where("src == 873 and dst == 999")
-    fltr = SomaDistanceFilter(None, circuit.morphologies, None)
+    fltr = DatasetOperation.initialize(["SomaDistance"],
+                                       None,
+                                       gj.circuit.morphologies,
+                                       None)[0]
     res = fltr.apply(circuit)
     assert 'valid_touch' not in res.schema
     assert res.count() == 36
@@ -51,7 +54,10 @@ def test_soma_filter(gj):
     Matches the selection of dendro-soma touches.
     """
     query = "src == {} and dst == {} and post_section == 0"
-    fltr = GapJunctionFilter(None, gj.circuit.morphologies, None)
+    fltr = DatasetOperation.initialize(["GapJunction"],
+                                       None,
+                                       gj.circuit.morphologies,
+                                       None)[0]
     circuit = gj.circuit.df.withColumnRenamed('synapse_id', 'pre_junction') \
                            .withColumn('post_junction', F.col('pre_junction'))
     trim_touches = fltr._create_soma_filter_udf(circuit)
@@ -68,7 +74,10 @@ def test_soma_filter_bidirectional(gj):
     Ensures that dendro-soma touches are bi-directional.
     """
     query = "src in ({0}, {1}) and dst in ({0}, {1}) and (post_section == 0 or pre_section == 0)"
-    fltr = GapJunctionFilter(None, gj.circuit.morphologies, None)
+    fltr = DatasetOperation.initialize(["GapJunction"],
+                                       None,
+                                       gj.circuit.morphologies,
+                                       None)[0]
     circuit = gj.circuit.df.withColumnRenamed('synapse_id', 'pre_junction') \
                            .withColumn('post_junction', F.col('pre_junction'))
     match_touches = fltr._create_dendrite_match_udf(circuit)
@@ -90,7 +99,10 @@ def test_dendrite_sync(gj):
     """Verify that gap junctions are synchronized right
     """
     query = "(src in {0} and dst in {0}) and post_section > 0"
-    fltr = GapJunctionFilter(None, gj.circuit.morphologies, None)
+    fltr = DatasetOperation.initialize(["GapJunction"],
+                                       None,
+                                       gj.circuit.morphologies,
+                                       None)[0]
     circuit = gj.circuit.df.withColumnRenamed('synapse_id', 'pre_junction') \
                            .withColumn('post_junction', F.col('pre_junction'))
     match_touches = fltr._create_dendrite_match_udf(circuit)
@@ -105,11 +117,15 @@ def test_dendrite_sync(gj):
 def test_gap_junctions(gj):
     """Verify that all filters play nice together.
     """
-    fltrs = [
-        SomaDistanceFilter,
-        GapJunctionFilter
-    ]
-    for cls in fltrs:
-        f = cls(None, gj.circuit.morphologies, None)
-        gj.circuit.df = f.apply(gj.circuit).cache()
+    fltrs = DatasetOperation.initialize(
+        [
+            "SomaDistance",
+            "GapJunction"
+        ],
+        None,
+        gj.circuit.morphologies,
+        None
+    )
+    for f in fltrs:
+        gj.circuit = f(gj.circuit)
     assert gj.circuit.df.count() > 0

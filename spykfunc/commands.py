@@ -2,10 +2,13 @@
 
 import sys
 import argparse
-from . import utils
+from . import filters, utils
 from .filters import DatasetOperation
 from . import filters # noqa
 from .definitions import RunningMode as RM, SortBy
+
+
+filters.load()
 
 
 # ------------------------------------

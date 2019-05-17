@@ -150,6 +150,7 @@ def setup_package():
             'spykfunc',
             'spykfunc.dataio',
             'spykfunc.filters',
+            'spykfunc.filters.implementations',
             'spykfunc.filters.udfs',
             'spykfunc.random',
             'spykfunc.tools',
