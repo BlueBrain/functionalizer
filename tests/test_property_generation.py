@@ -1,21 +1,21 @@
 """Test the various filters
 """
-
 import os
 import pytest
 import sparkmanager as sm
 from conftest import DATADIR
-from spykfunc.synapse_properties import compute_additional_h5_fields
+from spykfunc.filters import DatasetOperation
 
 
 @pytest.mark.slow
 def test_property_assignment(fz):
     fz.circuit.df = sm.read.parquet(os.path.join(DATADIR, "syn_prop_in.parquet"))
-    data = compute_additional_h5_fields(fz.circuit.df,
-                                        fz.circuit.reduced,
-                                        fz.circuit.synapse_class_matrix,
-                                        fz.circuit.synapse_class_properties,
-                                        123)
+    fz.recipe.xml.find("Seeds").attrib['synapseSeed'] = "123"
+    fltr = DatasetOperation.initialize(["SynapseProperties"],
+                                       fz.recipe,
+                                       None,
+                                       None)[0]
+    data = fltr.apply(fz.circuit)
     have = data.select("pre_gid", "post_gid", "synapseType")
     want = sm.read.parquet(os.path.join(DATADIR, "syn_prop_out.parquet")) \
         .groupBy("pre_gid", "post_gid", "synapseType").count()
@@ -27,9 +27,10 @@ def test_property_assignment(fz):
 @pytest.mark.slow
 def test_property_positive_u(fz):
     fz.circuit.df = sm.read.parquet(os.path.join(DATADIR, "syn_prop_in.parquet"))
-    data = compute_additional_h5_fields(fz.circuit.df,
-                                        fz.circuit.reduced,
-                                        fz.circuit.synapse_class_matrix,
-                                        fz.circuit.synapse_class_properties,
-                                        123)
+    fz.recipe.xml.find("Seeds").attrib['synapseSeed'] = "123"
+    fltr = DatasetOperation.initialize(["SynapseProperties"],
+                                       fz.recipe,
+                                       None,
+                                       None)[0]
+    data = fltr.apply(fz.circuit)
     assert data.where('u < 0').count() == 0

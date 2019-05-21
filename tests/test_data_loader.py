@@ -26,9 +26,6 @@ def test_loader():
     print(spykfunc)
     print(nrData)
 
-    matrx = nrData.load_synapse_prop_matrix(recipe)
-    return matrx
-
 
 if __name__ == "__main__":
     logging.warning("Started")

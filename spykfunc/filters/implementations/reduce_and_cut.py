@@ -20,12 +20,112 @@ from spykfunc.utils import get_logger
 from spykfunc.utils.checkpointing import checkpoint_resume, CheckpointHandler
 from spykfunc.utils.spark import cache_broadcast_single_part
 
+from . import Seeds
+
 logger = get_logger(__name__)
 
 
 _KEY_REDUCE = 0x100
 _KEY_CUT = 0x101
 _KEY_ACTIVE = 0x102
+
+
+class ConnectType:
+    """Enum class for Connect Types"""
+
+    InvalidConnect = 0
+    MTypeConnect = 1  # <mTypeRule>
+    LayerConnect = 2  # <layerRule>
+    ClassConnect = 3  # <sClassRule>
+    MaxConnectTypes = 4
+
+    __rule_names = {
+        "mTypeRule": MTypeConnect,
+        "layerRule": LayerConnect,
+        "sClassRule": ClassConnect
+    }
+    __names = {val: name for name, val in __rule_names.items()}
+
+    @classmethod
+    def from_type_name(cls, name):
+        return cls.__rule_names.get(name, cls.InvalidConnect)
+
+    @classmethod
+    def to_str(cls, index):
+        return cls.__names[index]
+
+
+class ConnectivityPathRule(object):
+    """Connectivity Pathway rule"""
+
+    connect_type = None
+    source = None
+    destination = None
+
+    probability = None
+    active_fraction = None
+    bouton_reduction_factor = None
+    cv_syns_connection = None
+    mean_syns_connection = None
+    stdev_syns_connection = None
+
+    # Possible field, currently not used by functionalizer
+    distance_bin = None
+    probability_bin = None
+    reciprocal_bin = None
+    reduction_min_prob = None
+    reduction_max_prob = None
+    multi_apposition_slope = None
+    multi_apposition_offset = None
+
+    _float_fields = ["probability", "mean_syns_connection", "stdev_syns_connection",
+                     "active_fraction", "bouton_reduction_factor", "cv_syns_connection"]
+
+    # ------
+    def __init__(self, rule_type, rule_dict, rule_children=None):
+        # type: (str, dict, list) -> None
+
+        self.connect_type = ConnectType.from_type_name(rule_type)
+
+        # Convert names
+        self.source = rule_dict.pop("from")
+        self.destination = rule_dict.pop("to")
+
+        for prop_name, prop_val in rule_dict.items():
+            if prop_name in self.__class__.__dict__:
+                if prop_name in ConnectivityPathRule._float_fields:
+                    setattr(self, prop_name, float(prop_val))
+                else:
+                    setattr(self, prop_name, prop_val)
+
+        # Convert IDS
+        if self.connect_type == ConnectType.LayerConnect:
+            self.source = int(self.source) - 1
+            self.destination = int(self.destination) - 1
+
+        if rule_children:
+            # simple probability
+            self.distance_bin = []
+            self.probability_bin = []
+            self.reciprocal_bin = []
+            for bin in rule_children:  # type:dict
+                self.distance_bin.append(bin.get("distance", 0))
+                self.probability_bin.append(bin.get("probability", 0))
+                self.reciprocal_bin.append(bin.get("reciprocal", 0))
+
+        if not self.is_valid():
+            logger.error("Wrong number of params in Connection Rule: " + str(self))
+
+    def is_valid(self):
+        # Rule according to validation in ConnectivityPathway::getReduceAndCutParameters
+        # Count number of rule params, must be 3
+        n_set_params = sum(var is not None for var in (self.probability, self.mean_syns_connection,
+                                                       self.stdev_syns_connection, self.active_fraction,
+                                                       self.bouton_reduction_factor, self.cv_syns_connection))
+        return n_set_params == 3
+
+    def __repr__(self):
+        return '<%s from="%s" to="%s">' % (ConnectType.to_str(self.connect_type), self.source, self.destination)
 
 
 class ReduceAndCut(DatasetOperation):
@@ -71,11 +171,28 @@ class ReduceAndCut(DatasetOperation):
     _checkpoint_buckets = ("src", "dst")
 
     def __init__(self, recipe, morphos, stats):
-        self.recipe = recipe
+        self.seed = Seeds.load(recipe.xml).synapseSeed
+        logger.info("Using seed %d for reduce and cut", self.seed)
         self.stats = stats
 
-        if len(self.recipe.conn_rules) == 0:
+        self.raw_connection_rules = list(
+            self.load_abstract_rules(
+                recipe.xml.find("ConnectionRules")
+            )
+        )
+
+        if len(self.raw_connection_rules) == 0:
             raise RuntimeError("No connection rules loaded. Please check the recipe.")
+
+    def load_abstract_rules(self, connections):
+        """Convert raw XML connection rules to corresponding objects
+        """
+        for conn_rule in connections:
+            # Create ConnectivityPath from NodeInfo-like object, compatible with xml.Element
+            if not isinstance(conn_rule, ConnectivityPathRule):
+                children = [child.attrib for child in conn_rule]
+                conn_rule = ConnectivityPathRule(conn_rule.tag, dict(conn_rule.attrib), children)
+            yield conn_rule
 
     def apply(self, circuit):
         """Filter the circuit according to the logic described in the
@@ -83,8 +200,7 @@ class ReduceAndCut(DatasetOperation):
         """
         full_touches = Circuit.only_touch_columns(touches_with_pathway(circuit.df))
         mtypes = circuit.mtype_df
-        conn_rules = self._build_concrete_mtype_conn_rules(self.recipe.conn_rules,
-                                                           circuit.morphology_types)
+        conn_rules = self.concretize_rules(circuit.morphology_types)
         self.conn_rules = sm.broadcast(conn_rules)
 
         # Get and broadcast Pathway stats
@@ -129,14 +245,13 @@ class ReduceAndCut(DatasetOperation):
         # Only the touch fields
         return Circuit.only_touch_columns(cut2AF_touches)
 
-    @staticmethod
-    def _build_concrete_mtype_conn_rules(src_conn_rules, mTypes):
-        """ Transform conn rules into concrete rule instances (without wildcards) and indexed by pathway
+    def concretize_rules(self, mTypes):
+        """Transform connection rules into concrete rule instances (without wildcards) and indexed by pathway
         """
         mtypes_rev = {mtype: i for i, mtype in enumerate(mTypes)}
         conn_rules = {}
 
-        for rule in src_conn_rules:  # type: ConnectivityPathRule
+        for rule in self.raw_connection_rules:
             srcs = matchfilter(mTypes, rule.source)
             dsts = matchfilter(mTypes, rule.destination)
             for src in srcs:
@@ -213,7 +328,7 @@ class ReduceAndCut(DatasetOperation):
         logger.debug(" -> Cutting touches")
         return _add_random_column(
             all_touches.join(fractions, "pathway_i"),
-            "reduce_rand", self.recipe.seeds.synapseSeed, _KEY_REDUCE,
+            "reduce_rand", self.seed, _KEY_REDUCE,
             F.col("synapse_id")
         ).where(F.col("pP_A") > F.col("reduce_rand")) \
          .drop("reduce_rand", "pP_A") \
@@ -263,7 +378,7 @@ class ReduceAndCut(DatasetOperation):
         logger.debug(" -> Computing connections to cut according to survival_rate")
         _df = connection_survival_rate
         cut_connections = _add_random_column(
-            _df, "cut_rand", self.recipe.seeds.synapseSeed, _KEY_CUT,
+            _df, "cut_rand", self.seed, _KEY_CUT,
             F.col("synapse_id"),
         ).where((_df.survival_rate > .0) & (_df.survival_rate > F.col("cut_rand"))) \
          .select("src", "dst", "synapse_id", "pathway_i", "reduced_touch_counts_connection")
@@ -323,7 +438,7 @@ class ReduceAndCut(DatasetOperation):
 
         shall_keep_connections = _add_random_column(
             cut_touch_counts_connection.join(active_fractions, "pathway_i"),
-            "active_rand", self.recipe.seeds.synapseSeed, _KEY_ACTIVE,
+            "active_rand", self.seed, _KEY_ACTIVE,
             F.col("synapse_id"),
         ).where(F.col("active_rand") < F.col("active_fraction")) \
          .select("src", "dst")
