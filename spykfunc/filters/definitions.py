@@ -126,6 +126,13 @@ class __DatasetOperationType(type):
         return sorted(cls.__filters.keys())
 
 
+def _log_touch_count(df):
+    """Print information for end users
+    """
+    logger.info("Surviving touches: %d", df.count())
+    return df
+
+
 class DatasetOperation(object, metaclass=__DatasetOperationType):
     """Force filters to have a unified interface
     """
@@ -149,7 +156,8 @@ class DatasetOperation(object, metaclass=__DatasetOperationType):
             else:
                 @checkpoint_resume(self._checkpoint_name,
                                    handlers=[
-                                       CheckpointHandler.before_save(Circuit.only_touch_columns)],
+                                       CheckpointHandler.before_save(Circuit.only_touch_columns),
+                                       CheckpointHandler.post_resume(_log_touch_count)],
                                    bucket_cols=self._checkpoint_buckets)
                 def fun():
                     return self.apply(circuit)

@@ -172,7 +172,9 @@ class NeuronDataSpark(NeuronData):
         except ValueError:
             logger.error("Incompatible schema of input files")
             raise RuntimeError("Incompatible schema of input files")
-        return sm.read.schema(want).parquet(*files)
+        touches = sm.read.schema(want).parquet(*files)
+        logger.info("Total touches: %d", touches.count())
+        return touches
 
     # ---
     def load_touch_bin(self, touch_file):
