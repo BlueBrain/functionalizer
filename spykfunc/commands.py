@@ -30,7 +30,7 @@ def _create_parser():
         """Dummy class to allow spiltting a comma separted list.
         """
         def __call__(self, parser, namespace, values, option_string=None):
-            setattr(namespace, self.dest, values[0].split(','))
+            setattr(namespace, self.dest, values.split(','))
 
     class _Formatter(argparse.HelpFormatter):
         """Dummy class to allow line-breaks in help

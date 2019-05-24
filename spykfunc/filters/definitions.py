@@ -97,6 +97,8 @@ class __DatasetOperationType(type):
         filters = []
         for name in names:
             fcls = cls.__filters.get(name, cls.__filters.get(name + 'Filter'))
+            if fcls is None:
+                raise ValueError(f"Cannot find filter '{name}'")
             key.update(fcls.__name__.encode())
             if hasattr(fcls, "_checkpoint_name"):
                 raise ValueError(f"Cannot have more than one {fcls.__name__}")
