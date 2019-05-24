@@ -6,7 +6,6 @@ from fnmatch import filter as matchfilter
 import pandas
 
 from pyspark.sql import functions as F
-from pyspark.sql import types as T
 
 import sparkmanager as sm
 
@@ -14,13 +13,12 @@ from spykfunc.circuit import Circuit
 from spykfunc.definitions import CheckpointPhases
 from spykfunc.filters import DatasetOperation, helpers
 from spykfunc.filters.udfs import reduce_cut_parameter_udf
-from spykfunc.random import RNGThreefry, uniform
 from spykfunc.schema import pathway_i_to_str, touches_with_pathway
 from spykfunc.utils import get_logger
 from spykfunc.utils.checkpointing import checkpoint_resume, CheckpointHandler
 from spykfunc.utils.spark import cache_broadcast_single_part
 
-from . import Seeds
+from . import Seeds, add_random_column
 
 logger = get_logger(__name__)
 
@@ -326,7 +324,7 @@ class ReduceAndCut(DatasetOperation):
         fractions = F.broadcast(params_df.select("pathway_i", "pP_A"))
 
         logger.debug(" -> Cutting touches")
-        return _add_random_column(
+        return add_random_column(
             all_touches.join(fractions, "pathway_i"),
             "reduce_rand", self.seed, _KEY_REDUCE,
             F.col("synapse_id")
@@ -377,7 +375,7 @@ class ReduceAndCut(DatasetOperation):
 
         logger.debug(" -> Computing connections to cut according to survival_rate")
         _df = connection_survival_rate
-        cut_connections = _add_random_column(
+        cut_connections = add_random_column(
             _df, "cut_rand", self.seed, _KEY_CUT,
             F.col("synapse_id"),
         ).where((_df.survival_rate > .0) & (_df.survival_rate > F.col("cut_rand"))) \
@@ -436,7 +434,7 @@ class ReduceAndCut(DatasetOperation):
 
         helpers._write_csv(pathway_i_to_str(active_fractions, mtypes), "active_fractions.csv")
 
-        shall_keep_connections = _add_random_column(
+        shall_keep_connections = add_random_column(
             cut_touch_counts_connection.join(active_fractions, "pathway_i"),
             "active_rand", self.seed, _KEY_ACTIVE,
             F.col("synapse_id"),
@@ -444,24 +442,6 @@ class ReduceAndCut(DatasetOperation):
          .select("src", "dst")
 
         return shall_keep_connections
-
-
-def _add_random_column(df, name, seed, key, derivative):
-    """Add a random column to a dataframe
-
-    :param df: the dataframe to augment
-    :param name: name for the random column
-    :param seed: the seed to use for the RNG
-    :param key: first key to derive the RNG with
-    :param derivative: column for second derivative of the RNG
-    :return: the dataframe with a random column
-    """
-    @F.pandas_udf('float')
-    def _fixed_rand(col):
-        rng = RNGThreefry().seed(seed).derivate(key)
-        return pandas.Series(uniform(rng, col.values))
-
-    return df.withColumn(name, _fixed_rand(derivative.cast(T.LongType())))
 
 
 def _params_out_csv(df, filename, mtypes):

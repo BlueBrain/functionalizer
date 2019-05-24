@@ -82,6 +82,9 @@ ext_mods = {
         library_dirs=[],
         libraries=['hdf5']
     ),
+    'spykfunc.filters.udfs.binning': dict(
+        include_dirs=[np.get_include()],
+    ),
     'spykfunc.filters.udfs.matching': dict(
         include_dirs=[np.get_include()],
     ),
