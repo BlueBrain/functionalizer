@@ -2,6 +2,20 @@
 Changelog
 =========
 
+Version 0.14.3
+==============
+
+Changes:
+  - Warn when synapse classification does not cover all values. See
+    FUNCZ-209_.
+
+Version 0.14.2
+==============
+
+Changes:
+  - Display intermittent touch count after checkpoints. See also
+    FUNCZ-201_.
+
 Version 0.14.1
 ==============
 
@@ -145,3 +159,5 @@ First working version with 3 base filters:
   - TouchRules
   - ReduceAndCut
 
+.. _FUNCZ-201: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-201
+.. _FUNCZ-209: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-209

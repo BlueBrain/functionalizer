@@ -180,7 +180,7 @@ class SynapseProperties(DatasetOperation):
         class_df = class_df.coalesce(1).sort("id")
         merged_props = prop_df.join(class_df, prop_df.type == class_df.id, "left").cache()
         n_syn_prop = merged_props.count()
-        logger.info("Found {} synpse property entries".format(n_syn_prop))
+        logger.info("Found {} synapse property entries".format(n_syn_prop))
 
         merged_props = F.broadcast(merged_props.checkpoint())
         return merged_props
@@ -217,8 +217,11 @@ class SynapseProperties(DatasetOperation):
         syn_etype_rev = {name: i for i, name in enumerate(etypes)}
         syn_sclass_rev = {name: i for i, name in enumerate(cclasses)}
 
-        prop_rule_matrix = np.empty(
+        not_covered = max(r._i for r in syn_class_rules) + 1
+
+        prop_rule_matrix = np.full(
             # Our 6-dim matrix
+            fill_value=not_covered,
             shape=(len(syn_mtype_rev), len(syn_etype_rev), len(syn_sclass_rev),
                    len(syn_mtype_rev), len(syn_etype_rev), len(syn_sclass_rev)),
             dtype="uint16"
@@ -237,7 +240,7 @@ class SynapseProperties(DatasetOperation):
         for rule in syn_class_rules:
             selectors = [None] * 6
             for i, direction in enumerate(("from", "to")):
-                for j, (field_t, vals) in enumerate(field_to_values.items()):
+                for j, field_t in enumerate(field_to_values):
                     field_name = direction + field_t
                     field_val = rule[field_name]
                     if field_val in (None, "*"):
@@ -266,6 +269,9 @@ class SynapseProperties(DatasetOperation):
                             for e2 in selectors[4]:
                                 for s2 in selectors[5]:
                                     prop_rule_matrix[m1, e1, s1, m2, e2, s2] = rule._i
+
+        if not_covered in prop_rule_matrix:
+            logger.warn("Synapse classification does not cover all values!")
 
         return prop_rule_matrix
 
