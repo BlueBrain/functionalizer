@@ -2,6 +2,12 @@
 Changelog
 =========
 
+Version 0.14.4
+==============
+
+Changes:
+  - Add additional output columns to gap-junction runs. See FUNCZ-211_.
+
 Version 0.14.3
 ==============
 
@@ -161,3 +167,4 @@ First working version with 3 base filters:
 
 .. _FUNCZ-201: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-201
 .. _FUNCZ-209: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-209
+.. _FUNCZ-211: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-211

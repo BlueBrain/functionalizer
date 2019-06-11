@@ -22,8 +22,6 @@ class GapJunctionFilter(DatasetOperation):
       radii on the same branch only the "parent" ones are kept.
     """
 
-    DENDRITE_COLUMNS = ['src', 'dst', 'pre_section', 'pre_segment', 'post_section', 'post_segment']
-
     _checkpoint = True
 
     def __init__(self, recipe, morphos, stats):
