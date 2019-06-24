@@ -33,7 +33,7 @@ class TouchRulesFilter(DatasetOperation):
 
     _checkpoint = True
 
-    def __init__(self, recipe, morphos, stats):
+    def __init__(self, recipe, morphos):
         """Initilize the filter by parsing the recipe
 
         The rules stored in the recipe are loaded in their abstract form,

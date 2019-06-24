@@ -45,3 +45,6 @@ docs/api/*
 docs/_build/*
 cover/*
 MANIFEST
+
+# Auxilliary files
+tags

@@ -75,8 +75,8 @@ class __DatasetOperationType(type):
         if not (spec.varargs is None and
                 spec.varkw is None and
                 spec.defaults is None and
-                spec.args == ['self', 'recipe', 'morphos', 'stats']):
-            raise AttributeError(f'class {cls} does not implement "__init__(recipe, morphos, stats)" properly')
+                spec.args == ['self', 'recipe', 'morphos']):
+            raise AttributeError(f'class {cls} does not implement "__init__(recipe, morphos)" properly')
         type.__init__(cls, name, bases, attrs)
         if attrs.get('_visible', True):
             cls.__filters[name.replace('Filter', '')] = cls
@@ -142,7 +142,7 @@ class DatasetOperation(object, metaclass=__DatasetOperationType):
 
     _visible = False
 
-    def __init__(self, recipe, morphos, stats):
+    def __init__(self, recipe, morphos):
         """Empty constructor supposed to be overriden
         """
         pass

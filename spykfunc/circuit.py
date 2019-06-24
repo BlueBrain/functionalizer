@@ -2,6 +2,54 @@
 """
 
 from pyspark.sql import functions as F
+from pyspark.sql import types as T
+
+from spykfunc.schema import touches_with_pathway
+from spykfunc.utils import get_logger
+
+logger = get_logger(__name__)
+
+
+def touches_per_pathway(touches):
+    """Calculate touch statistics for every pathway (src-dst mtype)
+
+    Args:
+        touches: A DataFrame with touch columns
+    Returns:
+        A dataframe containing, per pathway:
+        * number of touches
+        * connections (unique src/dst)
+        * the mean (touches/connection)
+    """
+    def pathway_connection_counts(touches):
+        """Get connections (src/dst) counts
+        """
+        connections_counts = (
+            touches
+            .groupBy("pathway_i", "src", "dst")
+            .agg(F.count("*").cast(T.IntegerType()).alias("count"))
+        )
+        return connections_counts
+
+    def pathway_statistics(counts):
+        """Gather statistics
+        """
+        return (
+            counts
+            .groupBy("pathway_i").agg(
+                F.sum("count").alias("total_touches"),
+                F.count("*").alias("total_connections")
+            )
+            .withColumn(
+                "average_touches_conn",
+                F.col("total_touches") / F.col("total_connections")
+            )
+        )
+
+    if 'pathway_i' not in touches.columns:
+        touches = touches_with_pathway(touches)
+    logger.debug("Computing Pathway stats...")
+    return pathway_statistics(pathway_connection_counts(touches))
 
 
 class Circuit(object):

@@ -14,7 +14,6 @@ from .recipe import Recipe
 from .data_loader import NeuronDataSpark
 from .data_export import NeuronExporter, SortBy
 from .dataio.cppneuron import MVD_Morpho_Loader
-from .stats import NeuronStats
 from .definitions import CellClass, CheckpointPhases
 from .utils.checkpointing import checkpoint_resume
 from .utils.filesystem import adjust_for_spark, autosense_hdfs
@@ -66,9 +65,6 @@ class Functionalizer(object):
     recipe = None
     """:property: The parsed recipe"""
 
-    neuron_stats = None
-    """:property: The :py:class:`~spykfunc.stats.NeuronStats` object for the current touch set"""
-
     exporter = None
     """:property: The :py:class:`~spykfunc.data_export.NeuronExporter` object"""
 
@@ -95,8 +91,6 @@ class Functionalizer(object):
             ("float2binary", "spykfunc.udfs.FloatArraySerializer"),
             ("int2binary", "spykfunc.udfs.IntArraySerializer"),
         ])
-
-        self.neuron_stats = NeuronStats()
 
     # -------------------------------------------------------------------------
     # Data loading and Init
@@ -148,7 +142,6 @@ class Functionalizer(object):
             .withColumnRenamed("post_neuron_id", "dst")
 
         self.circuit = Circuit(fdata, touches, self.recipe)
-        self.neuron_stats.circuit = self.circuit
 
         # Grow suffle partitions with size of touches DF
         # Min: 100 reducers
@@ -195,8 +188,7 @@ class Functionalizer(object):
 
         filters = DatasetOperation.initialize(filters or self._config.filters,
                                               self.recipe,
-                                              self.circuit.morphologies,
-                                              self.neuron_stats)
+                                              self.circuit.morphologies)
 
         logger.info("Starting Filtering...")
         for f in filters:

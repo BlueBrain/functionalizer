@@ -9,7 +9,7 @@ from pyspark.sql import functions as F
 
 import sparkmanager as sm
 
-from spykfunc.circuit import Circuit
+from spykfunc.circuit import Circuit, touches_per_pathway
 from spykfunc.definitions import CheckpointPhases
 from spykfunc.filters import DatasetOperation, helpers
 from spykfunc.filters.udfs import reduce_cut_parameter_udf
@@ -168,10 +168,9 @@ class ReduceAndCut(DatasetOperation):
     _checkpoint = True
     _checkpoint_buckets = ("src", "dst")
 
-    def __init__(self, recipe, morphos, stats):
+    def __init__(self, recipe, morphos):
         self.seed = Seeds.load(recipe.xml).synapseSeed
         logger.info("Using seed %d for reduce and cut", self.seed)
-        self.stats = stats
 
         self.raw_connection_rules = list(
             self.load_abstract_rules(
@@ -284,9 +283,7 @@ class ReduceAndCut(DatasetOperation):
         """
         # First obtain the pathway (morpho-morpho) stats dataframe
         _n_parts = max(full_touches.rdd.getNumPartitions() // 20, 100)
-        pathway_stats = (self.stats
-            .get_pathway_touch_stats_from_touches_with_pathway(full_touches)
-            .coalesce(_n_parts))
+        pathway_stats = touches_per_pathway(full_touches).coalesce(_n_parts)
 
         # param create udf
         rc_param_maker = reduce_cut_parameter_udf(self.conn_rules)

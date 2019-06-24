@@ -24,7 +24,7 @@ class GapJunctionFilter(DatasetOperation):
 
     _checkpoint = True
 
-    def __init__(self, recipe, morphos, stats):
+    def __init__(self, recipe, morphos):
         self.__morphos = morphos
 
     def apply(self, circuit):

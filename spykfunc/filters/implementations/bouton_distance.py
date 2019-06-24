@@ -29,7 +29,7 @@ class BoutonDistanceFilter(DatasetOperation):
     the recipe definition and filters out all synapses closer to the soma.
     """
 
-    def __init__(self, recipe, morphos, stats):
+    def __init__(self, recipe, morphos):
         fragment = recipe.xml.find("InitialBoutonDistance")
         self.distances = self.convert_info(fragment)
 

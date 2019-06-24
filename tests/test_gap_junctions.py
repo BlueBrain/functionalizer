@@ -40,8 +40,7 @@ def test_soma_distance(gj):
     circuit.df = circuit.df.where("src == 873 and dst == 999")
     fltr = DatasetOperation.initialize(["SomaDistance"],
                                        None,
-                                       gj.circuit.morphologies,
-                                       None)[0]
+                                       gj.circuit.morphologies)[0]
     res = fltr.apply(circuit)
     assert 'valid_touch' not in res.schema
     assert res.count() == 36
@@ -56,8 +55,7 @@ def test_soma_filter(gj):
     query = "src == {} and dst == {} and post_section == 0"
     fltr = DatasetOperation.initialize(["GapJunction"],
                                        None,
-                                       gj.circuit.morphologies,
-                                       None)[0]
+                                       gj.circuit.morphologies)[0]
     circuit = gj.circuit.df.withColumnRenamed('synapse_id', 'pre_junction') \
                            .withColumn('post_junction', F.col('pre_junction'))
     trim_touches = fltr._create_soma_filter_udf(circuit)
@@ -76,8 +74,7 @@ def test_soma_filter_bidirectional(gj):
     query = "src in ({0}, {1}) and dst in ({0}, {1}) and (post_section == 0 or pre_section == 0)"
     fltr = DatasetOperation.initialize(["GapJunction"],
                                        None,
-                                       gj.circuit.morphologies,
-                                       None)[0]
+                                       gj.circuit.morphologies)[0]
     circuit = gj.circuit.df.withColumnRenamed('synapse_id', 'pre_junction') \
                            .withColumn('post_junction', F.col('pre_junction'))
     match_touches = fltr._create_dendrite_match_udf(circuit)
@@ -101,8 +98,7 @@ def test_dendrite_sync(gj):
     query = "(src in {0} and dst in {0}) and post_section > 0"
     fltr = DatasetOperation.initialize(["GapJunction"],
                                        None,
-                                       gj.circuit.morphologies,
-                                       None)[0]
+                                       gj.circuit.morphologies)[0]
     circuit = gj.circuit.df.withColumnRenamed('synapse_id', 'pre_junction') \
                            .withColumn('post_junction', F.col('pre_junction'))
     match_touches = fltr._create_dendrite_match_udf(circuit)
@@ -124,7 +120,6 @@ def test_gap_junctions(gj):
         ],
         None,
         gj.circuit.morphologies,
-        None
     )
     for f in fltrs:
         gj.circuit = f(gj.circuit)

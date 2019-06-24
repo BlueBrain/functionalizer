@@ -43,23 +43,6 @@ On the filtering phase you have multiple options
 Beware that applying the filters does NOT necessarily run them immediately.
 They are executed as you request data results out of them (e.g. export or check stats)
 
-To check the current filtered touches:
-
-.. code-block:: python
-
-   >>> # Inspect the touches, or the graph
-   >>> fz.circuit
-   DataFrame[src: int, dst: int, pre_section: smallint, pre_segment: smallint, post_section: ...]
-
-   >>> fz.neuron_stats
-   <spykfunc.stats.NeuronStats at 0x451d890>
-
-   >>> fz.dataQ.
-                fz.dataQ.apply     fz.dataQ.get_stats    fz.dataQ.show
-                fz.dataQ.count     fz.dataQ.groupBy
-                fz.dataQ.filter    fz.dataQ.select
-
-
 In the end Export your touches, which will incur computing their properties
 
    >>> fz.export_results()

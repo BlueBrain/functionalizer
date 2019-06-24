@@ -33,7 +33,7 @@ class SpineLengthFilter(DatasetOperation):
     """Filter synapses by spine length
     """
 
-    def __init__(self, recipe, morphos, stats):
+    def __init__(self, recipe, morphos):
         self.seed = Seeds.load(recipe.xml).synapseSeed
         logger.info("Using seed %d for spine length adjustment", self.seed)
 
