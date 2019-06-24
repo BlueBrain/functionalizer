@@ -188,6 +188,7 @@ class Functionalizer(object):
 
         filters = DatasetOperation.initialize(filters or self._config.filters,
                                               self.recipe,
+                                              self.circuit.data,
                                               self.circuit.morphologies)
 
         logger.info("Starting Filtering...")

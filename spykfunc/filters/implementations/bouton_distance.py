@@ -21,6 +21,15 @@ class InitialBoutonDistance(GenericProperty):
         if cell_class == CellClass.CLASS_EXC:
             return soma_axon_distance >= self.excitatorySynapsesDistance
 
+    @classmethod
+    def load(cls, xml):
+        fragment = xml.find("InitialBoutonDistance")
+        if hasattr(fragment, "items"):
+            infos = {k: v for k, v in fragment.items()}
+            return cls(**infos)
+        else:
+            return cls()
+
 
 class BoutonDistanceFilter(DatasetOperation):
     """Filter synapses based on the distance from the soma.
@@ -29,17 +38,8 @@ class BoutonDistanceFilter(DatasetOperation):
     the recipe definition and filters out all synapses closer to the soma.
     """
 
-    def __init__(self, recipe, morphos):
-        fragment = recipe.xml.find("InitialBoutonDistance")
-        self.distances = self.convert_info(fragment)
-
-    @classmethod
-    def convert_info(cls, fragment):
-        if hasattr(fragment, "items"):
-            infos = {k: v for k, v in fragment.items()}
-            return InitialBoutonDistance(**infos)
-        else:
-            return InitialBoutonDistance()
+    def __init__(self, recipe, neurons, morphos):
+        self.distances = InitialBoutonDistance.load(recipe.xml)
 
     def apply(self, circuit):
         """Apply filter

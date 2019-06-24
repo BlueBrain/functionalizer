@@ -40,6 +40,7 @@ def test_soma_distance(gj):
     circuit.df = circuit.df.where("src == 873 and dst == 999")
     fltr = DatasetOperation.initialize(["SomaDistance"],
                                        None,
+                                       None,
                                        gj.circuit.morphologies)[0]
     res = fltr.apply(circuit)
     assert 'valid_touch' not in res.schema
@@ -54,6 +55,7 @@ def test_soma_filter(gj):
     """
     query = "src == {} and dst == {} and post_section == 0"
     fltr = DatasetOperation.initialize(["GapJunction"],
+                                       None,
                                        None,
                                        gj.circuit.morphologies)[0]
     circuit = gj.circuit.df.withColumnRenamed('synapse_id', 'pre_junction') \
@@ -73,6 +75,7 @@ def test_soma_filter_bidirectional(gj):
     """
     query = "src in ({0}, {1}) and dst in ({0}, {1}) and (post_section == 0 or pre_section == 0)"
     fltr = DatasetOperation.initialize(["GapJunction"],
+                                       None,
                                        None,
                                        gj.circuit.morphologies)[0]
     circuit = gj.circuit.df.withColumnRenamed('synapse_id', 'pre_junction') \
@@ -98,6 +101,7 @@ def test_dendrite_sync(gj):
     query = "(src in {0} and dst in {0}) and post_section > 0"
     fltr = DatasetOperation.initialize(["GapJunction"],
                                        None,
+                                       None,
                                        gj.circuit.morphologies)[0]
     circuit = gj.circuit.df.withColumnRenamed('synapse_id', 'pre_junction') \
                            .withColumn('post_junction', F.col('pre_junction'))
@@ -118,6 +122,7 @@ def test_gap_junctions(gj):
             "SomaDistance",
             "GapJunction"
         ],
+        None,
         None,
         gj.circuit.morphologies,
     )

@@ -125,6 +125,49 @@ class ConnectivityPathRule(object):
     def __repr__(self):
         return '<%s from="%s" to="%s">' % (ConnectType.to_str(self.connect_type), self.source, self.destination)
 
+    @classmethod
+    def load(cls, xml, mtypes):
+        """Load connection rules
+
+        Transform connection rules into concrete rule instances (without wildcards) and indexed by pathway
+
+        Args:
+            xml: The raw recipe XML to extract the data from
+            mtypes: The morphology types associated with the circuit
+        Returns:
+            A dictionary of pathways (src, dst mtype) and corresponding rules
+        """
+        rules = []
+        for rule in xml.find("ConnectionRules"):
+            children = [child.attrib for child in rule]
+            rules.append(ConnectivityPathRule(rule.tag, dict(rule.attrib), children))
+
+        if len(rules) == 0:
+            raise RuntimeError("No connection rules loaded. Please check the recipe.")
+
+        mtypes_rev = {mtype: i for i, mtype in enumerate(mtypes)}
+        concrete_rules = {}
+
+        for rule in rules:
+            srcs = matchfilter(mtypes, rule.source)
+            dsts = matchfilter(mtypes, rule.destination)
+            for src in srcs:
+                for dst in dsts:
+                    # key = src + ">" + dst
+                    # Key is now an int
+                    key = (mtypes_rev[src] << 16) + mtypes_rev[dst]
+                    if key in concrete_rules:
+                        # logger.debug("Several rules applying to the same mtype connection: %s->%s [Rule: %s->%s]",
+                        #                src, dst, rule.source, rule.destination)
+                        prev_rule = concrete_rules[key]
+                        # Overwrite if it is specific
+                        if (('*' in prev_rule.source and '*' not in rule.source) or
+                                ('*' in prev_rule.destination and '*' not in rule.destination)):
+                            concrete_rules[key] = rule
+                    else:
+                        concrete_rules[key] = rule
+        return concrete_rules
+
 
 class ReduceAndCut(DatasetOperation):
     """Reduce and cut touch distributions
@@ -168,28 +211,10 @@ class ReduceAndCut(DatasetOperation):
     _checkpoint = True
     _checkpoint_buckets = ("src", "dst")
 
-    def __init__(self, recipe, morphos):
+    def __init__(self, recipe, neurons, morphos):
         self.seed = Seeds.load(recipe.xml).synapseSeed
         logger.info("Using seed %d for reduce and cut", self.seed)
-
-        self.raw_connection_rules = list(
-            self.load_abstract_rules(
-                recipe.xml.find("ConnectionRules")
-            )
-        )
-
-        if len(self.raw_connection_rules) == 0:
-            raise RuntimeError("No connection rules loaded. Please check the recipe.")
-
-    def load_abstract_rules(self, connections):
-        """Convert raw XML connection rules to corresponding objects
-        """
-        for conn_rule in connections:
-            # Create ConnectivityPath from NodeInfo-like object, compatible with xml.Element
-            if not isinstance(conn_rule, ConnectivityPathRule):
-                children = [child.attrib for child in conn_rule]
-                conn_rule = ConnectivityPathRule(conn_rule.tag, dict(conn_rule.attrib), children)
-            yield conn_rule
+        self.conn_rules = ConnectivityPathRule.load(recipe.xml, neurons.mTypes)
 
     def apply(self, circuit):
         """Filter the circuit according to the logic described in the
@@ -197,8 +222,7 @@ class ReduceAndCut(DatasetOperation):
         """
         full_touches = Circuit.only_touch_columns(touches_with_pathway(circuit.df))
         mtypes = circuit.mtype_df
-        conn_rules = self.concretize_rules(circuit.morphology_types)
-        self.conn_rules = sm.broadcast(conn_rules)
+        self.conn_rules = sm.broadcast(self.conn_rules)
 
         # Get and broadcast Pathway stats
         # NOTE we cache and count to force evaluation in N tasks, while sorting in a single task
@@ -241,33 +265,6 @@ class ReduceAndCut(DatasetOperation):
 
         # Only the touch fields
         return Circuit.only_touch_columns(cut2AF_touches)
-
-    def concretize_rules(self, mTypes):
-        """Transform connection rules into concrete rule instances (without wildcards) and indexed by pathway
-        """
-        mtypes_rev = {mtype: i for i, mtype in enumerate(mTypes)}
-        conn_rules = {}
-
-        for rule in self.raw_connection_rules:
-            srcs = matchfilter(mTypes, rule.source)
-            dsts = matchfilter(mTypes, rule.destination)
-            for src in srcs:
-                for dst in dsts:
-                    # key = src + ">" + dst
-                    # Key is now an int
-                    key = (mtypes_rev[src] << 16) + mtypes_rev[dst]
-                    if key in conn_rules:
-                        # logger.debug("Several rules applying to the same mtype connection: %s->%s [Rule: %s->%s]",
-                        #                src, dst, rule.source, rule.destination)
-                        prev_rule = conn_rules[key]
-                        # Overwrite if it is specific
-                        if (('*' in prev_rule.source and '*' not in rule.source) or
-                                ('*' in prev_rule.destination and '*' not in rule.destination)):
-                            conn_rules[key] = rule
-                    else:
-                        conn_rules[key] = rule
-
-        return conn_rules
 
     # ---
     @sm.assign_to_jobgroup

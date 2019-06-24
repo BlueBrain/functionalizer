@@ -7,7 +7,10 @@ import sparkmanager as sm
 from pyspark.sql import functions as F
 
 from spykfunc.filters import DatasetOperation
-from spykfunc.recipe import GenericProperty
+from spykfunc.recipe import GenericProperty, Recipe
+from spykfunc.utils import get_logger
+
+logger = get_logger(__name__)
 
 
 class TouchRule(GenericProperty):
@@ -20,43 +23,23 @@ class TouchRule(GenericProperty):
     toMType = None
     type = ""
 
+    @classmethod
+    def load(cls, xml, mtypes, layers, *, strict=False):
+        """Construct touch rule matrix
 
-class TouchRulesFilter(DatasetOperation):
-    """Filter touches based on recipe rules
-
-    Defined in the recipe as `TouchRules`, restrict connections between
-    mtypes, types (dendrite/soma), and layers.  Any touches not allowed are
-    removed.
-
-    This filter is deterministic.
-    """
-
-    _checkpoint = True
-
-    def __init__(self, recipe, morphos):
-        """Initilize the filter by parsing the recipe
-
-        The rules stored in the recipe are loaded in their abstract form,
-        concretization will happen with the acctual circuit.
+        Args:
+            xml: The raw recipe XML to extract the data from
+            mtypes: The morphology types associated with the circuit
+            layers: The layer definitions
+            strict: Raise a ValueError a morphology type is not covered by the rules
+        Returns:
+            A multidimensional matrix, containing a one (1) for every
+            connection allowed. The dimensions correspond to the numeical
+            indices of layers and morphology types of source and
+            destination, as well as the rule type.
         """
-        self.rules = list(
-            recipe.load_group(
-                recipe.xml.find("TouchRules"),
-                TouchRule
-            )
-        )
-
-    def concretize_rules(self, circuit):
-        """Construct the conctrete form of the touch rules
-
-        Use information of the circuit to construct a rule matrix out of
-        the recipe information stored within the filter.
-        """
-        layers = circuit.layers
         layers_rev = {layer: i for i, layer in enumerate(layers)}
-
-        mtype = circuit.morphology_types
-        mtype_rev = {name: i for i, name in enumerate(mtype)}
+        mtype_rev = {name: i for i, name in enumerate(mtypes)}
 
         # dendrite mapping here is for historical purposes only, when we
         # distinguished only between soma and !soma.
@@ -74,34 +57,67 @@ class TouchRulesFilter(DatasetOperation):
             dtype="uint8"
         )
 
-        for rule in self.rules:
+        covered_types = set()
+
+        for rule in Recipe.load_group(xml.find("TouchRules"), cls):
             l1 = layers_rev[rule.fromLayer] if rule.fromLayer else slice(None)
             l2 = layers_rev[rule.toLayer] if rule.toLayer else slice(None)
             t1s = [slice(None)]
             t2s = [slice(None)]
             if rule.fromMType:
-                t1s = [mtype_rev[m] for m in fnmatch.filter(mtype, rule.fromMType)]
+                t1s = [mtype_rev[m] for m in fnmatch.filter(mtypes, rule.fromMType)]
+                covered_types.update(t1s)
             if rule.toMType:
-                t2s = [mtype_rev[m] for m in fnmatch.filter(mtype, rule.toMType)]
+                t2s = [mtype_rev[m] for m in fnmatch.filter(mtypes, rule.toMType)]
+                covered_types.update(t2s)
             rs = type_map[rule.type] if rule.type else [slice(None)]
 
             for t1 in t1s:
                 for t2 in t2s:
                     for r in rs:
                         touch_rule_matrix[l1, l2, t1, t2, r] = 1
+
+        not_covered = set(mtype_rev.values()) - covered_types
+        if not_covered:
+            msg = "No touch rules are covering: %s", ", ".join(mtypes[i] for i in not_covered)
+            if strict:
+                raise ValueError(msg)
+            else:
+                logger.warning(msg)
+                logger.warning("All corresponding touches will be trimmed!")
+
         return touch_rule_matrix
+
+
+class TouchRulesFilter(DatasetOperation):
+    """Filter touches based on recipe rules
+
+    Defined in the recipe as `TouchRules`, restrict connections between
+    mtypes, types (dendrite/soma), and layers.  Any touches not allowed are
+    removed.
+
+    This filter is deterministic.
+    """
+
+    _checkpoint = True
+
+    def __init__(self, recipe, neurons, morphos):
+        """Initilize the filter by parsing the recipe
+
+        The rules stored in the recipe are loaded in their abstract form,
+        concretization will happen with the acctual circuit.
+        """
+        self.rules = TouchRule.load(recipe.xml, neurons.mTypes, neurons.layers)
 
     def apply(self, circuit):
         """ .apply() method (runner) of the filter
         """
-        touch_rules = self.concretize_rules(circuit)
-
-        indices = list(touch_rules.shape)
+        indices = list(self.rules.shape)
         for i in reversed(range(len(indices) - 1)):
             indices[i] *= indices[i + 1]
 
         rdd = sm.parallelize(((i,)
-                              for i, v in enumerate(touch_rules.flatten())
+                              for i, v in enumerate(self.rules.flatten())
                               if v == 0), 200)
         rules = sm.createDataFrame(rdd, schema=["fail"])
         # For each neuron we require:

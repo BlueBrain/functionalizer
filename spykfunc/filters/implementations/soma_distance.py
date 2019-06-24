@@ -15,7 +15,7 @@ class SomaDistanceFilter(DatasetOperation):
     Removes all touches that are located within the soma.
     """
 
-    def __init__(self, recipe, morphos):
+    def __init__(self, recipe, neurons, morphos):
         self.__morphos = morphos
 
     def apply(self, circuit):
