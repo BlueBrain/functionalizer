@@ -74,14 +74,6 @@ _filename_ext = '.pyx' if BUILD_TYPE == 'DEVEL' else '.cpp'
 _ext_dir = osp.join(BASE_DIR, 'spykfunc/')
 
 ext_mods = {
-    'spykfunc.dataio.common': {},
-    'spykfunc.dataio.structbuf': {},
-    'spykfunc.dataio.cppneuron': dict(
-        include_dirs=[osp.join(BASE_DIR, 'deps/hadoken/include'),
-                      osp.join(BASE_DIR, 'deps/mvd-tool/include')],
-        library_dirs=[],
-        libraries=['hdf5']
-    ),
     'spykfunc.filters.udfs.binning': dict(
         include_dirs=[np.get_include()],
     ),
@@ -94,18 +86,6 @@ ext_mods = {
     ),
 }
 
-# Quick attempt find INCLUDE_DIRS required by cppneuron
-_libs_env = ['HDF5_ROOT', 'BOOST_ROOT', 'HIGHFIVE_ROOT']
-_cppneuron = 'spykfunc.dataio.cppneuron'
-for lib in _libs_env:
-    lib_ROOT = os.getenv(lib)
-    if lib_ROOT is not None and lib_ROOT != '/usr':
-        ext_mods[_cppneuron]['include_dirs'].append(os.path.join(lib_ROOT, "include"))
-        for _libdir in ('lib64', 'lib'):
-            full_libdir = osp.join(lib_ROOT, _libdir)
-            if(os.path.isdir(full_libdir)):
-                ext_mods[_cppneuron]['library_dirs'].append(full_libdir)
-
 extensions = [
     Extension(name, [name.replace('.', '/') + _filename_ext],
               language='c++',
@@ -116,15 +96,9 @@ extensions = [
 
 
 if BUILD_TYPE == 'DEVEL':
-    extensions.append(
-        Extension('tests.tst_neuron_memview',
-                  ['tests/tst_neuron_memview' + _filename_ext],
-                  language="c++"))
     extensions = cythonize(extensions,
                            cplus=True,
-                           build_dir="build",
-                           include_path=[osp.join(BASE_DIR, 'spykfunc/dataio/mvdtool'),
-                                         osp.join(BASE_DIR, 'deps/mvd-tool/python/include')])
+                           build_dir="build")
     for name in ext_mods:
         path = name.replace('.', '/') + '.cpp'
         src = osp.join("build", path)
@@ -179,6 +153,7 @@ def setup_package():
             'jprops',
             'lazy-property',
             'lxml',
+            'mvdtool>=2',
             'numpy',
             'pandas',
             'pathlib2;python_version<"3.4"',

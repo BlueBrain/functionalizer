@@ -146,7 +146,6 @@ class SynapseProperties(DatasetOperation):
         )
         return extended_touches
 
-
     def convert_properties(self, circuit, map_ids=False):
         """Loader for SynapsesProperties
         """

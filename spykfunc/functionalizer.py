@@ -11,9 +11,8 @@ from . import utils
 from .filters import DatasetOperation
 from .circuit import Circuit
 from .recipe import Recipe
-from .data_loader import NeuronDataSpark
+from .data_loader import NeuronData
 from .data_export import NeuronExporter, SortBy
-from .dataio.cppneuron import MVD_Morpho_Loader
 from .definitions import CellClass, CheckpointPhases
 from .utils.checkpointing import checkpoint_resume
 from .utils.filesystem import adjust_for_spark, autosense_hdfs
@@ -114,7 +113,7 @@ class Functionalizer(object):
         self.recipe = Recipe(recipe_file)
 
         # Load Neurons data
-        fdata = NeuronDataSpark(MVD_Morpho_Loader(mvd_file, morpho_dir), self._config.cache_dir)
+        fdata = NeuronData(mvd_file, morpho_dir, self._config.cache_dir)
         fdata.load_mvd_neurons_morphologies()
 
         # Init the Enumeration to contain fzer CellClass index
@@ -223,7 +222,7 @@ class Functionalizer(object):
                 total_t = self.circuit.touches.count()
                 n_parts = (total_t // (1024 * 1024)) or 1
             exporter.export_hdf5(self.circuit.touches,
-                                 self.circuit.neuron_count,
+                                 len(self.circuit.data),
                                  create_efferent=False,
                                  n_partitions=n_parts)
         else:

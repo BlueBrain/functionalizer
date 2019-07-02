@@ -99,12 +99,6 @@ class Circuit(object):
         return self.__neuron_data.neuronDF
 
     @property
-    def neuron_count(self):
-        """:property: the number of neurons loaded
-        """
-        return int(self.__neuron_data.nNeurons)
-
-    @property
     def morphologies(self):
         """:property: morphology DB
         """

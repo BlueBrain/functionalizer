@@ -28,8 +28,8 @@ NEURON_SCHEMA = T.StructType([
     T.StructField("morphology_i", T.IntegerType(), False),
     T.StructField("syn_class_i", T.ShortType(), False),
     T.StructField("layer", T.ShortType(), False),
-    T.StructField("position", T.ArrayType(T.DoubleType(), False), False),
-    T.StructField("rotation", T.ArrayType(T.DoubleType(), False), False),
+    # T.StructField("position", T.ArrayType(T.DoubleType(), False), False),
+    # T.StructField("rotation", T.ArrayType(T.DoubleType(), False), False),
 ])
 
 TOUCH_SCHEMA_V1 = T.StructType([

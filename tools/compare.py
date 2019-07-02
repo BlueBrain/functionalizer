@@ -29,8 +29,8 @@ def run():
     base = pd.read_parquet(args.baseline)
     comp = pd.read_parquet(args.comparison)
 
-    circuit = mvdtool.MVD3File(args.circuit.encode())
-    mtypes = pd.DataFrame({'mtype': circuit.getMtypes()})
+    circuit = mvdtool.MVD3.File(args.circuit.encode())
+    mtypes = pd.DataFrame({'mtype': circuit.all_mtypes})
 
     base = base.join(mtypes, on='connected_neurons_pre')
     base = base.join(mtypes,
