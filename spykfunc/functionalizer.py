@@ -117,7 +117,7 @@ class Functionalizer(object):
         fdata.load_mvd_neurons_morphologies()
 
         # Init the Enumeration to contain fzer CellClass index
-        CellClass.init_fzer_indexes(fdata.cellClasses)
+        CellClass.initialize_indices(fdata.cellClasses)
 
         # Verify required morphologies are available
         if self._config.no_morphos:

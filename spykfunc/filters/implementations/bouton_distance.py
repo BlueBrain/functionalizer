@@ -6,11 +6,13 @@ from spykfunc.definitions import CellClass
 
 
 class InitialBoutonDistance(GenericProperty):
-    """Info/filter for Synapses Bouton Distance"""
+    """Info/filter for Synapses Bouton Distance
+    """
+
     # implies _supported_attrs
     _map_attrs = {
-        'defaultInhSynapsesDistance': 'inhibitorySynapsesDistance',
-        'defaultExcSynapsesDistance': 'excitatorySynapsesDistance'
+        "defaultInhSynapsesDistance": "inhibitorySynapsesDistance",
+        "defaultExcSynapsesDistance": "excitatorySynapsesDistance",
     }
     inhibitorySynapsesDistance = 5.0
     excitatorySynapsesDistance = 25.0
@@ -23,12 +25,13 @@ class InitialBoutonDistance(GenericProperty):
 
     @classmethod
     def load(cls, xml):
+        """Extract a bouton distance classification object from XML
+        """
         fragment = xml.find("InitialBoutonDistance")
         if hasattr(fragment, "items"):
             infos = {k: v for k, v in fragment.items()}
             return cls(**infos)
-        else:
-            return cls()
+        return cls()
 
 
 class BoutonDistanceFilter(DatasetOperation):
@@ -45,27 +48,30 @@ class BoutonDistanceFilter(DatasetOperation):
         """Apply filter
         """
         # Use broadcast of Neuron version
-        return circuit.df.where("(distance_soma >= %f AND dst_syn_class_i = %d) OR "
-                                "(distance_soma >= %f AND dst_syn_class_i = %d)" % (
-                                    self.distances.inhibitorySynapsesDistance,
-                                    CellClass.INH.fzer_index,
-                                    self.distances.excitatorySynapsesDistance,
-                                    CellClass.EXC.fzer_index)
-                                )
+        return circuit.df.where(
+            "(distance_soma >= {:f} AND dst_syn_class_i = {:d}) OR "
+            "(distance_soma >= {:f} AND dst_syn_class_i = {:d})".format(
+                self.distances.inhibitorySynapsesDistance,
+                getattr(CellClass.INH, "index", -1),
+                self.distances.excitatorySynapsesDistance,
+                getattr(CellClass.EXC, "index", -1),
+            )
+        )
 
 
 class BoutonDistanceReverseFilter(BoutonDistanceFilter):
-    """
-    Reverse version of Bouton Distance filter, only keeping outliers.
+    """Reverse version of Bouton Distance filter, only keeping outliers.
     """
 
     _visible = False
 
     def apply(self, circuit):
-        return circuit.df.where("(distance_soma < %f AND dst_syn_class_i = %d) OR "
-                                "(distance_soma < %f AND dst_syn_class_i = %d)" % (
-                                    self.distances.inhibitorySynapsesDistance,
-                                    self.synapse_classes_indexes[CellClass.CLASS_INH],
-                                    self.distances.excitatorySynapsesDistance,
-                                    self.synapse_classes_indexes[CellClass.CLASS_EXC])
-                                )
+        return circuit.df.where(
+            "(distance_soma < {:f} AND dst_syn_class_i = {:d}) OR "
+            "(distance_soma < {:f} AND dst_syn_class_i = {:d})".format(
+                self.distances.inhibitorySynapsesDistance,
+                getattr(CellClass.INH, "index", -1),
+                self.distances.excitatorySynapsesDistance,
+                getattr(CellClass.EXC, "index", -1),
+            )
+        )

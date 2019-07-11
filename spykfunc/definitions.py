@@ -27,18 +27,18 @@ class CellClass(Enum):
         return self.value
 
     @classmethod
-    def init_fzer_indexes(cls, vec):
+    def initialize_indices(cls, vec):
         for i, name in enumerate(vec):
-            cls[name].fzer_index = i
+            cls[name].index = i
 
     @classmethod
-    def from_fzer_index(cls, i):
+    def from_index(cls, i):
         for cc in cls:
             if cc is cls.NONE:
                 continue
-            if not hasattr(cc, "fzer_index"):
-                raise RuntimeError("CellClass indexes no available. Please init_fzer_indexes()")
-            if cc.fzer_index == i:
+            if not hasattr(cc, "index"):
+                raise RuntimeError("CellClass indices no available. Please initialize_indices()")
+            if cc.index == i:
                 return cc
         return cls.NONE
 
