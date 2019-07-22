@@ -1,0 +1,6 @@
+<my_bad_recipe>
+  <SynapsesProperties neuralTransmitterReleaseDelay="0.1" axonalConductionVelocity="300.0">
+    <synapse fromSClass="EXC" toSClass="EXC" type="E2" />
+    <synapse fromSClass="INH" toSClass="INH" type="my_I2" />
+  </SynapsesProperties>
+</my_bad_recipe>

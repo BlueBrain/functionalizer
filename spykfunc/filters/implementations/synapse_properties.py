@@ -43,6 +43,12 @@ class SynapsesProperty(GenericProperty):
     _supported_attrs = [k for k in locals().keys()
                         if not k.startswith("_")]
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        if self.type[0] not in "EI":
+            raise ValueError(f"Synapse type needs to start with either 'E' or 'I'")
+
 
 class SynapsesClassification(GenericProperty):
     """Class representing a Synapse Classification"""
