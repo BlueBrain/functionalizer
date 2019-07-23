@@ -40,8 +40,12 @@ class SynapsesProperty(GenericProperty):
     type = ""
     neuralTransmitterReleaseDelay = 0.1
     axonalConductionVelocity = 300
+
+    _name = "SynapsesProperties"
     _supported_attrs = [k for k in locals().keys()
                         if not k.startswith("_")]
+    _supported_defaults = ["neuralTransmitterReleaseDelay",
+                           "axonalConductionVelocity",]
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

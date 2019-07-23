@@ -31,9 +31,14 @@ class GenericProperty(object):
 
     # We keep the index in which entries are declared
     _supported_attrs = ("_i",)
+    # Attributes that may change their defaults globally in the recipe
+    _supported_defaults = []
+
     _warn_missing_attrs = ()
     # allow to rename attributes
     _map_attrs = dict()
+    # allow recipe to be optional
+    _required = True
 
     def __init__(self, **rules):
         all_attrs = set(self._supported_attrs) | set(self._map_attrs.keys())
@@ -94,6 +99,18 @@ class GenericProperty(object):
                          for n in all_attrs if n != '_i')
         return '<{cls_name} {attrs}>'.format(cls_name=type(self).__name__, attrs=attrs)
 
+    @classmethod
+    def load(cls, xml):
+        """Load a list of properties defined by the class
+        """
+        e = xml.find(getattr(cls, "_name", cls.__name__))
+        for k, v in e.attrib.items():
+            if hasattr(cls, k) and k in getattr(cls, "_supported_defaults", []):
+                setattr(cls, k, cls._convert_type(v))
+            else:
+                raise ValueError(f"Default value for attribute {k} in {cls.__name__} not supported")
+        return list(Recipe.load_group(e, cls, cls._required))
+
 
 class Recipe(object):
     """Class holding Recipe information"""
@@ -126,9 +143,11 @@ class Recipe(object):
         :param item_cls: target class to convert the XML elements to
         :param required: allow the list of XML elements to be optional
         """
-        if items is None and not required:
-            logger.warn("skipping conversion of %s items (not required)", item_cls.__name__)
-            return
+        if items is None:
+            if not required:
+                logger.warn("skipping conversion of %s items (not required)", item_cls.__name__)
+                return
+            raise AttributeError(f"Cannot find required recipe component for {item_cls.__name__}")
         # Some fields are referred to by their index. We pick it here
         for i, item in enumerate(items):
             yield cls._check_convert(item, item_cls, i)

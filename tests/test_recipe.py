@@ -24,14 +24,20 @@ MTYPES = [
 ]
 
 
+def recipe(stub: str) -> Recipe:
+    """Centralized recipe location handling
+    """
+    return Recipe(str(Path(__file__).parent / "recipes" / (stub + ".xml")))
+
+
 @pytest.fixture
 def bad_recipe():
-    return Recipe(str(Path(__file__).parent / "v5builderRecipeAllPathways_faulty.xml"))
+    return recipe("faulty")
 
 
 @pytest.fixture
 def good_recipe():
-    return Recipe(str(Path(__file__).parent / "v5builderRecipeAllPathways.xml"))
+    return recipe("v5")
 
 
 def test_load_xml(good_recipe):
@@ -55,10 +61,20 @@ def test_syn_distances():
 def test_syn_properties(good_recipe, bad_recipe):
     """Test that the `type` referred to by the recipe starts with either E or I
     """
-    list(good_recipe.load_group(good_recipe.xml.find("SynapsesProperties"), SP))
-    # caplog.clear()
+    props = SP.load(good_recipe.xml)
+    assert len(props) == 75
+    assert all(p.axonalConductionVelocity == 300 for p in props)
+    assert all(p.neuralTransmitterReleaseDelay == 0.1 for p in props)
+
     with pytest.raises(ValueError):
-        list(bad_recipe.load_group(bad_recipe.xml.find("SynapsesProperties"), SP))
+        SP.load(bad_recipe.xml)
+
+    props = SP.load(recipe("synapse_properties").xml)
+    assert props[0].axonalConductionVelocity == 666
+    assert props[0].neuralTransmitterReleaseDelay == -13
+
+    assert props[-1].axonalConductionVelocity == 123
+    assert props[-2].neuralTransmitterReleaseDelay == 0
 
 
 def test_syn_distances_repr():

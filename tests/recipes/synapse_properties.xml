@@ -1,0 +1,9 @@
+<some_xml_here>
+  <SynapsesProperties neuralTransmitterReleaseDelay="-13" axonalConductionVelocity="666">
+    <synapse fromSClass="EXC" toSClass="EXC" type="E2" />
+    <synapse fromSClass="INH" toSClass="INH" type="I2" />
+
+    <synapse fromSClass="EXC" toSClass="INH" type="E2_INH" neuralTransmitterReleaseDelay="0"/>
+    <synapse fromSClass="INH" toSClass="EXC" type="I2" axonalConductionVelocity="123"/>
+  </SynapsesProperties>
+</some_xml_here>

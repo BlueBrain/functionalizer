@@ -487,7 +487,7 @@ So, for the recipe, after I exclude the 1 CRC cell, the 2 excitatory cells, and 
 
 	<Seeds recipeSeed="837632" columnSeed="2906729" synapseSeed="4236279"/>
 
-	<SynapsesProperties neuralTransmitterReleaseDelay="0.1" axonalConductionVelocity="300.0">
+	<SynapsesProperties>
 		<synapse fromSClass="EXC" toSClass="EXC" type="E2" />
 		<synapse fromSClass="INH" toSClass="INH" type="I2" />
 
