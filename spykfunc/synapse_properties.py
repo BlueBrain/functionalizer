@@ -77,7 +77,7 @@ def compute_additional_h5_fields(circuit, reduced, syn_class_matrix, syn_props_d
     # Compute #1: delaySomaDistance
     touches = touches.withColumn(
         "axonal_delay",
-        F.expr("conn.neuralTransmitterReleaseDelay + distance_soma * conn.axonalConductionVelocity")
+        F.expr("conn.neuralTransmitterReleaseDelay + distance_soma / conn.axonalConductionVelocity")
         .cast(T.FloatType())
     )
 

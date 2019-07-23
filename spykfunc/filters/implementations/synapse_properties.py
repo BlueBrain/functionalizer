@@ -39,7 +39,7 @@ class SynapsesProperty(GenericProperty):
     toEType = None
     type = ""
     neuralTransmitterReleaseDelay = 0.1
-    axonalConductionVelocity = 0.00333  # TODO: or 300?
+    axonalConductionVelocity = 300
     _supported_attrs = [k for k in locals().keys()
                         if not k.startswith("_")]
 
