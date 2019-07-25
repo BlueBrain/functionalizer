@@ -22,14 +22,14 @@ class SomaDistanceFilter(DatasetOperation):
         """Remove touches within the soma.
         """
         soma_radius = self._create_soma_radius_udf()
-        radii = circuit.neurons.select('morphology_i') \
+        radii = circuit.neurons.select('morphology') \
                                .distinct() \
                                .withColumn('radius_soma',
-                                           soma_radius(F.col('morphology_i'))) \
-                               .withColumnRenamed('morphology_i', 'dst_morphology_i')
+                                           soma_radius(F.col('morphology'))) \
+                               .withColumnRenamed('morphology', 'dst_morphology')
         _n_parts = max(radii.rdd.getNumPartitions() // 20, 100)
         radii = cache_broadcast_single_part(radii, parallelism=_n_parts)
-        return circuit.df.join(radii, 'dst_morphology_i') \
+        return circuit.df.join(radii, 'dst_morphology') \
                          .where(F.col('distance_soma') >= F.col('radius_soma')) \
                          .drop('radius_soma')
 

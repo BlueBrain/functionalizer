@@ -222,17 +222,13 @@ class MorphologyDB(object):
     :param str db_path: directory that contains the morphologies as .h5
     :param list(str) mapping: a list of morphologies to associate with the indices
     """
-    def __init__(self, db_path, mapping):
+    def __init__(self, db_path: str):
         self.db_path = Path(db_path)
         self._db = {}
-        self._mapping = mapping
 
-    def __getitem__(self, morpho):
-        if not isinstance(morpho, str):
-            morpho = self._mapping[morpho]
-        path = str(self.db_path / (morpho + ".h5"))
-        return Morphology(path)
+    def __getitem__(self, morpho: str):
         item = self._db.get(morpho)
         if not item:
+            path = str(self.db_path / (morpho + ".h5"))
             item = self._db[morpho] = Morphology(path)
         return item

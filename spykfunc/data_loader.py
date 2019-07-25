@@ -32,8 +32,8 @@ def _create_loader(filename):
     @F.pandas_udf(schema.NEURON_SCHEMA, F.PandasUDFType.GROUPED_MAP)
     def loader(data):
         assert(len(data) == 1)
-        from mvdtool import MVD3
-        fd = MVD3.File(filename)
+        import mvdtool
+        fd = mvdtool.open(filename)
         start, end = data.iloc[0]
         count = end - start
         return pd.DataFrame(
@@ -41,9 +41,8 @@ def _create_loader(filename):
                 id=range(start, end),
                 mtype_i=fd.raw_mtypes(start, count),
                 etype_i=fd.raw_etypes(start, count),
-                morphology_i=fd.raw_morphologies(start, count),
+                morphology=fd.morphologies(start, count),
                 syn_class_i=fd.raw_synapse_classes(start, count),
-                layer=fd.layers(start, count)
             )
         )
     return loader
@@ -53,14 +52,13 @@ class NeuronData:
     """Neuron data loading facilities
     """
 
-    NEURON_COLUMNS_TO_DROP = ['layer']
     PARTITION_SIZE = 20000
 
     def __init__(self, filename, morphologies, cache):
-        from mvdtool import MVD3
+        import mvdtool
         self._cache = cache
         self._filename = filename
-        self._mvd = MVD3.File(self._filename)
+        self._mvd = mvdtool.open(self._filename)
         self._morphopath = morphologies
 
         if not os.path.isdir(self._cache):
@@ -77,12 +75,6 @@ class NeuronData:
         """All electrophysiology types present in the circuit
         """
         return self._mvd.all_etypes
-
-    @LazyProperty
-    def morphologies(self):
-        """All morphologies present in the circuit
-        """
-        return self._mvd.all_morphologies
 
     @LazyProperty
     def cellClasses(self):
@@ -114,15 +106,14 @@ class NeuronData:
     def etype_df(self):
         return self._to_df(self.eTypes, ["etype_i", "etype_name"])
 
-    def load_mvd_neurons_morphologies(self, neuron_filter=None, **kwargs):
-        self._load_mvd_neurons(neuron_filter, **kwargs)
+    def load_neurons_morphologies(self, neuron_filter=None, **kwargs):
+        self._load_neurons(neuron_filter, **kwargs)
         # Morphologies are loaded lazily by the MorphologyDB object
         self.morphologyDB = BroadcastValue(
-            MorphologyDB(self._morphopath,
-                         dict(enumerate(self.morphologies)))
+            MorphologyDB(self._morphopath)
         )
 
-    def _load_mvd_neurons(self, neuron_filter=None):
+    def _load_neurons(self, neuron_filter=None):
         fn = self._filename
         sha = hashlib.sha256()
         sha.update(os.path.realpath(fn).encode())
@@ -137,13 +128,12 @@ class NeuronData:
         )
 
         if os.path.exists(mvd_parquet):
-            logger.info("Loading MVD from parquet")
+            logger.info("Loading circuit from parquet")
             mvd = sm.read.parquet(adjust_for_spark(mvd_parquet, local=True)).cache()
-            self.layers = tuple(sorted(r.layer for r in mvd.select('layer').distinct().collect()))
-            self.neuronDF = F.broadcast(mvd.drop(*self.NEURON_COLUMNS_TO_DROP))
+            self.neuronDF = F.broadcast(mvd)
             self.neuronDF.count()  # force materialize
         else:
-            logger.info("Building MVD from raw mvd files")
+            logger.info("Building circuit from raw mvd files")
             total_parts = len(self) // self.PARTITION_SIZE + 1
             logger.debug("Partitions: %d", total_parts)
 
@@ -159,18 +149,15 @@ class NeuronData:
             # Create DF
             logger.info("Creating data frame...")
             raw_mvd = parts.groupby("start", "end").apply(_create_loader(self._filename))
-            self.layers = tuple(sorted(r.layer for r in raw_mvd.select('layer').distinct().collect()))
-            layers = sm.createDataFrame(enumerate(self.layers), schema.LAYER_SCHEMA)
 
             # Evaluate (build partial NameMaps) and store
-            mvd = raw_mvd.join(layers, "layer") \
-                         .write.mode('overwrite') \
+            mvd = raw_mvd.write.mode('overwrite') \
                          .parquet(adjust_for_spark(mvd_parquet, local=True))
             raw_mvd.unpersist()
 
             # Mark as "broadcastable" and cache
             self.neuronDF = F.broadcast(
-                sm.read.parquet(adjust_for_spark(mvd_parquet)).drop(*self.NEURON_COLUMNS_TO_DROP)
+                sm.read.parquet(adjust_for_spark(mvd_parquet))
             ).cache()
 
     @staticmethod

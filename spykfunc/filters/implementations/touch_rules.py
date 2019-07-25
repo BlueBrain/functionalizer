@@ -16,29 +16,25 @@ logger = get_logger(__name__)
 class TouchRule(GenericProperty):
     """Class representing a Touch rule"""
 
-    _supported_attrs = {'fromLayer', 'toLayer', 'fromMType', 'toMType', 'type'}
-    fromLayer = None
-    toLayer = None
+    _supported_attrs = {'fromMType', 'toMType', 'type'}
     fromMType = None
     toMType = None
     type = ""
 
     @classmethod
-    def load(cls, xml, mtypes, layers, *, strict=False):
+    def load(cls, xml, mtypes, *, strict=False):
         """Construct touch rule matrix
 
         Args:
             xml: The raw recipe XML to extract the data from
             mtypes: The morphology types associated with the circuit
-            layers: The layer definitions
             strict: Raise a ValueError a morphology type is not covered by the rules
         Returns:
             A multidimensional matrix, containing a one (1) for every
             connection allowed. The dimensions correspond to the numeical
-            indices of layers and morphology types of source and
-            destination, as well as the rule type.
+            indices of morphology types of source and destination, as well
+            as the rule type.
         """
-        layers_rev = {layer: i for i, layer in enumerate(layers)}
         mtype_rev = {name: i for i, name in enumerate(mtypes)}
 
         # dendrite mapping here is for historical purposes only, when we
@@ -52,16 +48,13 @@ class TouchRule(GenericProperty):
         }
 
         touch_rule_matrix = np.zeros(
-            shape=(len(layers_rev), len(layers_rev),
-                   len(mtype_rev), len(mtype_rev), 4),
+            shape=(len(mtype_rev), len(mtype_rev), 4),
             dtype="uint8"
         )
 
         covered_types = set()
 
         for rule in Recipe.load_group(xml.find("TouchRules"), cls):
-            l1 = layers_rev[rule.fromLayer] if rule.fromLayer else slice(None)
-            l2 = layers_rev[rule.toLayer] if rule.toLayer else slice(None)
             t1s = [slice(None)]
             t2s = [slice(None)]
             if rule.fromMType:
@@ -75,7 +68,7 @@ class TouchRule(GenericProperty):
             for t1 in t1s:
                 for t2 in t2s:
                     for r in rs:
-                        touch_rule_matrix[l1, l2, t1, t2, r] = 1
+                        touch_rule_matrix[t1, t2, r] = 1
 
         not_covered = set(mtype_rev.values()) - covered_types
         if not_covered:
@@ -93,8 +86,7 @@ class TouchRulesFilter(DatasetOperation):
     """Filter touches based on recipe rules
 
     Defined in the recipe as `TouchRules`, restrict connections between
-    mtypes, types (dendrite/soma), and layers.  Any touches not allowed are
-    removed.
+    mtypes and types (dendrite/soma).  Any touches not allowed are removed.
 
     This filter is deterministic.
     """
@@ -107,7 +99,7 @@ class TouchRulesFilter(DatasetOperation):
         The rules stored in the recipe are loaded in their abstract form,
         concretization will happen with the acctual circuit.
         """
-        self.rules = TouchRule.load(recipe.xml, neurons.mTypes, neurons.layers)
+        self.rules = TouchRule.load(recipe.xml, neurons.mTypes)
 
     def apply(self, circuit):
         """ .apply() method (runner) of the filter
@@ -121,9 +113,7 @@ class TouchRulesFilter(DatasetOperation):
                               if v == 0), 200)
         rules = sm.createDataFrame(rdd, schema=["fail"])
         # For each neuron we require:
-        # - preLayer
         # - preMType
-        # - postLayer
         # - postMType
         # - postBranchType
         #
@@ -136,10 +126,8 @@ class TouchRulesFilter(DatasetOperation):
             touches = touches.withColumn('branch_type',
                                          (touches.post_section > 0).cast('integer'))
         return touches.withColumn("fail",
-                                  touches.src_layer_i * indices[1] +
-                                  touches.dst_layer_i * indices[2] +
-                                  touches.src_mtype_i * indices[3] +
-                                  touches.dst_mtype_i * indices[4] +
+                                  touches.src_mtype_i * indices[1] +
+                                  touches.dst_mtype_i * indices[2] +
                                   touches.branch_type) \
                       .join(F.broadcast(rules), "fail", "left_anti") \
                       .drop("fail")

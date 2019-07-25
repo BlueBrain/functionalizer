@@ -52,7 +52,7 @@ def _create_parser():
         formatter_class=_Formatter
     )
     parser.add_argument("recipe_file", help="the XML recipe file")
-    parser.add_argument("mvd_file",    help="the input mvd file")
+    parser.add_argument("circuit_file",    help="the input circuit file")
     parser.add_argument("morpho_dir",  help="the H5 morphology database directory")
     parser.add_argument("touch_files",
                         help="the touch files (parquets); "
@@ -84,7 +84,7 @@ def _create_parser():
     goutput = parser.add_argument_group("output options")
     goutput.add_argument("--cache-dir",
                          help="specify directory to cache circuits converted to parquet, "
-                              "defaults to OUTPUT_DIR/_mvd")
+                              "defaults to OUTPUT_DIR/_circuits")
     goutput.add_argument("--checkpoint-dir",
                          help="specify directory to store checkpoints, "
                               "defaults to OUTPUT_DIR/_checkpoints")

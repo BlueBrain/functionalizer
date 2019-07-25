@@ -38,8 +38,7 @@ RADII = [
 @pytest.fixture
 def morphos():
     return MorphologyDB(
-        Path(__file__).parent / "circuit_1000n" / "morphologies" / "h5",
-        defaultdict(int))
+        Path(__file__).parent / "circuit_1000n" / "morphologies" / "h5")
 
 
 def test_branch_lengths(morphos):

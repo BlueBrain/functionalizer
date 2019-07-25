@@ -145,7 +145,7 @@ def patch_ChC_SPAA_cells(circuit, morphology_db, pathways_to_patch):
             "new_post_section",
              get_axon_section_id(circuit.reposition,
                                  circuit.post_section,
-                                 circuit.dst_morphology_i)
+                                 circuit.dst_morphology)
         )
         .withColumn("new_post_segment",
                     F.when(circuit.reposition, 0).otherwise(circuit.post_segment))

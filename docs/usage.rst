@@ -37,13 +37,13 @@ See the output of the help for detailed information:
                    [--checkpoint-dir CHECKPOINT_DIR] [--output-dir OUTPUT_DIR]
                    [-c CONFIGURATION] [-p OVERRIDES] [--dump-configuration]
                    [--overwrite [{F,E}]] [--no-morphos]
-                   recipe_file mvd_file morpho_dir touch_files [touch_files ...]
+                   recipe_file circuit_file morpho_dir touch_files [touch_files ...]
 
    spykfunc is a pyspark implementation of functionalizer.
 
    positional arguments:
      recipe_file           the XML recipe file
-     mvd_file              the input mvd file
+     circuit_file          the input mvd file
      morpho_dir            the H5 morphology database directory
      touch_files           the touch files (parquets); a litertal blob expression
                            is also accepted.
@@ -68,7 +68,7 @@ See the output of the help for detailed information:
                            'Functionalizer'
      --cache-dir CACHE_DIR
                            specify directory to cache circuits converted to
-                           parquet, defaults to OUTPUT_DIR/_mvd
+                           parquet, defaults to OUTPUT_DIR/_circuits
      --checkpoint-dir CHECKPOINT_DIR
                            specify directory to store checkpoints, defaults to
                            OUTPUT_DIR/_checkpoints

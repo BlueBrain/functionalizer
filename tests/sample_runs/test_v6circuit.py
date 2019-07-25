@@ -4,7 +4,7 @@ from os import path
 BASE_DIR = path.expanduser("~/dev/TestData/S1HL-200um")
 args = (
     path.join(BASE_DIR, "builderRecipeAllPathways.xml"),  # recipe_file
-    path.join(BASE_DIR, "circuit.mvd3"),                         # mvd_file
+    path.join(BASE_DIR, "circuit.mvd3"),                         # circuit_file
     BASE_DIR,                                                    # morpho_dir
     path.join(BASE_DIR, "touches/touchesData.*.parquet")         # touch files
 )

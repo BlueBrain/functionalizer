@@ -22,12 +22,6 @@ class TestFilters(object):
     """Sequential tests of filters.
     """
 
-    def test_neuron_columns(self, fz):
-        """Test that non-essential columns are not broadcasted
-        """
-        assert 'layer' not in fz.circuit.neurons.columns
-        assert 'morphology' not in fz.circuit.neurons.columns
-
     def test_distance(self, fz):
         """Test the distance rules: deterministic
         """

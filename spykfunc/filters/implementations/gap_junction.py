@@ -76,7 +76,9 @@ class GapJunctionFilter(DatasetOperation):
             jid1 = data.pre_junction.values
             jid2 = data.post_junction.values
 
-            morphos = data.src_morphology_i.values
+            # This may be passed to us from pyspark as object type,
+            # breaking numpy.unique.
+            morphos = numpy.asarray(data.src_morphology.values, dtype="U")
             activated = numpy.zeros_like(src, dtype=bool)
             distances = numpy.zeros_like(src, dtype=float)
 

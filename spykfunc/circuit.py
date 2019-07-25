@@ -87,12 +87,6 @@ class Circuit(object):
         return self.__neuron_data.eTypes
 
     @property
-    def layers(self):
-        """:property: the layers of the current circuit
-        """
-        return self.__neuron_data.layers
-
-    @property
     def neurons(self):
         """:property: neuron data as a Spark dataframe
         """

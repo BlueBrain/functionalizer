@@ -11,7 +11,7 @@ Overview and Examples
    '0.9.0'
 
    >>> spykfunc.session?
-   Signature: spykfunc.session(recipe, mvd_file, first_touch, properties=None, …)
+   Signature: spykfunc.session(recipe, circuit_file, first_touch, properties=None, …)
    Docstring: Creates and Initializes a Functionalizer session
    :returns: A :py:class:`~spykfunc.Functionalizer` instance
 

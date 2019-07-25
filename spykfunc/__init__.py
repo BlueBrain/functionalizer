@@ -47,14 +47,14 @@ def functionalizer_new():
     return Functionalizer()
 
 
-def session(recipe, mvd_file, morphologies, touch_files, **opts):
+def session(recipe, circuit_file, morphologies, touch_files, **opts):
     """ Creates and Initializes a Functionalizer session
 
     :returns: A :py:class:`~spykfunc.Functionalizer` instance
     """
     from .commands import arg_parser
     from .functionalizer import session
-    args = (recipe, mvd_file, morphologies)
+    args = (recipe, circuit_file, morphologies)
     if isinstance(touch_files, str):
         args = args + (touch_files,)
     else:

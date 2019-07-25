@@ -45,7 +45,7 @@ class _SpykfuncOptions:
             hdfs_p = '/_spykfunc_{date}/checkpoints'
             self.checkpoint_dir = autosense_hdfs(local_p, hdfs_p)
         if self.cache_dir is None:
-            self.cache_dir = os.path.join(self.output_dir, "_mvd")
+            self.cache_dir = os.path.join(self.output_dir, "_circuits")
         if self.properties is None:
             self.properties = utils.Configuration(outdir=self.output_dir,
                                                   filename=filename,
@@ -95,12 +95,12 @@ class Functionalizer(object):
     # Data loading and Init
     # -------------------------------------------------------------------------
     @sm.assign_to_jobgroup
-    def init_data(self, recipe_file, mvd_file, morpho_dir, touch_files):
+    def init_data(self, recipe_file, circuit_file, morpho_dir, touch_files):
         """ Initializes all data for a Functionalizer session, reading MVDs, morphologies, recipe,
         and making all conversions
 
         :param recipe_file: The recipe file (XML)
-        :param mvd_file: The mvd file
+        :param circuit_file: The mvd file
         :param morpho_dir: The dir containing all required morphologies
         :param touch_files: A list of touch files. A single globbing expression can be specified as well"
         """
@@ -113,8 +113,8 @@ class Functionalizer(object):
         self.recipe = Recipe(recipe_file)
 
         # Load Neurons data
-        fdata = NeuronData(mvd_file, morpho_dir, self._config.cache_dir)
-        fdata.load_mvd_neurons_morphologies()
+        fdata = NeuronData(circuit_file, morpho_dir, self._config.cache_dir)
+        fdata.load_neurons_morphologies()
 
         # Init the Enumeration to contain fzer CellClass index
         CellClass.initialize_indices(fdata.cellClasses)
@@ -123,17 +123,6 @@ class Functionalizer(object):
         if self._config.no_morphos:
             logger.info("Running in no-morphologies mode. No ChC cells handling performed.")
             filters.SynapseProperties._morphologies = False
-        else:
-            expected = set(os.path.basename(fn) + '.h5' for fn in fdata.morphologies)
-            directories = set(os.path.dirname(fn) for fn in fdata.morphologies)
-            for dirname in directories:
-                expected.difference_update(set(os.listdir(os.path.join(morpho_dir, dirname))))
-            if len(expected) > 0:
-                logger.error("Some morphologies could not be located. Missing:\n\t" +
-                             " ".join(expected) + "\n"
-                             "Please provide a valid morphology path or restart with --no-morphos")
-                raise ValueError("Morphologies missing")
-            logger.debug("All morphology files found")
 
         # 'Load' touches
         touches = fdata.load_touch_parquet(*touch_files) \
@@ -250,5 +239,5 @@ def session(options):
     """
     args = vars(options)
     fzer = Functionalizer(**args)
-    fzer.init_data(options.recipe_file, options.mvd_file, options.morpho_dir, options.touch_files)
+    fzer.init_data(options.recipe_file, options.circuit_file, options.morpho_dir, options.touch_files)
     return fzer

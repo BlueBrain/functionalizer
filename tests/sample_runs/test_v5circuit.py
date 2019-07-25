@@ -5,7 +5,7 @@ CIRCUIT_v5_30k = path.expanduser("~/scratch/O0.v5")
 
 args = (
     path.join(CIRCUIT_v5_30k, "builderRecipeAllPathways2.xml"),  # recipe_file
-    path.join(CIRCUIT_v5_30k, "circuit.mvd3"),                   # mvd_file
+    path.join(CIRCUIT_v5_30k, "circuit.mvd3"),                   # circuit_file
     path.join(CIRCUIT_v5_30k, "morphologies/h5"),                # morpho_dir
     path.join(CIRCUIT_v5_30k, "touches/touchesData.*.parquet")   # touch_file0
 )

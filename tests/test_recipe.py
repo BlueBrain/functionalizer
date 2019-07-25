@@ -94,7 +94,7 @@ def test_syn_distances_repr():
 def test_touch_rules(good_recipe):
     """Test touch rules: make sure that all morphology types are covered.
     """
-    TR.load(good_recipe.xml, MTYPES, [])
+    TR.load(good_recipe.xml, MTYPES)
     # caplog.clear()
     with pytest.raises(ValueError):
-        TR.load(good_recipe.xml, MTYPES + ["FOOBAR"], [], strict=True)
+        TR.load(good_recipe.xml, MTYPES + ["FOOBAR"], strict=True)

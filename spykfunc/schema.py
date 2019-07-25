@@ -25,9 +25,9 @@ NEURON_SCHEMA = T.StructType([
     T.StructField("id", T.IntegerType(), False),
     T.StructField("mtype_i", T.ShortType(), False),
     T.StructField("etype_i", T.ShortType(), False),
-    T.StructField("morphology_i", T.IntegerType(), False),
+    T.StructField("morphology", T.StringType(), False),
     T.StructField("syn_class_i", T.ShortType(), False),
-    T.StructField("layer", T.ShortType(), False),
+    # T.StructField("layer", T.ShortType(), False),
     # T.StructField("position", T.ArrayType(T.DoubleType(), False), False),
     # T.StructField("rotation", T.ArrayType(T.DoubleType(), False), False),
 ])

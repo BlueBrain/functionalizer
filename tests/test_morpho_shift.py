@@ -11,15 +11,15 @@ NEURONS = [
     u'{"layer":23,"id":39167,"mtype_i":8,"mtype":"L23_CHC","electrophysiology":4,'
     u'"syn_class_index":1,"position":[933.0420086834877,1816.8584704754185,510.11526138663635],'
     u'"rotation":[0.0,0.9907887468577957,0.0,-0.13541661308701744],'
-    u'"morphology_i":"rp140328_ChC_4_idA_-_Scale_x1.000_y1.050_z1.000_-_Clone_4","layer_i":5}',
+    u'"morphology":"rp140328_ChC_4_idA_-_Scale_x1.000_y1.050_z1.000_-_Clone_4","layer_i":5}',
     u'{"layer":23,"id":101,"mtype_i":108,"mtype":"L23_CHC","electrophysiology":4,'
     u'"syn_class_index":1,"position":[933.0420086834877,1816.8584704754185,510.11526138663635],'
     u'"rotation":[0.0,0.9907887468577957,0.0,-0.13541661308701744],'
-    u'"morphology_i":"rp140328_ChC_4_idA_-_Scale_x1.000_y1.050_z1.000_-_Clone_4","layer_i":5}',
+    u'"morphology":"rp140328_ChC_4_idA_-_Scale_x1.000_y1.050_z1.000_-_Clone_4","layer_i":5}',
     u'{"layer":4,"id":42113,"mtype_i":18,"mtype":"L3_TPC:A","electrophysiology":5,'
     u'"syn_class_index":0,"position":[943.2136315772983,1726.1433241483917,496.33558039342364],'
     u'"rotation":[0.0,-0.5188810149187988,0.0,0.8548464729744385],'
-    u'"morphology_i":"dend-C240797B-P3_axon-sm110131a1-3_INT_idA_-_Clone_0","layer_i":2}'
+    u'"morphology":"dend-C240797B-P3_axon-sm110131a1-3_INT_idA_-_Clone_0","layer_i":2}'
 ]
 
 TOUCHES = [
@@ -65,8 +65,7 @@ def test_shift():
                      .join(F.broadcast(prefixed(neurons, "src")), "src") \
                      .join(F.broadcast(prefixed(neurons, "dst")), "dst")
 
-    morphos = MorphologyDB(Path(__file__).parent / "circuit_O1_partial" / "morphologies" / "h5",
-                           defaultdict(str))
+    morphos = MorphologyDB(Path(__file__).parent / "circuit_O1_partial" / "morphologies" / "h5")
     pathways = sm.createDataFrame([((8 << 16) | 18, True)], ["pathway_i", "reposition"])
     result = patch_ChC_SPAA_cells(circuit, morphos, pathways)
 

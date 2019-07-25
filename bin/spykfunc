@@ -20,26 +20,26 @@ _NAME=$0
 BASEDIR=$(dirname $(readlink -f "$0"))
 
 if [[ "$1" == "-h" || "$1" == "--help" ]]; then
-    echo "Syntax: $(basename $0) <recipe_file> <mvd_file> <morpho_dir> <touch_file.0> [spykfunc_options..., ] -- [args_passed_to_spark_submit, ...]"
+    echo "Syntax: $(basename $0) <recipe_file> <circuit_file> <morpho_dir> <touch_file.0> [spykfunc_options..., ] -- [args_passed_to_spark_submit, ...]"
     python $BASEDIR/commands.py --help
     exit 2
 fi
 
 if [ "$#" -lt 4 ]; then
     echo "ERROR: Wrong number of arguments"
-    echo "Syntax: $(basename $0) <recipe_file> <mvd_file> <morpho_dir> <touch_files> [args_passed_to_spark_submit, ...]"
+    echo "Syntax: $(basename $0) <recipe_file> <circuit_file> <morpho_dir> <touch_files> [args_passed_to_spark_submit, ...]"
     echo "        $(basename $0) --help"
     exit 2
 fi
 
 recipe_file=$1
-mvd_file=$2
+circuit_file=$2
 morpho_dir=$3
 touch_files=$4
 
-if ! [[ -f $recipe_file && -f $mvd_file && -d $morpho_dir ]]; then
+if ! [[ -f $recipe_file && -f $circuit_file && -d $morpho_dir ]]; then
     echo "ERROR: Arguments are not valid."
-    echo "       Be sure recipe_file and mvd_file exist, and morpho_dir is a directory"
+    echo "       Be sure recipe_file and circuit_file exist, and morpho_dir is a directory"
     exit 2
 fi
 
@@ -62,7 +62,7 @@ spark-submit \
   "$@" \
   $BASEDIR/commands.py -- \
       $recipe_file \
-      $mvd_file \
+      $circuit_file \
       $morpho_dir \
       $touch_files \
       ${args_to_spykfunc[@]}
