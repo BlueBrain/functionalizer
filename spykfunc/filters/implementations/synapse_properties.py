@@ -108,7 +108,7 @@ class SynapseProperties(DatasetOperation):
     _checkpoint = True
     _morphologies = True
 
-    def __init__(self, recipe, neurons, morphos):
+    def __init__(self, recipe, source, target, morphos):
         self.seed = Seeds.load(recipe.xml).synapseSeed
         logger.info("Using seed %d for synapse properties", self.seed)
 
@@ -197,19 +197,21 @@ class SynapseProperties(DatasetOperation):
     def convert_reposition(self, circuit):
         """Loader for pathways that need synapses to be repositioned
         """
-        mtype = circuit.morphology_types
-        mtype_rev = {name: i for i, name in enumerate(mtype)}
+        src_mtype = circuit.source.mtypes
+        src_mtype_rev = {name: i for i, name in enumerate(src_mtype)}
+        dst_mtype = circuit.target.mtypes
+        dst_mtype_rev = {name: i for i, name in enumerate(dst_mtype)}
 
         paths = []
         for shift in self.reposition:
-            src = mtype_rev.values()
-            dst = mtype_rev.values()
+            src = src_mtype_rev.values()
+            dst = dst_mtype_rev.values()
             if shift.type != 'AIS':
                 continue
             if shift.fromMType:
-                src = [mtype_rev[m] for m in fnmatch.filter(mtype, shift.fromMType)]
+                src = [src_mtype_rev[m] for m in fnmatch.filter(src_mtype, shift.fromMType)]
             if shift.toMType:
-                dst = [mtype_rev[m] for m in fnmatch.filter(mtype, shift.toMType)]
+                dst = [dst_mtype_rev[m] for m in fnmatch.filter(dst_mtype, shift.toMType)]
             paths.extend(itertools.product(src, dst))
         pathways = sm.createDataFrame([((s << 16) | d, True) for s, d in paths], schema.SYNAPSE_REPOSITION_SCHEMA)
         return F.broadcast(pathways)
@@ -218,37 +220,46 @@ class SynapseProperties(DatasetOperation):
         """Loader for SynapsesProperties
         """
         # shorthand
-        mtypes = circuit.morphology_types
-        etypes = circuit.electrophysiology_types
-        cclasses = circuit.cell_classes
-        syn_class_rules = self.properties
-        syn_mtype_rev = {name: i for i, name in enumerate(mtypes)}
-        syn_etype_rev = {name: i for i, name in enumerate(etypes)}
-        syn_sclass_rev = {name: i for i, name in enumerate(cclasses)}
+        values = dict()
+        reverses = dict()
+        shape = []
 
+        for direction, population in (("from", "source"), ("to", "target")):
+            mtypes = getattr(circuit, population).mtypes
+            etypes = getattr(circuit, population).etypes
+            cclasses = getattr(circuit, population).cell_classes
+
+            syn_mtype_rev = {name: i for i, name in enumerate(mtypes)}
+            syn_etype_rev = {name: i for i, name in enumerate(etypes)}
+            syn_sclass_rev = {name: i for i, name in enumerate(cclasses)}
+
+            shape += [len(syn_mtype_rev), len(syn_etype_rev), len(syn_sclass_rev)]
+
+            values[direction] = OrderedDict((("MType", mtypes),
+                                             ("EType", etypes),
+                                             ("SClass", cclasses)))
+            reverses[direction] = {"MType": syn_mtype_rev,
+                                   "EType": syn_etype_rev,
+                                   "SClass": syn_sclass_rev}
+
+        syn_class_rules = self.properties
         not_covered = max(r._i for r in syn_class_rules) + 1
 
         prop_rule_matrix = np.full(
             # Our 6-dim matrix
             fill_value=not_covered,
-            shape=(len(syn_mtype_rev), len(syn_etype_rev), len(syn_sclass_rev),
-                   len(syn_mtype_rev), len(syn_etype_rev), len(syn_sclass_rev)),
+            shape=shape,
             dtype="uint16"
         )
-
-        expanded_names = defaultdict(dict)
-        field_to_values = OrderedDict((("MType", mtypes),
-                                       ("EType", etypes),
-                                       ("SClass", cclasses)))
-        field_to_reverses = {"MType": syn_mtype_rev,
-                             "EType": syn_etype_rev,
-                             "SClass": syn_sclass_rev}
 
         # Iterate for all rules, expanding * as necessary
         # We keep rule definition order as required
         for rule in syn_class_rules:
             selectors = [None] * 6
             for i, direction in enumerate(("from", "to")):
+                expanded_names = defaultdict(dict)
+                field_to_values = values[direction]
+                field_to_reverses = reverses[direction]
                 for j, field_t in enumerate(field_to_values):
                     field_name = direction + field_t
                     field_val = rule[field_name]

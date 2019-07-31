@@ -41,37 +41,27 @@ class BoutonDistanceFilter(DatasetOperation):
     the recipe definition and filters out all synapses closer to the soma.
     """
 
-    def __init__(self, recipe, neurons, morphos):
+    def __init__(self, recipe, source, target, morphos):
         self.distances = InitialBoutonDistance.load(recipe.xml)
 
     def apply(self, circuit):
         """Apply filter
         """
+        def pos(cls):
+            """Save index function returning -1 if not found
+            """
+            try:
+                return circuit.target.cell_classes.index(cls)
+            except ValueError:
+                return -1
+
         # Use broadcast of Neuron version
         return circuit.df.where(
             "(distance_soma >= {:f} AND dst_syn_class_i = {:d}) OR "
             "(distance_soma >= {:f} AND dst_syn_class_i = {:d})".format(
                 self.distances.inhibitorySynapsesDistance,
-                getattr(CellClass.INH, "index", -1),
+                pos("INH"),
                 self.distances.excitatorySynapsesDistance,
-                getattr(CellClass.EXC, "index", -1),
-            )
-        )
-
-
-class BoutonDistanceReverseFilter(BoutonDistanceFilter):
-    """Reverse version of Bouton Distance filter, only keeping outliers.
-    """
-
-    _visible = False
-
-    def apply(self, circuit):
-        return circuit.df.where(
-            "(distance_soma < {:f} AND dst_syn_class_i = {:d}) OR "
-            "(distance_soma < {:f} AND dst_syn_class_i = {:d})".format(
-                self.distances.inhibitorySynapsesDistance,
-                getattr(CellClass.INH, "index", -1),
-                self.distances.excitatorySynapsesDistance,
-                getattr(CellClass.EXC, "index", -1),
+                pos("EXC")
             )
         )

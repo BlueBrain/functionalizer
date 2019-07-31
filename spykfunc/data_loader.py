@@ -10,10 +10,9 @@ from pyspark.sql import functions as F
 from pyspark.sql import types as T
 
 from . import schema
-from .dataio.morphologies import MorphologyDB
 from .definitions import MType
 from .utils import get_logger, make_slices, to_native_str
-from .utils.spark import BroadcastValue, cache_broadcast_single_part
+from .utils.spark import cache_broadcast_single_part
 from .utils.filesystem import adjust_for_spark
 
 
@@ -21,11 +20,12 @@ from .utils.filesystem import adjust_for_spark
 logger = get_logger(__name__)
 
 
-def _create_loader(filename):
+def _create_loader(filename, population):
     """Create a UDF to load neurons from MVD3
 
     Args:
         filename: The name of the circuit file
+        population: The population to load
     Returns:
         A Pandas UDF to be used over a group by
     """
@@ -33,7 +33,7 @@ def _create_loader(filename):
     def loader(data):
         assert(len(data) == 1)
         import mvdtool
-        fd = mvdtool.open(filename)
+        fd = mvdtool.open(filename, population)
         start, end = data.iloc[0]
         count = end - start
         return pd.DataFrame(
@@ -54,30 +54,30 @@ class NeuronData:
 
     PARTITION_SIZE = 20000
 
-    def __init__(self, filename, morphologies, cache):
+    def __init__(self, filename, population, cache):
         import mvdtool
         self._cache = cache
         self._filename = filename
-        self._mvd = mvdtool.open(self._filename)
-        self._morphopath = morphologies
+        self._population = population
+        self._mvd = mvdtool.open(self._filename, self._population)
 
         if not os.path.isdir(self._cache):
             os.makedirs(self._cache)
 
     @LazyProperty
-    def mTypes(self):
+    def mtypes(self):
         """All morphology types present in the circuit
         """
         return self._mvd.all_mtypes
 
     @LazyProperty
-    def eTypes(self):
+    def etypes(self):
         """All electrophysiology types present in the circuit
         """
         return self._mvd.all_etypes
 
     @LazyProperty
-    def cellClasses(self):
+    def cell_classes(self):
         """All cell classes present in the circuit
         """
         return self._mvd.all_synapse_classes
@@ -96,27 +96,21 @@ class NeuronData:
 
     @LazyProperty
     def sclass_df(self):
-        return self._to_df(self.cellClasses, ["sclass_i", "sclass_name"])
+        return self._to_df(self.cell_classes, ["sclass_i", "sclass_name"])
 
     @LazyProperty
     def mtype_df(self):
-        return self._to_df(self.mTypes, ["mtype_i", "mtype_name"])
+        return self._to_df(self.mtypes, ["mtype_i", "mtype_name"])
 
     @LazyProperty
     def etype_df(self):
-        return self._to_df(self.eTypes, ["etype_i", "etype_name"])
+        return self._to_df(self.etypes, ["etype_i", "etype_name"])
 
-    def load_neurons_morphologies(self, neuron_filter=None, **kwargs):
-        self._load_neurons(neuron_filter, **kwargs)
-        # Morphologies are loaded lazily by the MorphologyDB object
-        self.morphologyDB = BroadcastValue(
-            MorphologyDB(self._morphopath)
-        )
-
-    def _load_neurons(self, neuron_filter=None):
+    def load_neurons(self):
         fn = self._filename
         sha = hashlib.sha256()
         sha.update(os.path.realpath(fn).encode())
+        sha.update(self._population.encode())
         sha.update(str(os.stat(fn).st_size).encode())
         sha.update(str(os.stat(fn).st_mtime).encode())
         digest = sha.hexdigest()[:8]
@@ -130,8 +124,8 @@ class NeuronData:
         if os.path.exists(mvd_parquet):
             logger.info("Loading circuit from parquet")
             mvd = sm.read.parquet(adjust_for_spark(mvd_parquet, local=True)).cache()
-            self.neuronDF = F.broadcast(mvd)
-            self.neuronDF.count()  # force materialize
+            self.df = F.broadcast(mvd)
+            self.df.count()  # force materialize
         else:
             logger.info("Building circuit from raw mvd files")
             total_parts = len(self) // self.PARTITION_SIZE + 1
@@ -148,15 +142,22 @@ class NeuronData:
 
             # Create DF
             logger.info("Creating data frame...")
-            raw_mvd = parts.groupby("start", "end").apply(_create_loader(self._filename))
+            raw_mvd = (
+                parts
+                .groupby("start", "end")
+                .apply(_create_loader(self._filename, self._population))
+            )
 
             # Evaluate (build partial NameMaps) and store
-            mvd = raw_mvd.write.mode('overwrite') \
-                         .parquet(adjust_for_spark(mvd_parquet, local=True))
+            mvd = (
+                raw_mvd
+                .write.mode('overwrite')
+                .parquet(adjust_for_spark(mvd_parquet, local=True))
+            )
             raw_mvd.unpersist()
 
             # Mark as "broadcastable" and cache
-            self.neuronDF = F.broadcast(
+            self.df = F.broadcast(
                 sm.read.parquet(adjust_for_spark(mvd_parquet))
             ).cache()
 

@@ -14,6 +14,7 @@ def test_property_assignment(fz):
     fltr = DatasetOperation.initialize(["SynapseProperties"],
                                        fz.recipe,
                                        None,
+                                       None,
                                        None)[0]
     data = fltr.apply(fz.circuit)
     have = data.select("pre_gid", "post_gid", "synapseType")
@@ -30,6 +31,7 @@ def test_property_positive_u(fz):
     fz.recipe.xml.find("Seeds").attrib['synapseSeed'] = "123"
     fltr = DatasetOperation.initialize(["SynapseProperties"],
                                        fz.recipe,
+                                       None,
                                        None,
                                        None)[0]
     data = fltr.apply(fz.circuit)

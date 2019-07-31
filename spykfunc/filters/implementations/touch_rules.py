@@ -22,12 +22,13 @@ class TouchRule(GenericProperty):
     type = ""
 
     @classmethod
-    def load(cls, xml, mtypes, *, strict=False):
+    def load(cls, xml, src_mtypes, dst_mtypes, *, strict=False):
         """Construct touch rule matrix
 
         Args:
             xml: The raw recipe XML to extract the data from
-            mtypes: The morphology types associated with the circuit
+            src_mtypes: The morphology types associated with the source population
+            dst_mtypes: The morphology types associated with the target population
             strict: Raise a ValueError a morphology type is not covered by the rules
         Returns:
             A multidimensional matrix, containing a one (1) for every
@@ -35,7 +36,8 @@ class TouchRule(GenericProperty):
             indices of morphology types of source and destination, as well
             as the rule type.
         """
-        mtype_rev = {name: i for i, name in enumerate(mtypes)}
+        src_mtype_rev = {name: i for i, name in enumerate(src_mtypes)}
+        dst_mtype_rev = {name: i for i, name in enumerate(dst_mtypes)}
 
         # dendrite mapping here is for historical purposes only, when we
         # distinguished only between soma and !soma.
@@ -48,21 +50,22 @@ class TouchRule(GenericProperty):
         }
 
         touch_rule_matrix = np.zeros(
-            shape=(len(mtype_rev), len(mtype_rev), 4),
+            shape=(len(src_mtype_rev), len(dst_mtype_rev), 4),
             dtype="uint8"
         )
 
-        covered_types = set()
+        src_covered = set()
+        dst_covered = set()
 
         for rule in Recipe.load_group(xml.find("TouchRules"), cls):
             t1s = [slice(None)]
             t2s = [slice(None)]
             if rule.fromMType:
-                t1s = [mtype_rev[m] for m in fnmatch.filter(mtypes, rule.fromMType)]
-                covered_types.update(t1s)
+                t1s = [src_mtype_rev[m] for m in fnmatch.filter(src_mtypes, rule.fromMType)]
+                src_covered.update(t1s)
             if rule.toMType:
-                t2s = [mtype_rev[m] for m in fnmatch.filter(mtypes, rule.toMType)]
-                covered_types.update(t2s)
+                t2s = [dst_mtype_rev[m] for m in fnmatch.filter(dst_mtypes, rule.toMType)]
+                dst_covered.update(t2s)
             rs = type_map[rule.type] if rule.type else [slice(None)]
 
             for t1 in t1s:
@@ -70,9 +73,13 @@ class TouchRule(GenericProperty):
                     for r in rs:
                         touch_rule_matrix[t1, t2, r] = 1
 
-        not_covered = set(mtype_rev.values()) - covered_types
+        not_covered = set()
+        for  v in set(src_mtype_rev.values()) - src_covered:
+            not_covered.add(src_mtypes[v])
+        for  v in set(dst_mtype_rev.values()) - dst_covered:
+            not_covered.add(dst_mtypes[v])
         if not_covered:
-            msg = "No touch rules are covering: %s", ", ".join(mtypes[i] for i in not_covered)
+            msg = "No touch rules are covering: " + ", ".join(not_covered)
             if strict:
                 raise ValueError(msg)
             else:
@@ -93,13 +100,13 @@ class TouchRulesFilter(DatasetOperation):
 
     _checkpoint = True
 
-    def __init__(self, recipe, neurons, morphos):
+    def __init__(self, recipe, source, target, morphos):
         """Initilize the filter by parsing the recipe
 
         The rules stored in the recipe are loaded in their abstract form,
         concretization will happen with the acctual circuit.
         """
-        self.rules = TouchRule.load(recipe.xml, neurons.mTypes)
+        self.rules = TouchRule.load(recipe.xml, source.mtypes, target.mtypes)
 
     def apply(self, circuit):
         """ .apply() method (runner) of the filter

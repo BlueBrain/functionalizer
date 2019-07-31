@@ -126,14 +126,15 @@ class ConnectivityPathRule(object):
         return '<%s from="%s" to="%s">' % (ConnectType.to_str(self.connect_type), self.source, self.destination)
 
     @classmethod
-    def load(cls, xml, mtypes):
+    def load(cls, xml, src_mtypes, dst_mtypes):
         """Load connection rules
 
         Transform connection rules into concrete rule instances (without wildcards) and indexed by pathway
 
         Args:
             xml: The raw recipe XML to extract the data from
-            mtypes: The morphology types associated with the circuit
+            src_mtypes: The morphology types associated with the source population
+            dst_mtypes: The morphology types associated with the target population
         Returns:
             A dictionary of pathways (src, dst mtype) and corresponding rules
         """
@@ -145,17 +146,18 @@ class ConnectivityPathRule(object):
         if len(rules) == 0:
             raise RuntimeError("No connection rules loaded. Please check the recipe.")
 
-        mtypes_rev = {mtype: i for i, mtype in enumerate(mtypes)}
+        src_mtypes_rev = {mtype: i for i, mtype in enumerate(src_mtypes)}
+        dst_mtypes_rev = {mtype: i for i, mtype in enumerate(dst_mtypes)}
         concrete_rules = {}
 
         for rule in rules:
-            srcs = matchfilter(mtypes, rule.source)
-            dsts = matchfilter(mtypes, rule.destination)
+            srcs = matchfilter(src_mtypes, rule.source)
+            dsts = matchfilter(dst_mtypes, rule.destination)
             for src in srcs:
                 for dst in dsts:
                     # key = src + ">" + dst
                     # Key is now an int
-                    key = (mtypes_rev[src] << 16) + mtypes_rev[dst]
+                    key = (src_mtypes_rev[src] << 16) + dst_mtypes_rev[dst]
                     if key in concrete_rules:
                         # logger.debug("Several rules applying to the same mtype connection: %s->%s [Rule: %s->%s]",
                         #                src, dst, rule.source, rule.destination)
@@ -211,17 +213,22 @@ class ReduceAndCut(DatasetOperation):
     _checkpoint = True
     _checkpoint_buckets = ("src", "dst")
 
-    def __init__(self, recipe, neurons, morphos):
+    def __init__(self, recipe, source, target, morphos):
         self.seed = Seeds.load(recipe.xml).synapseSeed
         logger.info("Using seed %d for reduce and cut", self.seed)
-        self.conn_rules = ConnectivityPathRule.load(recipe.xml, neurons.mTypes)
+        self.conn_rules = ConnectivityPathRule.load(
+            recipe.xml,
+            source.mtypes,
+            target.mtypes
+        )
 
     def apply(self, circuit):
         """Filter the circuit according to the logic described in the
         class.
         """
         full_touches = Circuit.only_touch_columns(touches_with_pathway(circuit.df))
-        mtypes = circuit.mtype_df
+        src_mtypes = circuit.source.mtype_df
+        dst_mtypes = circuit.target.mtype_df
         self.conn_rules = sm.broadcast(self.conn_rules)
 
         # Get and broadcast Pathway stats
@@ -231,7 +238,7 @@ class ReduceAndCut(DatasetOperation):
         params_df = F.broadcast(_params)
 
         # Params ouput for validation
-        _params_out_csv(params_df, "pathway_params", mtypes)
+        _params_out_csv(params_df, "pathway_params", src_mtypes, dst_mtypes)
 
         #
         # Reduce
@@ -244,16 +251,23 @@ class ReduceAndCut(DatasetOperation):
         cut1_shall_keep_connections = self.calc_cut_survival_rate(
             reduced_touches,
             params_df,
-            mtypes=mtypes
+            src_mtypes=src_mtypes,
+            dst_mtypes=dst_mtypes
         )
 
-        _connection_counts_out_csv(cut1_shall_keep_connections, "cut_counts.csv", mtypes)
+        _connection_counts_out_csv(
+            cut1_shall_keep_connections,
+            "cut_counts.csv",
+            src_mtypes,
+            dst_mtypes
+        )
 
         logger.info("Calculating CUT part 2: Active Fractions")
         cut_shall_keep_connections = self.calc_cut_active_fraction(
             cut1_shall_keep_connections,
             params_df,
-            mtypes=mtypes
+            src_mtypes=src_mtypes,
+            dst_mtypes=dst_mtypes
         ).select("src", "dst")
 
         with sm.jobgroup("Filtering touches CUT step", ""):
@@ -261,7 +275,7 @@ class ReduceAndCut(DatasetOperation):
                 reduced_touches.join(cut_shall_keep_connections, ["src", "dst"])
             )
 
-            _touch_counts_out_csv(cut2AF_touches, "cut2af_counts.csv", mtypes)
+            _touch_counts_out_csv(cut2AF_touches, "cut2af_counts.csv", src_mtypes, dst_mtypes)
 
         # Only the touch fields
         return Circuit.only_touch_columns(cut2AF_touches)
@@ -328,7 +342,7 @@ class ReduceAndCut(DatasetOperation):
 
     # ---
     @sm.assign_to_jobgroup
-    def calc_cut_survival_rate(self, reduced_touches, params_df, mtypes):
+    def calc_cut_survival_rate(self, reduced_touches, params_df, src_mtypes, dst_mtypes):
         """
         Apply cut filter
         Cut computes a survivalRate and activeFraction for each post neuron
@@ -343,7 +357,12 @@ class ReduceAndCut(DatasetOperation):
                  F.count("src").alias("reduced_touch_counts_connection"))
         )
         # Debug
-        _connection_counts_out_csv(reduced_touch_counts_connection, "reduced_touch_counts_pathway", mtypes)
+        _connection_counts_out_csv(
+            reduced_touch_counts_connection,
+            "reduced_touch_counts_pathway",
+            src_mtypes,
+            dst_mtypes
+        )
 
         params_df_sigma = (
             params_df
@@ -352,7 +371,7 @@ class ReduceAndCut(DatasetOperation):
             .withColumn("sigma", params_df.pMu_A / 4)
         )
         # Debug
-        _params_out_csv(params_df_sigma, "survival_params", mtypes)
+        _params_out_csv(params_df_sigma, "survival_params", src_mtypes, dst_mtypes)
 
         connection_survival_rate = (
             reduced_touch_counts_connection
@@ -380,7 +399,7 @@ class ReduceAndCut(DatasetOperation):
     # ----
     @sm.assign_to_jobgroup
     @checkpoint_resume("shall_keep_connections", bucket_cols=("src", "dst"), child=True)
-    def calc_cut_active_fraction(self, cut_touch_counts_connection, params_df, mtypes):
+    def calc_cut_active_fraction(self, cut_touch_counts_connection, params_df, src_mtypes, dst_mtypes):
         """Cut according to the active_fractions
 
         Args:
@@ -426,7 +445,10 @@ class ReduceAndCut(DatasetOperation):
         # Result is a minimal DS so we cache and broadcast in single partition
         active_fractions = cache_broadcast_single_part(active_fractions, parallelism=_n_parts)
 
-        helpers._write_csv(pathway_i_to_str(active_fractions, mtypes), "active_fractions.csv")
+        helpers._write_csv(
+            pathway_i_to_str(active_fractions, src_mtypes, dst_mtypes),
+            "active_fractions.csv"
+        )
 
         shall_keep_connections = add_random_column(
             cut_touch_counts_connection.join(active_fractions, "pathway_i"),
@@ -438,7 +460,7 @@ class ReduceAndCut(DatasetOperation):
         return shall_keep_connections
 
 
-def _params_out_csv(df, filename, mtypes):
+def _params_out_csv(df, filename, src_mtypes, dst_mtypes):
     of_interest = ("pathway_i", "total_touches", "structural_mean",
                    "pP_A", "pMu_A", "active_fraction_legacy", "_debug")
     cols = []
@@ -446,18 +468,20 @@ def _params_out_csv(df, filename, mtypes):
         if hasattr(df, col):
             cols.append(col)
     debug_info = df.select(*cols)
-    helpers._write_csv(pathway_i_to_str(debug_info, mtypes), filename)
+    helpers._write_csv(pathway_i_to_str(debug_info, src_mtypes, dst_mtypes), filename)
 
 
-def _touch_counts_out_csv(df, filename, mtypes):
+def _touch_counts_out_csv(df, filename, src_mtypes, dst_mtypes):
     helpers._write_csv(pathway_i_to_str(
         df.groupBy("pathway_i").count(),
-        mtypes
+        src_mtypes,
+        dst_mtypes
     ), filename)
 
 
-def _connection_counts_out_csv(df, filename, mtypes):
+def _connection_counts_out_csv(df, filename, src_mtypes, dst_mtypes):
     helpers._write_csv(pathway_i_to_str(
         df.groupBy("pathway_i").sum("reduced_touch_counts_connection"),
-        mtypes
+        src_mtypes,
+        dst_mtypes
     ), filename)

@@ -35,35 +35,3 @@ _log.basicConfig(level=_log.WARN)
 
 class config:
     log_level = _log.DEBUG
-
-
-# ####################################################################################################
-# Shortcuts (mind the import must be done inside, as we want to allow importing spykfunc without spark)
-######################################################################################################
-def functionalizer_new():
-    """ Direct Functionalizer object
-    """
-    from .functionalizer import Functionalizer
-    return Functionalizer()
-
-
-def session(recipe, circuit_file, morphologies, touch_files, **opts):
-    """ Creates and Initializes a Functionalizer session
-
-    :returns: A :py:class:`~spykfunc.Functionalizer` instance
-    """
-    from .commands import arg_parser
-    from .functionalizer import session
-    args = (recipe, circuit_file, morphologies)
-    if isinstance(touch_files, str):
-        args = args + (touch_files,)
-    else:
-        args += tuple(touch_files)
-
-    for opt, opt_val in opts.items():
-        if opt_val is None:
-            args += ("--" + opt.replace("_", "-"),)
-        else:
-            args += ("--" + opt.replace("_", "-"), opt_val)
-    opts = arg_parser.parse_args(args)
-    return session(opts)

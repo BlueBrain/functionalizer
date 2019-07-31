@@ -53,8 +53,8 @@ touches_old = sm.read.parquet(args.old)
 touches_new = sm.read.parquet(args.new)
 
 neuron_data = NeuronDataSpark(cppneuron.MVD_Morpho_Loader(args.neurons, args.morphologies), "_mvd")
-neuron_data.load_neurons_morphologies()
-neurons = neuron_data.neuronDF
+neuron_data.load_neurons()
+neurons = neuron_data.df
 
 
 def prefixed(pre):

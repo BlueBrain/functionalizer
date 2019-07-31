@@ -152,19 +152,22 @@ def to_pathway_str(col1, col2):
     return F.concat(F.col(col1), F.lit("->"), F.col(col2))
 
 
-def pathway_i_to_str(df_pathway_i, mtypes):
+def pathway_i_to_str(df_pathway_i, src_mtypes, dst_mtypes):
     """
     Expression to calculate the pathway name from the pathway index.
-    :param df_pathway_i: Pathway index column
-    :param mtypes: mtypes dataframe, with two fields: (index: int, name: str)
+
+    Args:
+        df_pathway_i: Pathway index column
+        src_mtypes: mtypes dataframe, with two fields: (index: int, name: str)
+        dst_mtypes: mtypes dataframe, with two fields: (index: int, name: str)
     """
     col = "pathway_i"
     return (
         df_pathway_i
         .withColumn("src_morpho_i", F.shiftRight(col, 16))
         .withColumn("dst_morpho_i", F.col(col).bitwiseAND((1 << 16)-1))
-        .join(mtypes.toDF("src_morpho_i", "src_morpho"), "src_morpho_i")
-        .join(mtypes.toDF("dst_morpho_i", "dst_morpho"), "dst_morpho_i")
+        .join(src_mtypes.toDF("src_morpho_i", "src_morpho"), "src_morpho_i")
+        .join(dst_mtypes.toDF("dst_morpho_i", "dst_morpho"), "dst_morpho_i")
         .withColumn("pathway_str", F.concat("src_morpho", F.lit('->'), "dst_morpho"))
         .drop("src_morpho_i", "src_morpho", "dst_morpho_i", "dst_morpho")
     )

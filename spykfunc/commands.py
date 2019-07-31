@@ -11,10 +11,14 @@ from .definitions import RunningMode as RM, SortBy
 filters.load()
 
 
-# ------------------------------------
-# Executed from the SHELL
-# ------------------------------------
-def _create_parser():
+def _parse_args(args=None) -> argparse.Namespace:
+    """Handle arguments passed through the commandline
+
+    Takes a few corner cases into account w.r.t. backwards compatible arguments.
+    """
+    if args is None:
+        args = sys.argv[1:]
+
     class _ConfDumpAction(argparse._HelpAction):
         """Dummy class to list default configuration and exit, just like `--help`.
         """
@@ -52,12 +56,6 @@ def _create_parser():
         formatter_class=_Formatter
     )
     parser.add_argument("recipe_file", help="the XML recipe file")
-    parser.add_argument("circuit_file",    help="the input circuit file")
-    parser.add_argument("morpho_dir",  help="the H5 morphology database directory")
-    parser.add_argument("touch_files",
-                        help="the touch files (parquets); "
-                             "a litertal blob expression is also accepted.",
-                        nargs="+")
     gfilter = parser.add_argument_group("filter options")
     group = gfilter.add_mutually_exclusive_group(required=True)
     group.add_argument("--s2s", "--structural", dest="filters",
@@ -81,6 +79,13 @@ def _create_parser():
                               "note: ChC cells wont be patched and "
                               "branch_type field won't be part of the result",
                          action="store_true", default=False)
+    ginput = parser.add_argument_group("input options")
+    ginput.add_argument("--circuit", dest="circuit_file",
+                        help="the input circuit file")
+    ginput.add_argument("--from", dest="source", nargs=2,
+                        help="path and name for the source population")
+    ginput.add_argument("--to", dest="target", nargs=2,
+                        help="path and name for the target population")
     goutput = parser.add_argument_group("output options")
     goutput.add_argument("--cache-dir",
                          help="specify directory to cache circuits converted to parquet, "
@@ -121,35 +126,51 @@ def _create_parser():
     gadv.add_argument("--dump-configuration", action=_ConfDumpAction,
                       help="show the configuration including modifications via options prior "
                            "to this flag and exit")
-    return parser
+    parser.add_argument("morpho_dir", help="the H5 morphology database directory")
+    parser.add_argument("touch_files",
+                        help="the touch files (parquets); "
+                             "a litertal blob expression is also accepted.",
+                        nargs="+")
 
+    args = parser.parse_args(args)
 
-# Singleton parser
-arg_parser = _create_parser()
+    if args.circuit_file:
+        if args.source or args.target:
+            parser.error("either --circuit or --from/--to is allowed")
+        args.source = args.target = (args.circuit_file, "default")
+    elif all(a is None for a in (args.source, args.target)):
+        parser.error("either --circuit or --from/--to is required")
+    elif any(a is None for a in (args.source, args.target)):
+        parser.error("both --from and --to are required")
+
+    return args
 
 
 # *****************************************************
 # Application scripts
 # *****************************************************
 
-def spykfunc():
+def spykfunc() -> int:
     """ The main entry-point Spykfunc script. It will launch Spykfunc with a spark instance
         (created if not provided), run the default filters and export.
     """
-    # Will exit with code 2 if problems in args
-    options = arg_parser.parse_args()
+    from spykfunc.functionalizer import Functionalizer
 
-    # If everything seems ok, import functionalizer.
-    # Like this we can use the parser without starting with pyspark or spark-submit
-    # NOTE: Scripts must be executed from pyspark or spark-submit to import pyspark
-    from spykfunc.functionalizer import session
+    # Will exit with code 2 if problems in args
+    options = _parse_args()
     logger = utils.get_logger(__name__)
 
     try:
-        fuzer = session(options)
-        fuzer.process_filters(overwrite="F" in options.overwrite.upper())
-        fuzer.export_results(overwrite="E" in options.overwrite.upper(),
-                             order=getattr(SortBy, options.order.upper()))
+        args = vars(options)
+        fz = Functionalizer(**args)
+        fz.init_data(options.recipe_file,
+                     options.source,
+                     options.target,
+                     options.morpho_dir,
+                     options.touch_files)
+        fz.process_filters(overwrite="F" in options.overwrite.upper())
+        fz.export_results(overwrite="E" in options.overwrite.upper(),
+                          order=getattr(SortBy, options.order.upper()))
     except Exception:
         logger.error(utils.format_cur_exception())
         return 1

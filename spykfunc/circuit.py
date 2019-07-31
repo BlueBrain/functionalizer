@@ -4,8 +4,11 @@
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
 
+from spykfunc.data_loader import NeuronData
+from spykfunc.dataio.morphologies import MorphologyDB
 from spykfunc.schema import touches_with_pathway
 from spykfunc.utils import get_logger
+from spykfunc.utils.spark import BroadcastValue
 
 logger = get_logger(__name__)
 
@@ -58,14 +61,28 @@ class Circuit(object):
     Simple data container to simplify and future-proof the API.
     """
 
-    def __init__(self, neurons, touches, recipe):
+    def __init__(
+        self,
+        source: NeuronData,
+        target: NeuronData,
+        touches,
+        recipe,
+        morphologies: str
+    ):
         """Construct a new circuit
 
-        :param neurons: a :py:class:`~spykfunc.data_loader.NeuronDataSpark` object
+        :param source: the source neuron population
+        :param target: the target neuron population
         :param touches: a Spark dataframe with touch data
         :param recipe: a :py:class:`~spykfunc.recipe.Recipe` object
+        :param morphologies: the path to morphologies used in this circuit
         """
-        self.__neuron_data = neurons
+        self.source = source
+        self.target = target
+
+        self.morphologies = BroadcastValue(
+            MorphologyDB(morphologies)
+        )
 
         self._touches = touches
         self._initial_touches = touches
@@ -75,44 +92,17 @@ class Circuit(object):
         self.__reduced = None
 
     @property
-    def cell_classes(self):
-        """:property: cell names used in the circuit
-        """
-        return self.__neuron_data.cellClasses
-
-    @property
-    def electrophysiology_types(self):
-        """:property: electrophysiology names used in the circuit
-        """
-        return self.__neuron_data.eTypes
-
-    @property
-    def neurons(self):
-        """:property: neuron data as a Spark dataframe
-        """
-        return self.__neuron_data.neuronDF
-
-    @property
-    def morphologies(self):
-        """:property: morphology DB
-        """
-        return self.__neuron_data.morphologyDB
-
-    @property
-    def morphology_types(self):
-        """:property: morphology names used in the circuit
-        """
-        return self.__neuron_data.mTypes
-
-    def prefixed(self, pre):
-        """Returns the neurons with all columns prefixed
-
-        :param pre: the prefix to use
-        :type pre: string
-        """
-        tmp = self.neurons
+    def __src(self):
+        tmp = self.source.df
         for col in tmp.schema.names:
-            tmp = tmp.withColumnRenamed(col, pre if col == "id" else "{}_{}".format(pre, col))
+            tmp = tmp.withColumnRenamed(col, "src" if col == "id" else f"src_{col}")
+        return tmp
+
+    @property
+    def __dst(self):
+        tmp = self.target.df
+        for col in tmp.schema.names:
+            tmp = tmp.withColumnRenamed(col, "dst" if col == "id" else f"dst_{col}")
         return tmp
 
     @property
@@ -133,8 +123,8 @@ class Circuit(object):
             return self.__circuit
 
         self.__circuit = self._touches.alias("t") \
-                                      .join(F.broadcast(self.prefixed("src")), "src") \
-                                      .join(F.broadcast(self.prefixed("dst")), "dst")
+                                      .join(F.broadcast(self.__src), "src") \
+                                      .join(F.broadcast(self.__dst), "dst")
         return self.__circuit
 
     @property
@@ -146,8 +136,8 @@ class Circuit(object):
         self.__reduced = self._touches.alias("t") \
                                       .groupBy("src", "dst") \
                                       .agg(F.min("synapse_id").alias("synapse_id")) \
-                                      .join(F.broadcast(self.prefixed("src")), "src") \
-                                      .join(F.broadcast(self.prefixed("dst")), "dst")
+                                      .join(F.broadcast(self.__src), "src") \
+                                      .join(F.broadcast(self.__dst), "dst")
         return self.__reduced
 
     @dataframe.setter
@@ -177,16 +167,3 @@ class Circuit(object):
         def belongs_to_neuron(col):
             return col.startswith("src_") or col.startswith("dst_")
         return df.select([col for col in df.schema.names if not belongs_to_neuron(col)])
-
-    @property
-    def data(self):
-        """Direct access to the base data object
-        """
-        return self.__neuron_data
-
-    def __getattr__(self, item):
-        """Direct access to some interesting data attributes, namely existing dataframes
-        """
-        if item in ("sclass_df", "mtype_df", "etype_df"):
-            return getattr(self.__neuron_data, item)
-        raise AttributeError("Attribute {} not accessible.".format(item))

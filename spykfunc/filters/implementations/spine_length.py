@@ -33,7 +33,7 @@ class SpineLengthFilter(DatasetOperation):
     """Filter synapses by spine length
     """
 
-    def __init__(self, recipe, neurons, morphos):
+    def __init__(self, recipe, source, target, morphos):
         self.seed = Seeds.load(recipe.xml).synapseSeed
         logger.info("Using seed %d for spine length adjustment", self.seed)
 
@@ -56,7 +56,7 @@ class SpineLengthFilter(DatasetOperation):
         )
         touches = add_random_column(
             touches,
-            "spine_rand", 
+            "spine_rand",
             self.seed,
             _KEY_SPINE,
             F.col("synapse_id")

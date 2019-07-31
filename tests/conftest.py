@@ -7,13 +7,16 @@
 from __future__ import print_function, absolute_import, division
 import os
 import pytest
-import spykfunc
+
+from spykfunc.definitions import RunningMode as RM
+from spykfunc.functionalizer import Functionalizer
 
 DATADIR = os.path.join(os.path.dirname(__file__), "circuit_1000n")
 
 ARGS = (
     os.path.join(DATADIR, "builderRecipeAllPathways.xml"),
-    os.path.join(DATADIR, "circuit.mvd3"),
+    (os.path.join(DATADIR, "circuit.mvd3"), "default"),
+    (os.path.join(DATADIR, "circuit.mvd3"), "default"),
     os.path.join(DATADIR, "morphologies/h5"),
     os.path.join(DATADIR, "touches/*.parquet")
 )
@@ -24,12 +27,11 @@ def fz_fixture(tmpdir_factory):
     tmpdir = tmpdir_factory.mktemp('filters')
     cdir = tmpdir.join('check')
     odir = tmpdir.join('out')
-    kwargs = {
-        'functional': None,
-        'checkpoint-dir': str(cdir),
-        'output-dir': str(odir)
-    }
-    return spykfunc.session(*ARGS, **kwargs)
+    return Functionalizer(
+        filters=RM.FUNCTIONAL.value,
+        checkpoint_dir=str(cdir),
+        output_dir=str(odir)
+    ).init_data(*ARGS)
 
 
 @pytest.fixture(scope='session', name='gj')
@@ -38,12 +40,11 @@ def gj_fixture(tmpdir_factory):
     cdir = tmpdir.join('check')
     odir = tmpdir.join('out')
     args = list(ARGS[:-1]) + [os.path.join(DATADIR, "gap_junctions/touches*.parquet")]
-    kwargs = {
-        'gap-junctions': None,
-        'checkpoint-dir': str(cdir),
-        'output-dir': str(odir)
-    }
-    return spykfunc.session(*args, **kwargs)
+    return Functionalizer(
+        filters=RM.GAP_JUNCTIONS.value,
+        checkpoint_dir=str(cdir),
+        output_dir=str(odir)
+    ).init_data(*args)
 
 
 def pytest_addoption(parser):

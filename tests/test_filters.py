@@ -9,7 +9,8 @@ import pyspark.sql.functions as F
 from conftest import ARGS
 import sparkmanager as sm
 
-import spykfunc
+from spykfunc.definitions import RunningMode as RM
+from spykfunc.functionalizer import Functionalizer
 
 NUM_AFTER_DISTANCE = 2264809
 NUM_AFTER_TOUCH = 2218004
@@ -47,12 +48,11 @@ class TestFilters(object):
         tmpdir = tmpdir_factory.mktemp('filters')
         cdir = tmpdir.join('check')
         odir = tmpdir.join('out')
-        kwargs = {
-            'functional': None,
-            'checkpoint-dir': str(cdir),
-            'output-dir': str(odir)
-        }
-        fz2 = spykfunc.session(*ARGS, **kwargs)
+        fz2 = Functionalizer(
+            filters=RM.FUNCTIONAL.value,
+            checkpoint_dir=str(cdir),
+            output_dir=str(odir)
+        ).init_data(*ARGS)
         fz2.process_filters()
         original = fz.circuit.touches.count()
         count = fz2.circuit.touches.count()
@@ -80,7 +80,11 @@ class TestFilters(object):
             'checkpoint-dir': str(cdir),
             'output-dir': str(odir)
         }
-        fz2 = spykfunc.session(*ARGS, **kwargs)
+        fz2 = Functionalizer(
+            filters=RM.FUNCTIONAL.value,
+            checkpoint_dir=str(cdir),
+            output_dir=str(odir)
+        ).init_data(*ARGS)
         fz2.process_filters(overwrite=True)
         original = fz.circuit.touches.count()
         count = fz2.circuit.touches.count()
