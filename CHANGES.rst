@@ -6,6 +6,7 @@ Version 0.15.0
 ==============
 
 Changes:
+  - Use MorphIO/MorphoKit to read in morphologies. See FUNCZ-199_.
   - Add additional output columns to gap-junction runs. See FUNCZ-211_.
   - Fix executions for circuits with only one synapse class. See FUNCZ-218_.
   - Add preliminary SONATA support. See FUNCZ-217_.
@@ -167,6 +168,7 @@ First working version with 3 base filters:
   - TouchRules
   - ReduceAndCut
 
+.. _FUNCZ-199: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-199
 .. _FUNCZ-201: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-201
 .. _FUNCZ-209: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-209
 .. _FUNCZ-211: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-211

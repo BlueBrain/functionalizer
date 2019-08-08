@@ -88,8 +88,7 @@ class GapJunctionFilter(DatasetOperation):
 
             for m in unique_morphos:
                 # Work one morphology at a time to conserve memory
-                morpho = self.__morphos[m]
-                mdist = 3 * morpho.soma_radius(cache=True)
+                mdist = 3 * self.__morphos.soma_radius(m)
 
                 # Resolve from indices matching morphology to connections
                 idxs = numpy.where(unique_conns[:, 2] == m)[0]
@@ -102,8 +101,8 @@ class GapJunctionFilter(DatasetOperation):
                     if len(idx) == 0 or soma[idx[0]] != 0:
                         continue
                     for i in idx:
-                        path, dist = morpho.path_and_distance_of(sec[i], seg[i])
-                        distances[i] = dist
+                        distances[i] = self.__morphos.distance_to_soma(m, sec[i], seg[i])
+                        path = self.__morphos.ancestors(m, sec[i])
                         for j in idx:
                             if i == j:
                                 break

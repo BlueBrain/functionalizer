@@ -55,7 +55,6 @@ def test_shift():
     """
     from spykfunc.synapse_properties import patch_ChC_SPAA_cells
     from spykfunc.dataio.morphologies import MorphologyDB
-    from spykfunc.utils.spark import BroadcastValue
 
     sm.create("test_shift")
 

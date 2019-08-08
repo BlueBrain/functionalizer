@@ -210,6 +210,6 @@ def _create_axon_section_udf(morphology_db):
         sections = numpy.array(defaults.values, copy=True)
         for i, (shift, morpho) in enumerate(zip(reposition, morphos)):
             if shift:
-                sections[i] = morphology_db[morpho].first_axon_section
+                sections[i] = morphology_db.first_axon_section(morpho)
         return pandas.Series(data=sections)
     return shift_axon_section_id

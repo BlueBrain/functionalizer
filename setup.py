@@ -153,6 +153,7 @@ def setup_package():
             'jprops',
             'lazy-property',
             'lxml',
+            'morphokit',
             'mvdtool>=2',
             'numpy',
             'pandas',

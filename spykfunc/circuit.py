@@ -8,7 +8,6 @@ from spykfunc.data_loader import NeuronData
 from spykfunc.dataio.morphologies import MorphologyDB
 from spykfunc.schema import touches_with_pathway
 from spykfunc.utils import get_logger
-from spykfunc.utils.spark import BroadcastValue
 
 logger = get_logger(__name__)
 
@@ -80,9 +79,7 @@ class Circuit(object):
         self.source = source
         self.target = target
 
-        self.morphologies = BroadcastValue(
-            MorphologyDB(morphologies)
-        )
+        self.morphologies = MorphologyDB(morphologies)
 
         self._touches = touches
         self._initial_touches = touches

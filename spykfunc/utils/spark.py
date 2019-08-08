@@ -26,13 +26,3 @@ def cache_broadcast_single_part(df, parallelism=1):
     if parallelism > 1:
         df = df.coalesce(1)
     return F.broadcast(df)
-
-
-class BroadcastValue(object):
-    """Transparent access to broadcasted indexable vars
-    """
-    def __init__(self, value):
-        self._bcast_value = sm.sc.broadcast(value)
-
-    def __getitem__(self, name):
-        return self._bcast_value.value[name]

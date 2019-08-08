@@ -47,13 +47,18 @@ def test_branch_lengths(morphos):
     This assumes the C functionalizer as reference point.
     """
     for name, branches in BRANCHES:
-        assert numpy.allclose(morphos[name].branch_lengths, branches)
+        assert numpy.allclose(
+            [s.pathlength(-1) for s in morphos[name].sections],
+            branches[1:]
+        )
 
 
 def test_path_length(morphos):
     """Ensure that the path length is calculated correctly
     """
-    mine = numpy.array([morphos[name].distance_of(seg, sec) for (name, seg, sec), _ in LENGTHS])
+    mine = numpy.array([
+        morphos.distance_to_soma(name, sec, seg) for (name, sec, seg), _ in LENGTHS
+    ])
     funcz = numpy.array([length for _, length in LENGTHS])
     assert numpy.allclose(mine, funcz)
 
@@ -63,6 +68,6 @@ def test_soma_radii(morphos):
 
     This assumes the C functionalizer as reference point.
     """
-    mine = numpy.array([morphos[name].soma_radius() for name, _ in RADII])
+    mine = numpy.array([morphos.soma_radius(name) for name, _ in RADII])
     funcz = numpy.array([radius for _, radius in RADII])
     assert numpy.allclose(mine, funcz)

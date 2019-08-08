@@ -42,8 +42,8 @@ class SomaDistanceFilter(DatasetOperation):
 
         @F.pandas_udf("float")
         def soma_radius(morphos):
-            def r(idx):
-                return self.__morphos[idx].soma_radius()
+            def r(m):
+                return self.__morphos.soma_radius(m)
             f = numpy.vectorize(r)
             return pandas.Series(data=f(morphos.values), dtype="float")
 
