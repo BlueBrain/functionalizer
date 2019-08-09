@@ -87,7 +87,7 @@ MTYPE_SCHEMA = T.StructType([
     T.StructField("end_layer", T.ShortType(), False),
 ])
 
-SYNAPSE_PROPERTY_SCHEMA = T.StructType([
+SYNAPSE_CLASSIFICATION_SCHEMA = T.StructType([
     T.StructField("_i", T.ShortType(), False),
     T.StructField("fromSClass", T.StringType(), True),
     T.StructField("toSClass", T.StringType(), True),
@@ -106,11 +106,11 @@ SYNAPSE_REPOSITION_SCHEMA = T.StructType([
 ])
 
 SYNAPSE_CLASS_MAP_SCHEMA = T.StructType([
-    T.StructField("syn_prop_index", T.IntegerType(), False),
-    T.StructField("syn_prop_i", T.ShortType(), False),
+    T.StructField("classification_index", T.IntegerType(), False),
+    T.StructField("classification_i", T.ShortType(), False),
 ])
 
-SYNAPSE_CLASS_SCHEMA = T.StructType([
+SYNAPSE_PROPERTY_SCHEMA = T.StructType([
     T.StructField("_i", T.ShortType(), False),
     T.StructField("id", T.StringType(), False),
     T.StructField("gsyn", T.FloatType(), False),

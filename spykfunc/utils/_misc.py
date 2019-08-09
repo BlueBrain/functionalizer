@@ -172,11 +172,34 @@ DefaultHandler.setLevel(_logging.DEBUG)
 DefaultHandler.setFormatter(ColoredFormatter('(%(asctime)s) %(message)s', '%H:%M:%S'))
 
 
+class Singleton(type):
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super().__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+
+class Enforcer(_logging.Handler, metaclass=Singleton):
+    def __init__(self, level=_logging.WARNING):
+        super().__init__(level)
+        self._count = 0
+
+    def emit(self, record):
+        self._count += 1
+
+    def check(self):
+        if self._count > 0:
+            raise RuntimeError(f"Unsafe execution with {self._count} warnings.")
+
+
 def get_logger(name):
     logger = _logging.getLogger(name)
     logger.propagate = False
     logger.setLevel(config.log_level)
     logger.addHandler(DefaultHandler)
+    logger.addHandler(Enforcer())
     return logger
 
 

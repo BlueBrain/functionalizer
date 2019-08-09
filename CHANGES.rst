@@ -6,6 +6,9 @@ Version 0.15.0
 ==============
 
 Changes:
+  - Warn if entries in the classification matrix don't cover values. Also
+    adds option ``--strict`` to abort execution if any warnings are issued.
+    See FUNCZ-86_.
   - Use MorphIO/MorphoKit to read in morphologies. See FUNCZ-199_.
   - Add additional output columns to gap-junction runs. See FUNCZ-211_.
   - Fix executions for circuits with only one synapse class. See FUNCZ-218_.
@@ -168,6 +171,7 @@ First working version with 3 base filters:
   - TouchRules
   - ReduceAndCut
 
+.. _FUNCZ-86: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-86
 .. _FUNCZ-199: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-199
 .. _FUNCZ-201: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-201
 .. _FUNCZ-209: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-209

@@ -107,6 +107,9 @@ def _parse_args(args=None) -> argparse.Namespace:
                               "or E (for extended with synapse properties)",
                          choices=("F", "E"), const="F", nargs="?", default="")
     gadv = parser.add_argument_group("advanced options")
+    gadv.add_argument("--strict",
+                      help="turn any warnings emitted into errors, useful for recipe validation",
+                      default=False, action="store_true")
     gadv.add_argument("--debug",
                       help="enable additional debug output, may slow down execution",
                       default=False, action="store_true")

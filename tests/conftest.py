@@ -8,6 +8,7 @@ from __future__ import print_function, absolute_import, division
 import os
 import pytest
 
+from spykfunc import filters
 from spykfunc.definitions import RunningMode as RM
 from spykfunc.functionalizer import Functionalizer
 
@@ -20,6 +21,8 @@ ARGS = (
     os.path.join(DATADIR, "morphologies/h5"),
     os.path.join(DATADIR, "touches/*.parquet")
 )
+
+filters.load()
 
 
 @pytest.fixture(scope='session', name='fz')

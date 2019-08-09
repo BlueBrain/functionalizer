@@ -3,6 +3,7 @@
 # *************************************************************************
 from __future__ import absolute_import
 import glob
+import logging
 import os
 import time
 import sparkmanager as sm
@@ -33,6 +34,7 @@ class _SpykfuncOptions:
     no_morphos = False
     checkpoint_dir = None
     debug = False
+    strict = False
 
     def __init__(self, options_dict):
         filename = options_dict.get("configuration", None)
@@ -204,6 +206,9 @@ class Functionalizer(object):
             self.circuit.target,
             self.circuit.morphologies,
         )
+
+        if self._config.strict:
+            utils.Enforcer().check()
 
         logger.info("Starting Filtering...")
         for f in filters:

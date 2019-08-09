@@ -12,23 +12,24 @@ from .utils.spark import cache_broadcast_single_part
 from .random import RNGThreefry, gamma, poisson, truncated_normal
 
 
-def compute_additional_h5_fields(circuit, reduced, syn_class_matrix, syn_props_df, seed):
+def compute_additional_h5_fields(circuit, reduced, classification_matrix, properties_df, seed):
     """Compute randomized properties of touches based on their classification.
 
     :param circuit: the full synapse connection circuit
     :param reduced: a reduced connection count with only one pair of src, dst each
-    :param syn_class_matrix: a matrix associating connection properties with a class
-    :param syn_props_df: a dataframe containing the properties of connection classes
+    :param classification_matrix: a matrix associating connection properties with a class
+    :param properties_df: a dataframe containing the properties of connection classes
     :param seed: the seed to use for the random numbers underlying the properties
     """
-    syn_class_dims = syn_class_matrix.shape  # tuple of len 6
+    syn_class_dims = classification_matrix.shape  # tuple of len 6
 
     index_length = list(syn_class_dims)
     for i in reversed(range(len(index_length) - 1)):
         index_length[i] *= index_length[i + 1]
 
+
     # Compute the index for the matrix as in a flat array
-    connections = reduced.withColumn("syn_prop_index",
+    connections = reduced.withColumn("classification_index",
                                      reduced.src_mtype_i * index_length[1] +
                                      reduced.src_etype_i * index_length[2] +
                                      reduced.src_syn_class_i * index_length[3] +
@@ -39,13 +40,16 @@ def compute_additional_h5_fields(circuit, reduced, syn_class_matrix, syn_props_d
     # Convert the numpy matrix into a dataframe and join to get the right
     # property index
     nparts = 100
-    rdd = sm.parallelize(enumerate(int(n) for n in syn_class_matrix.flatten()), nparts)
+    rdd = sm.parallelize(enumerate(int(n) for n in classification_matrix.flatten()), nparts)
     syn_class = cache_broadcast_single_part(sm.createDataFrame(rdd, schema), parallelism=nparts)
-    connections = connections.join(syn_class, "syn_prop_index").drop("syn_prop_index")
+    connections = connections.join(syn_class, "classification_index").drop("classification_index")
 
     # Join with Syn Prop Class
-    syn_props_df = syn_props_df.alias("synprop")  # Synprops is globally cached and broadcasted
-    connections = connections.join(F.broadcast(syn_props_df), connections.syn_prop_i == syn_props_df._prop_i)
+    properties_df = properties_df.alias("synprop")  # Synprops is globally cached and broadcasted
+    connections = connections.join(
+        F.broadcast(properties_df),
+        connections.classification_i == properties_df._class_i
+    )
 
     # 0: Connecting gid: presynaptic for nrn.h5, postsynaptic for nrn_efferent.h5
     # 1: Axonal delay: computed using the distance of the presynaptic axon to the post synaptic terminal (milliseconds)
@@ -85,7 +89,7 @@ def compute_additional_h5_fields(circuit, reduced, syn_class_matrix, syn_props_d
     t = touches.withColumn(
         "synapseType",
         (F.when(F.col("conn.type").substr(0, 1) == F.lit('E'), 100).otherwise(0) +
-         F.col("conn._class_i")
+         F.col("conn._prop_i")
          ).cast(T.ShortType())
     )
 

@@ -1,7 +1,7 @@
 """A default filter plugin
 """
 from __future__ import division
-from fnmatch import filter as matchfilter
+import fnmatch
 
 import pandas
 
@@ -151,8 +151,12 @@ class ConnectivityPathRule(object):
         concrete_rules = {}
 
         for rule in rules:
-            srcs = matchfilter(src_mtypes, rule.source)
-            dsts = matchfilter(dst_mtypes, rule.destination)
+            srcs = fnmatch.filter(src_mtypes, rule.source)
+            dsts = fnmatch.filter(dst_mtypes, rule.destination)
+            if len(srcs) == 0:
+                logger.warning(f"Connection rules can't match from='{rule.source}'")
+            if len(dsts) == 0:
+                logger.warning(f"Connection rules can't match to='{rule.destination}'")
             for src in srcs:
                 for dst in dsts:
                     # key = src + ">" + dst

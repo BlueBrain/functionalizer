@@ -112,25 +112,32 @@ class SynapseProperties(DatasetOperation):
         self.seed = Seeds.load(recipe.xml).synapseSeed
         logger.info("Using seed %d for synapse properties", self.seed)
 
-        self.properties = list(
-            recipe.load_group(
-                recipe.xml.find("SynapsesProperties"),
-                SynapsesProperty
-            )
-        )
-        self.reposition = list(
+        reposition = list(
             recipe.load_group(
                 recipe.xml.find("SynapsesReposition"),
                 SynapsesReposition,
                 required=False
             )
         )
-        self.classification = list(
+        # Someone assigned the classification of synapses to an element
+        # called "Properties" and property management to "Classification"
+        # [sic]
+        classification = list(
+            recipe.load_group(
+                recipe.xml.find("SynapsesProperties"),
+                SynapsesProperty
+            )
+        )
+        properties = list(
             recipe.load_group(
                 recipe.xml.find("SynapsesClassification"),
                 SynapsesClassification
             )
         )
+
+        self.reposition = self.convert_reposition(source, target, reposition)
+        self.classification = self.convert_classification(source, target, classification)
+        self.properties = self.convert_properties(classification, properties)
 
     def apply(self, circuit):
         """Add properties to the circuit
@@ -138,72 +145,52 @@ class SynapseProperties(DatasetOperation):
         from spykfunc.synapse_properties import patch_ChC_SPAA_cells
         from spykfunc.synapse_properties import compute_additional_h5_fields
 
-        reposition = self.convert_reposition(circuit)
-        classification = self.convert_classification(circuit)
-        properties = self.convert_properties(circuit)
-
         if self._morphologies:
             circuit.df = patch_ChC_SPAA_cells(circuit.df,
                                               circuit.morphologies,
-                                              reposition)
+                                              self.reposition)
 
         extended_touches = compute_additional_h5_fields(
             circuit.df,
             circuit.reduced,
-            classification,
-            properties,
+            self.classification,
+            self.properties,
             self.seed
         )
         return extended_touches
 
-    def convert_properties(self, circuit, map_ids=False):
-        """Loader for SynapsesProperties
+    @staticmethod
+    def convert_properties(classification, properties):
+        """Loader for SynapsesClassification [sic]
+
+        This element of the recipe describes the properties after classification.
         """
-        prop_df = _load_from_recipe_ds(self.properties, schema.SYNAPSE_PROPERTY_SCHEMA) \
+        prop_df = _load_from_recipe_ds(properties, schema.SYNAPSE_PROPERTY_SCHEMA) \
             .withColumnRenamed("_i", "_prop_i")
-        class_df = _load_from_recipe_ds(self.classification, schema.SYNAPSE_CLASS_SCHEMA) \
+        class_df = _load_from_recipe_ds(classification, schema.SYNAPSE_CLASSIFICATION_SCHEMA) \
             .withColumnRenamed("_i", "_class_i")
 
-        if map_ids:
-            # Mapping entities from str to int ids
-            # Case 1: SClass
-            sclass_df = circuit.data.sclass_df
-            prop_df = prop_df\
-                .join(sclass_df.toDF("fromSClass_i", "fromSClass"), "fromSClass", "left_outer")\
-                .join(sclass_df.toDF("toSClass_i", "toSClass"), "toSClass", "left_outer")
-
-            # Case 2: Mtype
-            mtype_df = circuit.data.mtype_df
-            prop_df = prop_df\
-                .join(mtype_df.toDF("fromMType_i", "fromMType"), "fromMType", "left_outer")\
-                .join(mtype_df.toDF("toMType_i", "toMType"), "toMType", "left_outer")
-
-            # Case 3: Etype
-            etype_df = circuit.data.etype_df
-            prop_df = prop_df\
-                .join(etype_df.toDF("fromEType_i", "fromEType"), "fromEType", "left_outer")\
-                .join(etype_df.toDF("toEType_i", "toEType"), "toEType", "left_outer")
-
         # These are small DF, we coalesce to 1 so the sort doesnt require shuffle
-        prop_df = prop_df.coalesce(1).sort("type")
-        class_df = class_df.coalesce(1).sort("id")
-        merged_props = prop_df.join(class_df, prop_df.type == class_df.id, "left").cache()
+        class_df = class_df.coalesce(1).sort("type")
+        prop_df = prop_df.coalesce(1).sort("id")
+        merged_props = class_df.join(prop_df, prop_df.id == class_df.type, "left").cache()
         n_syn_prop = merged_props.count()
         logger.info("Found {} synapse property entries".format(n_syn_prop))
 
         merged_props = F.broadcast(merged_props.checkpoint())
         return merged_props
 
-    def convert_reposition(self, circuit):
+    @staticmethod
+    def convert_reposition(source, target, reposition):
         """Loader for pathways that need synapses to be repositioned
         """
-        src_mtype = circuit.source.mtypes
+        src_mtype = source.mtypes
         src_mtype_rev = {name: i for i, name in enumerate(src_mtype)}
-        dst_mtype = circuit.target.mtypes
+        dst_mtype = target.mtypes
         dst_mtype_rev = {name: i for i, name in enumerate(dst_mtype)}
 
         paths = []
-        for shift in self.reposition:
+        for shift in reposition:
             src = src_mtype_rev.values()
             dst = dst_mtype_rev.values()
             if shift.type != 'AIS':
@@ -216,18 +203,23 @@ class SynapseProperties(DatasetOperation):
         pathways = sm.createDataFrame([((s << 16) | d, True) for s, d in paths], schema.SYNAPSE_REPOSITION_SCHEMA)
         return F.broadcast(pathways)
 
-    def convert_classification(self, circuit):
-        """Loader for SynapsesProperties
+    @staticmethod
+    def convert_classification(source, target, classification):
+        """Loader for SynapsesProperties [sic]
+
+        This element of the recipe classifies synapses, to later on assign
+        matching properties. Classification may be based on source and
+        target `mtype`, `etype`, or synapse class.
         """
         # shorthand
         values = dict()
         reverses = dict()
         shape = []
 
-        for direction, population in (("from", "source"), ("to", "target")):
-            mtypes = getattr(circuit, population).mtypes
-            etypes = getattr(circuit, population).etypes
-            cclasses = getattr(circuit, population).cell_classes
+        for direction, population in (("from", source), ("to", target)):
+            mtypes = population.mtypes
+            etypes = population.etypes
+            cclasses = population.cell_classes
 
             syn_mtype_rev = {name: i for i, name in enumerate(mtypes)}
             syn_etype_rev = {name: i for i, name in enumerate(etypes)}
@@ -242,7 +234,7 @@ class SynapseProperties(DatasetOperation):
                                    "EType": syn_etype_rev,
                                    "SClass": syn_sclass_rev}
 
-        syn_class_rules = self.properties
+        syn_class_rules = classification
         not_covered = max(r._i for r in syn_class_rules) + 1
 
         prop_rule_matrix = np.full(
@@ -266,19 +258,20 @@ class SynapseProperties(DatasetOperation):
                     if field_val in (None, "*"):
                         # Slice(None) is numpy way for "all" in that dimension (same as colon)
                         selectors[i*3+j] = [slice(None)]
-                    elif "*" in field_val:
+                    else:
                         # Check if expansion was cached
                         val_matches = expanded_names[field_t].get(field_val)
                         if not val_matches:
                             # Expand it
                             val_matches = expanded_names[field_t][field_val] = \
                                 fnmatch.filter(field_to_values[field_t], field_val)
+                            if len(val_matches) == 0:
+                                logger.warn(
+                                    f"Synapse classification can't match {field_t}='{field_val}'"
+                                )
+
                         # Convert to int
                         selectors[i*3+j] = [field_to_reverses[field_t][v] for v in val_matches]
-                    else:
-                        # Convert to int. If the val is not found (e.g. morpho not in mvd) we must skip (use empty list)
-                        selector_val = field_to_reverses[field_t].get(field_val)
-                        selectors[i*3+j] = [selector_val] if selector_val is not None else []
 
             # The rule might have been expanded, so now we apply all of them
             # Assign to the matrix.

@@ -63,9 +63,13 @@ class TouchRule(GenericProperty):
             if rule.fromMType:
                 t1s = [src_mtype_rev[m] for m in fnmatch.filter(src_mtypes, rule.fromMType)]
                 src_covered.update(t1s)
+                if len(t1s) == 0:
+                    logger.warn(f"Touch rules can't match fromMType='{rule.fromMType}'")
             if rule.toMType:
                 t2s = [dst_mtype_rev[m] for m in fnmatch.filter(dst_mtypes, rule.toMType)]
                 dst_covered.update(t2s)
+                if len(t2s) == 0:
+                    logger.warn(f"Touch rules can't match toMType='{rule.toMType}'")
             rs = type_map[rule.type] if rule.type else [slice(None)]
 
             for t1 in t1s:
