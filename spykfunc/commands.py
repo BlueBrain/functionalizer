@@ -95,9 +95,6 @@ def _parse_args(args=None) -> argparse.Namespace:
                               "defaults to OUTPUT_DIR/_checkpoints")
     goutput.add_argument("--output-dir", default="spykfunc_output",  # see also `spykfunc/functionalizer.py`!
                          help="specify output directory, defaults to ./spykfunc_output")
-    goutput.add_argument("--output-hdf5",
-                         help="write/convert result to HDF5 (nrn.h5) rather than parquet",
-                         action="store_true", default=False, dest="format_hdf5")
     goutput.add_argument("--output-order",
                          help="which sorting to apply to the output, "
                               "defaults to post-view.",

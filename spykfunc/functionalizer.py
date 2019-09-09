@@ -25,7 +25,6 @@ _MB = 1024 ** 2
 
 
 class _SpykfuncOptions:
-    format_hdf5 = False
     output_dir = "spykfunc_output"
     properties = None
     name = "Functionalizer"
@@ -217,36 +216,18 @@ class Functionalizer(object):
     @sm.assign_to_jobgroup
     def export_results(
             self,
-            format_hdf5=None,
             output_path=None,
             overwrite=False,
             order: SortBy = SortBy.POST):
         """ Exports the current touches to storage, appending the synapse property fields
 
-        :param format_parquet: If True will export the touches in parquet format (rather than hdf5)
         :param output_path: Changes the default export directory
         :param order: How to sort the output
         """
         logger.info("Exporting touches...")
         exporter = self.exporter
-        if format_hdf5 is None:
-            format_hdf5 = self._config.format_hdf5
-
-        if format_hdf5:
-            # Calc the number of NRN output files to target ~32 MB part ~1M touches
-            n_parts = self.circuit.touches.rdd.getNumPartitions()
-            if n_parts <= 32:
-                # Small circuit. We directly count and target 1M touches per output file
-                total_t = self.circuit.touches.count()
-                n_parts = (total_t // (1024 * 1024)) or 1
-            exporter.export_hdf5(
-                self.circuit.touches,
-                len(self.circuit.source),
-                create_efferent=False,
-                n_partitions=n_parts,
-            )
-        else:
-            exporter.export_syn2_parquet(self.circuit.touches, order=order)
+ 
+        exporter.export(self.circuit.touches, order=order)
         logger.info("Data export complete")
 
     # -------------------------------------------------------------------------
