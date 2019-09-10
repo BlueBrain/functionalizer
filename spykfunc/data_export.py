@@ -104,9 +104,7 @@ class NeuronExporter(object):
         return None
 
     # ---
-    def export_syn2_parquet(self, df,
-                                  filename="circuit.parquet",
-                                  order: SortBy=SortBy.POST):
+    def export(self, df, filename="circuit.parquet", order: SortBy=SortBy.POST):
         """ Exports the results to parquet, following the transitional SYN2 spec
         with support for legacy NRN fields, e.g.: morpho_segment_id_post
         """
@@ -116,100 +114,6 @@ class NeuronExporter(object):
                       .sort(*(order.value))
         df_output.write.parquet(adjust_for_spark(output_path, local=True), mode="overwrite")
 
-    # ---
-    def export_hdf5(self, extended_touches_df, n_gids, create_efferent=False, n_partitions=None):
-        # In the export a lot of shuffling happens, we must carefully control partitioning
-        if n_partitions is None:
-            n_partitions = ((n_gids - 1) // DEFAULT_N_NEURONS_FILE) + 1
-        # We use shuffle.partitions to define the nr of partitions since coalesce is innefective
-        # with larger number of partitions (and repartition is not an option!)
-        sm.conf.set("spark.sql.shuffle.partitions", n_partitions)
-
-        nrn_filepath = self.ensure_file_path("_nrn.h5")
-        for fn in glob.glob1(self.output_path, "*nrn*.h5*"):
-            os.remove(path.join(self.output_path, fn))
-
-        df = extended_touches_df
-
-        # Massive conversion to binary using 'float2binary' java UDF and 'concat_bin' UDAF
-        arrays_df = (
-            df
-            .select(df.pre_gid, df.post_gid,
-                    F.array(*self.nrn_fields_as_float(df)).alias("floatvec"))
-            .sort("post_gid")
-            .selectExpr("(pre_gid + 1) as pre_gid",  # nrn gids start at 1
-                        "(post_gid + 1) as post_gid",
-                        "float2binary(floatvec) as bin_arr")
-            .groupBy("post_gid", "pre_gid")
-            .agg(self.concat_bin("bin_arr").alias("bin_matrix"),
-                 F.count("*").cast("int").alias("conn_count"))
-            .sort("post_gid", "pre_gid")
-            .groupBy("post_gid")
-            .agg(self.concat_bin("bin_matrix").alias("bin_matrix"),
-                 F.collect_list("pre_gid").alias("pre_gids"),
-                 F.collect_list("conn_count").alias("conn_counts"))
-            .selectExpr("post_gid",
-                        "bin_matrix",
-                        "int2binary(pre_gids) as pre_gids_bin",
-                        "int2binary(conn_counts) as conn_counts_bin")
-        )
-
-        # arrays_df = self.save_temp(arrays_df, "aggregated_touches.parquet", partition_col="file_nr")
-
-        # Init a list accumulator to gather output filenames
-        nrn_filenames = sm.accumulator([], spark_udef_utils.ListAccum())
-
-        # Export nrn.h5 via partition mapping
-        logger.info("Saving to NRN.h5 in parallel... ({} files) [3 stages]".format(n_partitions))
-        write_hdf5 = get_export_hdf5_f(nrn_filepath, nrn_filenames)
-        summary_rdd = arrays_df.rdd.mapPartitions(write_hdf5)
-        # Count to trigger saving, caching needed results.
-        # We need it since there's a coalesce after, for little parallelism later
-        summary_rdd = summary_rdd.persist(StorageLevel.MEMORY_AND_DISK)
-        summary_rdd.count()
-
-        # Mass rename
-        new_names = []
-        for i, fn in enumerate(nrn_filenames.value):
-            new_name = path.join(self.output_path, "nrn.h5.{}".format(i))
-            os.rename(fn, new_name)
-            new_names.append(new_name)
-
-        if create_efferent:
-            logger.info("Creating nrn_efferent files in parallel")
-            # Process conversion in parallel
-            nrn_files_rdd = sm.parallelize(new_names, len(new_names))
-            nrn_files_rdd.map(create_other_files).count()
-
-        # Export the base for nrn_summary (only afferent counts)
-        n_parts = (n_gids-1) // 100000 + 1  # Each 100K NRNs is roughly 500MB serialized data
-        logger.info("Creating nrn_summary.h5 [{} parts]".format(n_parts))
-        summary_rdd = summary_rdd.coalesce(n_parts)
-        summary_path = path.join(self.output_path, ".nrn_summary0.h5")
-        summary_h5_store = h5py.File(summary_path, "w")
-        n = 0
-        for post_gid, summary_npa in summary_rdd.toLocalIterator():
-            n += 1
-            summary_h5_store.create_dataset("a{}".format(post_gid), data=summary_npa)
-            if stderr.isatty():
-                # Show progress directy on stderr if attached to terminal
-                print("\rProgress: {} / {}".format(n, n_gids), end="", file=stderr)
-        summary_h5_store.close()
-        if stderr.isatty():
-            print("Complete.", file=stderr)
-
-        # Build merged nrn_summary
-        # TODO: Have this processing done in spark since now the summary is cached
-        logger.debug("Transposing nrn_summary")
-        final_nrn_summary = path.join(self.output_path, "nrn_summary.h5")
-        nrn_completer = tools.NrnCompleter(summary_path, logger=logger)
-        nrn_completer.create_transposed()
-        logger.debug("Merging into final nrn_summary")
-        nrn_completer.merge(merged_filename=final_nrn_summary)
-        nrn_completer.add_meta(final_nrn_summary, dict(
-            version=3,
-            numberOfFiles=len(nrn_filenames.value)
-        ))
 
     @staticmethod
     def get_syn2_parquet_fields(df):

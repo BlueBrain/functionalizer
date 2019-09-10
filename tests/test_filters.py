@@ -123,8 +123,3 @@ class TestFilters(object):
         want = want.round(5)
         assert have.equals(want)
 
-    def test_writeout_hdf5(self, fz):
-        """Simple test for h5 export.
-        """
-        fz.process_filters()
-        fz.export_results(format_hdf5=True)
