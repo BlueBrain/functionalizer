@@ -16,10 +16,20 @@ logger = get_logger(__name__)
 class TouchRule(GenericProperty):
     """Class representing a Touch rule"""
 
-    _supported_attrs = {'fromMType', 'toMType', 'type'}
+    _map_attrs = {
+        "type": "toBranchType",
+    }
+    _supported_attrs = {
+        'fromMType',
+        'toMType',
+        'fromBranchType',
+        'toBranchType',
+    }
+
     fromMType = None
     toMType = None
-    type = ""
+    fromBranchType = None
+    toBranchType = None
 
     @classmethod
     def load(cls, xml, src_mtypes, dst_mtypes, *, strict=False):
@@ -50,7 +60,7 @@ class TouchRule(GenericProperty):
         }
 
         touch_rule_matrix = np.zeros(
-            shape=(len(src_mtype_rev), len(dst_mtype_rev), 4),
+            shape=(len(src_mtype_rev), len(dst_mtype_rev), 4, 4),
             dtype="uint8"
         )
 
@@ -70,12 +80,15 @@ class TouchRule(GenericProperty):
                 dst_covered.update(t2s)
                 if len(t2s) == 0:
                     logger.warn(f"Touch rules can't match toMType='{rule.toMType}'")
-            rs = type_map[rule.type] if rule.type else [slice(None)]
+
+            r1s = type_map[rule.fromBranchType] if rule.fromBranchType else [slice(None)]
+            r2s = type_map[rule.toBranchType] if rule.toBranchType else [slice(None)]
 
             for t1 in t1s:
                 for t2 in t2s:
-                    for r in rs:
-                        touch_rule_matrix[t1, t2, r] = 1
+                    for r1 in r1s:
+                        for r2 in r2s:
+                            touch_rule_matrix[t1, t2, r1, r2] = 1
 
         not_covered = set()
         for  v in set(src_mtype_rev.values()) - src_covered:
@@ -126,6 +139,7 @@ class TouchRulesFilter(DatasetOperation):
         # For each neuron we require:
         # - preMType
         # - postMType
+        # - preBranchType
         # - postBranchType
         #
         # The first four fields are properties of the neurons, part of
@@ -133,12 +147,28 @@ class TouchRulesFilter(DatasetOperation):
         # historically checked by the index of the target neuron
         # section (0->soma)
         touches = circuit.df
-        if not hasattr(circuit.df, 'branch_type'):
-            touches = touches.withColumn('branch_type',
-                                         (touches.post_section > 0).cast('integer'))
+        if not hasattr(circuit.df, 'pre_branch_type'):
+            touches = (
+                touches
+                .withColumn('pre_branch_type',
+                            (touches.pre_section > 0).cast('integer'))
+            )
+        if not hasattr(circuit.df, 'post_branch_type'):
+            if 'branch_type' in touches.columns:
+                touches = (
+                    touches
+                    .withColumnRenamed('branch_type', 'post_branch_type')
+                )
+            else:
+                touches = (
+                    touches
+                    .withColumn('post_branch_type',
+                                (touches.post_section > 0).cast('integer'))
+                )
         return touches.withColumn("fail",
                                   touches.src_mtype_i * indices[1] +
                                   touches.dst_mtype_i * indices[2] +
-                                  touches.branch_type) \
+                                  touches.pre_branch_type * indices[3] +
+                                  touches.post_branch_type) \
                       .join(F.broadcast(rules), "fail", "left_anti") \
                       .drop("fail")

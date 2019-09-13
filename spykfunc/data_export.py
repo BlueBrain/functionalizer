@@ -49,7 +49,6 @@ MAPPING_ADDONS_INDICES = [
 MAPPING_ADDONS_V2 = [
     ("pre_section_fraction", "morpho_section_fraction_pre", T.FloatType()),
     ("post_section_fraction", "morpho_section_fraction_post", T.FloatType()),
-    ("branch_type", "morpho_section_type_post", None),
     ("spine_length", "morpho_spine_length", None),
     ("pre_position_x", "position_contour_pre_x", None),
     ("pre_position_y", "position_contour_pre_y", None),
@@ -57,6 +56,8 @@ MAPPING_ADDONS_V2 = [
     ("post_position_x", "position_center_post_x", None),
     ("post_position_y", "position_center_post_y", None),
     ("post_position_z", "position_center_post_z", None),
+    ("pre_branch_type", "morpho_section_type_pre", None),
+    ("post_branch_type", "morpho_section_type_post", None),
 ]
 
 MAPPING_GAP_JUNCTIONS = [

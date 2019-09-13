@@ -59,9 +59,15 @@ TOUCH_SCHEMA_V2 = T.StructType(TOUCH_SCHEMA_V1.fields + [
     T.StructField("branch_type", T.ShortType(), False),
 ])
 
+TOUCH_SCHEMA_V3 = T.StructType(TOUCH_SCHEMA_V2.fields[:-1] + [
+    T.StructField("pre_branch_type", T.ShortType(), False),
+    T.StructField("post_branch_type", T.ShortType(), False),
+])
+
 TOUCH_SCHEMAS = [
     TOUCH_SCHEMA_V1,
-    TOUCH_SCHEMA_V2
+    TOUCH_SCHEMA_V2,
+    TOUCH_SCHEMA_V3,
 ]
 
 GAP_JUNCTION_SCHEMA = T.StructType([

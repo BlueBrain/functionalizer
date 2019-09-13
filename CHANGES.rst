@@ -13,6 +13,7 @@ Changes:
   - Add additional output columns to gap-junction runs. See FUNCZ-211_.
   - Fix executions for circuits with only one synapse class. See FUNCZ-218_.
   - Add preliminary SONATA support. See FUNCZ-217_.
+  - Add support for ``{from,to}BranchType`` in `TouchRules`. See FUNCZ-223_.
 
 Version 0.14.3
 ==============
@@ -178,3 +179,4 @@ First working version with 3 base filters:
 .. _FUNCZ-211: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-211
 .. _FUNCZ-217: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-217
 .. _FUNCZ-218: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-218
+.. _FUNCZ-223: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-223
