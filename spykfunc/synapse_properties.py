@@ -100,14 +100,10 @@ def compute_additional_h5_fields(circuit, reduced, classification_matrix, proper
                 'pre_position_x', 'post_position_x',
                 'pre_position_y', 'post_position_y',
                 'pre_position_z', 'post_position_z',
+                'pre_branch_type', 'post_branch_type',
                 'spine_length'):
         if hasattr(t, col):
             optional.append(getattr(t, col).alias(col))
-    for col in ('branch_type',):
-        if hasattr(t, col):
-            optional.append(getattr(t, col).alias(col))
-        else:
-            optional.append(F.lit(0).alias(col))
 
     # Select fields
     return t.select(
@@ -126,9 +122,6 @@ def compute_additional_h5_fields(circuit, reduced, classification_matrix, proper
         t.rand_f.alias("f"),
         t.rand_dtc.alias("dtc"),
         t.synapseType.alias("synapseType"),
-        F.col("c.src_mtype_i").alias("morphology"),
-        F.lit(0).alias("branch_order_dend"),  # TBD
-        t.branch_order.alias("branch_order_axon"),
         t.rand_nrrp.alias("nrrp"),
         *optional
     )

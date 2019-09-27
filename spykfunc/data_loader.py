@@ -20,7 +20,7 @@ from .utils.filesystem import adjust_for_spark
 logger = get_logger(__name__)
 
 
-def _create_loader(filename, population):
+def _create_neuron_loader(filename, population):
     """Create a UDF to load neurons from MVD3
 
     Args:
@@ -48,11 +48,44 @@ def _create_loader(filename, population):
     return loader
 
 
+def _create_touch_loader(filename, population, columns):
+    """Create a UDF to load touches from SONATA
+
+    Args:
+        filename: The name of the touches file
+        population: The population to load
+        columns: The schema of the resulting dataframe
+    Returns:
+        A Pandas UDF to be used over a group by
+    """
+    @F.pandas_udf(columns, F.PandasUDFType.GROUPED_MAP)
+    def loader(data):
+        assert(len(data) == 1)
+        start, end = data.iloc[0]
+
+        import libsonata
+
+        p = libsonata.EdgeStorage(filename).open_population(population)
+        selection = libsonata.Selection([(start, end)])
+        attributes = p.attribute_names
+
+        data = dict(
+            pre_neuron_id=p.source_nodes(selection),
+            post_neuron_id=p.target_nodes(selection),
+        )
+
+        for name, alias in schema.INPUT_COLUMN_MAPPING:
+            if name in attributes:
+                data[alias] = p.get_attribute(name, selection)
+        return pd.DataFrame(data)
+    return loader
+
+
 class NeuronData:
     """Neuron data loading facilities
     """
 
-    PARTITION_SIZE = 20000
+    PARTITION_SIZE = 50000
 
     def __init__(self, filename, population, cache):
         import mvdtool
@@ -141,11 +174,11 @@ class NeuronData:
             )
 
             # Create DF
-            logger.info("Creating data frame...")
+            logger.info("Creating neuron data frame...")
             raw_mvd = (
                 parts
                 .groupby("start", "end")
-                .apply(_create_loader(self._filename, self._population))
+                .apply(_create_neuron_loader(self._filename, self._population))
             )
 
             # Evaluate (build partial NameMaps) and store
@@ -160,6 +193,44 @@ class NeuronData:
             self.df = F.broadcast(
                 sm.read.parquet(adjust_for_spark(mvd_parquet))
             ).cache()
+
+    @classmethod
+    def load_touch_sonata(cls, filename, population):
+        import libsonata
+        p = libsonata.EdgeStorage(filename).open_population(population)
+        # import pdb; pdb.set_trace()
+
+        total_parts = p.size // cls.PARTITION_SIZE + 1
+        logger.debug("Partitions: %d", total_parts)
+
+        attributes = set()
+        for alias, name in schema.INPUT_COLUMN_MAPPING:
+            if alias in p.attribute_names:
+                attributes.add(name)
+
+        columns = schema.TOUCH_SCHEMA_V3[1:3]
+        for n, col in enumerate(schema.TOUCH_SCHEMA_V3.fieldNames()):
+            if col in attributes:
+                columns.add(schema.TOUCH_SCHEMA_V3[n])
+
+        parts = sm.createDataFrame(
+            (
+                (cls.PARTITION_SIZE * n,
+                 min(cls.PARTITION_SIZE * (n + 1), p.size))
+                for n in range(total_parts)
+            ),
+            "start: int, end: int"
+        )
+
+        logger.info("Creating touch data frame...")
+        touches = (
+            parts
+            .groupby("start", "end")
+            .apply(_create_touch_loader(filename, population, columns))
+        )
+        logger.info("Total touches: %d", touches.count())
+
+        return touches
 
     @staticmethod
     def load_touch_parquet(*files):

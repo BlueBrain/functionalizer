@@ -92,18 +92,12 @@ class Functionalizer(object):
             adjust_for_spark(os.path.join(self._config.checkpoint_dir, "tmp"))
         )
         sm._jsc.hadoopConfiguration().setInt("parquet.block.size", 64 * _MB)
-        sm.register_java_functions(
-            [
-                ("float2binary", "spykfunc.udfs.FloatArraySerializer"),
-                ("int2binary", "spykfunc.udfs.IntArraySerializer"),
-            ]
-        )
 
     # -------------------------------------------------------------------------
     # Data loading and Init
     # -------------------------------------------------------------------------
     @sm.assign_to_jobgroup
-    def init_data(self, recipe_file, source, target, morpho_dir, touch_files):
+    def init_data(self, recipe_file, source, target, morpho_dir, parquet=None, sonata=None):
         """ Initializes all data for a Functionalizer session, reading MVDs, morphologies, recipe,
         and making all conversions
 
@@ -111,7 +105,8 @@ class Functionalizer(object):
         :param source: The source population path and name
         :param target: The target population path and name
         :param morpho_dir: The dir containing all required morphologies
-        :param touch_files: A list of touch files. A single globbing expression can be specified as well"
+        :param parquet: A list of touch files. A single globbing expression can be specified as well"
+        :param sonata: The edge population path and name
         """
         # In "program" mode this dir wont change later, so we can check here
         # for its existence/permission to create
@@ -138,15 +133,23 @@ class Functionalizer(object):
             )
             filters.SynapseProperties._morphologies = False
 
-        if isinstance(touch_files, str):
-            touch_files = glob.glob(touch_files)
-
         # 'Load' touches
-        touches = (
-            NeuronData.load_touch_parquet(*touch_files)
-            .withColumnRenamed("pre_neuron_id", "src")
-            .withColumnRenamed("post_neuron_id", "dst")
-        )
+        if parquet:
+            if isinstance(parquet, str):
+                parquet = glob.glob(parquet)
+            touches = (
+                NeuronData.load_touch_parquet(*parquet)
+                .withColumnRenamed("pre_neuron_id", "src")
+                .withColumnRenamed("post_neuron_id", "dst")
+            )
+        elif sonata:
+            touches = (
+                NeuronData.load_touch_sonata(*sonata)
+                .withColumnRenamed("pre_neuron_id", "src")
+                .withColumnRenamed("post_neuron_id", "dst")
+            )
+        else:
+            raise RuntimeError("Need to have touches")
 
         self.circuit = Circuit(n_to, n_from, touches, self.recipe, morpho_dir)
 

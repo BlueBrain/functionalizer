@@ -11,6 +11,67 @@ class DataSets:
     MORPHOLOGIES = "Dataset.Morphologies"
 
 
+INPUT_COLUMN_MAPPING = [
+    ("distance_soma", "distance_soma"),
+    ("afferent_section_type", "post_branch_type"),
+    ("afferent_segment_offset", "post_offset"),
+    ("afferent_center_x", "post_position_x"),
+    ("afferent_center_y", "post_position_y"),
+    ("afferent_center_z", "post_position_z"),
+    ("afferent_section_pos", "post_section_fraction"),
+    ("afferent_section_id", "post_section"),
+    ("afferent_segment_id", "post_segment"),
+    ("efferent_section_type", "pre_branch_type"),
+    ("efferent_segment_offset", "pre_offset"),
+    ("efferent_surface_x", "pre_position_x"),
+    ("efferent_surface_y", "pre_position_y"),
+    ("efferent_surface_z", "pre_position_z"),
+    ("efferent_section_pos", "pre_section_fraction"),
+    ("efferent_section_id", "pre_section"),
+    ("efferent_segment_id", "pre_segment"),
+    ("spine_length", "spine_length"),
+    ("synapse_id", "synapse_id"),
+]
+
+
+OUTPUT_COLUMN_MAPPING = [
+    ("post_gid", "connected_neurons_post", T.LongType()),
+    ("pre_gid", "connected_neurons_pre", T.LongType()),
+    ("axonal_delay", "delay", None),
+    ("gsyn", "conductance", None),
+    ("u", "u_syn", None),
+    ("d", "depression_time", None),
+    ("f", "facilitation_time", None),
+    ("dtc", "decay_time", None),
+    ("synapseType", "syn_type_id", None),
+    ("morphology", "morpho_type_id_pre", None),
+    # ("branch_order_dend", "morpho_branch_order_dend", None),  # N/A
+    # ("branch_order_axon", "morpho_branch_order_axon", None),  # Irrelevant
+    ("nrrp", "n_rrp_vesicles", T.ShortType()),
+    ("post_section", "morpho_section_id_post", None),
+    ("post_segment", "morpho_segment_id_post", None),
+    ("post_offset", "morpho_offset_segment_post", T.FloatType()),
+    ("pre_section", "morpho_section_id_pre", None),
+    ("pre_segment", "morpho_segment_id_pre", None),
+    ("pre_offset", "morpho_offset_segment_pre", T.FloatType()),
+    ("pre_section_fraction", "morpho_section_fraction_pre", T.FloatType()),
+    ("post_section_fraction", "morpho_section_fraction_post", T.FloatType()),
+    ("spine_length", "morpho_spine_length", None),
+    ("pre_position_x", "position_contour_pre_x", None),
+    ("pre_position_y", "position_contour_pre_y", None),
+    ("pre_position_z", "position_contour_pre_z", None),
+    ("post_position_x", "position_center_post_x", None),
+    ("post_position_y", "position_center_post_y", None),
+    ("post_position_z", "position_center_post_z", None),
+    ("pre_branch_type", "morpho_section_type_pre", None),
+    ("post_branch_type", "morpho_section_type_post", None),
+    ("src", "connected_neurons_pre", T.LongType()),
+    ("dst", "connected_neurons_post", T.LongType()),
+    ("post_junction", "junction_id_post", None),
+    ("pre_junction", "junction_id_pre", None),
+]
+
+
 LAYER_SCHEMA = T.StructType([
     T.StructField("layer_i", T.ByteType(), False),
     T.StructField("layer", T.ByteType(), False),
@@ -65,9 +126,9 @@ TOUCH_SCHEMA_V3 = T.StructType(TOUCH_SCHEMA_V2.fields[:-1] + [
 ])
 
 TOUCH_SCHEMAS = [
-    TOUCH_SCHEMA_V1,
-    TOUCH_SCHEMA_V2,
     TOUCH_SCHEMA_V3,
+    TOUCH_SCHEMA_V2,
+    TOUCH_SCHEMA_V1,
 ]
 
 GAP_JUNCTION_SCHEMA = T.StructType([

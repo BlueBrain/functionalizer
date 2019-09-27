@@ -86,6 +86,14 @@ def _parse_args(args=None) -> argparse.Namespace:
                         help="path and name for the source population")
     ginput.add_argument("--to", dest="target", nargs=2,
                         help="path and name for the target population")
+    gtouches = ginput.add_mutually_exclusive_group(required=True)
+    gtouches.add_argument("--parquet",
+                          help="the touch files (parquets); "
+                               "a litertal blob expression is also accepted.",
+                          nargs="+")
+    gtouches.add_argument("--touches",
+                          help="the touch file (sonata) and population",
+                          nargs=2)
     goutput = parser.add_argument_group("output options")
     goutput.add_argument("--cache-dir",
                          help="specify directory to cache circuits converted to parquet, "
@@ -127,10 +135,6 @@ def _parse_args(args=None) -> argparse.Namespace:
                       help="show the configuration including modifications via options prior "
                            "to this flag and exit")
     parser.add_argument("morpho_dir", help="the H5 morphology database directory")
-    parser.add_argument("touch_files",
-                        help="the touch files (parquets); "
-                             "a litertal blob expression is also accepted.",
-                        nargs="+")
 
     args = parser.parse_args(args)
 
@@ -167,7 +171,8 @@ def spykfunc() -> int:
                      options.source,
                      options.target,
                      options.morpho_dir,
-                     options.touch_files)
+                     options.parquet,
+                     options.touches)
         fz.process_filters(overwrite="F" in options.overwrite.upper())
         fz.export_results(overwrite="E" in options.overwrite.upper(),
                           order=getattr(SortBy, options.order.upper()))
