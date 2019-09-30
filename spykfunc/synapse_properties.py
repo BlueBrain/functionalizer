@@ -75,8 +75,19 @@ def compute_additional_h5_fields(circuit, reduced, classification_matrix, proper
     # IDs for random functions need to be unique, hence the use of offset
     connections = _add_connection_properties(connections, seed)
 
-    touches = circuit.alias("c").join(connections.alias("conn"),
-                                      [F.col("c.src") == F.col("conn.src"), F.col("c.dst") == F.col("conn.dst")])
+    # Identical columns should be dropped later
+    overlap = set(connections.columns) & set(circuit.columns)
+    for col in overlap:
+        connections = connections.withColumnRenamed(col, f"_{col}")
+
+    touches = (
+        circuit
+        .alias("c")
+        .join(connections.alias("conn"),
+              [F.col("c.src") == F.col("_src"),
+               F.col("c.dst") == F.col("_dst")])
+        .drop(*[f"_{col}" for col in overlap])
+    )
 
     # Compute #1: delaySomaDistance
     touches = touches.withColumn(
@@ -93,38 +104,14 @@ def compute_additional_h5_fields(circuit, reduced, classification_matrix, proper
          ).cast(T.ShortType())
     )
 
-    # Optional columns
-    optional = []
-    for col in ('pre_section_fraction',
-                'post_section_fraction',
-                'pre_position_x', 'post_position_x',
-                'pre_position_y', 'post_position_y',
-                'pre_position_z', 'post_position_z',
-                'pre_branch_type', 'post_branch_type',
-                'spine_length'):
-        if hasattr(t, col):
-            optional.append(getattr(t, col).alias(col))
+    # Required for SONATA support
+    if not hasattr(t, "synapse_type_id"):
+        t = t.withColumn(
+            "synapse_type_id",
+            F.lit(0)
+        )
 
-    # Select fields
-    return t.select(
-        F.col("c.src").alias("pre_gid"),
-        F.col("c.dst").alias("post_gid"),
-        t.axonal_delay,
-        t.post_section.alias("post_section"),
-        t.post_segment.alias("post_segment"),
-        t.post_offset.alias("post_offset"),
-        t.pre_section.alias("pre_section"),
-        t.pre_segment.alias("pre_segment"),
-        t.pre_offset.alias("pre_offset"),
-        t.rand_gsyn.alias("gsyn"),
-        t.rand_u.alias("u"),
-        t.rand_d.alias("d"),
-        t.rand_f.alias("f"),
-        t.rand_dtc.alias("dtc"),
-        t.synapseType.alias("synapseType"),
-        t.rand_nrrp.alias("nrrp"),
-        *optional
-    )
+    return t
 
 
 def patch_ChC_SPAA_cells(circuit, morphology_db, pathways_to_patch):
@@ -160,6 +147,9 @@ def patch_ChC_SPAA_cells(circuit, morphology_db, pathways_to_patch):
 def _add_connection_properties(connections, seed):
     """Add connection properties drawn from random distributions
 
+    The input parameters for the properties will be removed, the output
+    columns may retain the same name, though.
+
     :param connections: A Spark dataframe holding synapse connections
     :return: The input dataframe with additonal property columns
     """
@@ -183,9 +173,16 @@ def _add_connection_properties(connections, seed):
     connections = connections.sortWithinPartitions("src")
     for n, f in add:
         args = [F.col("synapse_id"), F.col(n)]
+        temp = [n]
         if n != "nrrp":
             args.append(F.col(n + "SD"))
-        connections = connections.withColumn("rand_" + n, f(*args))
+            temp.append(n + "SD")
+        connections = (
+            connections
+            .withColumn(f"rand_{n}", f(*args))
+            .drop(*temp)
+            .withColumnRenamed(f"rand_{n}", n)
+        )
     return connections
 
 

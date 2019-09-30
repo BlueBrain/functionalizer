@@ -17,11 +17,11 @@ def test_property_assignment(fz):
                                        fz.circuit.target,
                                        None)[0]
     data = fltr.apply(fz.circuit)
-    have = data.select("pre_gid", "post_gid", "synapseType")
+    have = data.select("src", "dst", "synapseType")
     want = sm.read.parquet(os.path.join(DATADIR, "syn_prop_out.parquet")) \
         .groupBy("pre_gid", "post_gid", "synapseType").count()
     comp = have.alias("h").join(want.alias("w"),
-        [have.pre_gid == want.pre_gid, have.post_gid == want.post_gid])
+        [have.src == want.pre_gid, have.dst == want.post_gid])
     assert comp.where("h.synapseType != w.synapseType").count() == 0
 
 

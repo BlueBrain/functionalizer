@@ -9,13 +9,13 @@ import time
 import sparkmanager as sm
 
 from . import filters
+from . import schema
 from . import utils
 from .filters import DatasetOperation
 from .circuit import Circuit
 from .recipe import Recipe
 from .data_loader import NeuronData
-from .data_export import NeuronExporter, SortBy
-from .definitions import CheckpointPhases
+from .definitions import CheckpointPhases, SortBy
 from .utils.checkpointing import checkpoint_resume
 from .utils.filesystem import adjust_for_spark, autosense_hdfs
 
@@ -67,9 +67,6 @@ class Functionalizer(object):
 
     recipe = None
     """:property: The parsed recipe"""
-
-    exporter = None
-    """:property: The :py:class:`~spykfunc.data_export.NeuronExporter` object"""
 
     # ==========
     def __init__(self, **options):
@@ -171,9 +168,6 @@ class Functionalizer(object):
         )
         sm.conf.set("spark.sql.shuffle.partitions", shuffle_partitions)
 
-        # Data exporter
-        self.exporter = NeuronExporter(output_path=self._config.output_dir)
-
         return self
 
     @property
@@ -226,16 +220,37 @@ class Functionalizer(object):
             self,
             output_path=None,
             overwrite=False,
-            order: SortBy = SortBy.POST):
+            order: SortBy = SortBy.POST,
+            filename: str = "circuit.parquet"):
         """ Exports the current touches to storage, appending the synapse property fields
 
         :param output_path: Changes the default export directory
         :param order: How to sort the output
         """
+        def get_fields(df):
+            # Transitional SYN2 spec fields
+            for field, alias, cast in schema.OUTPUT_COLUMN_MAPPING:
+                if hasattr(df, field):
+                    logger.info("Writing field %s", field)
+                    if cast:
+                        yield getattr(df, field).cast(cast).alias(alias)
+                    else:
+                        yield getattr(df, field).alias(alias)
+
+        df = (
+            self.circuit.touches
+            .withColumnRenamed("src", "pre_gid")
+            .withColumnRenamed("dst", "post_gid")
+        )
+
+        output_path = os.path.realpath(os.path.join(self.output_directory, filename))
         logger.info("Exporting touches...")
-        exporter = self.exporter
- 
-        exporter.export(self.circuit.touches, order=order)
+        df_output = df.select(*get_fields(df)) \
+                      .sort(*(order.value))
+        df_output.write.parquet(
+            adjust_for_spark(output_path, local=True),
+            mode="overwrite"
+        )
         logger.info("Data export complete")
 
     # -------------------------------------------------------------------------

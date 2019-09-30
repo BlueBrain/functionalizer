@@ -44,6 +44,8 @@ OUTPUT_COLUMN_MAPPING = [
     ("f", "facilitation_time", None),
     ("dtc", "decay_time", None),
     ("synapseType", "syn_type_id", None),
+    # Renamed to edge_type_id to conform to SONATA
+    ("synapse_type_id", "synapse_type_id", None),
     ("morphology", "morpho_type_id_pre", None),
     # ("branch_order_dend", "morpho_branch_order_dend", None),  # N/A
     # ("branch_order_axon", "morpho_branch_order_axon", None),  # Irrelevant
