@@ -31,7 +31,6 @@ class _SpykfuncOptions:
     name = "Functionalizer"
     cache_dir = None
     filters = None
-    no_morphos = False
     checkpoint_dir = None
     debug = False
     strict = False
@@ -122,13 +121,6 @@ class Functionalizer(object):
         else:
             n_to = NeuronData(*target, self._config.cache_dir)
             n_to.load_neurons()
-
-        # Verify required morphologies are available
-        if self._config.no_morphos:
-            logger.info(
-                "Running in no-morphologies mode. No ChC cells handling performed."
-            )
-            filters.SynapseProperties._morphologies = False
 
         # 'Load' touches
         if parquet:

@@ -2,6 +2,19 @@
 Changelog
 =========
 
+Version 0.15.2
+==============
+
+Changes:
+  - Split of repositioning of synapses into a separate filter. See
+    FUNCZ-226_.
+
+Version 0.15.1
+==============
+
+Changes:
+  - Improved the determination of fields to write to the output
+
 Version 0.15.0
 ==============
 
@@ -180,3 +193,4 @@ First working version with 3 base filters:
 .. _FUNCZ-217: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-217
 .. _FUNCZ-218: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-218
 .. _FUNCZ-223: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-223
+.. _FUNCZ-226: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-226

@@ -36,7 +36,7 @@ See the output of the help for detailed information:
                    [--format-hdf5] [--name NAME] [--cache-dir CACHE_DIR]
                    [--checkpoint-dir CHECKPOINT_DIR] [--output-dir OUTPUT_DIR]
                    [-c CONFIGURATION] [-p OVERRIDES] [--dump-configuration]
-                   [--overwrite [{F,E}]] [--no-morphos]
+                   [--overwrite [{F,E}]]
                    recipe_file circuit_file morpho_dir touch_files [touch_files ...]
 
    spykfunc is a pyspark implementation of functionalizer.
@@ -54,14 +54,14 @@ See the output of the help for detailed information:
                                BoutonDistance, SynapseProperties
      --s2f, --functional   functional pruning and filtering using:
                                BoutonDistance, TouchRules, ReduceAndCut,
-                               SynapseProperties
+                               SynapseReposition, SynapseProperties
      --gap-junctions       run filters for gap-junctions:
                                SomaDistance, GapJunction
      --filters FILTERS     run a list of custom filters (comma-separated),
                            available:
                                BoutonDistance, CumulativeDistance, GapJunction,
-                               ReduceAndCut, SomaDistance, SynapseProperties,
-                               TouchRules
+                               ReduceAndCut, SomaDistance, SynapseReposition,
+                               SynapseProperties, TouchRules
      --format-hdf5         write/convert result to HDF5 (nrn.h5) rather than
                            parquet
      --name NAME           name that will show up in the Spark logs, defaults to
@@ -89,9 +89,6 @@ See the output of the help for detailed information:
                            forcing their recomputation; possible values: F (for
                            filtered, implies E) or E (for extended with synapse
                            properties)
-     --no-morphos          run spykfunc without morphologies; note: ChC cells
-                           wont be patched and branch_type field won't be part of
-                           the result
 
 Use the `--format-hdf5` flag to obtain output in HDF5. This is not
 guaranteed to work with larger circuits.

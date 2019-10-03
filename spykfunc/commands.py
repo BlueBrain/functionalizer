@@ -74,11 +74,6 @@ def _parse_args(args=None) -> argparse.Namespace:
                        help="run a list of custom filters (comma-separated), available:\ni|" +
                             ", ".join(DatasetOperation.modules()),
                        action=_SplitAction)
-    gfilter.add_argument("--no-morphos",
-                         help="run spykfunc without morphologies; "
-                              "note: ChC cells wont be patched and "
-                              "branch_type field won't be part of the result",
-                         action="store_true", default=False)
     ginput = parser.add_argument_group("input options")
     ginput.add_argument("--circuit", dest="circuit_file",
                         help="the input circuit file")

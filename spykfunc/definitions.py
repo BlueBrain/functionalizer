@@ -10,7 +10,7 @@ class RunningMode(Enum):
     """Definintions for running modes
     """
     STRUCTURAL = ('BoutonDistance', 'SynapseProperties')
-    FUNCTIONAL = ('BoutonDistance', 'TouchRules', 'ReduceAndCut', 'SynapseProperties')
+    FUNCTIONAL = ('BoutonDistance', 'TouchRules', 'ReduceAndCut', 'SynapseReposition', 'SynapseProperties')
     GAP_JUNCTIONS = ('SomaDistance', 'GapJunction')
 
 

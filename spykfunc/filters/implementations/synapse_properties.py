@@ -2,7 +2,6 @@
 """
 from collections import defaultdict, OrderedDict
 import fnmatch
-import itertools
 import numpy as np
 
 import sparkmanager as sm
@@ -17,15 +16,6 @@ from spykfunc.utils import get_logger
 from . import Seeds
 
 logger = get_logger(__name__)
-
-
-class SynapsesReposition(GenericProperty):
-    """Class representing rules to shift synapse positions"""
-
-    _supported_attrs = {'fromMType', 'toMType', 'type'}
-    fromMType = None
-    toMType = None
-    type = ""
 
 
 class SynapsesProperty(GenericProperty):
@@ -83,11 +73,8 @@ class SynapsesClassification(GenericProperty):
 class SynapseProperties(DatasetOperation):
     """Assign synapse properties
 
-    This "filter" augments touches with properties of synapses by
-
-    * shifting the post-section of synapses for ChC and SpAA cells to the
-      soma according to the `SynapsesReposition` rules of the recipe.
-    * adding the fields
+    This "filter" augments touches with properties of synapses by adding
+    the fields
 
       - `gsyn` following a Gamma-distribution,
       - `d` following a Gamma-distribution,
@@ -96,7 +83,7 @@ class SynapseProperties(DatasetOperation):
       - `dtc` following a truncated Normal-distribution,
       - `nrrp` following a Poisson-distribution
 
-      as specified by the `SynapsesClassification` part of the recipe.
+    as specified by the `SynapsesClassification` part of the recipe.
 
     To draw from the distributions, a seed derived from the `synapseSeed`
     in the recipe is used.
@@ -106,19 +93,11 @@ class SynapseProperties(DatasetOperation):
     """
 
     _checkpoint = True
-    _morphologies = True
 
     def __init__(self, recipe, source, target, morphos):
         self.seed = Seeds.load(recipe.xml).synapseSeed
         logger.info("Using seed %d for synapse properties", self.seed)
 
-        reposition = list(
-            recipe.load_group(
-                recipe.xml.find("SynapsesReposition"),
-                SynapsesReposition,
-                required=False
-            )
-        )
         # Someone assigned the classification of synapses to an element
         # called "Properties" and property management to "Classification"
         # [sic]
@@ -135,20 +114,13 @@ class SynapseProperties(DatasetOperation):
             )
         )
 
-        self.reposition = self.convert_reposition(source, target, reposition)
         self.classification = self.convert_classification(source, target, classification)
         self.properties = self.convert_properties(classification, properties)
 
     def apply(self, circuit):
         """Add properties to the circuit
         """
-        from spykfunc.synapse_properties import patch_ChC_SPAA_cells
         from spykfunc.synapse_properties import compute_additional_h5_fields
-
-        if self._morphologies:
-            circuit.df = patch_ChC_SPAA_cells(circuit.df,
-                                              circuit.morphologies,
-                                              self.reposition)
 
         extended_touches = compute_additional_h5_fields(
             circuit.df,
@@ -179,29 +151,6 @@ class SynapseProperties(DatasetOperation):
 
         merged_props = F.broadcast(merged_props.checkpoint())
         return merged_props
-
-    @staticmethod
-    def convert_reposition(source, target, reposition):
-        """Loader for pathways that need synapses to be repositioned
-        """
-        src_mtype = source.mtypes
-        src_mtype_rev = {name: i for i, name in enumerate(src_mtype)}
-        dst_mtype = target.mtypes
-        dst_mtype_rev = {name: i for i, name in enumerate(dst_mtype)}
-
-        paths = []
-        for shift in reposition:
-            src = src_mtype_rev.values()
-            dst = dst_mtype_rev.values()
-            if shift.type != 'AIS':
-                continue
-            if shift.fromMType:
-                src = [src_mtype_rev[m] for m in fnmatch.filter(src_mtype, shift.fromMType)]
-            if shift.toMType:
-                dst = [dst_mtype_rev[m] for m in fnmatch.filter(dst_mtype, shift.toMType)]
-            paths.extend(itertools.product(src, dst))
-        pathways = sm.createDataFrame([((s << 16) | d, True) for s, d in paths], schema.SYNAPSE_REPOSITION_SCHEMA)
-        return F.broadcast(pathways)
 
     @staticmethod
     def convert_classification(source, target, classification):
