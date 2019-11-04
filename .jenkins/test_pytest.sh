@@ -1,8 +1,9 @@
-script=$(mktemp)
+echo TMPDIR is defined as ${TMPDIR} on $(hostname)
+script=$(mktemp -p .)
 cat >$script <<EOF
 cd $WORKSPACE
-export SPARK_LOCAL_DIRS=/nvme/\$(whoami)/\$SLURM_JOBID/spark-local
-export SPARK_WORKER_DIR=/nvme/\$(whoami)/\$SLURM_JOBID/spark-worker
+export SPARK_LOCAL_DIRS=/\${TMPDIR}/\${SLURM_JOBID}/spark-local
+export SPARK_WORKER_DIR=/\${TMPDIR}/\${SLURM_JOBID}/spark-worker
 export PYTHONPATH=$PWD:$PYTHONPATH
 python setup.py test
 EOF

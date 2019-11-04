@@ -8,6 +8,10 @@ Version 0.15.2
 Changes:
   - Split of repositioning of synapses into a separate filter. See
     FUNCZ-226_.
+  - Fix branch type matching in `TouchRules`. Allow `axon` to be matched,
+    and do no longer match `axon` values when using the `dendrite` value.
+    This should not have a user impact, as the default `TouchDetector`
+    touch space is axon-dendrite connections. See also FUNCZ-216_.
 
 Version 0.15.1
 ==============
@@ -190,6 +194,7 @@ First working version with 3 base filters:
 .. _FUNCZ-201: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-201
 .. _FUNCZ-209: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-209
 .. _FUNCZ-211: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-211
+.. _FUNCZ-216: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-216
 .. _FUNCZ-217: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-217
 .. _FUNCZ-218: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-218
 .. _FUNCZ-223: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-223

@@ -54,7 +54,8 @@ class TouchRule(GenericProperty):
         type_map = {
             '*': [0, 1, 2, 3],
             'soma': [0],
-            'dendrite': [1, 2, 3],
+            'axon': [1],
+            'dendrite': [2, 3],
             'basal': [2],
             'apical': [3]
         }
@@ -148,10 +149,11 @@ class TouchRulesFilter(DatasetOperation):
         # section (0->soma)
         touches = circuit.df
         if not hasattr(circuit.df, 'pre_branch_type'):
+            logger.warn(f"Guessing pre-branch type for touch rules!")
             touches = (
                 touches
                 .withColumn('pre_branch_type',
-                            (touches.pre_section > 0).cast('integer'))
+                            (touches.pre_section > 0).cast('integer') * 2)
             )
         if not hasattr(circuit.df, 'post_branch_type'):
             if 'branch_type' in touches.columns:
@@ -160,10 +162,11 @@ class TouchRulesFilter(DatasetOperation):
                     .withColumnRenamed('branch_type', 'post_branch_type')
                 )
             else:
+                logger.warn(f"Guessing post-branch type for touch rules!")
                 touches = (
                     touches
                     .withColumn('post_branch_type',
-                                (touches.post_section > 0).cast('integer'))
+                                (touches.post_section > 0).cast('integer') * 2)
                 )
         return touches.withColumn("fail",
                                   touches.src_mtype_i * indices[1] +

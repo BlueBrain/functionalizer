@@ -219,7 +219,7 @@ class NeuronData:
                  min(cls.PARTITION_SIZE * (n + 1), p.size))
                 for n in range(total_parts)
             ),
-            "start: int, end: int"
+            "start: long, end: long"
         )
 
         logger.info("Creating touch data frame...")
