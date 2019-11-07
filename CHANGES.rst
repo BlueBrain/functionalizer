@@ -12,6 +12,7 @@ Changes:
     and do no longer match `axon` values when using the `dendrite` value.
     This should not have a user impact, as the default `TouchDetector`
     touch space is axon-dendrite connections. See also FUNCZ-216_.
+  - Activate spine length filtering if recipe component is present.
 
 Version 0.15.1
 ==============

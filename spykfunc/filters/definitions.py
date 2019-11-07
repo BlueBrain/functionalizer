@@ -104,7 +104,13 @@ class __DatasetOperationType(type):
                 raise ValueError(f"Cannot have more than one {fcls.__name__}")
             fcls._checkpoint_name = f"{fcls.__name__.replace('Filter', '').lower()}" \
                                     f"_{key.hexdigest()[:8]}"
-            filters.append(fcls(*args))
+            try:
+                filters.append(fcls(*args))
+            except Exception as e:
+                if fcls._required:
+                    logger.exception(f"Could not instantiate {fcls.__name__}")
+                    raise
+                logger.warning(f"Disabling optional {fcls.__name__}: {e}")
         for i in range(len(filters) - 1, -1, -1):
             base = Path(checkpoint_resume.directory)
             parquet = filters[i]._checkpoint_name + '.parquet'
@@ -141,6 +147,7 @@ class DatasetOperation(object, metaclass=__DatasetOperationType):
     _checkpoint_buckets = None
 
     _visible = False
+    _required = True
 
     def __init__(self, recipe, source, target, morphos):
         """Empty constructor supposed to be overriden

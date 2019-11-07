@@ -25,15 +25,15 @@ class SynapseReposition(DatasetOperation):
     according to the `SynapsesReposition` rules of the recipe.
     """
 
+    _required = False
+
     def __init__(self, recipe, source, target, morphos):
         reposition = list(
             recipe.load_group(
                 recipe.xml.find("SynapsesReposition"),
-                SynapsesReposition,
-                required=False
+                SynapsesReposition
             )
         )
-
         self.reposition = self.convert_reposition(source, target, reposition)
 
     def apply(self, circuit):
