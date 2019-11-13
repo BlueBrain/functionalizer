@@ -8,6 +8,8 @@ export PYTHONPATH=$PWD:$PYTHONPATH
 python setup.py test
 EOF
 
+module load unstable boost cmake
+
 part=$([ $(date +%H) -gt 8 -a $(date +%H) -lt 20 ] && echo interactive || echo prod)
 # srun here rather than salloc since the latter executes on the local
 # machine, with internal sruns running on remote nodes with requested

@@ -3,28 +3,97 @@
 """
     Setup file for spykfunc.
 """
-from setuptools import setup, Command, Extension
-from setuptools.command.test import test as TestCommand
-from setuptools.command.install import install as InstallCommand
-import sys
+import glob
 import os
 import os.path as osp
-import glob
-import shutil
+import platform
+import re
+import subprocess
+import sys
 
-import numpy as np
+from distutils.version import LooseVersion
+from pathlib import Path
+from setuptools import setup, Command, Extension
+from setuptools.command.build_ext import build_ext
+from setuptools.command.test import test as TestCommand
 
-BUILD_TYPE = os.getenv('BUILD_TYPE', "RELEASE").upper()
 BASE_DIR = osp.dirname(__file__)
 EXAMPLES_DESTINATION = "share/spykfunc/examples"
 _TERMINAL_CTRL = "\033[{}m"
 
-assert BUILD_TYPE in ["RELEASE", "DEVEL"], "Build types allowed: DEVEL, RELEASE"
 
-if BUILD_TYPE == "RELEASE":
-    assert glob.glob(osp.join(BASE_DIR, 'spykfunc/*/*.cpp'))
-elif BUILD_TYPE == "DEVEL":
-    from Cython.Build import cythonize
+class CMakeExtension(Extension):
+    def __init__(self, name, sourcedir=''):
+        Extension.__init__(self, name, sources=[])
+        self.sourcedir = os.path.abspath(sourcedir)
+
+
+def find_cmake():
+    for candidate in ['cmake', 'cmake3']:
+        try:
+            out = subprocess.check_output([candidate, '--version'])
+            cmake_version = LooseVersion(re.search(r'version\s*([\d.]+)',
+                                                   out.decode()).group(1))
+            if cmake_version >= '3.2.0':
+                return candidate
+        except OSError:
+            pass
+
+    raise RuntimeError("CMake >= 3.2.0 must be installed to build Spykfunc")
+
+
+class CMakeBuild(build_ext):
+    def run(self):
+        cmake = find_cmake()
+        for ext in self.extensions:
+            self.build_extension(ext, cmake)
+
+    def build_extension(self, ext, cmake):
+        source = Path(self.build_temp).resolve() / self.get_ext_filename(ext.name)
+        extdir = str(source.parent)
+        cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
+                      '-DPYTHON_EXECUTABLE=' + sys.executable]
+
+        cfg = 'Debug' if self.debug else 'Release'
+        build_args = ['--config', cfg]
+
+        if 'BOOST_ROOT' in os.environ:
+            cmake_args += ['-DBOOST_ROOT={}'.format(os.environ['BOOST_ROOT'])]
+
+        if platform.system() == "Windows":
+            cmake_args += ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}'.format(
+                cfg.upper(),
+                extdir)]
+            if sys.maxsize > 2**32:
+                cmake_args += ['-A', 'x64']
+            build_args += ['--', '/m']
+        else:
+            cmake_args += ['-DCMAKE_BUILD_TYPE={}'.format(cfg)]
+            build_args += ['--', '-j']
+
+        if not os.path.exists(self.build_temp):
+            os.makedirs(self.build_temp)
+
+        try:
+            proc = subprocess.Popen(
+                "echo $CXX", shell=True, stdout=subprocess.PIPE)
+            output = subprocess.check_call([cmake, ext.sourcedir] + cmake_args,
+                                           cwd=self.build_temp)
+            output = subprocess.check_call([cmake, '--build', '.'] + build_args,
+                                           cwd=self.build_temp)
+        except subprocess.CalledProcessError as exc:
+            print("Status : FAIL", exc.returncode, exc.output)
+            raise
+
+        # Put into the local source directory
+        target = Path(self.get_ext_fullpath(ext.name)).resolve()
+        target.parent.mkdir(parents=True, exist_ok=True)
+        self.copy_file(source, target)
+
+        # Add it to the library to package
+        libs = Path(self.build_lib).resolve() / self.get_ext_filename(ext.name)
+        libs.parent.mkdir(parents=True, exist_ok=True)
+        self.copy_file(source, libs)
 
 
 # *******************************
@@ -102,67 +171,15 @@ class PyTest(TestCommand):
         sys.exit(errno)
 
 
-class Install(InstallCommand):
-    """Post-installation for installation mode."""
-    def run(self):
-        InstallCommand.run(self)
-        print("{}Going to install examples to INSTALL_PREFIX/{}{}"
-              .format(_TERMINAL_CTRL.format(32),    # Green
-                      EXAMPLES_DESTINATION,
-                      _TERMINAL_CTRL.format(0)))    # reset
-
-
 # *******************************
-# Extensions setup
+# Main setup
 # *******************************
-_filename_ext = '.pyx' if BUILD_TYPE == 'DEVEL' else '.cpp'
-
-_ext_dir = osp.join(BASE_DIR, 'spykfunc/')
-
-ext_mods = {
-    'spykfunc.filters.udfs.binning': dict(
-        include_dirs=[np.get_include()],
-    ),
-    'spykfunc.filters.udfs.matching': dict(
-        include_dirs=[np.get_include()],
-    ),
-    'spykfunc.random.threefry': dict(
-        include_dirs=[osp.join(BASE_DIR, 'deps/hadoken/include'),
-                      np.get_include()],
-    ),
-}
-
-extensions = [
-    Extension(name, [name.replace('.', '/') + _filename_ext],
-              language='c++',
-              extra_compile_args=['-std=c++11'],
-              **opts)
-    for name, opts in ext_mods.items()
-]
-
-
-if BUILD_TYPE == 'DEVEL':
-    extensions = cythonize(extensions,
-                           cplus=True,
-                           build_dir="build")
-    for name in ext_mods:
-        path = name.replace('.', '/') + '.cpp'
-        src = osp.join("build", path)
-        dst = osp.join(BASE_DIR, path)
-        print("{}Updating Cython-generated extension '{}'{}"
-              .format(_TERMINAL_CTRL.format(32),    # Green
-                      path,
-                      _TERMINAL_CTRL.format(0)))    # reset
-        shutil.copy(src, dst)
-
-
 def setup_package():
     maybe_sphinx = [
         'sphinx<3.0.0',
         'sphinx-bluebrain-theme @ https://github.com/BlueBrain/sphinx-bluebrain-theme/archive/v0.1.1.tar.gz',
         'docs-internal-upload'
     ] if 'build_docs' in sys.argv else []
-    maybe_cython = ["cython<0.26"] if BUILD_TYPE == "DEVEL" else []
 
     setup(
         # name and other metadata are in setup.cfg
@@ -179,12 +196,10 @@ def setup_package():
             'spykfunc.filters',
             'spykfunc.filters.implementations',
             'spykfunc.filters.udfs',
-            'spykfunc.random',
             'spykfunc.tools',
             'spykfunc.tools.analysis',
             'spykfunc.utils',
         ],
-        ext_modules=extensions,
         package_data={
             'spykfunc': ['data/*']
         },
@@ -212,17 +227,18 @@ def setup_package():
             'pyarrow<0.15.0',
             'sparkmanager>=0.7.0',
         ],
-        setup_requires=['setuptools_scm'] + maybe_sphinx + maybe_cython,
+        setup_requires=['setuptools_scm'] + maybe_sphinx,
         tests_require=['mock', 'pytest', 'pytest-cov'],
         extras_require={
             # Dependencies if the user wants a dev env
-            'dev': ['cython<0.26', 'flake8'],
+            'dev': ['flake8'],
             'plot': ['seaborn', 'requests', 'bb5']
         },
+        ext_modules=[CMakeExtension('spykfunc.filters.udfs._udfs', 'spykfunc/filters/udfs')],
         cmdclass={
             'build_docs': Documentation,
+            'build_ext': CMakeBuild,
             'test': PyTest,
-            'install': Install
         },
         entry_points={
             'console_scripts': [

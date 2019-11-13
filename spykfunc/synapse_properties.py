@@ -7,9 +7,9 @@ import pandas
 import sparkmanager as sm
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
-from .schema import touches_with_pathway, SYNAPSE_CLASS_MAP_SCHEMA as schema
+from .schema import SYNAPSE_CLASS_MAP_SCHEMA as schema
 from .utils.spark import cache_broadcast_single_part
-from .random import RNGThreefry, gamma, poisson, truncated_normal
+from .filters.udfs import gamma, poisson, truncated_normal
 
 
 def compute_additional_h5_fields(circuit, reduced, classification_matrix, properties_df, seed):
@@ -114,36 +114,6 @@ def compute_additional_h5_fields(circuit, reduced, classification_matrix, proper
     return t
 
 
-def patch_ChC_SPAA_cells(circuit, morphology_db, pathways_to_patch):
-    """Patches a circuit, fixing the touch post-segment of ChC and SPAA cells to axon
-    """
-    # isChCpre = neuronMap.getMTypeFromIndex(preMType).find( "ChC" )
-    # isSP_AApre = neuronMap.getMTypeFromIndex(preMType).find("SP_AA")
-
-    get_axon_section_id = _create_axon_section_udf(morphology_db)
-
-    circuit = touches_with_pathway(circuit).join(pathways_to_patch, "pathway_i", "left_outer")
-
-    patched_circuit = (
-        circuit.withColumn(
-            "new_post_section",
-             get_axon_section_id(circuit.reposition,
-                                 circuit.post_section,
-                                 circuit.dst_morphology)
-        )
-        .withColumn("new_post_segment",
-                    F.when(circuit.reposition, 0).otherwise(circuit.post_segment))
-        .withColumn("new_post_offset",
-                    F.when(circuit.reposition, 0.5).otherwise(circuit.post_offset))
-        .drop("post_section", "post_segment", "post_offset", "pathway_i", "reposition")
-        .withColumnRenamed("new_post_section", "post_section")
-        .withColumnRenamed("new_post_segment", "post_segment")
-        .withColumnRenamed("new_post_offset", "post_offset")
-    )
-
-    return patched_circuit
-
-
 def _add_connection_properties(connections, seed):
     """Add connection properties drawn from random distributions
 
@@ -156,9 +126,8 @@ def _add_connection_properties(connections, seed):
     def __generate(key, fct):
         @F.pandas_udf('float')
         def _udf(*args):
-            rng = RNGThreefry().seed(seed)
             args = [a.values for a in args]
-            return pandas.Series(fct(rng.derivate(key), *args))
+            return pandas.Series(fct(seed, key, *args))
         return _udf
 
     add = [
@@ -184,26 +153,3 @@ def _add_connection_properties(connections, seed):
             .withColumnRenamed(f"rand_{n}", n)
         )
     return connections
-
-
-def _create_axon_section_udf(morphology_db):
-    """ Creates a UDF for a given morphologyDB that looks up
-        the first axon section in a morphology given its name
-
-    :param morphology_db: the morphology db
-    :return: a UDF to shift the post section of some morphology types
-    """
-    @F.pandas_udf('integer')
-    def shift_axon_section_id(reposition, defaults, morphos):
-        """Shift the axon sections for morphologies flagged.
-
-        :param reposition: flag to indicate if a shift is needed
-        :param defaults: post section to use when no shift is required
-        :param morphos: morphology types to get the axon section for
-        """
-        sections = numpy.array(defaults.values, copy=True)
-        for i, (shift, morpho) in enumerate(zip(reposition, morphos)):
-            if shift:
-                sections[i] = morphology_db.first_axon_section(morpho)
-        return pandas.Series(data=sections)
-    return shift_axon_section_id

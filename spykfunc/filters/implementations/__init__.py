@@ -8,8 +8,7 @@ import pandas
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
 
-from spykfunc.filters.udfs import get_bins
-from spykfunc.random import RNGThreefry, uniform
+from spykfunc.filters.udfs import get_bins, uniform
 from spykfunc.recipe import Attribute, GenericProperty
 
 
@@ -41,8 +40,7 @@ def add_random_column(df, name, seed, key, derivative):
     """
     @F.pandas_udf('float')
     def _fixed_rand(col):
-        rng = RNGThreefry().seed(seed).derivate(key)
-        return pandas.Series(uniform(rng, col.values))
+        return pandas.Series(uniform(seed, key, col.values))
     return df.withColumn(name, _fixed_rand(derivative.cast(T.LongType())))
 
 

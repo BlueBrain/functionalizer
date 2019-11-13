@@ -1,6 +1,9 @@
 import fnmatch
 import itertools
 
+import numpy
+import pandas
+
 import sparkmanager as sm
 from pyspark.sql import functions as F
 
@@ -35,10 +38,32 @@ class SynapseReposition(DatasetOperation):
     def apply(self, circuit):
         """Actually reposition the synapses
         """
-        from spykfunc.synapse_properties import patch_ChC_SPAA_cells
-        return patch_ChC_SPAA_cells(circuit.df,
-                                    circuit.morphologies,
-                                    self.reposition)
+        get_axon_section_id = _create_axon_section_udf(circuit.morphologies)
+
+        circuit = (
+            schema
+            .touches_with_pathway(circuit.df)
+            .join(self.reposition, "pathway_i", "left_outer")
+        )
+
+        patched_circuit = (
+            circuit.withColumn(
+                "new_post_section",
+                get_axon_section_id(circuit.reposition,
+                                    circuit.post_section,
+                                    circuit.dst_morphology)
+            )
+            .withColumn("new_post_segment",
+                        F.when(circuit.reposition, 0).otherwise(circuit.post_segment))
+            .withColumn("new_post_offset",
+                        F.when(circuit.reposition, 0.5).otherwise(circuit.post_offset))
+            .drop("post_section", "post_segment", "post_offset", "pathway_i", "reposition")
+            .withColumnRenamed("new_post_section", "post_section")
+            .withColumnRenamed("new_post_segment", "post_segment")
+            .withColumnRenamed("new_post_offset", "post_offset")
+        )
+
+        return patched_circuit
 
     @staticmethod
     def convert_reposition(source, target, reposition):
@@ -62,3 +87,26 @@ class SynapseReposition(DatasetOperation):
             paths.extend(itertools.product(src, dst))
         pathways = sm.createDataFrame([((s << 16) | d, True) for s, d in paths], schema.SYNAPSE_REPOSITION_SCHEMA)
         return F.broadcast(pathways)
+
+
+def _create_axon_section_udf(morphology_db):
+    """ Creates a UDF for a given morphologyDB that looks up
+        the first axon section in a morphology given its name
+
+    :param morphology_db: the morphology db
+    :return: a UDF to shift the post section of some morphology types
+    """
+    @F.pandas_udf('integer')
+    def shift_axon_section_id(reposition, defaults, morphos):
+        """Shift the axon sections for morphologies flagged.
+
+        :param reposition: flag to indicate if a shift is needed
+        :param defaults: post section to use when no shift is required
+        :param morphos: morphology types to get the axon section for
+        """
+        sections = numpy.array(defaults.values, copy=True)
+        for i, (shift, morpho) in enumerate(zip(reposition, morphos)):
+            if shift:
+                sections[i] = morphology_db.first_axon_section(morpho)
+        return pandas.Series(data=sections)
+    return shift_axon_section_id

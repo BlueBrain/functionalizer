@@ -2,17 +2,20 @@
 """
 from collections import defaultdict
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pyspark.sql.functions as F
 import pytest
 import sparkmanager as sm
+
+from spykfunc.circuit import Circuit
 
 NEURONS = [
     u'{"layer":23,"id":39167,"mtype_i":8,"mtype":"L23_CHC","electrophysiology":4,'
     u'"syn_class_index":1,"position":[933.0420086834877,1816.8584704754185,510.11526138663635],'
     u'"rotation":[0.0,0.9907887468577957,0.0,-0.13541661308701744],'
     u'"morphology":"rp140328_ChC_4_idA_-_Scale_x1.000_y1.050_z1.000_-_Clone_4","layer_i":5}',
-    u'{"layer":23,"id":101,"mtype_i":108,"mtype":"L23_CHC","electrophysiology":4,'
+    u'{"layer":23,"id":101,"mtype_i":108,"mtype":"L24_CHB","electrophysiology":4,'
     u'"syn_class_index":1,"position":[933.0420086834877,1816.8584704754185,510.11526138663635],'
     u'"rotation":[0.0,0.9907887468577957,0.0,-0.13541661308701744],'
     u'"morphology":"rp140328_ChC_4_idA_-_Scale_x1.000_y1.050_z1.000_-_Clone_4","layer_i":5}',
@@ -32,19 +35,22 @@ TOUCHES = [
     u'{"src":39167,"dst":42113,"pre_section":196,"pre_segment":21,"post_section":338,"post_segment":7,'
     u'"pre_offset":4.610659,"post_offset":0.42679042,"distance_soma":169.00676,"branch_order":11}'
 ]
+#
+# pathways = sm.createDataFrame([((8 << 16) | 18, True)], ["pathway_i", "reposition"])
 
 
-def prefixed(neurons, pre):
-    """Returns the neurons with all columns prefixed
+def mock_group():
+    from collections import namedtuple
+    rule = namedtuple("rule", ["type", "fromMType", "toMType"])
+    yield rule("AIS", "*CHC", None)
 
-    :param neurons: dataframe to prefix
-    :param pre: the prefix to use
-    :type pre: string
-    """
-    tmp = neurons
-    for col in tmp.schema.names:
-        tmp = tmp.withColumnRenamed(col, pre if col == "id" else "{}_{}".format(pre, col))
-    return tmp
+
+def mock_mtypes(neurons):
+    vals = [(r.mtype_i, r.mtype) for r in neurons.collect()]
+    ms = [str(n) for n in range(max((i for i, _ in vals)) + 1)]
+    for i, m in vals:
+        ms[i] = m
+    return ms
 
 
 @pytest.mark.slow
@@ -53,20 +59,33 @@ def test_shift():
 
     Move synapses to AIS while keeping other touches untouched.
     """
-    from spykfunc.synapse_properties import patch_ChC_SPAA_cells
+    from spykfunc.filters.implementations.synapse_reposition import SynapsesReposition, SynapseReposition
     from spykfunc.dataio.morphologies import MorphologyDB
 
     sm.create("test_shift")
 
     neurons = sm.read.json(sm.parallelize(NEURONS))
     touches = sm.read.json(sm.parallelize(TOUCHES))
-    circuit = touches.alias("t") \
-                     .join(F.broadcast(prefixed(neurons, "src")), "src") \
-                     .join(F.broadcast(prefixed(neurons, "dst")), "dst")
 
-    morphos = MorphologyDB(Path(__file__).parent / "circuit_O1_partial" / "morphologies" / "h5")
-    pathways = sm.createDataFrame([((8 << 16) | 18, True)], ["pathway_i", "reposition"])
-    result = patch_ChC_SPAA_cells(circuit, morphos, pathways)
+    recipe = MagicMock()
+
+    population = MagicMock()
+    population.df = neurons
+    population.mtypes = mock_mtypes(neurons)
+
+    c = Circuit(
+        population,
+        population,
+        touches,
+        recipe,
+        Path(__file__).parent / "circuit_O1_partial" / "morphologies" / "h5"
+    )
+
+    touches.show()
+    fltr = SynapseReposition(recipe, c.source, c.target, c.morphologies)
+    fltr.reposition = fltr.convert_reposition(c.source, c.target, mock_group())
+    result = fltr.apply(c)
+    result.select(touches.columns).show()
 
     shifted = result.where(result.src == 39167)
     assert shifted.select("post_section").distinct().rdd.keys().collect() == [1]
