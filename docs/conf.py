@@ -93,7 +93,7 @@ pygments_style = 'sphinx'
 
 # -- Options for HTML output ---------------------------------------------------
 
-html_theme = 'sphinx-limestone-theme'
+html_theme = 'sphinx-bluebrain-theme'
 html_title = "Spykfunc"
 
 # The name for this set of Sphinx documents.  If None, it defaults to
