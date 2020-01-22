@@ -76,12 +76,12 @@ class SynapseProperties(DatasetOperation):
     This "filter" augments touches with properties of synapses by adding
     the fields
 
-      - `gsyn` following a Gamma-distribution,
-      - `d` following a Gamma-distribution,
-      - `f` following a Gamma-distribution,
-      - `u` following a truncated Normal-distribution,
-      - `dtc` following a truncated Normal-distribution,
-      - `nrrp` following a Poisson-distribution
+    - `gsyn` following a Gamma-distribution,
+    - `d` following a Gamma-distribution,
+    - `f` following a Gamma-distribution,
+    - `u` following a truncated Normal-distribution,
+    - `dtc` following a truncated Normal-distribution,
+    - `nrrp` following a Poisson-distribution
 
     as specified by the `SynapsesClassification` part of the recipe.
 

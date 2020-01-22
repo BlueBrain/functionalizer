@@ -69,7 +69,11 @@ class Documentation(Command):
     def _upload(self):
         from docs_internal_upload import docs_internal_upload
         print("Uploading....")
-        docs_internal_upload("docs/_build/html", metadata_path="docs/metadata.md")
+        docs_internal_upload(
+            "docs/_build/html",
+            metadata_path="docs/metadata.md",
+            duplicate_version_error=False
+        )
 
 
 class PyTest(TestCommand):
