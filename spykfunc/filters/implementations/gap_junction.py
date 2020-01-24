@@ -1,12 +1,17 @@
 """A default filter plugin
 """
+import math
 import numpy
 
 from pyspark.sql import functions as F
+from pyspark.sql import Window
 
 from spykfunc.filters import DatasetOperation
 from spykfunc.filters.udfs import match_dendrites
+from spykfunc.recipe import GenericProperty
+from spykfunc.utils import get_logger
 
+logger = get_logger(__name__)
 
 class GapJunctionFilter(DatasetOperation):
     """Synchronize gap junctions
@@ -141,3 +146,109 @@ class GapJunctionFilter(DatasetOperation):
                                      data.post_junction.values).astype(bool)
             return data[accept]
         return match_touches
+
+
+class DenseIDFilter(DatasetOperation):
+
+    _checkpoint = True
+
+    def apply(self, circuit):
+        """Condense the synapse id field used to match gap-junctions
+        """
+        assert "synapse_id" in circuit.df.columns, \
+            "DenseID must be called before GapJunction"
+
+        touches = circuit.df.repartition(
+            circuit.df.rdd.getNumPartitions(),
+            "src",
+            "dst"
+        ).cache()
+
+        gid_window = (
+            Window
+            .orderBy("src")
+            .rangeBetween(Window.unboundedPreceding, 0)
+        )
+
+        gid_offsets = (
+            touches
+            .groupby("src")
+            .count()
+            .withColumn("gid_offset", F.sum("count").over(gid_window) - F.col("count"))
+            .drop("count")
+            .cache()
+        )
+
+        window = (
+            Window
+            .partitionBy("src")
+            .orderBy("dst")
+            .rangeBetween(Window.unboundedPreceding, 0)
+        )
+
+        offsets = (
+            touches
+            .join(F.broadcast(gid_offsets), "src")
+            .groupby("src", "dst")
+            .agg(
+                F.count("gid_offset").alias("count"),
+                F.first("gid_offset").alias("gid_offset")
+            )
+            .withColumn(
+                "offset",
+                F.sum("count").over(window) - F.col("count") + F.col("gid_offset") - F.lit(1)
+            )
+            .drop("count", "gid_offset")
+            .withColumnRenamed("src", "source")  # weird needed workaround
+            .withColumnRenamed("dst", "target")  # weird needed workaround
+            .cache()
+        )
+
+        id_window = (
+            Window
+            .partitionBy("src", "dst")
+            .orderBy("old_synapse_id")
+        )
+
+        return (
+            touches
+            .join(offsets, (touches.src == offsets.source) & (touches.dst == offsets.target))
+            .drop("source", "target")  # drop workaround column
+            .withColumnRenamed("synapse_id", "old_synapse_id")
+            .withColumn("synapse_id", F.row_number().over(id_window) + F.col("offset"))
+            .drop("old_synapse_id", "offset")
+        )
+
+class GapJunctionProperty(GenericProperty):
+    """Class representing a gap-junction property"""
+    _supported_attrs = {"gsyn"}
+    gsyn = 0.2
+
+
+class GapJunctionProperties(DatasetOperation):
+    """Assign gap-junction properties
+
+    This "filter" augments touches with properties of gap-junctions by adding
+    the field
+
+    - `gsyn` representing the conductance of the gap-junction with a
+      default value of 0.2
+
+    as specified by the `GapJunctionProperties` part of the recipe.
+
+    """
+
+    def __init__(self, recipe, source, target, morphos):
+        self.conductance = GapJunctionProperty.load_one(recipe.xml).gsyn
+
+    def apply(self, circuit):
+        """Add properties to the circuit
+        """
+
+        touches = (
+            circuit
+            .df
+            .withColumn("gsyn", F.lit(self.conductance))
+        )
+
+        return touches

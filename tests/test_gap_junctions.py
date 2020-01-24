@@ -4,8 +4,11 @@ import copy
 import pandas
 import pytest
 
+from pathlib import Path
+
 from pyspark.sql import functions as F
 from spykfunc.filters import DatasetOperation
+from spykfunc.recipe import Recipe
 
 
 # (src, dst), num_connections
@@ -118,13 +121,13 @@ def test_dendrite_sync(gj):
 
 
 @pytest.mark.slow
-def test_gap_junctions(gj):
+def test_dense_ids(gj):
     """Verify that all filters play nice together.
     """
+    total = gj.circuit.df.count()
     fltrs = DatasetOperation.initialize(
         [
-            "SomaDistance",
-            "GapJunction"
+            "DenseID",
         ],
         None,
         None,
@@ -133,4 +136,58 @@ def test_gap_junctions(gj):
     )
     for f in fltrs:
         gj.circuit = f(gj.circuit)
+    extrema = (
+        gj
+        .circuit
+        .df
+        .agg(
+            F.min("synapse_id").alias("lower"),
+            F.max("synapse_id").alias("upper")
+        )
+        .collect()[0]
+    )
+    assert extrema["lower"] == 0
+    assert extrema["upper"] == total - 1
+    assert gj.circuit.df.count() == total
+
+
+@pytest.mark.slow
+def test_touch_reduction(gj):
+    """Verify that touch reduction hits the mark
+    """
+    total = gj.circuit.df.count()
+    fltrs = DatasetOperation.initialize(
+        [
+            "DenseID",
+            "TouchReduction"
+        ],
+        Recipe(str(Path(__file__).parent / "recipes" / "gap_junctions.xml")),
+        None,
+        None,
+        None
+    )
+    for f in fltrs:
+        gj.circuit = f(gj.circuit)
+    assert abs(gj.circuit.df.count() / float(total) - 0.5) < 0.01
+
+
+@pytest.mark.slow
+def test_gap_junctions(gj):
+    """Verify that all filters play nice together.
+    """
+    fltrs = DatasetOperation.initialize(
+        [
+            "SomaDistance",
+            "GapJunction",
+            "GapJunctionProperties"
+        ],
+        Recipe(str(Path(__file__).parent / "recipes" / "gap_junctions.xml")),
+        None,
+        None,
+        gj.circuit.morphologies,
+    )
+    for f in fltrs:
+        gj.circuit = f(gj.circuit)
     assert gj.circuit.df.count() > 0
+    assert "gsyn" in gj.circuit.df.columns
+    assert gj.circuit.df.first()["gsyn"] == 0.75

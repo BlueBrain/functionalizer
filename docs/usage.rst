@@ -53,15 +53,19 @@ See the output of the help for detailed information:
      --s2s, --structural   structural pruning only with filters:
                                BoutonDistance, SynapseProperties
      --s2f, --functional   functional pruning and filtering using:
-                               BoutonDistance, TouchRules, ReduceAndCut,
-                               SynapseReposition, SynapseProperties
+                               BoutonDistance, TouchRules, SpineLength,
+                               ReduceAndCut, SynapseReposition, SynapseProperties
      --gap-junctions       run filters for gap-junctions:
-                               SomaDistance, GapJunction
+                               SomaDistance, DenseID, GapJunction,
+                               GapJunctionProperties
      --filters FILTERS     run a list of custom filters (comma-separated),
                            available:
-                               BoutonDistance, CumulativeDistance, GapJunction,
-                               ReduceAndCut, SomaDistance, SynapseReposition,
-                               SynapseProperties, TouchRules
+                               BoutonDistance, DenseID, GapJunction,
+                               GapJunctionProperties, ReduceAndCut, SomaDistance,
+                               SpineLength, SynapseProperties, SynapseReposition,
+                               TouchRules
+
+
      --format-hdf5         write/convert result to HDF5 (nrn.h5) rather than
                            parquet
      --name NAME           name that will show up in the Spark logs, defaults to

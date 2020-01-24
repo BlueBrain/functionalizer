@@ -1,0 +1,4 @@
+<my_gap_junction_recipe>
+  <GapJunctionProperty gsyn="0.75"/>
+  <TouchReduction survival_rate="0.5"/>
+</my_gap_junction_recipe>

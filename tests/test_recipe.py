@@ -7,8 +7,9 @@ import pytest
 
 from spykfunc.recipe import Recipe
 from spykfunc.filters.implementations.bouton_distance import InitialBoutonDistance as BD
-from spykfunc.filters.implementations.touch_rules import TouchRule as TR
+from spykfunc.filters.implementations.gap_junction import GapJunctionProperty as GJ
 from spykfunc.filters.implementations.synapse_properties import SynapsesProperty as SP
+from spykfunc.filters.implementations.touch import TouchRule as TR
 
 
 MTYPES = [
@@ -98,3 +99,9 @@ def test_touch_rules(good_recipe):
     # caplog.clear()
     with pytest.raises(ValueError):
         TR.load(good_recipe.xml, MTYPES + ["FOOBAR"], MTYPES, strict=True)
+
+def test_gap_junction():
+    """Test that the gap junction conductance is set right
+    """
+    recipe = Recipe(str(Path(__file__).parent / "recipes" / "gap_junctions.xml"))
+    assert GJ.load_one(recipe.xml).gsyn == 0.75

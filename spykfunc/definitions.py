@@ -11,7 +11,7 @@ class RunningMode(Enum):
     """
     STRUCTURAL = ('BoutonDistance', 'SynapseProperties')
     FUNCTIONAL = ('BoutonDistance', 'TouchRules', 'SpineLength', 'ReduceAndCut', 'SynapseReposition', 'SynapseProperties')
-    GAP_JUNCTIONS = ('SomaDistance', 'GapJunction')
+    GAP_JUNCTIONS = ('SomaDistance', 'DenseID', 'GapJunction', 'GapJunctionProperties')
 
 
 class CellClass(Enum):

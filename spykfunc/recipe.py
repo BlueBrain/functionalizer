@@ -111,6 +111,16 @@ class GenericProperty(object):
                 raise ValueError(f"Default value for attribute {k} in {cls.__name__} not supported")
         return list(Recipe.load_group(e, cls, cls._required))
 
+    @classmethod
+    def load_one(cls, xml):
+        """Load a list of properties defined by the class
+        """
+        e = xml.find(getattr(cls, "_name", cls.__name__))
+        if hasattr(e, "items"):
+            infos = {k: v for k, v in e.items()}
+            return cls(**infos)
+        return cls()
+
 
 class Recipe(object):
     """Class holding Recipe information"""
