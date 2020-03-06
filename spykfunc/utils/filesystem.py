@@ -74,7 +74,7 @@ class AttemptedInstance(object):
         try:
             self.__obj = self.__cls()
         except Exception as e:
-            L.warn("No HDFS cluster found, deactivating support")
+            L.warning("No HDFS cluster found, deactivating support")
             self.__obj = False
 
 

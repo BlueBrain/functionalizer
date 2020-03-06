@@ -7,7 +7,7 @@ import sparkmanager as sm
 from pyspark.sql import functions as F
 
 from spykfunc.filters import DatasetOperation
-from spykfunc.recipe import GenericProperty, Recipe
+from spykfunc.recipe import Attribute, GenericProperty, Recipe
 from spykfunc.utils import get_logger
 
 from . import Seeds, add_random_column
@@ -22,10 +22,11 @@ _KEY_TOUCH = 0x202
 class TouchReduction(GenericProperty):
     """Class representing a Touch filter"""
 
-    survival_rate = None
+    attributes = [
+        Attribute(name="survival_rate", kind=float)
+    ]
 
-    _supported_attrs = [k for k in locals().keys()
-                        if not k.startswith("_")]
+    singleton = True
 
 
 class TouchReductionFilter(DatasetOperation):
@@ -41,7 +42,7 @@ class TouchReductionFilter(DatasetOperation):
         The rules stored in the recipe are loaded in their abstract form,
         concretization will happen with the acctual circuit.
         """
-        self.survival = TouchReduction.load_one(recipe.xml).survival_rate
+        self.survival = TouchReduction.load(recipe.xml).survival_rate
         self.seed = Seeds.load(recipe.xml).synapseSeed
         logger.info("Using seed %d for trimming touches", self.seed)
 
@@ -66,20 +67,14 @@ class TouchReductionFilter(DatasetOperation):
 class TouchRule(GenericProperty):
     """Class representing a Touch rule"""
 
-    _map_attrs = {
-        "type": "toBranchType",
-    }
-    _supported_attrs = {
-        'fromMType',
-        'toMType',
-        'fromBranchType',
-        'toBranchType',
-    }
+    attributes = [
+        Attribute("fromMType", default="*"),
+        Attribute("toMType", default="*"),
+        Attribute("fromBranchType", default="*"),
+        Attribute("toBranchType", alias="type", default="*"),
+    ]
 
-    fromMType = None
-    toMType = None
-    fromBranchType = None
-    toBranchType = None
+    group_name = "TouchRules"
 
     @classmethod
     def load(cls, xml, src_mtypes, dst_mtypes, *, strict=False):
@@ -118,19 +113,19 @@ class TouchRule(GenericProperty):
         src_covered = set()
         dst_covered = set()
 
-        for rule in Recipe.load_group(xml.find("TouchRules"), cls):
+        for rule in GenericProperty.load.__func__(cls, xml):
             t1s = [slice(None)]
             t2s = [slice(None)]
             if rule.fromMType:
                 t1s = [src_mtype_rev[m] for m in fnmatch.filter(src_mtypes, rule.fromMType)]
                 src_covered.update(t1s)
                 if len(t1s) == 0:
-                    logger.warn(f"Touch rules can't match fromMType='{rule.fromMType}'")
+                    logger.warning(f"Touch rules can't match fromMType='{rule.fromMType}'")
             if rule.toMType:
                 t2s = [dst_mtype_rev[m] for m in fnmatch.filter(dst_mtypes, rule.toMType)]
                 dst_covered.update(t2s)
                 if len(t2s) == 0:
-                    logger.warn(f"Touch rules can't match toMType='{rule.toMType}'")
+                    logger.warning(f"Touch rules can't match toMType='{rule.toMType}'")
 
             r1s = type_map[rule.fromBranchType] if rule.fromBranchType else [slice(None)]
             r2s = type_map[rule.toBranchType] if rule.toBranchType else [slice(None)]
@@ -199,7 +194,7 @@ class TouchRulesFilter(DatasetOperation):
         # section (0->soma)
         touches = circuit.df
         if not hasattr(circuit.df, 'pre_branch_type'):
-            logger.warn(f"Guessing pre-branch type for touch rules!")
+            logger.warning(f"Guessing pre-branch type for touch rules!")
             touches = (
                 touches
                 .withColumn('pre_branch_type',
@@ -212,7 +207,7 @@ class TouchRulesFilter(DatasetOperation):
                     .withColumnRenamed('branch_type', 'post_branch_type')
                 )
             else:
-                logger.warn(f"Guessing post-branch type for touch rules!")
+                logger.warning(f"Guessing post-branch type for touch rules!")
                 touches = (
                     touches
                     .withColumn('post_branch_type',

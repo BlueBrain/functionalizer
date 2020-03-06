@@ -6,16 +6,17 @@ from pyspark.sql import functions as F
 
 from spykfunc import schema
 from spykfunc.filters import DatasetOperation
-from spykfunc.recipe import GenericProperty
+from spykfunc.recipe import Attribute, GenericProperty
 
 
 class SynapsesReposition(GenericProperty):
     """Class representing rules to shift synapse positions"""
 
-    _supported_attrs = {'fromMType', 'toMType', 'type'}
-    fromMType = None
-    toMType = None
-    type = ""
+    attributes = [
+        Attribute("fromMtype", default="*", kind=str),
+        Attribute("toMtype", default="*", kind=str),
+        Attribute("type", default="*", kind=str)
+    ]
 
 
 class SynapseReposition(DatasetOperation):
@@ -28,12 +29,7 @@ class SynapseReposition(DatasetOperation):
     _required = False
 
     def __init__(self, recipe, source, target, morphos):
-        reposition = list(
-            recipe.load_group(
-                recipe.xml.find("SynapsesReposition"),
-                SynapsesReposition
-            )
-        )
+        reposition = SynapsesReposition.load(recipe.xml)
         self.reposition = self.convert_reposition(source, target, reposition)
 
     def apply(self, circuit):

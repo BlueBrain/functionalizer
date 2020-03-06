@@ -1,7 +1,7 @@
 """A default filter plugin
 """
 from spykfunc.filters import DatasetOperation
-from spykfunc.recipe import GenericProperty
+from spykfunc.recipe import Attribute, GenericProperty
 from spykfunc.definitions import CellClass
 
 
@@ -9,29 +9,21 @@ class InitialBoutonDistance(GenericProperty):
     """Info/filter for Synapses Bouton Distance
     """
 
-    # implies _supported_attrs
-    _map_attrs = {
-        "defaultInhSynapsesDistance": "inhibitorySynapsesDistance",
-        "defaultExcSynapsesDistance": "excitatorySynapsesDistance",
-    }
-    inhibitorySynapsesDistance = 5.0
-    excitatorySynapsesDistance = 25.0
+    attributes = [
+        Attribute(
+            "inhibitorySynapsesDistance",
+            alias="defaultInhSynapsesDistance",
+            default=5.0,
+        ),
+        Attribute(
+            "excitatorySynapsesDistance",
+            alias="defaultExcSynapsesDistance",
+            default=25.0,
+        ),
+    ]
 
-    def is_distance_valid(self, cell_class, soma_axon_distance):
-        if cell_class == CellClass.CLASS_INH:
-            return soma_axon_distance >= self.inhibitorySynapsesDistance
-        if cell_class == CellClass.CLASS_EXC:
-            return soma_axon_distance >= self.excitatorySynapsesDistance
-
-    @classmethod
-    def load(cls, xml):
-        """Extract a bouton distance classification object from XML
-        """
-        fragment = xml.find("InitialBoutonDistance")
-        if hasattr(fragment, "items"):
-            infos = {k: v for k, v in fragment.items()}
-            return cls(**infos)
-        return cls()
+    required = False
+    singleton = True
 
 
 class BoutonDistanceFilter(DatasetOperation):

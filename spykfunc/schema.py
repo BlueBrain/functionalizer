@@ -43,6 +43,8 @@ OUTPUT_COLUMN_MAPPING = [
     ("d", "depression_time", None),
     ("f", "facilitation_time", None),
     ("dtc", "decay_time", None),
+    ("gsynSRSF", "conductance_scale_factor", None),
+    ("uHillCoefficient", "u_hill_coefficient", None),
     ("synapseType", "syn_type_id", None),
     # Renamed to edge_type_id to conform to SONATA
     ("synapse_type_id", "synapse_type_id", None),
@@ -195,6 +197,8 @@ SYNAPSE_PROPERTY_SCHEMA = T.StructType([
     T.StructField("f", T.FloatType(), False),
     T.StructField("fSD", T.FloatType(), False),
     T.StructField("nrrp", T.ShortType(), False),
+    T.StructField("gsynSRSF", T.FloatType(), False),
+    T.StructField("uHillCoefficient", T.FloatType(), False),
 ])
 
 

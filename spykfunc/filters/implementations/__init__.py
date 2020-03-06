@@ -1,5 +1,7 @@
 """Reference implementations of filters
 """
+from __future__ import annotations
+
 import numpy
 import pandas
 
@@ -8,26 +10,21 @@ from pyspark.sql import types as T
 
 from spykfunc.filters.udfs import get_bins
 from spykfunc.random import RNGThreefry, uniform
-from spykfunc.recipe import GenericProperty
+from spykfunc.recipe import Attribute, GenericProperty
 
 
 class Seeds(GenericProperty):
     """Container to store seeds
     """
-    _supported_attrs = {'recipeSeed', 'columnSeed', 'synapseSeed'}
-    recipeSeed = 0
-    columnSeed = 0
-    synapseSeed = 0
 
-    @classmethod
-    def load(cls, xml):
-        """Load seeds from XML structure.
-        """
-        seed_info = xml.find("Seeds")
-        if hasattr(seed_info, "items"):
-            infos = {k: v for k, v in seed_info.items()}
-            return cls(**infos)
-        return cls()
+    attributes = [
+        Attribute(name="recipeSeed", kind=int, default=0),
+        Attribute(name="columnSeed", kind=int, default=0),
+        Attribute(name="synapseSeed", kind=int, default=0),
+    ]
+
+    singleton = True
+    required = False
 
 
 def add_random_column(df, name, seed, key, derivative):

@@ -4,8 +4,13 @@
 # *******************************************************************************************************
 from __future__ import print_function, absolute_import
 
+from collections import namedtuple
+from enum import Enum
 from lxml import etree
-from six import iteritems
+from typing import Union
+
+import copy
+
 from .utils import get_logger
 
 logger = get_logger(__name__)
@@ -17,109 +22,211 @@ class ConfigurationError(Exception):
     pass
 
 
-# A singleton to mark required fields
-_REQUIRED_ = object()
+class Attribute:
+    """Attributes to a property
 
+    Accepts keyword arguments only apart from the name of the attribute.
 
-class GenericProperty(object):
+    Args:
+        name: The identifier in the configuration
+        kind: The Python type of the attribute. Will be assumed from
+              `default` if not given.
+        default: Optional default value
+        group_default: If group level attributes may change the default
+        required: If the attribute needs to be set
+        warn: Print a warning if the attribute is not set
     """
-    A Generic Property holder whose subclasses shall define a
-    _supported_attrs class attribute with the list of supported attributes
-    Additionally, they can define _map_attrs to set alias
-    Class attributes set to None are not required.
-    """
+    def __init__(self,
+                 name: str,
+                 *,
+                 alias: str = None,
+                 kind: type = None,
+                 default: Union[int, float, str] = None,
+                 group_default: bool = False,
+                 required: bool = True,
+                 warn: bool = False):
+        self._alias = alias
+        if kind is None:
+            if default is None:
+                raise TypeError("__init__() missing required keyword argument "
+                                "'kind' or 'default'")
+            self._kind = type(default)
+        elif default is not None and type(default) != kind:
+            raise TypeError("__init__() has mismatch of types for required keyword "
+                            "argument 'kind' or 'default'")
+        elif default is None and kind is None:
+            raise TypeError("__init__() has missing type for required keyword "
+                            "argument 'kind' or 'default'")
+        else:
+            self._kind = kind
+        self._name = name
+        self._default = default
+        self._group_default = group_default
 
-    # We keep the index in which entries are declared
-    _supported_attrs = ("_i",)
-    # Attributes that may change their defaults globally in the recipe
-    _supported_defaults = []
+        self._required = required
+        self._warn = warn
 
-    _warn_missing_attrs = ()
-    # allow to rename attributes
-    _map_attrs = dict()
-    # allow recipe to be optional
-    _required = True
+    def convert(self, value=None):
+        if value is None:
+            if self.required and self._default is not None:
+                return self._default
+            raise ValueError(
+                f"{self.name} requires a value"
+            )
+        return self._kind(value)
 
-    def __init__(self, **rules):
-        all_attrs = set(self._supported_attrs) | set(self._map_attrs.keys())
-        changed_attrs = set()
+    def default(self, value):
+        if not self._group_default:
+            raise TypeError(f"cannot change default for '{self.name}'")
+        if type(value) == int and type(value) != self._kind:
+            raise TypeError(f"wrong type to change default for '{self.name}'")
+        self._default = self._kind(value)
 
-        for name, value in rules.items():
-            # Note: "_i" must be checked for since subclasses override _supported_attrs
-            if name not in all_attrs and name != "_i":
-                logger.warning("Attribute %s not expected for recipe class %s",
-                               name, type(self).__name__)
-                continue
+    @property
+    def alias(self):
+        return self._alias
 
-            # name exists, but might be an alias. Get original
-            att_name = self._map_attrs.get(name, name)
-            changed_attrs.add(att_name)
-            if att_name != name:
-                logger.debug("[Alias] Attribute %s read from field %s", att_name, name)
+    @property
+    def initialized(self):
+        return self._value is not None
 
-            if value == "*":
-                # * the match-all, is represented as None
-                setattr(self, att_name, None)
-            else:
-                # Attempt conversion to real types
-                value = self._convert_type(value)
-                setattr(self, att_name, value)
+    @property
+    def name(self):
+        return self._name
 
-        # Look for required fields which were not set
-        for att_name in self._supported_attrs:
-            if not att_name.startswith("_") and att_name not in changed_attrs:
-                field_desc = "%s: Field %s" % (self.__class__.__name__, att_name)
-                if att_name in self._warn_missing_attrs:
-                    logger.warning(field_desc + " was not specified. Proceeding with default value.")
-                elif getattr(self.__class__, att_name) is _REQUIRED_:
-                    raise ConfigurationError("%s required but not specified" % field_desc)
+    @property
+    def required(self):
+        return self._required
 
-    @staticmethod
-    def _convert_type(value):
+    @property
+    def warn(self):
+        return self._warn
+
+
+class PropertyMeta(type):
+    def __new__(cls, name, bases, dct):
+        attributes = dct.pop("attributes")
+        dct.setdefault("required", True)
+        dct.setdefault("singleton", False)
+
+        attributes.insert(0, Attribute(name="_i", kind=int, required=False))
+
+        def allowed(k):
+            return k.startswith("_") or k in ("group_name", "load", "required", "singleton")
+        public = [k for k in dct.keys() if not allowed(k)]
+
+        assert \
+            len(public) == 0, \
+            "The only class attribute allowed are 'attributes', 'load'"
+
+        x = super().__new__(cls, name, bases, dct)
+        x._attributes = attributes
+
+        return x
+
+    def load(self, xml):
+        """Load a list of properties defined by the class
+        """
+        # Setting the group's default value for an attribute will not work
+        # when loading more than one group, thus restore previous state
+        # after conversion.
+        attributes = copy.deepcopy(self._attributes)
         try:
-            # Will raise if not int
-            # Comparison False if is a true float, so no change
-            if value == str(int(value)):
-                return int(value)
-        except ValueError:
-            # check str has a float
+            if hasattr(self, "group_name"):
+                e = xml.find(self.group_name)
+                if e is None:
+                    raise ValueError(f"Could not find '{self.group_name}'")
+                attrs = {a.name: a for a in self._attributes}
+                for k, v in e.attrib.items():
+                    attrs[k].default(v)
+                items = e
+            else:
+                items = xml.findall(self.__name__)
+            data = [self(_i=i, **(getattr(item, "attrib", item)))
+                    for i, item in enumerate(items)]
+        finally:
+            self._attributes = attributes
+
+        if not self.singleton:
+            return data
+
+        if len(data) > 1:
+            raise ValueError(f"{self.__name__} should only be present once")
+        elif len(data) == 1:
+            return data[0]
+        elif not self.required:
+            return self()
+        raise ValueError(f"{self.__name__} could not be found")
+
+
+class GenericProperty(metaclass=PropertyMeta):
+    """Generic class embodying properties of settings
+
+    Settings should inherit from this class, and define the following class
+    attributes:
+
+    - `attributes`: a list of attributes the setting can have
+    - `group_name`: name under which to search for settings
+    - `required`: if the settings group is optional (defaults to `True`)
+    - `singleton`: the setting should be defined only once (defaults to
+      `False`)
+
+    If `group_name` is given, the attributes of the element with the same
+    name will set as the default values for the encapsulated properties.
+    All child items of the element will be converted into the property
+    class.
+
+    Otherwise, all items matching the property class name will be converted.
+
+    If `required` is given and no item is matched, a `ValueError` will be
+    raised.
+    """
+
+    attributes = []
+
+    def __init__(self, **items):
+        for attr in self._attributes:
+            item = items.pop(attr.name, None)
+            if item is None and attr.alias:
+                item = items.pop(attr.alias, None)
+                if item is not None:
+                    logger.debug(
+                        "[Alias] Attribute %s read from field %s",
+                        attr.name,
+                        attr.alias
+                    )
+
+            if item is None and not attr.required:
+                continue
+            elif item is None and attr.warn:
+                logger.warning(
+                    "%s: Field %s was not specified. Proceeding with default value.",
+                    type(self).__name__,
+                    attr.name
+                )
+
             try:
-                return float(value)
-            except ValueError:
-                pass
-        return value
+                setattr(self, attr.name, attr.convert(item))
+            except Exception as e:
+                raise ConfigurationError(
+                    f"{type(self).__name__}: Field {attr.name} required but not specified"
+                )
+
+        for name in items.keys():
+            logger.warning("Attribute %s not expected for recipe class %s",
+                           name, type(self).__name__)
 
     def __getitem__(self, item):
         return getattr(self, item)
 
     def __repr__(self):
-        unmap = {v: k for k, v in iteritems(self._map_attrs)}
-        all_attrs = set(self._supported_attrs) | set(self._map_attrs.keys())
-        attrs = " ".join('{0}="{1}"'.format(unmap.get(n, n), getattr(self, self._map_attrs.get(n, n)))
-                         for n in all_attrs if n != '_i')
-        return '<{cls_name} {attrs}>'.format(cls_name=type(self).__name__, attrs=attrs)
-
-    @classmethod
-    def load(cls, xml):
-        """Load a list of properties defined by the class
-        """
-        e = xml.find(getattr(cls, "_name", cls.__name__))
-        for k, v in e.attrib.items():
-            if hasattr(cls, k) and k in getattr(cls, "_supported_defaults", []):
-                setattr(cls, k, cls._convert_type(v))
-            else:
-                raise ValueError(f"Default value for attribute {k} in {cls.__name__} not supported")
-        return list(Recipe.load_group(e, cls, cls._required))
-
-    @classmethod
-    def load_one(cls, xml):
-        """Load a list of properties defined by the class
-        """
-        e = xml.find(getattr(cls, "_name", cls.__name__))
-        if hasattr(e, "items"):
-            infos = {k: v for k, v in e.items()}
-            return cls(**infos)
-        return cls()
+        attrs = []
+        for attr in self._attributes:
+            if attr.name == "_i":
+                continue
+            if hasattr(self, attr.name):
+                attrs.append(f"{attr.name}=\"{getattr(self, attr.name)}\"")
+        return '<{} {}>'.format(type(self).__name__, " ".join(attrs))
 
 
 class Recipe(object):
@@ -144,45 +251,3 @@ class Recipe(object):
             raise e
         else:
             self.xml = tree.getroot()
-
-    @classmethod
-    def load_group(cls, items, item_cls, required=True):
-        """Convert and yield contents of an XML list
-
-        :param items: a list of XML elements
-        :param item_cls: target class to convert the XML elements to
-        :param required: allow the list of XML elements to be optional
-        """
-        if items is None:
-            if not required:
-                logger.warn("skipping conversion of %s items (not required)", item_cls.__name__)
-                return
-            raise AttributeError(f"Cannot find required recipe component for {item_cls.__name__}")
-        # Some fields are referred to by their index. We pick it here
-        for i, item in enumerate(items):
-            yield cls._check_convert(item, item_cls, i)
-
-    @staticmethod
-    def _check_convert(item, cls, i=None):
-        """Checks if the given item is already of type cls
-           Otherwise attempts to convert by passing the dict as keyword arguments
-        """
-        if not isinstance(item, cls):
-            if hasattr(item, "attrib"):
-                item = item.attrib
-            item = cls(**item)
-        # Store index as _i
-        if i is not None:
-            item._i = i
-        return item
-
-    class NodeInfo:
-        """The Node interface
-        """
-        _sub_nodes = []  # The list of sub nodes
-        tag = ""  # Type of connection (mTypeRule,...)
-        attrib = {}  # A dict with the attributes of the connection #type:dict
-
-        def __iter__(self, *args):
-            """Gets an iterator for children nodes, required for simple probability"""
-            return iter(self._sub_nodes)

@@ -1,0 +1,13 @@
+<some_xml_here>
+    <SynapsesProperties neuralTransmitterReleaseDelay="0.1" axonalConductionVelocity="0.00333" >
+      <synapse fromSClass="EXC" toSClass="EXC" type="E2" axonalConductionVelocity="0.002" />
+      <synapse fromSClass="INH" toSClass="INH" type="I2" neuralTransmitterReleaseDelay="0.4" axonalConductionVelocity="0.002" />
+      <synapse fromSClass="EXC" toSClass="INH" type="E2" />
+      <synapse fromSClass="INH" toSClass="EXC" type="I2" axonalConductionVelocity="0.004" />
+    </SynapsesProperties>
+
+    <SynapsesClassification>
+      <class id="I2"  gsyn="0.33" gsynSD="0.28" nsyn="16.0" nsynSD="5.50" dtc="8.30" dtcSD="2.2" u="0.25" uSD="0.13" d="706" dSD="405" f="021" fSD="9" ase="0" gsynSRSF="0.0" uHillCoefficient="1.46"/>
+      <class id="E2"  gsyn="0.30" gsynSD="0.20" nsyn="5.00" nsynSD="2.00" dtc="1.74" dtcSD="0.18" u="0.0" uSD="0.50" d="671" dSD="017" f="017" fSD="5" ase="1"/>
+    </SynapsesClassification>
+</some_xml_here>
