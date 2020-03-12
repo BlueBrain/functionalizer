@@ -2,6 +2,17 @@
 Changelog
 =========
 
+Version 0.15.3
+==============
+
+Changes:
+  - Process `uHillCoefficient` and `gsynSRSF` attributes of
+    `SynapseClassification`.  See FUNCZ-238_.
+  - Added filters `DenseID` to compress the ids of gap junctions (to be run
+    before `GapJunction`, and `GapJunctionProperties` to set the
+    conductance of gap junctions.  These filters are active by default when
+    running with `--gap-junctions`.
+
 Version 0.15.2
 ==============
 
@@ -200,3 +211,4 @@ First working version with 3 base filters:
 .. _FUNCZ-218: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-218
 .. _FUNCZ-223: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-223
 .. _FUNCZ-226: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-226
+.. _FUNCZ-238: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-238
