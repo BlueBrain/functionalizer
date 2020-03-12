@@ -223,7 +223,7 @@ class Functionalizer(object):
             # Transitional SYN2 spec fields
             for field, alias, cast in schema.OUTPUT_COLUMN_MAPPING:
                 if hasattr(df, field):
-                    logger.info("Writing field %s", field)
+                    logger.info("Writing field %s", alias)
                     if cast:
                         yield getattr(df, field).cast(cast).alias(alias)
                     else:
