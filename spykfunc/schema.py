@@ -67,6 +67,12 @@ OUTPUT_COLUMN_MAPPING = [
     ("post_position_x", "position_center_post_x", None),
     ("post_position_y", "position_center_post_y", None),
     ("post_position_z", "position_center_post_z", None),
+    ("pre_position_center_x", "position_center_pre_x", None),
+    ("pre_position_center_y", "position_center_pre_y", None),
+    ("pre_position_center_z", "position_center_pre_z", None),
+    ("post_position_surface_x", "position_contour_post_x", None),
+    ("post_position_surface_y", "position_contour_post_y", None),
+    ("post_position_surface_z", "position_contour_post_z", None),
     ("pre_branch_type", "morpho_section_type_pre", None),
     ("post_branch_type", "morpho_section_type_post", None),
     ("src", "connected_neurons_pre", T.LongType()),
@@ -129,7 +135,17 @@ TOUCH_SCHEMA_V3 = T.StructType(TOUCH_SCHEMA_V2.fields[:-1] + [
     T.StructField("post_branch_type", T.ShortType(), False),
 ])
 
+TOUCH_SCHEMA_V4 = T.StructType(TOUCH_SCHEMA_V3.fields + [
+    T.StructField("pre_position_center_x", T.FloatType(), False),
+    T.StructField("pre_position_center_y", T.FloatType(), False),
+    T.StructField("pre_position_center_z", T.FloatType(), False),
+    T.StructField("post_position_surface_x", T.FloatType(), False),
+    T.StructField("post_position_surface_y", T.FloatType(), False),
+    T.StructField("post_position_surface_z", T.FloatType(), False),
+])
+
 TOUCH_SCHEMAS = [
+    TOUCH_SCHEMA_V4,
     TOUCH_SCHEMA_V3,
     TOUCH_SCHEMA_V2,
     TOUCH_SCHEMA_V1,
