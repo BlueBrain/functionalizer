@@ -12,11 +12,11 @@ _RC_params_schema = T.StructType([
     T.StructField("pMu_A", T.FloatType()),
     T.StructField("bouton_reduction_factor", T.FloatType()),
     T.StructField("active_fraction_legacy", T.FloatType()),
-    T.StructField("_debug", T.StringType()),
+    T.StructField("debug", T.StringType()),
 ])
 
 
-def reduce_cut_parameter_udf(conn_rules_map, debug=False):
+def reduce_cut_parameter_udf(conn_rules_map):
     # Defaults
     activeFraction_default = 0.5
     boutonReductionFactor_default = 0.04
@@ -28,8 +28,8 @@ def reduce_cut_parameter_udf(conn_rules_map, debug=False):
         :param structuralMean: The average of touches/connection for the given mtype-mtype rule
         :return: a tuple of (pP_A, pMu_A, bouton_reduction_factor, activeFraction_legacy)
         """
-        _debug = None
-        nil = (1.0, None, None, None, _debug)  # On error don't cut
+        debug = None
+        nil = (1.0, None, None, None, debug)  # On error don't cut
 
         # If there are no connections for a pathway (mean=0), cannot compute valid numbers
         if structuralMean == 0:
@@ -55,9 +55,8 @@ def reduce_cut_parameter_udf(conn_rules_map, debug=False):
                 p = 1.0 / structuralMean
                 syn_pprime, p_A, mu_A, syn_R_actual = pprime_approximation(rt_star, cv_syns_connection, p)
                 pActiveFraction = rule.active_fraction
-                if debug:
-                    _debug = "s2f 4.3: (r=%.3f, cv=%.3f, p=%.3f) -> pprime=%.3f, pA=%.3f, mu_A=%.3f" % (
-                        rt_star, cv_syns_connection, p, syn_pprime, p_A, mu_A)
+                debug = "s2f 4.3: (r=%.3f, cv=%.3f, p=%.3f) -> pprime=%.3f, pA=%.3f, mu_A=%.3f" % (
+                    rt_star, cv_syns_connection, p, syn_pprime, p_A, mu_A)
 
             elif rule.mean_syns_connection:
                 # 4.2 of s2f 2.0
@@ -67,8 +66,7 @@ def reduce_cut_parameter_udf(conn_rules_map, debug=False):
                 syn_pprime = 1.0 / (sqrt(sdt*sdt + 0.25) + 0.5)
                 p_A = (p / (1.0 - p) * (1.0 - syn_pprime) / syn_pprime) if (p != 1.0) else 1.0   # Control DIV/0
                 pActiveFraction = activeFraction_default
-                if debug:
-                    _debug = "s2f 4.2: p=%.3f, pprime=%.3f, pA=%.3f, mu_A=%.3f" % (p, syn_pprime, p_A, mu_A)
+                debug = "s2f 4.2: p=%.3f, pprime=%.3f, pA=%.3f, mu_A=%.3f" % (p, syn_pprime, p_A, mu_A)
 
             elif rule.probability:
                 # unassigned in s2f 2.0
@@ -81,8 +79,7 @@ def reduce_cut_parameter_udf(conn_rules_map, debug=False):
                 mu_A = (structuralMean - cv_syns_connection * structuralMean + cv_syns_connection) * modifier
                 if mu_A < 1.0:
                     mu_A = 1.0
-                if debug:
-                    _debug = "s2f unassigned: modifier=%.3f, pA=%.3f, mu_A=%.3f" % (modifier, p_A, mu_A)
+                debug = "s2f unassigned: modifier=%.3f, pA=%.3f, mu_A=%.3f" % (modifier, p_A, mu_A)
 
             else:
                 logging.warning("Rule not supported")
@@ -97,8 +94,7 @@ def reduce_cut_parameter_udf(conn_rules_map, debug=False):
             p_A = (p / (1.0 - p) * (1.0 - pprime) / pprime) if (p != 1.0) else 1.0
             pActiveFraction = rule.active_fraction
             boutonReductionFactor = boutonReductionFactor_default
-            if debug:
-                _debug = "s2f 4.1: p=%.3f, pprime=%.3f, pA=%.3f, mu_A=%.3f" % (p, pprime, p_A, mu_A)
+            debug = "s2f 4.1: p=%.3f, pprime=%.3f, pA=%.3f, mu_A=%.3f" % (p, pprime, p_A, mu_A)
 
         else:
             logging.warning("Rule not supported")
@@ -111,7 +107,7 @@ def reduce_cut_parameter_udf(conn_rules_map, debug=False):
             pActiveFraction = 1.0
 
         # ActiveFraction calculated here is legacy and only used if boutonReductionFactor is null
-        return p_A, pMu_A, boutonReductionFactor, pActiveFraction, _debug
+        return p_A, pMu_A, boutonReductionFactor, pActiveFraction, debug
 
     return F.udf(f, _RC_params_schema)
 

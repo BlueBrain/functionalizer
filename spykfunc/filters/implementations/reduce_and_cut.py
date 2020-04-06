@@ -374,6 +374,7 @@ class ReduceAndCut(DatasetOperation):
             .select("pathway_i", "pMu_A")
             .withColumn("sigma", params_df.pMu_A / 4)
         )
+
         # Debug
         _params_out_csv(params_df_sigma, "survival_params", src_mtypes, dst_mtypes)
 
@@ -381,7 +382,11 @@ class ReduceAndCut(DatasetOperation):
             reduced_touch_counts_connection
             .join(params_df_sigma, "pathway_i")  # Fetch the pathway params
             .withColumn("survival_rate",  # Calc survivalRate
-                        F.expr("1.0 / (1.0 + exp((-4.0/sigma) * (reduced_touch_counts_connection-pMu_A)))"))
+                        F.when(
+                            F.col("sigma") == 0, F.lit(1.0)
+                        ).otherwise(
+                            F.expr("1.0 / (1.0 + exp((-4.0/sigma) * (reduced_touch_counts_connection-pMu_A)))")
+                        ))
             .drop("sigma", "pMu_A")
         )
 
@@ -465,7 +470,7 @@ class ReduceAndCut(DatasetOperation):
 
 
 def _params_out_csv(df, filename, src_mtypes, dst_mtypes):
-    of_interest = ("pathway_i", "total_touches", "structural_mean",
+    of_interest = ("pathway_i", "total_touches", "structural_mean", "survival_rate",
                    "pP_A", "pMu_A", "active_fraction_legacy", "_debug")
     cols = []
     for col in of_interest:
