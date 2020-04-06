@@ -35,7 +35,7 @@ def load(*dirnames: str) -> None:
     for dirname in dirnames:
         filenames = glob(f"{dirname}/*.py")
         for filename in filenames:
-            modulename = os.path.realpath(filename[:-3])
+            modulename = filename[:-3]
             relative = min(
                 [os.path.relpath(modulename, p) for p in sys.path],
                 key=len
