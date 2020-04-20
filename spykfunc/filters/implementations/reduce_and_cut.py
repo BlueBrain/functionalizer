@@ -67,6 +67,10 @@ class ConnectivityPathRule(object):
     mean_syns_connection = None
     stdev_syns_connection = None
 
+    # Circumvent value calculations, use the following verbatim
+    p_A = None
+    pMu_A = None
+
     # Possible field, currently not used by functionalizer
     distance_bin = None
     probability_bin = None
@@ -77,7 +81,8 @@ class ConnectivityPathRule(object):
     multi_apposition_offset = None
 
     _float_fields = ["probability", "mean_syns_connection", "stdev_syns_connection",
-                     "active_fraction", "bouton_reduction_factor", "cv_syns_connection"]
+                     "active_fraction", "bouton_reduction_factor", "cv_syns_connection",
+                     "p_A", "pMu_A"]
 
     # ------
     def __init__(self, rule_type, rule_dict, rule_children=None):
@@ -116,11 +121,16 @@ class ConnectivityPathRule(object):
 
     def is_valid(self):
         # Rule according to validation in ConnectivityPathway::getReduceAndCutParameters
-        # Count number of rule params, must be 3
-        n_set_params = sum(var is not None for var in (self.probability, self.mean_syns_connection,
-                                                       self.stdev_syns_connection, self.active_fraction,
-                                                       self.bouton_reduction_factor, self.cv_syns_connection))
-        return n_set_params == 3
+        allowed_parameters = [
+            {"mean_syns_connection", "stdev_syns_connection", "active_fraction"},
+            {"bouton_reduction_factor", "cv_syns_connection", "active_fraction"},
+            {"bouton_reduction_factor", "cv_syns_connection", "mean_syns_connection"},
+            {"bouton_reduction_factor", "cv_syns_connection", "probability"},
+            {"bouton_reduction_factor", "pMu_A", "p_A"}
+        ]
+
+        set_parameters = set(attr for attr in self._float_fields if getattr(self, attr) is not None)
+        return set_parameters in allowed_parameters
 
     def __repr__(self):
         return '<%s from="%s" to="%s">' % (ConnectType.to_str(self.connect_type), self.source, self.destination)

@@ -29,11 +29,10 @@ def reduce_cut_parameter_udf(conn_rules_map):
         :return: a tuple of (pP_A, pMu_A, bouton_reduction_factor, activeFraction_legacy)
         """
         debug = None
-        nil = (1.0, None, None, None, debug)  # On error don't cut
 
         # If there are no connections for a pathway (mean=0), cannot compute valid numbers
         if structuralMean == 0:
-            return nil
+            return (1.0, None, None, None, "no structural mean")
 
         # conn_rules_map is optimized as a Broadcast variable
         # unfortunately in pyspark it is not transparent, we must use ".value"
@@ -41,7 +40,7 @@ def reduce_cut_parameter_udf(conn_rules_map):
         rule = conn_rules_map.value.get(pathway_i)
 
         if not rule:
-            return nil
+            return (1.0, None, None, None, "no corresponding rule")
 
         # Directly from recipe
         boutonReductionFactor = rule.bouton_reduction_factor
@@ -83,7 +82,13 @@ def reduce_cut_parameter_udf(conn_rules_map):
 
             else:
                 logging.warning("Rule not supported")
-                return nil
+                return (1.0, None, None, None, "unsupported rule w/ button reduction factor")
+
+        elif boutonReductionFactor is not None and rule.p_A is not None and rule.pMu_A is not None:
+            pActiveFraction = activeFraction_default
+            mu_A = 0.5 + rule.pMu_A
+            p_A = rule.p_A
+            debug = "s2f defaulted: pA=%.3f, mu_A=%.3f" % (p_A, mu_A)
 
         elif rule.mean_syns_connection and rule.stdev_syns_connection:
             # 4.1 of s2f 2.0
@@ -98,7 +103,7 @@ def reduce_cut_parameter_udf(conn_rules_map):
 
         else:
             logging.warning("Rule not supported")
-            return nil
+            return (1.0, None, None, None, "unsupported rule")
 
         pMu_A = mu_A - 0.5
         if p_A > 1.0:

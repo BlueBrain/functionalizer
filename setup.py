@@ -158,7 +158,7 @@ if BUILD_TYPE == 'DEVEL':
 
 def setup_package():
     maybe_sphinx = [
-        'sphinx',
+        'sphinx<3.0.0',
         'sphinx-bluebrain-theme @ https://github.com/BlueBrain/sphinx-bluebrain-theme/archive/v0.1.1.tar.gz',
         'docs-internal-upload'
     ] if 'build_docs' in sys.argv else []
