@@ -2,6 +2,18 @@
 Changelog
 =========
 
+Version 0.15.4
+==============
+
+Changes:
+  - Added `p_A` and `pMu_A` to allowed parameters in `mTypeRule`.  See
+    FUNCZ-242_.
+  - Added support for additional positions in the TouchDetector output.  See
+    FUNCZ-236_.
+
+Fixes:
+  - More robust filter loading
+
 Version 0.15.3
 ==============
 
@@ -211,4 +223,6 @@ First working version with 3 base filters:
 .. _FUNCZ-218: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-218
 .. _FUNCZ-223: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-223
 .. _FUNCZ-226: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-226
+.. _FUNCZ-236: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-236
 .. _FUNCZ-238: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-238
+.. _FUNCZ-242: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-242
