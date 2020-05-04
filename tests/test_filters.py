@@ -12,9 +12,9 @@ import sparkmanager as sm
 from spykfunc.definitions import RunningMode as RM
 from spykfunc.functionalizer import Functionalizer
 
-NUM_AFTER_DISTANCE = 2264809
-NUM_AFTER_TOUCH = 2218004
-NUM_AFTER_FILTER = 169920
+NUM_AFTER_DISTANCE = 226301
+NUM_AFTER_TOUCH = 221686
+NUM_AFTER_FILTER = 15996
 
 
 @pytest.mark.slow
@@ -154,14 +154,14 @@ class TestFilters(object):
 
         props = (
             df.where(
-                (F.col("connected_neurons_pre") == 56)
+                (F.col("connected_neurons_pre") == 58)
                 & (F.col("connected_neurons_post") == 36)
             )
             .select(*cols)
             .toPandas()
         )
         want = pd.DataFrame(
-            [(0.40889, 693.155029, 13.12169, 0.15601, 1.70221, 1)], columns=cols
+            [(0.16834326, 673.3085, 17.946482, 0.3050348, 1.7670848, 1)], columns=cols
         )
         for col, dtype in zip(cols, dtypes):
             want[col] = want[col].astype(dtype)
