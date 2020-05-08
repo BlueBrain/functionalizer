@@ -18,8 +18,6 @@ class Configuration(dict):
 
     default_filename = Path(__file__).parent.parent / 'data' / 'default.properties'
     """:property: filename storing the defaults"""
-    jar_filename = Path(__file__).parent.parent / 'data' / 'spykfunc_udfs.jar'
-    """:property: path to a jar needed for operations"""
 
     def __init__(self, outdir, filename=None, overrides=None):
         """Provide a configuaration dictionary
@@ -42,7 +40,6 @@ class Configuration(dict):
             for k, v in jprops.iter_properties(fd):
                 self[k] = v
 
-        self["spark.jars"] = self.jar_filename
         self["spark.driver.extraJavaOptions"] = \
             "-Dderby.system.home={} {}".format(
                 outdir.resolve(),
