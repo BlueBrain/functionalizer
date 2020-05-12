@@ -1,51 +1,51 @@
-API
-===
+Code Structure
+==============
 
+The underlying operating basis of the Spark Functionalizer is the
+subsequent application of several filters to a circuit representation
+encompassing synapses and cells to obtain a realistic set of synapses
+representing the connectome of a brain region.
 
-Functionalizer
-``````````````
+In this implementation, a central :class:`.Functionalizer` instance is used
+to configure the Apache Spark setup, then load the appropriate cell data,
+scientific recipe, and touches between cells.  Internally, the brain
+circuit is then represented by the :class:`.Circuit` class.
+A sequence of filters inheriting from the :class:`.DatasetOperation` class
+process the touches, which can be subsequently written to disk.
 
-.. automodule:: spykfunc.functionalizer
-    :members: Functionalizer
+Entry Point
+```````````
 
+For most uses, the :class:`.Circuit` is constructed by the
+:class:`.Functionalizer` class based on user parameters passed through.
+The latter handles also user parameters and the setup of the Apache Spark
+infrastructure, including memory settings and storage paths.
 
-Synapse Filters
-```````````````
+.. autoclass:: spykfunc.functionalizer.Functionalizer
+   :members: init_data, export_results, process_filters
 
-The following filters are accepted by `Spykfunc`'s ``--filters`` command
-line option.
-To use any of the filters, remove the `Filter` suffix if present, e.g.,
-:class:`~BoutonDistanceFilter` becomes `BoutonDistance`.
+Data Handling
+`````````````
 
-Parametrized Synapse Reduction
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The :class:`.NeuronData` class is used to read both nodes and edges from
+binary storage or Parquet.  Nodes are customarily stored in either the
+SONATA_ or MVD3_ format based on HDF5, and :class:`.NeuronData` will
+internally cache them in Parquet format for faster future access.
 
-.. autoclass:: spykfunc.filters.implementations.bouton_distance.BoutonDistanceFilter
-.. autoclass:: spykfunc.filters.implementations.soma_distance.SomaDistanceFilter
-.. autoclass:: spykfunc.filters.implementations.touch.TouchReductionFilter
-.. autoclass:: spykfunc.filters.implementations.touch.TouchRulesFilter
+.. autoclass:: spykfunc.circuit.Circuit
 
-Synapse Identification
-~~~~~~~~~~~~~~~~~~~~~~
+.. autoclass:: spykfunc.data_loader.NeuronData
+   :members: load_neurons, load_touch_parquet, load_touch_sonata
 
-.. autoclass:: spykfunc.filters.implementations.synapse_id.AddIDFilter
-.. autoclass:: spykfunc.filters.implementations.synapse_id.DenseIDFilter
+Filtering
+`````````
 
-Generating Properties for Gap-Junctions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+A detailed overview of the scientific filter implementations available in
+`Spykfunc` can be found in :ref:`Synapse Filters <filters>`.
 
-.. autoclass:: spykfunc.filters.implementations.gap_junction.GapJunctionFilter
-.. autoclass:: spykfunc.filters.implementations.gap_junction.GapJunctionProperties
+.. autoclass:: spykfunc.filters.DatasetOperation
+   :members:
+   :private-members:
 
-Sampled Reduction
-~~~~~~~~~~~~~~~~~
-
-.. autoclass:: spykfunc.filters.implementations.spine_length.SpineLengthFilter
-
-.. autoclass:: spykfunc.filters.implementations.reduce_and_cut.ReduceAndCut
-
-Generating Properties of Chemical Synapses
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: spykfunc.filters.implementations.synapse_reposition.SynapseReposition
-.. autoclass:: spykfunc.filters.implementations.synapse_properties.SynapseProperties
+.. _SONATA: https://bbpteam.epfl.ch/documentation/projects/Circuit%20Documentation/latest/sonata.html
+.. _MVD3: https://bbpteam.epfl.ch/documentation/projects/Circuit%20Documentation/latest/mvd3.html

@@ -140,14 +140,47 @@ def _log_touch_count(df):
 
 
 class DatasetOperation(object, metaclass=__DatasetOperationType):
-    """Force filters to have a unified interface
+    """Basis for synapse filters
+
+    Every filter should derive from :class:`~spykfunc.filters.DatasetOperation`,
+    which will enforce the right format for the constructor
+    and :meth:`~spykfunc.filters.DatasetOperation.apply` functions.
+    The former is optional, but should be
+    used to extract relevant information from the recipe.
+
+    The two node populations are passed to the constructor to enable
+    cross-checks between the recipe information and the population
+    properties.  If the constructor raises an exception and the
+    :attr:`._required` attribute is set to `False`, the filter will be
+    skipped.
+
+    Arguments
+    ---------
+    recipe
+        Wrapper around an XML document with parametrization information
+    source
+        The source node population
+    target
+        The target node population
+    morphos
+        A morphology storage object
     """
 
     _checkpoint = False
+    """Store the results on disk, allows to skip computation on subsequent
+    runs.
+    """
     _checkpoint_buckets = None
+    """Partition the data when checkpointing, avoids sort on load.
+    """
 
     _visible = False
+    """Determines the visibility of the filter to the user.
+    """
     _required = True
+    """If set to `False`, the filter will be skipped if recipe components
+    are not found.
+    """
 
     def __init__(self, recipe, source, target, morphos):
         """Empty constructor supposed to be overriden

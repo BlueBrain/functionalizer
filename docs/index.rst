@@ -15,6 +15,7 @@ typically `syn2`, but also `nrn_*.h5`.
    Getting Started <usage>
    Changelog <changes>
    API Reference <api>
+   Filters <filters>
 
    License <license>
    Authors <authors>

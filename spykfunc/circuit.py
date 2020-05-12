@@ -1,11 +1,13 @@
 """Module for circuit related classes, functions
 """
 
+import pyspark.sql
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
 
 from spykfunc.data_loader import NeuronData
 from spykfunc.dataio.morphologies import MorphologyDB
+from spykfunc.recipe import Recipe
 from spykfunc.schema import touches_with_pathway
 from spykfunc.utils import get_logger
 
@@ -57,28 +59,57 @@ def touches_per_pathway(touches):
 class Circuit(object):
     """Reprensentation of a circuit
 
-    Simple data container to simplify and future-proof the API.
+    Simple data container to simplify and future-proof the API.  Objects of
+    this class will hold both nodes and edges of the initial brain
+    connectivity.
+
+    Access to both node populations is provided via :attr:`.Circuit.source`
+    and :attr:`.Circuit.target`.  Likewise, the current edges can be
+    obtained via :attr:`.Circuit.touches`.
+
+    The preferred access to the circuit is through
+    :attr:`.Circuit.dataframe`, or, shorter, :attr:`.Circuit.df`.  These
+    two object properties provide the synapses of the circuit joined with
+    both neuron populations for a full set of properties.  The source and
+    target neuron populations attributes are prefixed with `src_` and
+    `dst_`, respectively.  The identification of the neurons will be plain
+    `src` and `dst`.
+
+    The shorter :attr:`.Circuit.df` should also be used to update the
+    connectivity.
+
+    For convenience, the attribute :attr:`.Circuit.reduced` will provide
+    the circuits connectivity reduced to only one connection per (`src`,
+    `dst`) identifier pair.  Each connection will provide the miniumum of
+    the `synapse_id` to be able to generate reproducible random numbers.
+
+    Arguments
+    ---------
+    source
+        the source neuron population
+    target
+        the target neuron population
+    touches
+        the synaptic connections
+    morphologies
+        the path to the morphology data of the neurons
     """
 
     def __init__(
         self,
         source: NeuronData,
         target: NeuronData,
-        touches,
-        recipe,
+        touches: pyspark.sql.DataFrame,
         morphologies: str
     ):
         """Construct a new circuit
-
-        :param source: the source neuron population
-        :param target: the target neuron population
-        :param touches: a Spark dataframe with touch data
-        :param recipe: a :py:class:`~spykfunc.recipe.Recipe` object
-        :param morphologies: the path to morphologies used in this circuit
         """
+        #: :property: the source neuron population
         self.source = source
+        #: :property: the target neuron population
         self.target = target
 
+        #: :property: a wrapper around the morphology storage
         self.morphologies = MorphologyDB(morphologies)
 
         self._touches = touches
@@ -104,7 +135,7 @@ class Circuit(object):
 
     @property
     def df(self):
-        """:property" shortcut for `dataframe`.
+        """:property: shortcut for :prop:`dataframe`.
         """
         return self.dataframe
 

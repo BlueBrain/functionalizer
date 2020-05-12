@@ -82,12 +82,32 @@ def _create_touch_loader(filename, population, columns):
 
 
 class NeuronData:
-    """Neuron data loading facilities
+    """Data loading facilities
+
+    This class represent neuron populations, lazily loaded.  After the
+    construction, general properties of the neurons, such as the unique
+    values of the :attr:`.NeuronData.mtypes`, :attr:`.NeuronData.etypes`,
+    or :attr:`.NeuronData.cell_classes` present can be accessed.
+
+    To load neuron-specific information, use
+    :meth:`.NeuronData.load_neurons`.  In addition,
+    :meth:`.NeuronData.load_touch_parquet` and
+    :meth:`.NeuronData.load_touch_sonata` can be used to read the
+    connectivity.
+
+    Arguments
+    ---------
+    filename
+        the path to the neuron storage container
+    population
+        the name of the neuron population
+    cache
+        a directory name to use for caching generated Parquet
     """
 
     PARTITION_SIZE = 50000
 
-    def __init__(self, filename, population, cache):
+    def __init__(self, filename: str, population: str, cache: str):
         import mvdtool
         self._cache = cache
         self._filename = filename
