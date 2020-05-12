@@ -1,7 +1,5 @@
-"""A default filter plugin
+"""Filters to add properties to synapses
 """
-from __future__ import annotations  # for class as return type
-
 from collections import defaultdict, OrderedDict
 from typing import List
 import fnmatch
@@ -78,7 +76,7 @@ class SynapsesClassification(GenericProperty):
     group_name = "SynapsesClassification"
 
     @classmethod
-    def load(cls, xml) -> List[SynapsesClassification]:
+    def load(cls, xml):
         data = GenericProperty.load.__func__(cls, xml)
         for attr in [a for a in cls._attributes if not a.required]:
             values = sum(getattr(d, attr.name, None) is not None for d in data)
