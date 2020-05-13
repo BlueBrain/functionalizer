@@ -140,7 +140,7 @@ class Functionalizer(object):
         else:
             raise RuntimeError("Need to have touches")
 
-        self.circuit = Circuit(n_to, n_from, touches, self.recipe, morpho_dir)
+        self.circuit = Circuit(n_from, n_to, touches, self.recipe, morpho_dir)
 
         # Grow suffle partitions with size of touches DF
         # Min: 100 reducers

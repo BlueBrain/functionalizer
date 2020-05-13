@@ -10,6 +10,9 @@ Changes:
     `synapse_id` field.  Also skip the generating the `axonal_delay` field
     if `distance_soma` is not present in the input.  See also FUNCZ-212_.
 
+Fixes:
+  - Multi-population support had source and target populations swapped
+
 Version 0.15.4
 ==============
 
