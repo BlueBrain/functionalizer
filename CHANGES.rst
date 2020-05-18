@@ -2,6 +2,17 @@
 Changelog
 =========
 
+Version 0.15.5
+==============
+
+Changes:
+  - Added a `AddID` filter to be able to process SONATA without the
+    `synapse_id` field.  Also skip the generating the `axonal_delay` field
+    if `distance_soma` is not present in the input.  See also FUNCZ-212_.
+
+Fixes:
+  - Multi-population support had source and target populations swapped
+
 Version 0.15.4
 ==============
 
@@ -218,6 +229,7 @@ First working version with 3 base filters:
 .. _FUNCZ-201: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-201
 .. _FUNCZ-209: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-209
 .. _FUNCZ-211: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-211
+.. _FUNCZ-212: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-212
 .. _FUNCZ-216: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-216
 .. _FUNCZ-217: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-217
 .. _FUNCZ-218: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-218

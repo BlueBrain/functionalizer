@@ -8,8 +8,11 @@ import sparkmanager as sm
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
 from .schema import SYNAPSE_CLASS_MAP_SCHEMA as schema
+from .utils import get_logger
 from .utils.spark import cache_broadcast_single_part
 from .filters.udfs import gamma, poisson, truncated_normal
+
+logger = get_logger(__name__)
 
 
 def compute_additional_h5_fields(circuit, reduced, classification_matrix, properties_df, seed):
@@ -90,11 +93,14 @@ def compute_additional_h5_fields(circuit, reduced, classification_matrix, proper
     )
 
     # Compute #1: delaySomaDistance
-    touches = touches.withColumn(
-        "axonal_delay",
-        F.expr("conn.neuralTransmitterReleaseDelay + distance_soma / conn.axonalConductionVelocity")
-        .cast(T.FloatType())
-    )
+    if "distance_soma" in touches.columns:
+        touches = touches.withColumn(
+            "axonal_delay",
+            F.expr("conn.neuralTransmitterReleaseDelay + distance_soma / conn.axonalConductionVelocity")
+            .cast(T.FloatType())
+        )
+    else:
+        logger.warning("Generating the 'axonal_delay' property requires the 'distance_soma' field")
 
     # Compute #13: synapseType:  Inhibitory < 100 or  Excitatory >= 100
     t = touches.withColumn(
