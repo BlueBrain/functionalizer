@@ -11,29 +11,9 @@ class DataSets:
     MORPHOLOGIES = "Dataset.Morphologies"
 
 
-INPUT_COLUMN_MAPPING = [
-    ("distance_soma", "distance_soma"),
-    ("afferent_section_type", "post_branch_type"),
-    ("afferent_segment_offset", "post_offset"),
-    ("afferent_center_x", "post_position_x"),
-    ("afferent_center_y", "post_position_y"),
-    ("afferent_center_z", "post_position_z"),
-    ("afferent_section_pos", "post_section_fraction"),
-    ("afferent_section_id", "post_section"),
-    ("afferent_segment_id", "post_segment"),
-    ("efferent_section_type", "pre_branch_type"),
-    ("efferent_segment_offset", "pre_offset"),
-    ("efferent_surface_x", "pre_position_x"),
-    ("efferent_surface_y", "pre_position_y"),
-    ("efferent_surface_z", "pre_position_z"),
-    ("efferent_section_pos", "pre_section_fraction"),
-    ("efferent_section_id", "pre_section"),
-    ("efferent_segment_id", "pre_segment"),
-    ("spine_length", "spine_length"),
-    ("synapse_id", "synapse_id"),
-]
-
-
+# Maps from the internal naming scheme to the SYN2 one. The third component
+# of the tuple specifies the datatype to convert to. If None, no conversion
+# is performed.
 OUTPUT_COLUMN_MAPPING = [
     ("post_gid", "connected_neurons_post", T.LongType()),
     ("pre_gid", "connected_neurons_pre", T.LongType()),
@@ -80,6 +60,34 @@ OUTPUT_COLUMN_MAPPING = [
     ("post_junction", "junction_id_post", None),
     ("pre_junction", "junction_id_pre", None),
 ]
+
+
+# When reading SONATA, this will map any attributes Spykfunc may produce
+# back to the internal names. SONATA specific names are hardcoded, other
+# fields are added by using the reverse of the output map.
+INPUT_COLUMN_MAPPING = [
+    ("distance_soma", "distance_soma"),
+    ("afferent_section_type", "post_branch_type"),
+    ("afferent_segment_offset", "post_offset"),
+    ("afferent_center_x", "post_position_x"),
+    ("afferent_center_y", "post_position_y"),
+    ("afferent_center_z", "post_position_z"),
+    ("afferent_section_pos", "post_section_fraction"),
+    ("afferent_section_id", "post_section"),
+    ("afferent_segment_id", "post_segment"),
+    ("efferent_section_type", "pre_branch_type"),
+    ("efferent_segment_offset", "pre_offset"),
+    ("efferent_surface_x", "pre_position_x"),
+    ("efferent_surface_y", "pre_position_y"),
+    ("efferent_surface_z", "pre_position_z"),
+    ("efferent_section_pos", "pre_section_fraction"),
+    ("efferent_section_id", "pre_section"),
+    ("efferent_segment_id", "pre_segment"),
+    ("spine_length", "spine_length"),
+    ("synapse_id", "synapse_id"),
+    ("edge_type_id", "synapse_type_id"),
+    ("efferent_morphology_id", "morphology"),
+] + [(external, internal) for (internal, external, _) in OUTPUT_COLUMN_MAPPING]
 
 
 LAYER_SCHEMA = T.StructType([

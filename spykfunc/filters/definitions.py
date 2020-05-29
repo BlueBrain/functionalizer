@@ -154,6 +154,10 @@ class DatasetOperation(object, metaclass=__DatasetOperationType):
     :attr:`._required` attribute is set to `False`, the filter will be
     skipped.
 
+    If filters add or remove columns from the dataframe, this should be
+    communicated via the :attr:`._columns` attribute, otherwise the general
+    invocation of the filters will fail, as column consistency is checked.
+
     Arguments
     ---------
     recipe
@@ -182,6 +186,24 @@ class DatasetOperation(object, metaclass=__DatasetOperationType):
     are not found.
     """
 
+    _columns = []
+    """A list columns to be consumed and produced.
+
+    Each item should be a tuple of two strings, giving the column
+    consumed/dropped, and the column produced. If no column is dropped,
+    `None` can be used. Likewise, if a column is only dropped, `None` can
+    be the second element.
+
+    Examples::
+
+       (None, "synapse_id")  # will produce the column "synapse_id"
+       ("synapse_id", None)  # will drop the colulmn "synapse_id"
+       ("ham", "spam")       # will produce the colum "spam" while also
+                             # dropping "ham". If the latter is not
+                             # present, the former will not be
+                             # added.
+    """
+
     def __init__(self, recipe, source, target, morphos):
         """Empty constructor supposed to be overriden
         """
@@ -191,6 +213,16 @@ class DatasetOperation(object, metaclass=__DatasetOperationType):
         classname = self.__class__.__name__
         logger.info(f"Applying {classname}")
         with sm.jobgroup(classname):
+            olds = set(circuit.df.columns)
+            to_add = set(a for (c, a) in self._columns if not c or c in olds)
+            to_drop = set(c for (c, _) in self._columns if c in olds)
+            to_remove = olds & to_add
+
+            if to_remove:
+                logger.warning(f"Removing columns {', '.join(to_remove)}")
+                circuit.df = circuit.df.drop(*to_remove)
+                olds -= to_remove
+
             if not self._checkpoint:
                 circuit.df = self.apply(circuit)
             else:
@@ -202,6 +234,19 @@ class DatasetOperation(object, metaclass=__DatasetOperationType):
                 def fun():
                     return self.apply(circuit)
                 circuit.df = fun()
+            news = set(circuit.df.columns)
+
+            dropped = olds - news
+            added = news - olds
+
+            if to_drop - dropped:
+                raise RuntimeError(f"Undropped columns: {to_drop - dropped}")
+            if dropped - to_drop:
+                raise RuntimeError(f"Dropped columns: {dropped - to_drop}")
+            if to_add - added:
+                raise RuntimeError(f"Missing columns: {to_add - added}")
+            if added - to_add:
+                raise RuntimeError(f"Additional columns: {added - to_add}")
             return circuit
 
     @abstractmethod

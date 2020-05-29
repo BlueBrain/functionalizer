@@ -21,6 +21,8 @@ class AddIDFilter(DatasetOperation):
 
     _checkpoint = True
 
+    _columns = [(None, "synapse_id")]
+
     def apply(self, circuit):
         """Add a `synapse_id` field to `circuit`
         """

@@ -286,13 +286,14 @@ class ReduceAndCut(DatasetOperation):
 
         with sm.jobgroup("Filtering touches CUT step", ""):
             cut2AF_touches = (
-                reduced_touches.join(cut_shall_keep_connections, ["src", "dst"])
+                reduced_touches
+                .join(cut_shall_keep_connections, ["src", "dst"])
             )
 
             _touch_counts_out_csv(cut2AF_touches, "cut2af_counts.csv", src_mtypes, dst_mtypes)
 
         # Only the touch fields
-        return Circuit.only_touch_columns(cut2AF_touches)
+        return Circuit.only_touch_columns(cut2AF_touches).drop("pathway_i")
 
     # ---
     @sm.assign_to_jobgroup

@@ -57,7 +57,7 @@ def touches_per_pathway(touches):
 
 
 class Circuit(object):
-    """Reprensentation of a circuit
+    """Representation of a circuit
 
     Simple data container to simplify and future-proof the API.  Objects of
     this class will hold both nodes and edges of the initial brain

@@ -19,6 +19,14 @@ from .utils.filesystem import adjust_for_spark
 # Globals
 logger = get_logger(__name__)
 
+_numpy_to_spark = {
+    'int16': T.ShortType,
+    'int32': T.IntegerType,
+    'int64': T.LongType,
+    'float32': T.FloatType,
+    'float64': T.DoubleType,
+}
+
 
 def _create_neuron_loader(filename, population):
     """Create a UDF to load neurons from MVD3
@@ -218,20 +226,19 @@ class NeuronData:
     def load_touch_sonata(cls, filename, population):
         import libsonata
         p = libsonata.EdgeStorage(filename).open_population(population)
-        # import pdb; pdb.set_trace()
+
+        def _type(col):
+            data = p.get_attribute(col, libsonata.Selection([0]))
+            return _numpy_to_spark[data.dtype.name]()
 
         total_parts = p.size // cls.PARTITION_SIZE + 1
         logger.debug("Partitions: %d", total_parts)
 
-        attributes = set()
+        columns = schema.TOUCH_SCHEMA_V3.fields[1:3]
         for alias, name in schema.INPUT_COLUMN_MAPPING:
             if alias in p.attribute_names:
-                attributes.add(name)
-
-        columns = schema.TOUCH_SCHEMA_V3[1:3]
-        for n, col in enumerate(schema.TOUCH_SCHEMA_V3.fieldNames()):
-            if col in attributes:
-                columns.add(schema.TOUCH_SCHEMA_V3[n])
+                columns.append(T.StructField(name, _type(alias), False))
+        columns = T.StructType(columns)
 
         parts = sm.createDataFrame(
             (
