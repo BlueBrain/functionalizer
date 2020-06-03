@@ -77,7 +77,6 @@ def test_shift():
         population,
         population,
         touches,
-        recipe,
         Path(__file__).parent / "circuit_O1_partial" / "morphologies" / "h5"
     )
 

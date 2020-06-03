@@ -27,7 +27,7 @@ extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'sphinx.ext.todo',
               'sphinx.ext.doctest', 'sphinx.ext.ifconfig',
               'sphinx.ext.napoleon']
 
-autodoc_mock_imports = ['sparkmanager']
+autodoc_mock_imports = ['pyspark', 'pyspark.sql', 'sparkmanager', 'spykfunc.schema', 'spykfunc.utils.checkpointing']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

@@ -29,6 +29,11 @@ class GapJunctionFilter(DatasetOperation):
 
     _checkpoint = True
 
+    _columns = [
+        (None, "pre_junction"),
+        (None, "post_junction"),
+    ]
+
     def __init__(self, recipe, source, target, morphos):
         self.__morphos = morphos
 
@@ -168,6 +173,10 @@ class GapJunctionProperties(DatasetOperation):
     as specified by the `GapJunctionProperties` part of the recipe.
 
     """
+
+    _columns = [
+        (None, "gsyn"),
+    ]
 
     def __init__(self, recipe, source, target, morphos):
         self.conductance = GapJunctionProperty.load(recipe.xml)[0].gsyn

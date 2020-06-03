@@ -106,6 +106,7 @@ convert the TouchDetector output:
 
 .. code-block:: console
 
+   $ module load parquet-converters
    $ touch2parquet
    usage: touch2parquet[_endian] <touch_file1 touch_file2 ...>
        touch2parquet [-h]
@@ -121,6 +122,7 @@ For a quicker conversion, use an MPI-enabled version:
 
 .. code-block:: console
 
+   $ module load parquet-converters
    $ salloc -Aproj16 -pinteractive -t 8:00:00 -N1 -n42
    …some SLURM/shell output…
    $ srun --mpi=pmi2 touch2parquetp ../touchesData.0
@@ -264,11 +266,23 @@ Output Conversion
 -----------------
 
 Within an allocation, the following command will convert all parquet files
-present in the Spykfunc output directory, and convert them to a `circuit.syn2`
-file:
+present in the Spykfunc output directory, and convert them to a
+`edges.sonata` file:
 
 .. code-block:: console
 
+   $ module load parquet-converters
    $ salloc -Aproj16 -pinteractive -t 8:00:00 -N1 -n42
    …some SLURM/shell output…
-   $ srun --mpi=pmi2 parquet2syn2p circuit.parquet/*.parquet
+   $ srun --mpi=pmi2 parquet2hdf5 \
+                --format SONATA \
+                --from from_nodes.sonata FROM_POPULATION \
+                --to to_nodes.sonata TO_POPULATION \
+                -p EDGE_POPULATION \
+                -o edges.sonata \
+                circuit.parquet/*.parquet
+
+Both ``FROM_POPULATION`` and ``TO_POPULATION`` need to be populations
+present in the respective node files.  The name ``EDGE_POPULATION`` will be
+used in the edge storage file, if the ``-p`` flag is not given,
+``EDGE_POPULATION`` will be set to `default`.

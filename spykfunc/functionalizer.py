@@ -94,15 +94,30 @@ class Functionalizer(object):
     # -------------------------------------------------------------------------
     @sm.assign_to_jobgroup
     def init_data(self, recipe_file, source, target, morpho_dir, parquet=None, sonata=None):
-        """ Initializes all data for a Functionalizer session, reading MVDs, morphologies, recipe,
-        and making all conversions
+        """Initialize all data required
 
-        :param recipe_file: The recipe file (XML)
-        :param source: The source population path and name
-        :param target: The target population path and name
-        :param morpho_dir: The dir containing all required morphologies
-        :param parquet: A list of touch files. A single globbing expression can be specified as well"
-        :param sonata: The edge population path and name
+        Will load the necessary cell collections from `source` and `target`
+        parameters, and construct the underlying brain :class:`.Circuit`.
+        The `recipe_file` will only be fully processed once filters are
+        instantiated.
+
+        Arguments
+        ---------
+        recipe_file
+            A scientific prescription to be used by the filters on the
+            circuit
+        source
+            The source population path and name
+        target
+            The target population path and name
+        morpho_dir
+            The storage path to all required morphologies
+        parquet
+            A list of touch files; a single globbing expression can be
+            specified as well
+        sonata
+            Alternative touch representation, consisting of edge population
+            path and name
         """
         # In "program" mode this dir wont change later, so we can check here
         # for its existence/permission to create
@@ -140,7 +155,7 @@ class Functionalizer(object):
         else:
             raise RuntimeError("Need to have touches")
 
-        self.circuit = Circuit(n_from, n_to, touches, self.recipe, morpho_dir)
+        self.circuit = Circuit(n_from, n_to, touches, morpho_dir)
 
         # Grow suffle partitions with size of touches DF
         # Min: 100 reducers
@@ -178,11 +193,22 @@ class Functionalizer(object):
     # Main entry point of Filter Execution
     # -------------------------------------------------------------------------
     def process_filters(self, filters=None, overwrite=False):
-        """Runs all functionalizer filters in order, according to the classic functionalizer:
-           (1.1) Soma-axon distance
-           (1.2) Touch rules (s2f only)
-           (2.1) Reduce (s2f only)
-           (2.2) Cut (s2f only)
+        """Filter the circuit
+
+        Uses either the specified filters or a default set, based on the
+        parameters passed to the :class:`.Functionalizer` constructor.
+
+        Any filter that writes a checkpoint will be skipped if the sequence
+        of data and filters leading up to said checkpoint did not change.
+        Use the `overwrite` argument to change this behavior.
+
+        Arguments
+        ---------
+        filters
+            A list of filter names to be run.  Any `Filter` suffix should
+            be omitted.
+        overwrite
+            Allows to overwrite checkpoints
         """
         self._ensure_data_loaded()
 
@@ -214,10 +240,18 @@ class Functionalizer(object):
             overwrite=False,
             order: SortBy = SortBy.POST,
             filename: str = "circuit.parquet"):
-        """ Exports the current touches to storage, appending the synapse property fields
+        """Writes the touches of the circuit to disk
 
-        :param output_path: Changes the default export directory
-        :param order: How to sort the output
+        Arguments
+        ---------
+        output_path
+            Allows to change the default output directory
+        overwrite
+            Write over previous results
+        order
+            The sorting of the touches
+        filename
+            Allows to change the default output name
         """
         def get_fields(df):
             # Transitional SYN2 spec fields
@@ -249,6 +283,7 @@ class Functionalizer(object):
     # Helper functions
     # -------------------------------------------------------------------------
     def _ensure_data_loaded(self):
-        """ Ensures required data is available"""
+        """Ensures required data is available
+        """
         if self.recipe is None or self.circuit is None:
             raise RuntimeError("No touches available. Please load data first.")

@@ -49,9 +49,16 @@ def compute_additional_h5_fields(circuit, reduced, classification_matrix, proper
 
     # Join with Syn Prop Class
     properties_df = properties_df.alias("synprop")  # Synprops is globally cached and broadcasted
-    connections = connections.join(
-        F.broadcast(properties_df),
-        connections.classification_i == properties_df._class_i
+    connections = (
+        connections
+        .join(
+            F.broadcast(properties_df),
+            connections.classification_i == properties_df._class_i
+        )
+        .drop(
+            "classification_i",
+            "_class_i"
+        )
     )
 
     # 0: Connecting gid: presynaptic for nrn.h5, postsynaptic for nrn_efferent.h5
@@ -86,28 +93,59 @@ def compute_additional_h5_fields(circuit, reduced, classification_matrix, proper
     touches = (
         circuit
         .alias("c")
-        .join(connections.alias("conn"),
-              [F.col("c.src") == F.col("_src"),
-               F.col("c.dst") == F.col("_dst")])
+        .join((
+                connections
+                .drop(
+                    "id",
+                    "nsyn",
+                    "nsynSD",
+                    "fromEType",
+                    "fromMType",
+                    "fromSClass",
+                    "toEType",
+                    "toMType",
+                    "toSClass",
+                )
+                .alias("conn")
+            ),
+            [F.col("c.src") == F.col("_src"),
+             F.col("c.dst") == F.col("_dst")]
+        )
         .drop(*[f"_{col}" for col in overlap])
     )
 
     # Compute #1: delaySomaDistance
     if "distance_soma" in touches.columns:
-        touches = touches.withColumn(
-            "axonal_delay",
-            F.expr("conn.neuralTransmitterReleaseDelay + distance_soma / conn.axonalConductionVelocity")
-            .cast(T.FloatType())
+        touches = (
+            touches
+            .withColumn(
+                "axonal_delay",
+                F.expr("conn.neuralTransmitterReleaseDelay + distance_soma / conn.axonalConductionVelocity")
+                .cast(T.FloatType())
+            )
+            .drop(
+                "distance_soma",
+                "axonalConductionVelocity",
+                "neuralTransmitterReleaseDelay",
+            )
         )
     else:
         logger.warning("Generating the 'axonal_delay' property requires the 'distance_soma' field")
+        touches = touches.drop("axonalConductionVelocity", "neuralTransmitterReleaseDelay")
 
     # Compute #13: synapseType:  Inhibitory < 100 or  Excitatory >= 100
-    t = touches.withColumn(
-        "synapseType",
-        (F.when(F.col("conn.type").substr(0, 1) == F.lit('E'), 100).otherwise(0) +
-         F.col("conn._prop_i")
-         ).cast(T.ShortType())
+    t = (
+        touches
+        .withColumn(
+            "synapseType",
+            (F.when(F.col("conn.type").substr(0, 1) == F.lit('E'), 100).otherwise(0) +
+             F.col("conn._prop_i")
+             ).cast(T.ShortType())
+        )
+        .drop(
+            "type",
+            "_prop_i",
+        )
     )
 
     # Required for SONATA support

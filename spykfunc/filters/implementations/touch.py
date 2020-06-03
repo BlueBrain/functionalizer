@@ -192,6 +192,7 @@ class TouchRulesFilter(DatasetOperation):
         # neuronDF, while postBranchType is a property if the touch,
         # historically checked by the index of the target neuron
         # section (0->soma)
+        added = []
         touches = circuit.df
         if not hasattr(circuit.df, 'pre_branch_type'):
             logger.warning(f"Guessing pre-branch type for touch rules!")
@@ -200,6 +201,7 @@ class TouchRulesFilter(DatasetOperation):
                 .withColumn('pre_branch_type',
                             (touches.pre_section > 0).cast('integer') * 2)
             )
+            added.append("pre_branch_type")
         if not hasattr(circuit.df, 'post_branch_type'):
             if 'branch_type' in touches.columns:
                 touches = (
@@ -213,10 +215,11 @@ class TouchRulesFilter(DatasetOperation):
                     .withColumn('post_branch_type',
                                 (touches.post_section > 0).cast('integer') * 2)
                 )
+            added.append("post_branch_type")
         return touches.withColumn("fail",
                                   touches.src_mtype_i * indices[1] +
                                   touches.dst_mtype_i * indices[2] +
                                   touches.pre_branch_type * indices[3] +
                                   touches.post_branch_type) \
                       .join(F.broadcast(rules), "fail", "left_anti") \
-                      .drop("fail")
+                      .drop("fail", *added)

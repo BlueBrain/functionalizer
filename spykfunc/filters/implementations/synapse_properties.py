@@ -117,6 +117,20 @@ class SynapseProperties(DatasetOperation):
 
     _checkpoint = True
 
+    _columns = [
+        (None, "gsyn"),
+        (None, "u"),
+        (None, "d"),
+        (None, "f"),
+        (None, "dtc"),
+        (None, "nrrp"),
+
+        ("distance_soma", "axonal_delay"),
+
+        (None, "synapseType"),
+        (None, "synapse_type_id"),
+    ]
+
     def __init__(self, recipe, source, target, morphos):
         self.seed = Seeds.load(recipe.xml).synapseSeed
         logger.info("Using seed %d for synapse properties", self.seed)
@@ -131,6 +145,12 @@ class SynapseProperties(DatasetOperation):
             source, target, classification
         )
         self.properties = self.convert_properties(classification, properties)
+
+        if "gsynSRSF" in self.properties.columns:
+            self._columns.append((None, "gsynSRSF"))
+        if "uHillCoefficient" in self.properties.columns:
+            self._columns.append((None, "uHillCoefficient"))
+
 
     def apply(self, circuit):
         """Add properties to the circuit
