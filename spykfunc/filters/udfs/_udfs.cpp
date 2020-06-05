@@ -174,7 +174,7 @@ py::array_t<int> poisson(int seed, int key, py::array_t<long> subkey, py::array_
         if (_k[i] >= 1) {
             const auto p = decltype(dist)::param_type(_k[i] - 1);
             mapper rng(engine.derivate(_subkey[i]));
-            _result[i] = dist(rng, p);
+            _result[i] = 1 + dist(rng, p);
         } else {
             _result[i] = 1;
         }

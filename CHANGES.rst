@@ -2,6 +2,12 @@
 Changelog
 =========
 
+Version 0.15.6
+==============
+
+Fixes:
+  - The parameter `nrrp` was off by one.
+
 Version 0.15.5
 ==============
 
