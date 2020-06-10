@@ -56,7 +56,7 @@ def test_sonata_properties(tmpdir_factory):
     cdir = tmpdir.join("check")
     odir = tmpdir.join("out")
     fz = Functionalizer(
-        filters=["AddID", "SynapseProperties"], checkpoint_dir=str(cdir), output_dir=str(odir)
+        filters=["SynapseProperties"], checkpoint_dir=str(cdir), output_dir=str(odir)
     ).init_data(*ARGS[:-1], sonata=(os.path.join(DATADIR, "edges.h5"), "default"))
     fz.process_filters()
 

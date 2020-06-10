@@ -80,6 +80,7 @@ def _create_touch_loader(filename, population, columns):
         data = dict(
             pre_neuron_id=p.source_nodes(selection),
             post_neuron_id=p.target_nodes(selection),
+            synapse_id=selection.flatten(),
         )
 
         for name, alias in schema.INPUT_COLUMN_MAPPING:
@@ -234,7 +235,7 @@ class NeuronData:
         total_parts = p.size // cls.PARTITION_SIZE + 1
         logger.debug("Partitions: %d", total_parts)
 
-        columns = schema.TOUCH_SCHEMA_V3.fields[1:3]
+        columns = schema.TOUCH_SCHEMA_V3.fields[:3]
         for alias, name in schema.INPUT_COLUMN_MAPPING:
             if alias in p.attribute_names:
                 columns.append(T.StructField(name, _type(alias), False))
