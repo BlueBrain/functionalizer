@@ -2,6 +2,13 @@
 Changelog
 =========
 
+Version 0.15.7
+==============
+
+Changes:
+  - The SONATA input will now create the field `synapse_id`, hence
+    deprecating the `AddID` filter.
+
 Version 0.15.6
 ==============
 
