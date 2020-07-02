@@ -197,7 +197,6 @@ def setup_package():
             'spykfunc.filters.implementations',
             'spykfunc.filters.udfs',
             'spykfunc.tools',
-            'spykfunc.tools.analysis',
             'spykfunc.utils',
         ],
         package_data={
@@ -229,11 +228,6 @@ def setup_package():
         ],
         setup_requires=['setuptools_scm'] + maybe_sphinx,
         tests_require=['mock', 'pytest', 'pytest-cov'],
-        extras_require={
-            # Dependencies if the user wants a dev env
-            'dev': ['flake8'],
-            'plot': ['seaborn', 'requests', 'bb5']
-        },
         ext_modules=[CMakeExtension('spykfunc.filters.udfs._udfs', 'spykfunc/filters/udfs')],
         cmdclass={
             'build_docs': Documentation,
@@ -243,7 +237,6 @@ def setup_package():
         entry_points={
             'console_scripts': [
                 'spykfunc = spykfunc.commands:spykfunc',
-                'spykfunc_plot = spykfunc.tools.scaling:run [plot]',
                 'parquet-compare = spykfunc.tools.compare:run',
                 'parquet-coalesce = spykfunc.tools.coalesce:run',
             ],

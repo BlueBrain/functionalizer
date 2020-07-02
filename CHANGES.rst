@@ -8,6 +8,8 @@ Version 0.15.7
 Changes:
   - The SONATA input will now create the field `synapse_id`, hence
     deprecating the `AddID` filter.
+  - The plotting utilities have been removed as our ability to obtain
+    performance data has been crippled. See also FUNCZ-244_.
 
 Version 0.15.6
 ==============
@@ -251,3 +253,4 @@ First working version with 3 base filters:
 .. _FUNCZ-236: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-236
 .. _FUNCZ-238: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-238
 .. _FUNCZ-242: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-242
+.. _FUNCZ-244: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-244
