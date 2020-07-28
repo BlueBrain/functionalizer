@@ -262,6 +262,10 @@ Spykfunc will save during the execution, maybe 3-5 times the size of the
 input data (drawn dash-dotted), here 32 nodes should suffice to
 successfully functionalize 11 million neurons.
 
+As the underlying data for this estimation may change frequently, please
+follow the instructions in the :ref:`debugging` section to monitor a test run and adjust
+resources as needed.
+
 Output Conversion
 -----------------
 

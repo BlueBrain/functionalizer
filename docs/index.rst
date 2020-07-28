@@ -13,6 +13,7 @@ typically `syn2`, but also `nrn_*.h5`.
    :maxdepth: 3
 
    Getting Started <usage>
+   Debugging <debugging>
    Changelog <changes>
    API Reference <api>
    Filters <filters>
