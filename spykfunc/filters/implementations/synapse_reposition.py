@@ -16,10 +16,12 @@ class SynapsesReposition(GenericProperty):
     """Class representing rules to shift synapse positions"""
 
     attributes = [
-        Attribute("fromMtype", default="*", kind=str),
-        Attribute("toMtype", default="*", kind=str),
+        Attribute("fromMType", default="*", kind=str),
+        Attribute("toMType", default="*", kind=str),
         Attribute("type", default="*", kind=str)
     ]
+
+    group_name = "SynapsesReposition"
 
 
 class SynapseReposition(DatasetOperation):
@@ -38,32 +40,17 @@ class SynapseReposition(DatasetOperation):
     def apply(self, circuit):
         """Actually reposition the synapses
         """
-        get_axon_section_id = _create_axon_section_udf(circuit.morphologies)
+        axon_shift = _create_axon_section_udf(circuit.morphologies)
 
-        circuit = (
+        patched = (
             schema
             .touches_with_pathway(circuit.df)
             .join(self.reposition, "pathway_i", "left_outer")
+            .mapInPandas(axon_shift, circuit.df.schema)
+            .drop("pathway_i", "reposition")
         )
 
-        patched_circuit = (
-            circuit.withColumn(
-                "new_post_section",
-                get_axon_section_id(circuit.reposition,
-                                    circuit.post_section,
-                                    circuit.dst_morphology)
-            )
-            .withColumn("new_post_segment",
-                        F.when(circuit.reposition, 0).otherwise(circuit.post_segment))
-            .withColumn("new_post_offset",
-                        F.when(circuit.reposition, 0.5).otherwise(circuit.post_offset))
-            .drop("post_section", "post_segment", "post_offset", "pathway_i", "reposition")
-            .withColumnRenamed("new_post_section", "post_section")
-            .withColumnRenamed("new_post_segment", "post_segment")
-            .withColumnRenamed("new_post_offset", "post_offset")
-        )
-
-        return patched_circuit
+        return patched
 
     @staticmethod
     def convert_reposition(source, target, reposition):
@@ -94,19 +81,24 @@ def _create_axon_section_udf(morphology_db):
         the first axon section in a morphology given its name
 
     :param morphology_db: the morphology db
-    :return: a UDF to shift the post section of some morphology types
+    :return: a function than can be used by ``mapInPandas`` to shift synapses
     """
-    @F.pandas_udf('integer')
-    def shift_axon_section_id(reposition, defaults, morphos):
-        """Shift the axon sections for morphologies flagged.
-
-        :param reposition: flag to indicate if a shift is needed
-        :param defaults: post section to use when no shift is required
-        :param morphos: morphology types to get the axon section for
+    def _shift_to_axon_section(dfs):
+        """Shifts synapses to the first axon section
         """
-        sections = numpy.array(defaults.values, copy=True)
-        for i, (shift, morpho) in enumerate(zip(reposition, morphos)):
-            if shift:
-                sections[i] = morphology_db.first_axon_section(morpho)
-        return pandas.Series(data=sections)
-    return shift_axon_section_id
+        for df in dfs:
+            set_section_fraction = "post_section_fraction" in df.columns
+            set_soma_distance = "distance_soma" in df.columns
+            for i in numpy.nonzero(df.reposition.values)[0]:
+                morpho = df.dst_morphology.iloc[i]
+                (idx, dist, frac, soma) = morphology_db.first_axon_section(morpho)
+                df.post_branch_type = 1  # Axon. Soma is 0, dendrites are higher
+                df.post_offset.iloc[i] = dist
+                df.post_section.iloc[i] = idx
+                df.post_segment.iloc[i] = 0  # First segment on the axon
+                if set_section_fraction:
+                    df.post_section_fraction.iloc[i] = frac
+                if set_soma_distance:
+                    df.distance_soma.iloc[i] = soma
+            yield df
+    return _shift_to_axon_section
