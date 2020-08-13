@@ -220,7 +220,7 @@ SYNAPSE_PROPERTY_SCHEMA = T.StructType([
     T.StructField("dSD", T.FloatType(), False),
     T.StructField("f", T.FloatType(), False),
     T.StructField("fSD", T.FloatType(), False),
-    T.StructField("nrrp", T.ShortType(), False),
+    T.StructField("nrrp", T.FloatType(), False),
     T.StructField("gsynSRSF", T.FloatType(), False),
     T.StructField("uHillCoefficient", T.FloatType(), False),
 ])

@@ -7,7 +7,9 @@ Version 0.15.7
 
 Fixes:
   - The `SynapseReposition` filter did not parse the recipe correctly. See
-    also FUNCZ-247_.
+    also FUNCZ-257_.
+  - The `nrrp` parameter to synapse generation is read as a floating point
+    value again. See also FUNCZ-258_.
 
 Changes:
   - The SONATA input will now create the field `synapse_id`, hence
@@ -258,4 +260,5 @@ First working version with 3 base filters:
 .. _FUNCZ-238: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-238
 .. _FUNCZ-242: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-242
 .. _FUNCZ-244: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-244
-.. _FUNCZ-245: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-247
+.. _FUNCZ-257: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-257
+.. _FUNCZ-258: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-258

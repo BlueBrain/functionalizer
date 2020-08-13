@@ -160,7 +160,7 @@ py::array_t<float> uniform(int seed, int key, py::array_t<long> subkey) {
 }
 
 
-py::array_t<int> poisson(int seed, int key, py::array_t<long> subkey, py::array_t<short> k) {
+py::array_t<int> poisson(int seed, int key, py::array_t<long> subkey, py::array_t<float> k) {
     py::array_t<int> result(subkey.shape(0));
 
     mapper engine(init(seed, key));
@@ -171,7 +171,7 @@ py::array_t<int> poisson(int seed, int key, py::array_t<long> subkey, py::array_
     boost::random::poisson_distribution<int, double> dist;
 
     for (std::size_t i = 0; i < result.shape(0); ++i) {
-        if (_k[i] >= 1) {
+        if (_k[i] >= 1.) {
             const auto p = decltype(dist)::param_type(_k[i] - 1);
             mapper rng(engine.derivate(_subkey[i]));
             _result[i] = 1 + dist(rng, p);
