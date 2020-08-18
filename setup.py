@@ -191,6 +191,7 @@ def setup_package():
             "Source": "https://bbpcode.epfl.ch/code/#/admin/projects/building/Spykfunc",
         },
         packages=[
+            'sparkmanager',
             'spykfunc',
             'spykfunc.dataio',
             'spykfunc.filters',
@@ -224,7 +225,8 @@ def setup_package():
             'pathlib2;python_version<"3.4"',
             'progress',
             'pyarrow',
-            'sparkmanager>=0.7.0',
+            'pyspark>=3',
+            'six',
         ],
         setup_requires=['setuptools_scm'] + maybe_sphinx,
         tests_require=['mock', 'pytest', 'pytest-cov'],
@@ -241,6 +243,12 @@ def setup_package():
                 'parquet-coalesce = spykfunc.tools.coalesce:run',
             ],
         },
+        scripts=[
+            'scripts/sm_cluster',
+            'scripts/sm_run',
+            'scripts/sm_startup',
+            'scripts/sm_shutdown',
+        ],
         dependency_links=[
             "https://bbpteam.epfl.ch/repository/devpi/simple/docs_internal_upload"
         ],
