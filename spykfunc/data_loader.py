@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import glob
 import hashlib
 import os
 import sparkmanager as sm
@@ -26,6 +27,8 @@ _numpy_to_spark = {
     'float32': T.FloatType,
     'float64': T.DoubleType,
 }
+
+PARTITION_SIZE = 50000
 
 
 def _create_neuron_loader(filename, population):
@@ -91,18 +94,15 @@ def _create_touch_loader(filename, population, columns):
 
 
 class NeuronData:
-    """Data loading facilities
+    """Neuron data loading facilities
 
     This class represent neuron populations, lazily loaded.  After the
     construction, general properties of the neurons, such as the unique
     values of the :attr:`.NeuronData.mtypes`, :attr:`.NeuronData.etypes`,
     or :attr:`.NeuronData.cell_classes` present can be accessed.
 
-    To load neuron-specific information, use
-    :meth:`.NeuronData.load_neurons`.  In addition,
-    :meth:`.NeuronData.load_touch_parquet` and
-    :meth:`.NeuronData.load_touch_sonata` can be used to read the
-    connectivity.
+    To load neuron-specific information, access the property
+    :attr:`.NeuronData.df`, data will be loaded lazily.
 
     Arguments
     ---------
@@ -114,11 +114,10 @@ class NeuronData:
         a directory name to use for caching generated Parquet
     """
 
-    PARTITION_SIZE = 50000
-
     def __init__(self, filename: str, population: str, cache: str):
         import mvdtool
         self._cache = cache
+        self._df = None
         self._filename = filename
         self._population = population
         self._mvd = mvdtool.open(self._filename, self._population)
@@ -168,7 +167,13 @@ class NeuronData:
     def etype_df(self):
         return self._to_df(self.etypes, ["etype_i", "etype_name"])
 
-    def load_neurons(self):
+    @property
+    def df(self):
+        if not self._df:
+            self._df = self._load_neurons()
+        return self._df
+
+    def _load_neurons(self):
         fn = self._filename
         sha = hashlib.sha256()
         sha.update(os.path.realpath(fn).encode())
@@ -186,17 +191,17 @@ class NeuronData:
         if os.path.exists(mvd_parquet):
             logger.info("Loading circuit from parquet")
             mvd = sm.read.parquet(adjust_for_spark(mvd_parquet, local=True)).cache()
-            self.df = F.broadcast(mvd)
-            self.df.count()  # force materialize
+            df = F.broadcast(mvd)
+            df.count()  # force materialize
         else:
             logger.info("Building circuit from raw mvd files")
-            total_parts = len(self) // self.PARTITION_SIZE + 1
+            total_parts = len(self) // PARTITION_SIZE + 1
             logger.debug("Partitions: %d", total_parts)
 
             parts = sm.createDataFrame(
                 (
-                    (self.PARTITION_SIZE * n,
-                     min(self.PARTITION_SIZE * (n + 1), len(self)))
+                    (PARTITION_SIZE * n,
+                     min(PARTITION_SIZE * (n + 1), len(self)))
                     for n in range(total_parts)
                 ),
                 "start: int, end: int"
@@ -219,12 +224,51 @@ class NeuronData:
             raw_mvd.unpersist()
 
             # Mark as "broadcastable" and cache
-            self.df = F.broadcast(
+            df = F.broadcast(
                 sm.read.parquet(adjust_for_spark(mvd_parquet))
             ).cache()
+        return df
 
-    @classmethod
-    def load_touch_sonata(cls, filename, population):
+
+class TouchData:
+    """Touch data loading facilities
+
+    This class represent the connectivity between cell populations, lazily
+    loaded.  Access the property :attr:`.NeuronData.df`, to load the data.
+
+    Arguments
+    ---------
+    parquet
+        A list of touch files; a single globbing expression can be
+        specified as well
+    sonata
+        Alternative touch representation, consisting of edge population
+        path and name
+    """
+
+    def __init__(self, parquet, sonata):
+        if parquet:
+            if isinstance(parquet, str):
+                parquet = glob.glob(parquet)
+            self._loader = self._load_parquet
+            self._args = parquet
+        elif sonata:
+            self._loader = self._load_sonata
+            self._args = sonata
+        else:
+            raise ValueError("TouchData needs to be initialized with touch data")
+
+    @property
+    def df(self):
+        return (
+            self
+            ._loader(*self._args)
+            .withColumnRenamed("pre_neuron_id", "src")
+            .withColumnRenamed("post_neuron_id", "dst")
+        )
+
+    @staticmethod
+    def _load_sonata(filename, population):
         import libsonata
         p = libsonata.EdgeStorage(filename).open_population(population)
 
@@ -232,7 +276,7 @@ class NeuronData:
             data = p.get_attribute(col, libsonata.Selection([0]))
             return _numpy_to_spark[data.dtype.name]()
 
-        total_parts = p.size // cls.PARTITION_SIZE + 1
+        total_parts = p.size // PARTITION_SIZE + 1
         logger.debug("Partitions: %d", total_parts)
 
         columns = schema.TOUCH_SCHEMA_V3.fields[:3]
@@ -243,8 +287,8 @@ class NeuronData:
 
         parts = sm.createDataFrame(
             (
-                (cls.PARTITION_SIZE * n,
-                 min(cls.PARTITION_SIZE * (n + 1), p.size))
+                (PARTITION_SIZE * n,
+                 min(PARTITION_SIZE * (n + 1), p.size))
                 for n in range(total_parts)
             ),
             "start: long, end: long"
@@ -261,7 +305,7 @@ class NeuronData:
         return touches
 
     @staticmethod
-    def load_touch_parquet(*files):
+    def _load_parquet(*files):
         def compatible(s1: T.StructType, s2: T.StructType) -> bool:
             """Test schema compatibility
             """

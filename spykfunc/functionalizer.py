@@ -2,7 +2,6 @@
 #  An implementation of Functionalizer in spark
 # *************************************************************************
 from __future__ import absolute_import
-import glob
 import logging
 import os
 import time
@@ -14,7 +13,7 @@ from . import utils
 from .filters import DatasetOperation
 from .circuit import Circuit
 from .recipe import Recipe
-from .data_loader import NeuronData
+from .data_loader import NeuronData, TouchData
 from .definitions import CheckpointPhases, SortBy
 from .utils.checkpointing import checkpoint_resume
 from .utils.filesystem import adjust_for_spark, autosense_hdfs
@@ -34,6 +33,7 @@ class _SpykfuncOptions:
     checkpoint_dir = None
     debug = False
     strict = False
+    dry_run = False
 
     def __init__(self, options_dict):
         filename = options_dict.get("configuration", None)
@@ -129,34 +129,19 @@ class Functionalizer(object):
 
         # Load Neurons data
         n_from = NeuronData(*source, self._config.cache_dir)
-        n_from.load_neurons()
 
         if source == target:
             n_to = n_from
         else:
             n_to = NeuronData(*target, self._config.cache_dir)
-            n_to.load_neurons()
 
-        # 'Load' touches
-        if parquet:
-            if isinstance(parquet, str):
-                parquet = glob.glob(parquet)
-            touches = (
-                NeuronData.load_touch_parquet(*parquet)
-                .withColumnRenamed("pre_neuron_id", "src")
-                .withColumnRenamed("post_neuron_id", "dst")
-            )
-        elif sonata:
-            touches = (
-                NeuronData.load_touch_sonata(*sonata)
-                .withColumnRenamed("pre_neuron_id", "src")
-                .withColumnRenamed("post_neuron_id", "dst")
-            )
-        else:
-            raise RuntimeError("Need to have touches")
+        touches = TouchData(parquet, sonata)
 
         self.circuit = Circuit(n_from, n_to, touches, morpho_dir)
 
+        return self
+
+    def _configure_shuffle_partitions(self, touches):
         # Grow suffle partitions with size of touches DF
         # Min: 100 reducers
         # NOTE: According to some tests we need to cap the amount of reducers to 4000 per node
@@ -174,8 +159,6 @@ class Functionalizer(object):
             shuffle_partitions,
         )
         sm.conf.set("spark.sql.shuffle.partitions", shuffle_partitions)
-
-        return self
 
     @property
     def output_directory(self):
@@ -222,8 +205,12 @@ class Functionalizer(object):
             self.circuit.morphologies,
         )
 
-        if self._config.strict:
+        if self._config.strict or self._config.dry_run:
             utils.Enforcer().check()
+        if self._config.dry_run:
+            return
+
+        self._configure_shuffle_partitions(self.circuit.touches)
 
         logger.info("Starting Filtering...")
         for f in filters:

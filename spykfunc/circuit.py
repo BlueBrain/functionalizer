@@ -5,7 +5,7 @@ import pyspark.sql
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
 
-from spykfunc.data_loader import NeuronData
+from spykfunc.data_loader import NeuronData, TouchData
 from spykfunc.dataio.morphologies import MorphologyDB
 from spykfunc.recipe import Recipe
 from spykfunc.schema import touches_with_pathway
@@ -99,7 +99,7 @@ class Circuit(object):
         self,
         source: NeuronData,
         target: NeuronData,
-        touches: pyspark.sql.DataFrame,
+        touches: TouchData,
         morphologies: str
     ):
         """Construct a new circuit
@@ -112,8 +112,8 @@ class Circuit(object):
         #: :property: a wrapper around the morphology storage
         self.morphologies = MorphologyDB(morphologies)
 
-        self._touches = touches
-        self._initial_touches = touches
+        self._touches = None
+        self._touch_loader = touches
 
         # The circuit will be constructed (and grouped by src, dst
         self.__circuit = None
@@ -150,9 +150,9 @@ class Circuit(object):
         if self.__circuit:
             return self.__circuit
 
-        self.__circuit = self._touches.alias("t") \
-                                      .join(F.broadcast(self.__src), "src") \
-                                      .join(F.broadcast(self.__dst), "dst")
+        self.__circuit = self.touches.alias("t") \
+                                     .join(F.broadcast(self.__src), "src") \
+                                     .join(F.broadcast(self.__dst), "dst")
         return self.__circuit
 
     @property
@@ -161,17 +161,16 @@ class Circuit(object):
         """
         if self.__reduced:
             return self.__reduced
-        self.__reduced = self._touches.alias("t") \
-                                      .groupBy("src", "dst") \
-                                      .agg(F.min("synapse_id").alias("synapse_id")) \
-                                      .join(F.broadcast(self.__src), "src") \
-                                      .join(F.broadcast(self.__dst), "dst")
+
+        self.__reduced = self.touches.alias("t") \
+                                     .groupBy("src", "dst") \
+                                     .agg(F.min("synapse_id").alias("synapse_id")) \
+                                     .join(F.broadcast(self.__src), "src") \
+                                     .join(F.broadcast(self.__dst), "dst")
         return self.__reduced
 
     @dataframe.setter
     def dataframe(self, dataframe):
-        if self._initial_touches is None:
-            raise ValueError("Circuit was not properly initialized!")
         self._touches = self.only_touch_columns(dataframe)
         if any(n.startswith('src_') or n.startswith('dst_') for n in dataframe.schema.names):
             self.__circuit = dataframe
@@ -184,6 +183,8 @@ class Circuit(object):
     def touches(self):
         """:property: touch data as a Spark dataframe
         """
+        if not self._touches:
+            self._touches = self._touch_loader.df
         return self._touches
 
     @staticmethod

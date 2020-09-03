@@ -13,6 +13,11 @@ from spykfunc.circuit import Circuit
 from spykfunc.recipe import Recipe
 
 
+class MockLoader:
+    def __init__(self, touches):
+        self.df = touches
+
+
 def mock_mtypes(neurons):
     vals = [(r.mtype_i, r.mtype) for r in neurons.collect()]
     ms = [str(n) for n in range(max((i for i, _ in vals)) + 1)]
@@ -44,7 +49,7 @@ def test_shift():
     c = Circuit(
         population,
         population,
-        touches,
+        MockLoader(touches),
         Path(__file__).parent / "circuit_O1_partial" / "morphologies" / "h5"
     )
 

@@ -2,6 +2,17 @@
 Changelog
 =========
 
+Version 0.16.0
+==============
+
+Changes:
+  - Shuffle the data loading order to perform almost all I/O after recipe
+    parsing and setup.
+    Added an option ``--dry-run`` to read minimal data and verify the
+    recipe.
+    See also FUNCZ-248_.
+
+
 Version 0.15.7
 ==============
 
@@ -260,5 +271,6 @@ First working version with 3 base filters:
 .. _FUNCZ-238: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-238
 .. _FUNCZ-242: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-242
 .. _FUNCZ-244: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-244
+.. _FUNCZ-248: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-248
 .. _FUNCZ-257: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-257
 .. _FUNCZ-258: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-258
