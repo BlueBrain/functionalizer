@@ -17,7 +17,7 @@ class SortBy(Enum):
 class RunningMode(Enum):
     """Definintions for running modes
     """
-    STRUCTURAL = ('BoutonDistance', 'SynapseProperties')
+    STRUCTURAL = ('BoutonDistance', 'TouchRules', 'SynapseProperties')
     FUNCTIONAL = ('BoutonDistance', 'TouchRules', 'SpineLength', 'ReduceAndCut', 'SynapseReposition', 'SynapseProperties')
     GAP_JUNCTIONS = ('SomaDistance', 'DenseID', 'GapJunction', 'GapJunctionProperties')
 

@@ -11,6 +11,8 @@ Version 0.17.0
 Breaking Changes:
   - Replace the random number generating library. Switch to using the tried
     and tested Random123 library.  See also HPCTM-1294_.
+  - Run the `TouchRules` filter by default in structural mode.  See also
+    FUNCZ-255_.
 
 Changes:
   - Produce `debug` output by default.  See also FUNCZ-281_.
@@ -330,6 +332,7 @@ First working version with 3 base filters:
 .. _FUNCZ-242: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-242
 .. _FUNCZ-244: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-244
 .. _FUNCZ-248: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-248
+.. _FUNCZ-255: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-255
 .. _FUNCZ-257: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-257
 .. _FUNCZ-258: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-258
 .. _FUNCZ-262: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-262
