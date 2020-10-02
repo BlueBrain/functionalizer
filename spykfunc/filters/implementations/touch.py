@@ -137,9 +137,9 @@ class TouchRule(GenericProperty):
                             touch_rule_matrix[t1, t2, r1, r2] = 1
 
         not_covered = set()
-        for  v in set(src_mtype_rev.values()) - src_covered:
+        for v in set(src_mtype_rev.values()) - src_covered:
             not_covered.add(src_mtypes[v])
-        for  v in set(dst_mtype_rev.values()) - dst_covered:
+        for v in set(dst_mtype_rev.values()) - dst_covered:
             not_covered.add(dst_mtypes[v])
         if not_covered:
             msg = "No touch rules are covering: " + ", ".join(not_covered)
