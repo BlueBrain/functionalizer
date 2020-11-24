@@ -210,8 +210,6 @@ SYNAPSE_PROPERTY_SCHEMA = T.StructType([
     T.StructField("id", T.StringType(), False),
     T.StructField("gsyn", T.FloatType(), False),
     T.StructField("gsynSD", T.FloatType(), False),
-    T.StructField("nsyn", T.FloatType(), False),
-    T.StructField("nsynSD", T.FloatType(), False),
     T.StructField("dtc", T.FloatType(), False),
     T.StructField("dtcSD", T.FloatType(), False),
     T.StructField("u", T.FloatType(), False),

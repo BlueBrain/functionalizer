@@ -5,14 +5,14 @@ import pytest
 import sparkmanager as sm
 from conftest import DATADIR
 from pathlib import Path
+from recipe import Recipe
 from spykfunc.filters import DatasetOperation
-from spykfunc.recipe import Recipe
 
 
 @pytest.mark.slow
 def test_property_assignment(fz):
     fz.circuit.df = sm.read.parquet(os.path.join(DATADIR, "syn_prop_in.parquet"))
-    fz.recipe.xml.find("Seeds").attrib['synapseSeed'] = "123"
+    fz.recipe.seeds.synapseSeed = "123"
     fltr = DatasetOperation.initialize(["SynapseProperties"],
                                        fz.recipe,
                                        fz.circuit.source,
@@ -30,7 +30,7 @@ def test_property_assignment(fz):
 @pytest.mark.slow
 def test_property_positive_u(fz):
     fz.circuit.df = sm.read.parquet(os.path.join(DATADIR, "syn_prop_in.parquet"))
-    fz.recipe.xml.find("Seeds").attrib['synapseSeed'] = "123"
+    fz.recipe.seeds.synapseSeed = "123"
     fltr = DatasetOperation.initialize(["SynapseProperties"],
                                        fz.recipe,
                                        fz.circuit.source,
@@ -43,7 +43,7 @@ def test_property_positive_u(fz):
 @pytest.mark.slow
 def test_property_u_hill(fz):
     fz.circuit.df = sm.read.parquet(os.path.join(DATADIR, "syn_prop_in.parquet"))
-    fz.recipe = Recipe(str(Path(__file__).parent / "recipes" / "synapse_properties_uhill_all.xml"))
+    fz.recipe = Recipe(str(Path(__file__).parent / "recipe" / "data" / "synapse_properties_uhill_all.xml"))
     fltr = DatasetOperation.initialize(["SynapseProperties"],
                                        fz.recipe,
                                        fz.circuit.source,

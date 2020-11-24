@@ -18,7 +18,7 @@ from spykfunc.utils import get_logger
 from spykfunc.utils.checkpointing import checkpoint_resume, CheckpointHandler
 from spykfunc.utils.spark import cache_broadcast_single_part
 
-from . import Seeds, add_random_column
+from . import add_random_column
 
 logger = get_logger(__name__)
 
@@ -26,163 +26,6 @@ logger = get_logger(__name__)
 _KEY_REDUCE = 0x100
 _KEY_CUT = 0x101
 _KEY_ACTIVE = 0x102
-
-
-class ConnectType:
-    """Enum class for Connect Types"""
-
-    InvalidConnect = 0
-    MTypeConnect = 1  # <mTypeRule>
-    LayerConnect = 2  # <layerRule>
-    ClassConnect = 3  # <sClassRule>
-    MaxConnectTypes = 4
-
-    __rule_names = {
-        "mTypeRule": MTypeConnect,
-        "layerRule": LayerConnect,
-        "sClassRule": ClassConnect
-    }
-    __names = {val: name for name, val in __rule_names.items()}
-
-    @classmethod
-    def from_type_name(cls, name):
-        return cls.__rule_names.get(name, cls.InvalidConnect)
-
-    @classmethod
-    def to_str(cls, index):
-        return cls.__names[index]
-
-
-class ConnectivityPathRule(object):
-    """Connectivity Pathway rule"""
-
-    connect_type = None
-    source = None
-    destination = None
-
-    probability = None
-    active_fraction = None
-    bouton_reduction_factor = None
-    cv_syns_connection = None
-    mean_syns_connection = None
-    stdev_syns_connection = None
-
-    # Circumvent value calculations, use the following verbatim
-    p_A = None
-    pMu_A = None
-
-    # Possible field, currently not used by functionalizer
-    distance_bin = None
-    probability_bin = None
-    reciprocal_bin = None
-    reduction_min_prob = None
-    reduction_max_prob = None
-    multi_apposition_slope = None
-    multi_apposition_offset = None
-
-    _float_fields = ["probability", "mean_syns_connection", "stdev_syns_connection",
-                     "active_fraction", "bouton_reduction_factor", "cv_syns_connection",
-                     "p_A", "pMu_A"]
-
-    # ------
-    def __init__(self, rule_type, rule_dict, rule_children=None):
-        # type: (str, dict, list) -> None
-
-        self.connect_type = ConnectType.from_type_name(rule_type)
-
-        # Convert names
-        self.source = rule_dict.pop("from")
-        self.destination = rule_dict.pop("to")
-
-        for prop_name, prop_val in rule_dict.items():
-            if prop_name in self.__class__.__dict__:
-                if prop_name in ConnectivityPathRule._float_fields:
-                    setattr(self, prop_name, float(prop_val))
-                else:
-                    setattr(self, prop_name, prop_val)
-
-        # Convert IDS
-        if self.connect_type == ConnectType.LayerConnect:
-            self.source = int(self.source) - 1
-            self.destination = int(self.destination) - 1
-
-        if rule_children:
-            # simple probability
-            self.distance_bin = []
-            self.probability_bin = []
-            self.reciprocal_bin = []
-            for bin in rule_children:  # type:dict
-                self.distance_bin.append(bin.get("distance", 0))
-                self.probability_bin.append(bin.get("probability", 0))
-                self.reciprocal_bin.append(bin.get("reciprocal", 0))
-
-        if not self.is_valid():
-            logger.error("Wrong number of params in Connection Rule: " + str(self))
-
-    def is_valid(self):
-        # Rule according to validation in ConnectivityPathway::getReduceAndCutParameters
-        allowed_parameters = [
-            {"mean_syns_connection", "stdev_syns_connection", "active_fraction"},
-            {"bouton_reduction_factor", "cv_syns_connection", "active_fraction"},
-            {"bouton_reduction_factor", "cv_syns_connection", "mean_syns_connection"},
-            {"bouton_reduction_factor", "cv_syns_connection", "probability"},
-            {"bouton_reduction_factor", "pMu_A", "p_A"}
-        ]
-
-        set_parameters = set(attr for attr in self._float_fields if getattr(self, attr) is not None)
-        return set_parameters in allowed_parameters
-
-    def __repr__(self):
-        return '<%s from="%s" to="%s">' % (ConnectType.to_str(self.connect_type), self.source, self.destination)
-
-    @classmethod
-    def load(cls, xml, src_mtypes, dst_mtypes):
-        """Load connection rules
-
-        Transform connection rules into concrete rule instances (without wildcards) and indexed by pathway
-
-        Args:
-            xml: The raw recipe XML to extract the data from
-            src_mtypes: The morphology types associated with the source population
-            dst_mtypes: The morphology types associated with the target population
-        Returns:
-            A dictionary of pathways (src, dst mtype) and corresponding rules
-        """
-        rules = []
-        for rule in xml.find("ConnectionRules"):
-            children = [child.attrib for child in rule]
-            rules.append(ConnectivityPathRule(rule.tag, dict(rule.attrib), children))
-
-        if len(rules) == 0:
-            raise RuntimeError("No connection rules loaded. Please check the recipe.")
-
-        src_mtypes_rev = {mtype: i for i, mtype in enumerate(src_mtypes)}
-        dst_mtypes_rev = {mtype: i for i, mtype in enumerate(dst_mtypes)}
-        concrete_rules = {}
-
-        for rule in rules:
-            srcs = fnmatch.filter(src_mtypes, rule.source)
-            dsts = fnmatch.filter(dst_mtypes, rule.destination)
-            if len(srcs) == 0:
-                logger.warning(f"Connection rules can't match from='{rule.source}'")
-            if len(dsts) == 0:
-                logger.warning(f"Connection rules can't match to='{rule.destination}'")
-            for src in srcs:
-                for dst in dsts:
-                    # key = src + ">" + dst
-                    # Key is now an int
-                    key = (src_mtypes_rev[src] << 16) + dst_mtypes_rev[dst]
-                    if key in concrete_rules:
-                        # logger.debug("Several rules applying to the same mtype connection: %s->%s [Rule: %s->%s]",
-                        #                src, dst, rule.source, rule.destination)
-                        prev_rule = concrete_rules[key]
-                        # Overwrite if it is specific
-                        if (('*' in prev_rule.source and '*' not in rule.source) or
-                                ('*' in prev_rule.destination and '*' not in rule.destination)):
-                            concrete_rules[key] = rule
-                    else:
-                        concrete_rules[key] = rule
-        return concrete_rules
 
 
 class ReduceAndCut(DatasetOperation):
@@ -228,13 +71,9 @@ class ReduceAndCut(DatasetOperation):
     _checkpoint_buckets = ("src", "dst")
 
     def __init__(self, recipe, source, target, morphos):
-        self.seed = Seeds.load(recipe.xml).synapseSeed
+        self.seed = recipe.seeds.synapseSeed
         logger.info("Using seed %d for reduce and cut", self.seed)
-        self.conn_rules = ConnectivityPathRule.load(
-            recipe.xml,
-            source.mtypes,
-            target.mtypes
-        )
+        self.conn_rules = recipe.connection_rules.to_matrix(source.mtypes, target.mtypes)
 
     def apply(self, circuit):
         """Filter the circuit according to the logic described in the

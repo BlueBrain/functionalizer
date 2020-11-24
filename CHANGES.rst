@@ -2,6 +2,13 @@
 Changelog
 =========
 
+Version 0.17.0
+==============
+
+Changes:
+  - Factor the recipe reading code out into its own module. See also
+    FUNCZ-183_.
+
 Version 0.16.0
 ==============
 
@@ -257,6 +264,7 @@ First working version with 3 base filters:
   - ReduceAndCut
 
 .. _FUNCZ-86: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-86
+.. _FUNCZ-183: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-183
 .. _FUNCZ-199: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-199
 .. _FUNCZ-201: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-201
 .. _FUNCZ-209: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-209

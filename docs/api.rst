@@ -1,5 +1,5 @@
-Code Structure
-==============
+Spykfunc API
+============
 
 The underlying operating basis of the Spark Functionalizer is the
 subsequent application of several filters to a circuit representation

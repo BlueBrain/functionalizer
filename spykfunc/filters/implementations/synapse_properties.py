@@ -11,83 +11,9 @@ from pyspark.sql import types as T
 
 from spykfunc import schema
 from spykfunc.filters import DatasetOperation
-from spykfunc.recipe import Attribute, GenericProperty
 from spykfunc.utils import get_logger
 
-from . import Seeds
-
 logger = get_logger(__name__)
-
-
-class SynapsesProperty(GenericProperty):
-    """Class representing a Synapse property"""
-
-    attributes = [
-        Attribute("fromSClass", default="*"),
-        Attribute("toSClass", default="*"),
-        Attribute("fromMType", default="*"),
-        Attribute("toMType", default="*"),
-        Attribute("fromEType", default="*"),
-        Attribute("toEType", default="*"),
-        Attribute("type", default=""),
-        Attribute(
-            "neuralTransmitterReleaseDelay",
-            default=0.1,
-            group_default=True
-        ),
-        Attribute(
-            "axonalConductionVelocity",
-            default=300.0,
-            group_default=True
-        ),
-    ]
-
-    group_name = "SynapsesProperties"
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-        if self.type[0] not in "EI":
-            raise ValueError(f"Synapse type needs to start with either 'E' or 'I'")
-
-
-class SynapsesClassification(GenericProperty):
-    """Class representing a Synapse Classification"""
-
-    attributes = [
-        Attribute(name="id", kind=str),
-        Attribute(name="gsyn", kind=float),
-        Attribute(name="gsynSD", kind=float, alias="gsynVar"),
-        Attribute(name="nsyn", kind=float, default=0.),   # legacy attribute, not actually supported
-        Attribute(name="nsynSD", kind=float, alias="nsynVar", default=0.),
-        Attribute(name="dtc", kind=float),
-        Attribute(name="dtcSD", kind=float, alias="dtcVar"),
-        Attribute(name="u", kind=float),
-        Attribute(name="uSD", kind=float, alias="uVar"),
-        Attribute(name="d", kind=float),
-        Attribute(name="dSD", kind=float, alias="dVar"),
-        Attribute(name="f", kind=float),
-        Attribute(name="fSD", kind=float, alias="fVar"),
-        Attribute(name="nrrp", default=0.0, warn=True),
-        Attribute(name="gsynSRSF", kind=float, required=False),
-        Attribute(name="uHillCoefficient", kind=float, required=False),
-    ]
-
-    group_name = "SynapsesClassification"
-
-    @classmethod
-    def load(cls, xml):
-        data = GenericProperty.load.__func__(cls, xml)
-        for attr in [a for a in cls._attributes if not a.required]:
-            values = sum(getattr(d, attr.name, None) is not None for d in data)
-            if values == 0:  # no values, remove attribute
-                pass
-                # for d in data:
-                #     delattr(d, attr)
-            elif values != len(data):
-                raise ValueError(f"Attribute {attr} needs to be set/unset"
-                                 f" for all {cls.__name__} simultaneously")
-        return data
 
 
 class SynapseProperties(DatasetOperation):
@@ -132,25 +58,21 @@ class SynapseProperties(DatasetOperation):
     ]
 
     def __init__(self, recipe, source, target, morphos):
-        self.seed = Seeds.load(recipe.xml).synapseSeed
+        self.seed = recipe.seeds.synapseSeed
         logger.info("Using seed %d for synapse properties", self.seed)
 
-        # Someone assigned the classification of synapses to an element
-        # called "Properties" and property management to "Classification"
-        # [sic]
-        classification = SynapsesProperty.load(recipe.xml)
-        properties = SynapsesClassification.load(recipe.xml)
-
-        self.classification = self.convert_classification(
-            source, target, classification
+        self.rules = self.convert_rules(
+            source, target, recipe.synapse_properties.rules
         )
-        self.properties = self.convert_properties(classification, properties)
+        self.properties = self.convert_properties(
+            recipe.synapse_properties.rules,
+            recipe.synapse_properties.classes
+        )
 
         if "gsynSRSF" in self.properties.columns:
             self._columns.append((None, "gsynSRSF"))
         if "uHillCoefficient" in self.properties.columns:
             self._columns.append((None, "uHillCoefficient"))
-
 
     def apply(self, circuit):
         """Add properties to the circuit
@@ -160,21 +82,19 @@ class SynapseProperties(DatasetOperation):
         extended_touches = compute_additional_h5_fields(
             circuit.df,
             circuit.reduced,
-            self.classification,
+            self.rules,
             self.properties,
             self.seed
         )
         return extended_touches
 
     @staticmethod
-    def convert_properties(classification, properties):
-        """Loader for SynapsesClassification [sic]
-
-        This element of the recipe describes the properties after classification.
+    def convert_properties(rules, classes):
+        """Merges synapse class assignment and properties
         """
-        prop_df = _load_from_recipe(properties, schema.SYNAPSE_PROPERTY_SCHEMA, trim=True) \
+        prop_df = _load_from_recipe(classes, schema.SYNAPSE_PROPERTY_SCHEMA, trim=True) \
             .withColumnRenamed("_i", "_prop_i")
-        class_df = _load_from_recipe(classification, schema.SYNAPSE_CLASSIFICATION_SCHEMA) \
+        class_df = _load_from_recipe(rules, schema.SYNAPSE_CLASSIFICATION_SCHEMA) \
             .withColumnRenamed("_i", "_class_i")
 
         # These are small DF, we coalesce to 1 so the sort doesnt require shuffle
@@ -188,12 +108,8 @@ class SynapseProperties(DatasetOperation):
         return merged_props
 
     @staticmethod
-    def convert_classification(source, target, classification):
-        """Loader for SynapsesProperties [sic]
-
-        This element of the recipe classifies synapses, to later on assign
-        matching properties. Classification may be based on source and
-        target `mtype`, `etype`, or synapse class.
+    def convert_rules(source, target, rules):
+        """Expands the synapse classification rules
         """
         # shorthand
         values = dict()
@@ -218,8 +134,7 @@ class SynapseProperties(DatasetOperation):
                                    "EType": syn_etype_rev,
                                    "SClass": syn_sclass_rev}
 
-        syn_class_rules = classification
-        not_covered = max(r._i for r in syn_class_rules) + 1
+        not_covered = max(r._i for r in rules) + 1
 
         prop_rule_matrix = np.full(
             # Our 6-dim matrix
@@ -230,7 +145,7 @@ class SynapseProperties(DatasetOperation):
 
         # Iterate for all rules, expanding * as necessary
         # We keep rule definition order as required
-        for rule in syn_class_rules:
+        for rule in rules:
             selectors = [None] * 6
             for i, direction in enumerate(("from", "to")):
                 expanded_names = defaultdict(dict)
@@ -238,7 +153,7 @@ class SynapseProperties(DatasetOperation):
                 field_to_reverses = reverses[direction]
                 for j, field_t in enumerate(field_to_values):
                     field_name = direction + field_t
-                    field_val = rule[field_name]
+                    field_val = getattr(rule, field_name)
                     if field_val in (None, "*"):
                         # Slice(None) is numpy way for "all" in that dimension (same as colon)
                         selectors[i*3+j] = [slice(None)]
@@ -291,7 +206,7 @@ def cast_in_eq_py_t(val, spark_t):
 def _load_from_recipe(recipe_group, group_schema, *, trim: bool = False):
     if trim:
         fields = []
-        for i, field in reversed(list(enumerate(group_schema.fields))):
+        for field in reversed(list(group_schema.fields)):
             haves = [hasattr(entry, field.name) for entry in recipe_group]
             if all(haves):
                 fields.append(field)

@@ -7,7 +7,6 @@ from pyspark.sql import functions as F
 
 from spykfunc.filters import DatasetOperation
 from spykfunc.filters.udfs import match_dendrites
-from spykfunc.recipe import Attribute, GenericProperty
 from spykfunc.utils import get_logger
 
 logger = get_logger(__name__)
@@ -153,14 +152,6 @@ class GapJunctionFilter(DatasetOperation):
         return match_touches
 
 
-class GapJunctionProperty(GenericProperty):
-    """Class representing a gap-junction property"""
-
-    attributes = [
-        Attribute("gsyn", kind=float, default=0.2)
-    ]
-
-
 class GapJunctionProperties(DatasetOperation):
     """Assign gap-junction properties
 
@@ -179,7 +170,7 @@ class GapJunctionProperties(DatasetOperation):
     ]
 
     def __init__(self, recipe, source, target, morphos):
-        self.conductance = GapJunctionProperty.load(recipe.xml)[0].gsyn
+        self.conductance = recipe.gap_junction_properties.gsyn
 
     def apply(self, circuit):
         """Add properties to the circuit

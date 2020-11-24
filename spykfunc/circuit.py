@@ -7,7 +7,6 @@ from pyspark.sql import types as T
 
 from spykfunc.data_loader import NeuronData, TouchData
 from spykfunc.dataio.morphologies import MorphologyDB
-from spykfunc.recipe import Recipe
 from spykfunc.schema import touches_with_pathway
 from spykfunc.utils import get_logger
 

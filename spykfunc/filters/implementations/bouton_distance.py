@@ -1,29 +1,7 @@
 """A default filter plugin
 """
 from spykfunc.filters import DatasetOperation
-from spykfunc.recipe import Attribute, GenericProperty
 from spykfunc.definitions import CellClass
-
-
-class InitialBoutonDistance(GenericProperty):
-    """Info/filter for Synapses Bouton Distance
-    """
-
-    attributes = [
-        Attribute(
-            "inhibitorySynapsesDistance",
-            alias="defaultInhSynapsesDistance",
-            default=5.0,
-        ),
-        Attribute(
-            "excitatorySynapsesDistance",
-            alias="defaultExcSynapsesDistance",
-            default=25.0,
-        ),
-    ]
-
-    required = False
-    singleton = True
 
 
 class BoutonDistanceFilter(DatasetOperation):
@@ -34,7 +12,7 @@ class BoutonDistanceFilter(DatasetOperation):
     """
 
     def __init__(self, recipe, source, target, morphos):
-        self.distances = InitialBoutonDistance.load(recipe.xml)
+        self.distances = recipe.bouton_distances
 
     def apply(self, circuit):
         """Apply filter

@@ -177,7 +177,7 @@ class PyTest(TestCommand):
 def setup_package():
     maybe_sphinx = [
         'sphinx<3.0.0',
-        'sphinx-bluebrain-theme @ https://github.com/BlueBrain/sphinx-bluebrain-theme/archive/v0.1.1.tar.gz',
+        'sphinx-bluebrain-theme',
         'docs-internal-upload'
     ] if 'build_docs' in sys.argv else []
 
@@ -191,6 +191,8 @@ def setup_package():
             "Source": "https://bbpcode.epfl.ch/code/#/admin/projects/building/Spykfunc",
         },
         packages=[
+            'recipe',
+            'recipe.parts',
             'sparkmanager',
             'spykfunc',
             'spykfunc.dataio',
@@ -213,7 +215,6 @@ def setup_package():
             'enum34;python_version<"3.4"',
             'funcsigs',
             'future',
-            'h5py',
             'hdfs',
             'jprops',
             'lazy-property',

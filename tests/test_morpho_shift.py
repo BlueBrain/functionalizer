@@ -7,10 +7,10 @@ from unittest.mock import MagicMock
 
 import pyspark.sql.functions as F
 import pytest
+from recipe import Recipe
 import sparkmanager as sm
 
 from spykfunc.circuit import Circuit
-from spykfunc.recipe import Recipe
 
 
 class MockLoader:
@@ -32,7 +32,7 @@ def test_shift():
 
     Move synapses to AIS while keeping other touches untouched.
     """
-    from spykfunc.filters.implementations.synapse_reposition import SynapsesReposition, SynapseReposition
+    from spykfunc.filters.implementations.synapse_reposition import SynapseReposition
     from spykfunc.dataio.morphologies import MorphologyDB
 
     sm.create("test_shift")
