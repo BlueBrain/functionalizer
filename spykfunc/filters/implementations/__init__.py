@@ -9,21 +9,6 @@ from pyspark.sql import functions as F
 from pyspark.sql import types as T
 
 from spykfunc.filters.udfs import get_bins, uniform
-from spykfunc.recipe import Attribute, GenericProperty
-
-
-class Seeds(GenericProperty):
-    """Container to store seeds
-    """
-
-    attributes = [
-        Attribute(name="recipeSeed", kind=int, default=0),
-        Attribute(name="columnSeed", kind=int, default=0),
-        Attribute(name="synapseSeed", kind=int, default=0),
-    ]
-
-    singleton = True
-    required = False
 
 
 def add_random_column(df, name, seed, key, derivative):

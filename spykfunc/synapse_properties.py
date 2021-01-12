@@ -97,8 +97,6 @@ def compute_additional_h5_fields(circuit, reduced, classification_matrix, proper
                 connections
                 .drop(
                     "id",
-                    "nsyn",
-                    "nsynSD",
                     "fromEType",
                     "fromMType",
                     "fromSClass",

@@ -7,26 +7,15 @@ import sparkmanager as sm
 from pyspark.sql import functions as F
 
 from spykfunc.filters import DatasetOperation
-from spykfunc.recipe import Attribute, GenericProperty, Recipe
 from spykfunc.utils import get_logger
 
-from . import Seeds, add_random_column
+from . import add_random_column
 
 
 logger = get_logger(__name__)
 
 
 _KEY_TOUCH = 0x202
-
-
-class TouchReduction(GenericProperty):
-    """Class representing a Touch filter"""
-
-    attributes = [
-        Attribute(name="survival_rate", kind=float)
-    ]
-
-    singleton = True
 
 
 class TouchReductionFilter(DatasetOperation):
@@ -42,8 +31,8 @@ class TouchReductionFilter(DatasetOperation):
         The rules stored in the recipe are loaded in their abstract form,
         concretization will happen with the acctual circuit.
         """
-        self.survival = TouchReduction.load(recipe.xml).survival_rate
-        self.seed = Seeds.load(recipe.xml).synapseSeed
+        self.survival = recipe.touch_reduction.survival_rate
+        self.seed = recipe.seeds.synapseSeed
         logger.info("Using seed %d for trimming touches", self.seed)
 
     def apply(self, circuit):
@@ -64,94 +53,6 @@ class TouchReductionFilter(DatasetOperation):
         )
 
 
-class TouchRule(GenericProperty):
-    """Class representing a Touch rule"""
-
-    attributes = [
-        Attribute("fromMType", default="*"),
-        Attribute("toMType", default="*"),
-        Attribute("fromBranchType", default="*"),
-        Attribute("toBranchType", alias="type", default="*"),
-    ]
-
-    group_name = "TouchRules"
-
-    @classmethod
-    def load(cls, xml, src_mtypes, dst_mtypes, *, strict=False):
-        """Construct touch rule matrix
-
-        Args:
-            xml: The raw recipe XML to extract the data from
-            src_mtypes: The morphology types associated with the source population
-            dst_mtypes: The morphology types associated with the target population
-            strict: Raise a ValueError a morphology type is not covered by the rules
-        Returns:
-            A multidimensional matrix, containing a one (1) for every
-            connection allowed. The dimensions correspond to the numeical
-            indices of morphology types of source and destination, as well
-            as the rule type.
-        """
-        src_mtype_rev = {name: i for i, name in enumerate(src_mtypes)}
-        dst_mtype_rev = {name: i for i, name in enumerate(dst_mtypes)}
-
-        # dendrite mapping here is for historical purposes only, when we
-        # distinguished only between soma and !soma.
-        type_map = {
-            '*': [0, 1, 2, 3],
-            'soma': [0],
-            'axon': [1],
-            'dendrite': [2, 3],
-            'basal': [2],
-            'apical': [3]
-        }
-
-        touch_rule_matrix = np.zeros(
-            shape=(len(src_mtype_rev), len(dst_mtype_rev), 4, 4),
-            dtype="uint8"
-        )
-
-        src_covered = set()
-        dst_covered = set()
-
-        for rule in GenericProperty.load.__func__(cls, xml):
-            t1s = [slice(None)]
-            t2s = [slice(None)]
-            if rule.fromMType:
-                t1s = [src_mtype_rev[m] for m in fnmatch.filter(src_mtypes, rule.fromMType)]
-                src_covered.update(t1s)
-                if len(t1s) == 0:
-                    logger.warning(f"Touch rules can't match fromMType='{rule.fromMType}'")
-            if rule.toMType:
-                t2s = [dst_mtype_rev[m] for m in fnmatch.filter(dst_mtypes, rule.toMType)]
-                dst_covered.update(t2s)
-                if len(t2s) == 0:
-                    logger.warning(f"Touch rules can't match toMType='{rule.toMType}'")
-
-            r1s = type_map[rule.fromBranchType] if rule.fromBranchType else [slice(None)]
-            r2s = type_map[rule.toBranchType] if rule.toBranchType else [slice(None)]
-
-            for t1 in t1s:
-                for t2 in t2s:
-                    for r1 in r1s:
-                        for r2 in r2s:
-                            touch_rule_matrix[t1, t2, r1, r2] = 1
-
-        not_covered = set()
-        for v in set(src_mtype_rev.values()) - src_covered:
-            not_covered.add(src_mtypes[v])
-        for v in set(dst_mtype_rev.values()) - dst_covered:
-            not_covered.add(dst_mtypes[v])
-        if not_covered:
-            msg = "No touch rules are covering: " + ", ".join(not_covered)
-            if strict:
-                raise ValueError(msg)
-            else:
-                logger.warning(msg)
-                logger.warning("All corresponding touches will be trimmed!")
-
-        return touch_rule_matrix
-
-
 class TouchRulesFilter(DatasetOperation):
     """Filter touches based on recipe rules
 
@@ -169,7 +70,7 @@ class TouchRulesFilter(DatasetOperation):
         The rules stored in the recipe are loaded in their abstract form,
         concretization will happen with the acctual circuit.
         """
-        self.rules = TouchRule.load(recipe.xml, source.mtypes, target.mtypes)
+        self.rules = recipe.touch_rules.to_matrix(source.mtypes, target.mtypes)
 
     def apply(self, circuit):
         """ .apply() method (runner) of the filter

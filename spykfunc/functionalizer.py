@@ -7,12 +7,13 @@ import os
 import time
 import sparkmanager as sm
 
+from recipe import Recipe
+
 from . import filters
 from . import schema
 from . import utils
 from .filters import DatasetOperation
 from .circuit import Circuit
-from .recipe import Recipe
 from .data_loader import NeuronData, TouchData
 from .definitions import CheckpointPhases, SortBy
 from .utils.checkpointing import checkpoint_resume

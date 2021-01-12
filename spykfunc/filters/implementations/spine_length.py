@@ -9,28 +9,15 @@ from pyspark.sql import functions as F
 import sparkmanager as sm
 
 from spykfunc.filters import DatasetOperation
-from spykfunc.recipe import Attribute, GenericProperty
 from spykfunc.utils import get_logger
 
-from . import Seeds, add_bin_column, add_random_column
+from . import add_bin_column, add_random_column
 
 
 logger = get_logger(__name__)
 
 
 _KEY_SPINE = 0x200
-
-
-class Quantile(GenericProperty):
-    """Representing the fraction of synapses below a certain spinelength
-    """
-
-    attributes = [
-        Attribute("length", kind=float),
-        Attribute("fraction", kind=float),
-    ]
-
-    group_name = "SpineLengths"
 
 
 class SpineLengthFilter(DatasetOperation):
@@ -40,11 +27,11 @@ class SpineLengthFilter(DatasetOperation):
     _required = False
 
     def __init__(self, recipe, source, target, morphos):
-        self.seed = Seeds.load(recipe.xml).synapseSeed
+        self.seed = recipe.seeds.synapseSeed
         logger.info("Using seed %d for spine length adjustment", self.seed)
 
         self.binnings = sorted(
-            Quantile.load(recipe.xml),
+            recipe.spine_lengths,
             key=attrgetter('length')
         )
 
