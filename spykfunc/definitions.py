@@ -1,9 +1,29 @@
 from enum import Enum
 
 
+# Fields to sort by, besides the neuron IDs. Used to get a deterministic
+# order in the output.
+_SORTING_FIELDS = (
+    "pre_section",
+    "pre_segment",
+    "post_section",
+    "post_segment",
+    "pre_offset",
+    "post_offset"
+)
+
+
 class SortBy(Enum):
-    POST = ("connected_neurons_post", "connected_neurons_pre")
-    PRE = ("connected_neurons_pre", "connected_neurons_post")
+    POST = (
+        "connected_neurons_post",
+        "connected_neurons_pre",
+        *_SORTING_FIELDS
+    )
+    PRE = (
+        "connected_neurons_pre",
+        "connected_neurons_post",
+        *_SORTING_FIELDS
+    )
 
 
 class RunningMode(Enum):

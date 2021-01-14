@@ -2,14 +2,16 @@
 Changelog
 =========
 
-Version 0.17.0
+Version 0.16.0
 ==============
 
 Changes:
   - Factor the recipe reading code out into its own module. See also
     FUNCZ-183_.
+  - Sort within each output partition to have completely reproducible
+    output. See also FUNCZ-262_.
 
-Version 0.16.0
+Version 0.15.9
 ==============
 
 Changes:
@@ -282,3 +284,4 @@ First working version with 3 base filters:
 .. _FUNCZ-248: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-248
 .. _FUNCZ-257: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-257
 .. _FUNCZ-258: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-258
+.. _FUNCZ-262: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-262
