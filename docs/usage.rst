@@ -1,23 +1,19 @@
-Running
-=======
+Running Spykfunc
+================
 
-A couple of examples, both single node and using a cluster, can be found in
-the examples directory in the source.
+In the most simple case you just want to run Spykfunc in one of three modi:
 
-In the most simple case you just want to run Spykfunc from the command line, which will
-apply the same filters as Functionalizer in one of three modi:
-
-* **Structural** runs basic filtering only via
+* **Structural** (command line argument ``--s2s``) runs basic filtering only via
   :class:`~spykfunc.filters.BoutonDistanceFilter` and
   :class:`~spykfunc.filters.SynapseProperties`.
 
-* **Functional** produces a circuit ready for simulation by the means of
+* **Functional** (command line argument ``--s2f``) produces a circuit ready for simulation by the means of
   :class:`~spykfunc.filters.BoutonDistanceFilter`,
   :class:`~spykfunc.filters.TouchRulesFilter`,
   :class:`~spykfunc.filters.ReduceAndCut`, and
   :class:`~spykfunc.filters.SynapseProperties`.
 
-* **Gap-Junctions** uses
+* **Gap-Junctions** (command line argument ``--gap-junctions``) uses
   :class:`~spykfunc.filters.SomaDistance` and
   :class:`~spykfunc.filters.GapJunction` to produce a circuit based on gap
   junctions.
@@ -26,80 +22,11 @@ Custom lists of filters can be run with the ``--filters`` command line
 option, separated only by commas (``,``).  Note that any trailing `Filter`
 should be omitted from class names.
 
-See the output of the help for detailed information:
-
-.. code-block:: console
-
-   $ module load spykfunc
-   $ spykfunc -h
-   usage: spykfunc [-h] (--s2s | --s2f | --gap-junctions | --filters FILTERS)
-                   [--format-hdf5] [--name NAME] [--cache-dir CACHE_DIR]
-                   [--checkpoint-dir CHECKPOINT_DIR] [--output-dir OUTPUT_DIR]
-                   [-c CONFIGURATION] [-p OVERRIDES] [--dump-configuration]
-                   [--overwrite [{F,E}]]
-                   recipe_file circuit_file morpho_dir touch_files [touch_files ...]
-
-   spykfunc is a pyspark implementation of functionalizer.
-
-   positional arguments:
-     recipe_file           the XML recipe file
-     circuit_file          the input mvd file
-     morpho_dir            the H5 morphology database directory
-     touch_files           the touch files (parquets); a litertal blob expression
-                           is also accepted.
-
-   optional arguments:
-     -h, --help            show this help message and exit
-     --s2s, --structural   structural pruning only with filters:
-                               BoutonDistance, SynapseProperties
-     --s2f, --functional   functional pruning and filtering using:
-                               BoutonDistance, TouchRules, SpineLength,
-                               ReduceAndCut, SynapseReposition, SynapseProperties
-     --gap-junctions       run filters for gap-junctions:
-                               SomaDistance, DenseID, GapJunction,
-                               GapJunctionProperties
-     --filters FILTERS     run a list of custom filters (comma-separated),
-                           available:
-                               BoutonDistance, DenseID, GapJunction,
-                               GapJunctionProperties, ReduceAndCut, SomaDistance,
-                               SpineLength, SynapseProperties, SynapseReposition,
-                               TouchRules
-
-
-     --format-hdf5         write/convert result to HDF5 (nrn.h5) rather than
-                           parquet
-     --name NAME           name that will show up in the Spark logs, defaults to
-                           'Functionalizer'
-     --cache-dir CACHE_DIR
-                           specify directory to cache circuits converted to
-                           parquet, defaults to OUTPUT_DIR/_circuits
-     --checkpoint-dir CHECKPOINT_DIR
-                           specify directory to store checkpoints, defaults to
-                           OUTPUT_DIR/_checkpoints
-     --output-dir OUTPUT_DIR
-                           specify output directory, defaults to
-                           ./spykfunc_output
-     -c CONFIGURATION, --configuration CONFIGURATION
-                           a configuration file to use; see `--dump-
-                           configuration` for default settings
-     -p OVERRIDES, --spark-property OVERRIDES
-                           override single properties of the configuration, i.e.,
-                               `--spark-property
-                               spark.master=spark://1.2.3.4:7077`
-                           may be specified multiple times.
-     --dump-configuration  show the configuration including modifications via
-                           options prior to this flag and exit
-     --overwrite [{F,E}]   overwrite the result of selected intermediate steps,
-                           forcing their recomputation; possible values: F (for
-                           filtered, implies E) or E (for extended with synapse
-                           properties)
-
-Use the `--format-hdf5` flag to obtain output in HDF5. This is not
-guaranteed to work with larger circuits.
-
-
-Input Conversion
+File Conversions
 ----------------
+
+Input Data
+~~~~~~~~~~
 
 The touch files need to be in parquet. The module includes binaries to
 convert the TouchDetector output:
@@ -125,7 +52,7 @@ For a quicker conversion, use an MPI-enabled version:
    $ module load parquet-converters
    $ salloc -Aproj16 -pinteractive -t 8:00:00 -N1 -n42
    …some SLURM/shell output…
-   $ srun --mpi=pmi2 touch2parquetp ../touchesData.0
+   $ srun --mpi=pmi2 touch2parquet ../touchesData.0
    [Info] Converting ../touchesData.0
    $ ls
    touchesData.0.parquet   touchesData.1.parquet   touchesData.2.parquet   touchesData.3.parquet
@@ -140,134 +67,8 @@ For a quicker conversion, use an MPI-enabled version:
    touchesData.18.parquet  touchesData.28.parquet  touchesData.38.parquet
    touchesData.19.parquet  touchesData.29.parquet  touchesData.39.parquet
 
-
-Executing Spykfunc on the cluster
----------------------------------
-
-For optimal performance, the Spark functionalizer should be run on a
-cluster. Within a SLURM allocation, the following can be used to start up
-both a Spark and a HDFS cluster:
-
-.. code-block:: bash
-
-   module load nix/hpc/spykfunc
-
-   export CORES=36
-   export CIRCUIT=/gpfs/bbp.cscs.ch/project/proj68/circuits/dev-11M/circuit.mvd3
-   export MORPHOS=/gpfs/bbp.cscs.ch/project/proj59/entities/morphologies/2017.10.31/v1
-   export RECIPE=/gpfs/bbp.cscs.ch/project/proj68/circuits/dev-11M/connectome/functional/recipe_patched/builderRecipeAllPathways.xml
-   export TOUCHES=/gpfs/bbp.cscs.ch/project/proj68/circuits/dev-11M/connectome/touches/parquet/*.parquet
-
-   export OUTDIR=/gpfs/bbp.cscs.ch/project/proj68/circuits/dev-11M/connectome/functional/output.n64
-   mkdir -p $OUTDIR
-   cd $OUTDIR
-   sm_run -c $CORES \
-           spykfunc --s2f \
-                   --output-dir=$OUTDIR \
-                   --checkpoint-dir=/use/hadoop/ \
-                   --spark-property spark.master=spark://$(hostname):7077 \
-                   $RECIPE $CIRCUIT $MORPHOS $TOUCHES
-
-The `sm_run` command is a custom wrapper tuned to the BB5 environment, used
-to start both the Spark and optional HDFS cluster.
-
-Its behavior is determined mostly by environment variables or command line
-flags.  E.g., the `-c` flag above is used to set the number of cores that
-Spark will use.
-By default, 18 cores are assigned to an executor, and the `-c` flag to
-`sm_run` should be a multiple of 18.
-To decrease the amount of cores, make sure that `-c` is a multiple of
-the number `n` passed to `--spark-property spark.executor.cores=n`
-simultaneously.
-
-Similarly, `-m` can be used to restrict the memory that
-Spark, and thus the Spark functionalizer, will use.
-The corresponding setting for Spykfunc is `--spark-property
-spark.executor.memory=…`.
-
-By default, `sm_run` will start an HDFS cluster to save the execution
-state and coerce Spark to break the execution chain.
-For larger circuits, i.e., more than 2 million neurons, the runtime will be
-shortened dramatically compared to storing the checkpoints/execution state
-on GPFS.
-The HDFS cluster can be disabled by passing `-H` to `sm_run`.
-
-.. note::
-
-   By default, `sm_run` will store cluster data, such as logs and temporary
-   configurations, in a directory `_cluster` where it is executed. The user
-   is responsible for removing this directory after a possible analysis of
-   the execution.
-
-The following shows all options to run a Spark cluster, and can also be
-obtained by executing `sm_run` without any arguments:
-
-.. code::
-
-   usage: sm_run [-c SM_WORKER_CORES] [-m SM_WORKER_MEMORY] [-H|-h HADOOP_HOME] [-w WORKDIR] [-e ENVIRONMENT] COMMAND ARGS…
-          sm_startup WORKDIR [ENVIRONMENT]
-          sm_shutdown
-
-   special options:
-     -H   Disabe HADOOP support.
-
-   positional arguments:
-     WORKDIR       Working directory to use. Defaults to ./_cluster.
-     ENVIRONMENT   Script to source to obtain the right environment.
-                   Will be automatically looked for in $WORKDIR, $SPARK_CONF_DIR, $SPARK_HOME.
-
-   environment variables to configure behavior:
-     HADOOP_HOME           If set, will spawn a HADOOP cluster.
-
-     SM_MASTER_MEMORY      Memory to dedicate to the master. Will be
-                           subtracted from the detected machine memory when
-                           calculating the memory allocation for workers.
-
-                           Can be set by the user, and is specified in MB.
-                           Defaults to 4096.
-
-     SM_WORKDIR            The WORKDIR exported and accessible to the
-                           ENVIRONMENT script.
-
-     SM_WORKER_CORES       Cores to allot to a worker.
-
-     SM_WORKER_MEMORY      Memory to allot to a worker.
-
-     SM_WORKER_COUNT       Limit number of workers.
-
-     SM_HADOOP_COUNT       Limit number of Hadoop name nodes.
-
-     SM_EXECUTE            Command to execute once the cluster has started.
-
-     SM_VERBOSE            Print all commands before executing them, via .
-
-
-
-SLURM Allocation Size
-----------------------
-
-To be able to estimate the size of a SLURM allocation on BB5, the following
-graph may be of use:
-
-.. figure:: disk_scaling.png
-   :alt: Weak scaling of the required disk space
-
-   Disk space needed for shuffle data as of summer 2018.
-
-Since the nodes in UC4 each have 2TB of local SSD space available, and
-compression is enabled by default, the shuffle data alone will require
-about 10 nodes when functionalizing 11 million neurons (S2S, compressed).
-It is recommended to allow for additional space due to the checkpoints that
-Spykfunc will save during the execution, maybe 3-5 times the size of the
-input data (drawn dash-dotted), here 32 nodes should suffice to
-successfully functionalize 11 million neurons.
-
-As the underlying data for this estimation may change frequently, please
-follow the instructions in the :ref:`debugging` section to monitor a test run and adjust
-resources as needed.
-
-Output Conversion
------------------
+Output Data
+~~~~~~~~~~~
 
 Within an allocation, the following command will convert all parquet files
 present in the Spykfunc output directory, and convert them to a
@@ -290,3 +91,142 @@ Both ``FROM_POPULATION`` and ``TO_POPULATION`` need to be populations
 present in the respective node files.  The name ``EDGE_POPULATION`` will be
 used in the edge storage file, if the ``-p`` flag is not given,
 ``EDGE_POPULATION`` will be set to `default`.
+
+Executing Spykfunc on the cluster
+---------------------------------
+
+For all but the smallest executions on the order of a thousand cells,
+Spykfunc should be run on a dedicated Apache Spark cluster.
+For SLURM-based clusters such as BlueBrain5, the ``sm_run`` script will
+start an Apache Spark cluster within a SLURM allocation and launch a
+specified program to run on said cluster.
+By default, it will also provide a Hadoop Distributed File System (HDFS)
+cluster that will accelerate operations that have a strong impact on
+parallel file systems used to MPI loads.
+To turn off the startup of HDFS, provide the ``-H`` flag to ``sm_run``.
+
+.. warning::
+   When using SLURM to launch the cluster, please ensure that only one
+   process is launched per node (``--ntasks-per-node=1``).
+   The script ``sm_run`` will start one Spark worker per task, and each
+   worker will attempt to allocate all CPUs assigned to the allocation on
+   the node.
+   More than one worker per node will result in oversubscription and
+   resource shortage!
+
+For optimal performance, the Spark functionalizer should be run on a
+cluster. Within a SLURM allocation, the following can be used to start up
+both a Spark and a HDFS cluster:
+
+.. code-block:: bash
+
+   module load archive/2021-XY spykfunc
+   export BASE=/gpfs/bbp.cscs.ch/project/proj12/jenkins/cellular/circuit-1k/
+
+   export NODES=$BASE/nodes.h5
+   export NODE_POPULATION=default
+   export MORPHOS=$BASE/morphologies/h5
+   export RECIPE=$BASE/bioname/builderRecipeAllPathways.xml
+   export TOUCHES=$BASE/touches/parquet/*.parquet
+
+   cd $MY_OUTPUT_DIRECTORY  # For the user to set!
+
+   # Rather than using salloc, sm_run may also be called within a script
+   # submitted to the queue via sbatch.
+   salloc -Aproj16 --ntasks-per-node=1 -Cnvme -N2 --exclusive --mem=0 \
+       sm_run \
+           spykfunc --s2f \
+                    --output-dir=${PWD} \
+                    -p spark.master=spark://\$\(hostname\):7077 \
+                    --from ${NODES} ${NODE_POPULATION} \
+                    --to ${NODES} ${NODE_POPULATION} \
+                    --parquet ${TOUCHES} \
+                    ${RECIPE} \
+                    ${MORPHOS}
+
+.. note::
+   The ``sm_run`` script will create auxilliary directories in the current
+   working directory, which needs to be on a shared file system to work on
+   allocations with more than one node.
+   These directories include one named ``_cluster``, where logs and temporary
+   configurations are stored.
+   The user is also responsible for removing this directory after a possible
+   analysis of the execution.
+
+Its behavior is determined mostly by environment variables or command line
+flags.  E.g., the ``-c`` flag above is used to set the number of cores that
+Spark will use.
+By default, 18 cores are assigned to an executor, and the ``-c`` flag to
+``sm_run`` should be a multiple of 18.
+To decrease the amount of cores, make sure that ``-c`` is a multiple of
+the number `n` passed to ``--spark-property spark.executor.cores=n``
+simultaneously.
+
+Similarly, ``-m`` can be used to restrict the memory that
+Spark, and thus the Spark functionalizer, will use.
+The corresponding setting for Spykfunc is ``--spark-property
+spark.executor.memory=…``.
+
+Re-generating Synapse Properties of SONATA Files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Spykfunc can also be used to re-generate synapse properties for SONATA
+files, e.g., from the projectionalizer.
+When using SONATA input, the edge population needs to be specified, too.
+The following demonstrates an execution as above, but replaces the input
+Parquet by SONATA and runs only the synapse properties:
+
+.. code-block:: bash
+
+   export NODES=$BASE/nodes.h5
+   export NODE_POPULATION=default
+   export MORPHOS=$BASE/morphologies/h5
+   export RECIPE=$BASE/bioname/builderRecipeAllPathways.xml
+   export EDGES=$BASE/edges.h5
+   export EDGE_POPULATION=default
+
+   salloc -Aproj16 --ntasks-per-node=1 -Cnvme -N2 --exclusive --mem=0 \
+       sm_run \
+           spykfunc \
+                    --output-dir=${PWD} \
+                    -p spark.master=spark://\$\(hostname\):7077 \
+                    --from ${NODES} ${NODE_POPULATION} \
+                    --to ${NODES} ${NODE_POPULATION} \
+                    --touches ${EDGES} ${EDGE_POPULATION} \
+                    --filters=SynapseProperties \
+                    ${RECIPE} \
+                    ${MORPHOS}
+
+SLURM Allocation Size
+~~~~~~~~~~~~~~~~~~~~~
+
+To be able to estimate the size of a SLURM allocation on BB5, the following
+graph may be of use:
+
+.. figure:: disk_scaling.png
+   :alt: Weak scaling of the required disk space
+
+   Disk space needed for shuffle data as of summer 2018.
+
+Since the nodes in UC4 each have 2TB of local SSD space available, and
+compression is enabled by default, the shuffle data alone will require
+about 10 nodes when functionalizing 11 million neurons (S2S, compressed).
+It is recommended to allow for additional space due to the checkpoints that
+Spykfunc will save during the execution, maybe 3-5 times the size of the
+input data (drawn dash-dotted), here 32 nodes should suffice to
+successfully functionalize 11 million neurons.
+
+As the underlying data for this estimation may change frequently, please
+follow the instructions in the :ref:`debugging` section to monitor a test run and adjust
+resources as needed.
+
+Further Information
+-------------------
+
+The following two commands should print up-to-date information about the
+usage of ``spykfunc`` and ``sm_run``:
+
+.. code-block:: console
+
+   $ spykfunc --help
+   $ sm_run --help
