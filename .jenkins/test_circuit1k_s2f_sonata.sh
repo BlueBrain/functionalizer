@@ -12,7 +12,10 @@ salloc -Aproj16 -p$part -Cnvme -N1 --exclusive --mem=0 \
                  --output-dir=$PWD \
                  --checkpoint-dir=$PWD \
                  -p spark.master=spark://\$\(hostname\):7077 \
-                 $RECIPE --circuit $CIRCUIT $MORPHOS \
+                 --from $CIRCUIT All \
+                 --to $CIRCUIT All \
+                 $RECIPE \
+                 $MORPHOS \
                  --parquet $TOUCHES
 
 parquet-coalesce circuit.parquet single.parquet

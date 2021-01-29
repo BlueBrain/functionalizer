@@ -7,7 +7,6 @@ from pyspark.sql import types as T
 
 from spykfunc.data_loader import NeuronData, TouchData
 from spykfunc.dataio.morphologies import MorphologyDB
-from spykfunc.schema import touches_with_pathway
 from spykfunc.utils import get_logger
 
 logger = get_logger(__name__)
@@ -49,8 +48,6 @@ def touches_per_pathway(touches):
             )
         )
 
-    if 'pathway_i' not in touches.columns:
-        touches = touches_with_pathway(touches)
     logger.debug("Computing Pathway stats...")
     return pathway_statistics(pathway_connection_counts(touches))
 
@@ -117,6 +114,47 @@ class Circuit(object):
         # The circuit will be constructed (and grouped by src, dst
         self.__circuit = None
         self.__reduced = None
+
+        self.__pathway_columns = None
+        self.__pathway_offsets = []
+
+    def with_pathway(self, df=None):
+        if df is None:
+            df = self.df
+
+        def to_pathway_i(col1, col2):
+            """
+            Expression to calculate the pathway index based on the morphologies' index
+            :param col1: The dataframe src morphology index field
+            :param col2: The dataframe dst morphology index field
+            """
+            return (F.shiftLeft(col1, 16) + F.col(col2)).cast(T.IntegerType()).alias("pathway_i")
+
+        return df.withColumn(
+            "pathway_i",
+            to_pathway_i("src_mtype_i", "dst_mtype_i")
+        )
+
+    @staticmethod
+    def pathway_to_str(df_pathway_i, src_mtypes, dst_mtypes):
+        """
+        Expression to calculate the pathway name from the pathway index.
+
+        Args:
+            df_pathway_i: Pathway index column
+            src_mtypes: mtypes dataframe, with two fields: (index: int, name: str)
+            dst_mtypes: mtypes dataframe, with two fields: (index: int, name: str)
+        """
+        col = "pathway_i"
+        return (
+            df_pathway_i
+            .withColumn("src_morpho_i", F.shiftRight(col, 16))
+            .withColumn("dst_morpho_i", F.col(col).bitwiseAND((1 << 16)-1))
+            .join(src_mtypes.toDF("src_morpho_i", "src_morpho"), "src_morpho_i")
+            .join(dst_mtypes.toDF("dst_morpho_i", "dst_morpho"), "dst_morpho_i")
+            .withColumn("pathway_str", F.concat("src_morpho", F.lit('->'), "dst_morpho"))
+            .drop("src_morpho_i", "src_morpho", "dst_morpho_i", "dst_morpho")
+        )
 
     @property
     def __src(self):

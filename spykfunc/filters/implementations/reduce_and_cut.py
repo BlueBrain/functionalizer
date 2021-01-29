@@ -13,7 +13,6 @@ from spykfunc.circuit import Circuit, touches_per_pathway
 from spykfunc.definitions import CheckpointPhases
 from spykfunc.filters import DatasetOperation, helpers
 from spykfunc.filters.udfs import reduce_cut_parameter_udf
-from spykfunc.schema import pathway_i_to_str, touches_with_pathway
 from spykfunc.utils import get_logger
 from spykfunc.utils.checkpointing import checkpoint_resume, CheckpointHandler
 from spykfunc.utils.spark import cache_broadcast_single_part
@@ -79,7 +78,7 @@ class ReduceAndCut(DatasetOperation):
         """Filter the circuit according to the logic described in the
         class.
         """
-        full_touches = Circuit.only_touch_columns(touches_with_pathway(circuit.df))
+        full_touches = Circuit.only_touch_columns(circuit.with_pathway())
         src_mtypes = circuit.source.mtype_df
         dst_mtypes = circuit.target.mtype_df
         self.conn_rules = sm.broadcast(self.conn_rules)
@@ -242,7 +241,7 @@ class ReduceAndCut(DatasetOperation):
 
         # Deactivated due to large output size.
         # _dbg_df = connection_survival_rate.select("pathway_i", "reduced_touch_counts_connection", "survival_rate")
-        # helpers._write_csv(pathway_i_to_str(_dbg_df.groupBy("pathway_i").count(), mtypes),
+        # helpers._write_csv(Circuit.pathway_to_str(_dbg_df.groupBy("pathway_i").count(), mtypes),
         #            "connection_survival_rate.csv")
 
         logger.debug(" -> Computing connections to cut according to survival_rate")
@@ -305,7 +304,7 @@ class ReduceAndCut(DatasetOperation):
         active_fractions = cache_broadcast_single_part(active_fractions, parallelism=_n_parts)
 
         helpers._write_csv(
-            pathway_i_to_str(active_fractions, src_mtypes, dst_mtypes),
+            Circuit.pathway_to_str(active_fractions, src_mtypes, dst_mtypes),
             "active_fractions.csv"
         )
 
@@ -327,11 +326,11 @@ def _params_out_csv(df, filename, src_mtypes, dst_mtypes):
         if hasattr(df, col):
             cols.append(col)
     debug_info = df.select(*cols)
-    helpers._write_csv(pathway_i_to_str(debug_info, src_mtypes, dst_mtypes), filename)
+    helpers._write_csv(Circuit.pathway_to_str(debug_info, src_mtypes, dst_mtypes), filename)
 
 
 def _touch_counts_out_csv(df, filename, src_mtypes, dst_mtypes):
-    helpers._write_csv(pathway_i_to_str(
+    helpers._write_csv(Circuit.pathway_to_str(
         df.groupBy("pathway_i").count(),
         src_mtypes,
         dst_mtypes
@@ -339,7 +338,7 @@ def _touch_counts_out_csv(df, filename, src_mtypes, dst_mtypes):
 
 
 def _connection_counts_out_csv(df, filename, src_mtypes, dst_mtypes):
-    helpers._write_csv(pathway_i_to_str(
+    helpers._write_csv(Circuit.pathway_to_str(
         df.groupBy("pathway_i").sum("reduced_touch_counts_connection"),
         src_mtypes,
         dst_mtypes
