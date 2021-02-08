@@ -7,7 +7,7 @@ for i in $(seq 1 2); do
 part=\$([ \$(date +%H) -gt 8 -a \$(date +%H) -lt 20 ] && echo interactive || echo prod)
 
 export BASE=\$DATADIR/cellular/circuit-${i}k/
-export CIRCUIT=\$BASE/circuit.mvd3
+export CIRCUIT=\$BASE/nodes.h5
 export MORPHOS=\$BASE/morphologies/h5
 export RECIPE=\$BASE/bioname/builderRecipeAllPathways.xml
 export TOUCHES=\$BASE/touches/parquet/*.parquet
@@ -22,9 +22,9 @@ salloc -Aproj16 -p\$part -Cnvme -N1 --exclusive --mem=0 \\
 
 parquet-coalesce circuit.parquet single.parquet
 parquet-compare \\
-    \$DATADIR/cellular/circuit-${i}k/circuit.mvd3 \\
+    \$CIRCUIT \\
     single.parquet \\
-    \$DATADIR/cellular/circuit-${i}k/touches/${labels[$m]}/circuit.parquet
+    \$BASE/touches/${labels[$m]}/circuit.parquet
 EOS
     done
 done

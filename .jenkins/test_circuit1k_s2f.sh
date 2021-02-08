@@ -1,7 +1,7 @@
 part=$([ $(date +%H) -gt 8 -a $(date +%H) -lt 20 ] && echo interactive || echo prod)
 
 export BASE=$DATADIR/cellular/circuit-1k/
-export CIRCUIT=$BASE/circuit.mvd3
+export CIRCUIT=$BASE/nodes.h5
 export MORPHOS=$BASE/morphologies/h5
 export RECIPE=$BASE/bioname/builderRecipeAllPathways.xml
 export TOUCHES=$BASE/touches/parquet/*.parquet
@@ -17,6 +17,6 @@ salloc -Aproj16 -p$part -Cnvme -N1 --exclusive --mem=0 \
 
 parquet-coalesce circuit.parquet single.parquet
 parquet-compare \
-    $DATADIR/cellular/circuit-1k/circuit.mvd3 \
+    $CIRCUIT \
     single.parquet \
-    $DATADIR/cellular/circuit-1k/touches/functional/circuit.parquet
+    $BASE/touches/functional/circuit.parquet

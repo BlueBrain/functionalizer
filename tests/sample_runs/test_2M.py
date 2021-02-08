@@ -6,10 +6,10 @@ DATA = "/gpfs/bbp.cscs.ch/scratch/gss/leite/circuit_2M"
 
 print("Path for touches: " + path.join(DATA, "circuit/*.parquet"))
 args = (
-    path.join(BASE_DIR, "recipe/builderRecipeAllPathways.xml"),  # recipe_file
-    path.join(DATA, "circuit.mvd3"),                         # circuit_file
-    path.join(BASE_DIR, "morphologies/h5"),                  # morpho_dir
-    path.join(DATA, "circuit/*.parquet")                     # touch_files
+    path.join(BASE_DIR, "recipe/builderRecipeAllPathways.xml"),  # recipe file
+    path.join(DATA, "nodes.h5"),                                 # circuit file
+    path.join(BASE_DIR, "morphologies/h5"),                      # morpho dir
+    path.join(DATA, "circuit/*.parquet")                         # touch files
 )
 
 if __name__ == "__main__":

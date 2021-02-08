@@ -45,6 +45,8 @@ docs/api/*
 docs/_build/*
 cover/*
 MANIFEST
+spack-*
+.vscode/
 
 # Auxilliary files
 tags

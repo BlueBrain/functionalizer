@@ -139,7 +139,7 @@ def _parse_args(args=None) -> argparse.Namespace:
     if args.circuit_file:
         if args.source or args.target:
             parser.error("either --circuit or --from/--to is allowed")
-        args.source = args.target = (args.circuit_file, "default")
+        args.source = args.target = (args.circuit_file, "All")
     elif all(a is None for a in (args.source, args.target)):
         parser.error("either --circuit or --from/--to is required")
     elif any(a is None for a in (args.source, args.target)):

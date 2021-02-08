@@ -34,5 +34,5 @@ MAX_CORES=$((NUM_NODES * EXEC_PER_NODE * CORES_PER_EXEC))
 echo "Running with $NUM_NODES nodes * $EXEC_PER_NODE executors * $CORES_PER_EXEC cores. TOTAL: $MAX_CORES cores"
 
 set -x
-spykfunc $CIRCUIT_DIR/builderRecipeAllPathways.xml $CIRCUIT_DIR/circuit.mvd3 $CIRCUIT_DIR/morphologies/h5 $CIRCUIT_DIR/touches/\*.parquet -p spark.master=$MASTER -p spark.driver.memory=8G -p spark.executor.memory=64G -p spark.executor.cores=$CORES_PER_EXEC -p spark.cores.max=$MAX_CORES -p spark.ui.showConsoleProgress=false $_LOCALDIR
+spykfunc $CIRCUIT_DIR/builderRecipeAllPathways.xml $CIRCUIT_DIR/nodes.h5 $CIRCUIT_DIR/morphologies/h5 $CIRCUIT_DIR/touches/\*.parquet -p spark.master=$MASTER -p spark.driver.memory=8G -p spark.executor.memory=64G -p spark.executor.cores=$CORES_PER_EXEC -p spark.cores.max=$MAX_CORES -p spark.ui.showConsoleProgress=false $_LOCALDIR
 

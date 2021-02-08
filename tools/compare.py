@@ -3,7 +3,7 @@
 import argparse
 import sys
 
-import mvdtool
+import libsonata
 import pandas as pd
 
 
@@ -29,8 +29,8 @@ def run():
     base = pd.read_parquet(args.baseline)
     comp = pd.read_parquet(args.comparison)
 
-    circuit = mvdtool.MVD3.File(args.circuit.encode())
-    mtypes = pd.DataFrame({'mtype': circuit.all_mtypes})
+    pop = libsonata.NodeStorage(args.circuit.encode()).open_population("All")
+    mtypes = pd.DataFrame({'mtype': pop.enumeration_values("mtype")})
 
     base = base.join(mtypes, on='connected_neurons_pre')
     base = base.join(mtypes,

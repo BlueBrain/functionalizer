@@ -221,6 +221,7 @@ def setup_package():
             'lxml',
             'morphokit',
             'mvdtool>=2',
+            'libsonata',
             'numpy',
             'pandas',
             'pathlib2;python_version<"3.4"',

@@ -11,7 +11,7 @@ DATADIR = '/home/matwolf/Work/Playpen/O1.v6a'
 
 ARGS = (
     os.path.join(DATADIR, "builderRecipeAllPathways.xml"),
-    os.path.join(DATADIR, "circuit.mvd3"),
+    os.path.join(DATADIR, "nodes.h5"),
     os.path.join(DATADIR, "touches/*.parquet")
 )
 

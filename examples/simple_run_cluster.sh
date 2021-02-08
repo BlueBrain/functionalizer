@@ -4,7 +4,7 @@ CIRCUIT_DIR=$SCRIPTPATH/../tests/circuit_1000n
 MORPHO_DIR="."
 
 spykfunc $CIRCUIT_DIR/builderRecipeAllPathways.xml \
-         $CIRCUIT_DIR/circuit.mvd3 \
+         $CIRCUIT_DIR/nodes.h5 \
          $MORPHO_DIR \
          $CIRCUIT_DIR/touches/touchesData.*.parquet \
          -p "spark.master=spark://localhost:7077" \

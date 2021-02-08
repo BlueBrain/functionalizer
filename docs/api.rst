@@ -28,9 +28,9 @@ Data Handling
 `````````````
 
 The :class:`.NeuronData` class is used to read both nodes and edges from
-binary storage or Parquet.  Nodes are customarily stored in either the
-SONATA_ or MVD3_ format based on HDF5, and :class:`.NeuronData` will
-internally cache them in Parquet format for faster future access.
+binary storage or Parquet.  Nodes are customarily stored in SONATA_ format
+based on HDF5, and :class:`.NeuronData` will internally cache them in
+Parquet format for faster future access.
 
 .. autoclass:: spykfunc.circuit.Circuit
 
@@ -48,4 +48,3 @@ A detailed overview of the scientific filter implementations available in
    :private-members:
 
 .. _SONATA: https://bbpteam.epfl.ch/documentation/projects/Circuit%20Documentation/latest/sonata.html
-.. _MVD3: https://bbpteam.epfl.ch/documentation/projects/Circuit%20Documentation/latest/mvd3.html

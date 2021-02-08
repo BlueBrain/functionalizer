@@ -6,8 +6,8 @@ except ImportError as e:
 
 CIRCUIT_DIR = path.join(path.dirname(__file__), "../tests/circuit_1000n")
 args = (
-    path.join(CIRCUIT_DIR, "builderRecipeAllPathways.xml"),  # recipe_file
-    path.join(CIRCUIT_DIR, "circuit.mvd3"),                  # circuit_file
+    path.join(CIRCUIT_DIR, "builderRecipeAllPathways.xml"),  # recipe file
+    path.join(CIRCUIT_DIR, "nodes.h5"),                      # circuit file
     path.join(CIRCUIT_DIR, "touches/touchesData.*.parquet"), # touch files
 )
 

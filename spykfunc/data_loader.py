@@ -32,7 +32,7 @@ PARTITION_SIZE = 50000
 
 
 def _create_neuron_loader(filename, population):
-    """Create a UDF to load neurons from MVD3
+    """Create a UDF to load neurons from Sonata
 
     Args:
         filename: The name of the circuit file
@@ -43,21 +43,22 @@ def _create_neuron_loader(filename, population):
     @F.pandas_udf(schema.NEURON_SCHEMA, F.PandasUDFType.GROUPED_MAP)
     def loader(data):
         assert(len(data) == 1)
-        import mvdtool
-        fd = mvdtool.open(filename, population)
+        import libsonata
+        nodes = libsonata.NodeStorage(filename)
+        pop = nodes.open_population(population)
+
         start, end = data.iloc[0]
-        count = end - start
+        selection = libsonata.Selection([(start, end)])
         return pd.DataFrame(
             dict(
                 id=range(start, end),
-                mtype_i=fd.raw_mtypes(start, count),
-                etype_i=fd.raw_etypes(start, count),
-                morphology=fd.morphologies(start, count),
-                syn_class_i=fd.raw_synapse_classes(start, count),
+                mtype_i=pop.get_enumeration('mtype', selection),
+                etype_i=pop.get_enumeration('etype', selection),
+                morphology=pop.get_attribute('morphology', selection),
+                syn_class_i=pop.get_enumeration('synapse_class', selection),
             )
         )
     return loader
-
 
 def _create_touch_loader(filename, population, columns):
     """Create a UDF to load touches from SONATA
@@ -115,12 +116,12 @@ class NeuronData:
     """
 
     def __init__(self, filename: str, population: str, cache: str):
-        import mvdtool
+        import libsonata
         self._cache = cache
         self._df = None
         self._filename = filename
         self._population = population
-        self._mvd = mvdtool.open(self._filename, self._population)
+        self._pop = libsonata.NodeStorage(filename).open_population(population)
 
         if not os.path.isdir(self._cache):
             os.makedirs(self._cache)
@@ -129,22 +130,22 @@ class NeuronData:
     def mtypes(self):
         """All morphology types present in the circuit
         """
-        return self._mvd.all_mtypes
+        return self._pop.enumeration_values("mtype")
 
     @LazyProperty
     def etypes(self):
         """All electrophysiology types present in the circuit
         """
-        return self._mvd.all_etypes
+        return self._pop.enumeration_values("etype")
 
     @LazyProperty
     def cell_classes(self):
         """All cell classes present in the circuit
         """
-        return self._mvd.all_synapse_classes
+        return self._pop.enumeration_values("synapse_class")
 
     def __len__(self):
-        return len(self._mvd)
+        return len(self._pop)
 
     @staticmethod
     def _to_df(vec, field_names):
