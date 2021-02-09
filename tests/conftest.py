@@ -57,6 +57,12 @@ def pytest_addoption(parser):
                      default=False, help="run slow tests")
 
 
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers", "slow: mark test as slow"
+    )
+
+
 def pytest_collection_modifyitems(config, items):
     if config.getoption("--run-slow"):
         # --runslow given in cli: do not skip slow tests

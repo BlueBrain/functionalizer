@@ -7,7 +7,7 @@ from ..property import Property, singleton
 class InitialBoutonDistance(Property):
     """Minimum distances of synapses from the soma"""
 
-    _alias = {
+    _attribute_alias = {
         "defaultInhSynapsesDistance": "inhibitorySynapsesDistance",
         "defaultExcSynapsesDistance": "excitatorySynapsesDistance",
     }

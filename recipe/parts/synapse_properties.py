@@ -63,7 +63,7 @@ class SynapseClass(Property):
         "uHillCoefficient": float,
     }
 
-    _alias = {
+    _attribute_alias = {
         "gsynVar": "gsynSD",
         "dtcVar": "dtcSD",
         "uVar": "uSD",
@@ -82,7 +82,6 @@ class SynapseClasses(PropertyGroup):
         data = super(SynapseClasses, cls).load(xml)
         for attr in ("gsynSRSF", "uHillCoefficient"):
             values = sum(getattr(d, attr, None) is not None for d in data)
-            logger.error(f"INVESTIGATING {attr}: {values} / {len(data)}")
             if values == 0:  # no values, remove attribute
                 for d in data:
                     del d._local_attributes[attr]

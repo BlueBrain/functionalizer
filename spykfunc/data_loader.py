@@ -2,12 +2,11 @@ from __future__ import absolute_import
 
 import glob
 import hashlib
-import os
-import sparkmanager as sm
 import logging
-import pandas as pd
 import math
-from lazy_property import LazyProperty
+import os
+import pandas as pd
+import sparkmanager as sm
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
 
@@ -22,11 +21,11 @@ from .utils.filesystem import adjust_for_spark
 logger = get_logger(__name__)
 
 _numpy_to_spark = {
-    'int16': T.ShortType,
-    'int32': T.IntegerType,
-    'int64': T.LongType,
-    'float32': T.FloatType,
-    'float64': T.DoubleType,
+    "int16": T.ShortType,
+    "int32": T.IntegerType,
+    "int64": T.LongType,
+    "float32": T.FloatType,
+    "float64": T.DoubleType,
 }
 
 PARTITION_SIZE = 50000
@@ -41,10 +40,12 @@ def _create_neuron_loader(filename, population):
     Returns:
         A Pandas UDF to be used over a group by
     """
+
     @F.pandas_udf(schema.NEURON_SCHEMA, F.PandasUDFType.GROUPED_MAP)
     def loader(data):
-        assert(len(data) == 1)
+        assert len(data) == 1
         import libsonata
+
         nodes = libsonata.NodeStorage(filename)
         pop = nodes.open_population(population)
 
@@ -53,13 +54,16 @@ def _create_neuron_loader(filename, population):
         return pd.DataFrame(
             dict(
                 id=ids,
-                mtype_i=pop.get_enumeration('mtype', selection),
-                etype_i=pop.get_enumeration('etype', selection),
-                morphology=pop.get_attribute('morphology', selection),
-                syn_class_i=pop.get_enumeration('synapse_class', selection),
+                etype_i=pop.get_enumeration("etype", selection),
+                mtype_i=pop.get_enumeration("mtype", selection),
+                region_i=pop.get_enumeration("region", selection),
+                syn_class_i=pop.get_enumeration("synapse_class", selection),
+                morphology=pop.get_attribute("morphology", selection),
             )
         )
+
     return loader
+
 
 def _create_touch_loader(filename, population, columns):
     """Create a UDF to load touches from SONATA
@@ -71,9 +75,10 @@ def _create_touch_loader(filename, population, columns):
     Returns:
         A Pandas UDF to be used over a group by
     """
+
     @F.pandas_udf(columns, F.PandasUDFType.GROUPED_MAP)
     def loader(data):
-        assert(len(data) == 1)
+        assert len(data) == 1
         start, end = data.iloc[0]
 
         import libsonata
@@ -92,6 +97,7 @@ def _create_touch_loader(filename, population, columns):
             if name in attributes:
                 data[alias] = p.get_attribute(name, selection)
         return pd.DataFrame(data)
+
     return loader
 
 
@@ -100,8 +106,11 @@ class NeuronData:
 
     This class represent neuron populations, lazily loaded.  After the
     construction, general properties of the neurons, such as the unique
-    values of the :attr:`.NeuronData.mtypes`, :attr:`.NeuronData.etypes`,
-    or :attr:`.NeuronData.cell_classes` present can be accessed.
+    values of the
+    :attr:`.NeuronData.mtype_values`,
+    :attr:`.NeuronData.etype_values`, or
+    :attr:`.NeuronData.sclass_values`
+    present can be accessed.
 
     To load neuron-specific information, access the property
     :attr:`.NeuronData.df`, data will be loaded lazily.
@@ -129,23 +138,9 @@ class NeuronData:
         if not os.path.isdir(self._cache):
             os.makedirs(self._cache)
 
-    @LazyProperty
-    def mtypes(self):
-        """All morphology types present in the circuit
-        """
-        return self._pop.enumeration_values("mtype")
-
-    @LazyProperty
-    def etypes(self):
-        """All electrophysiology types present in the circuit
-        """
-        return self._pop.enumeration_values("etype")
-
-    @LazyProperty
-    def cell_classes(self):
-        """All cell classes present in the circuit
-        """
-        return self._pop.enumeration_values("synapse_class")
+    mtype_values = property(lambda self: self._pop.enumeration_values("mtype"))
+    etype_values = property(lambda self: self._pop.enumeration_values("etype"))
+    sclass_values = property(lambda self: self._pop.enumeration_values("synapse_class"))
 
     def __len__(self):
         return len(self._pop)
@@ -157,19 +152,8 @@ class NeuronData:
         The dataframe is immediately cached and broadcasted as single partition
         """
         return cache_broadcast_single_part(
-            sm.createDataFrame(enumerate(vec), schema.indexed_strings(field_names)))
-
-    @LazyProperty
-    def sclass_df(self):
-        return self._to_df(self.cell_classes, ["sclass_i", "sclass_name"])
-
-    @LazyProperty
-    def mtype_df(self):
-        return self._to_df(self.mtypes, ["mtype_i", "mtype_name"])
-
-    @LazyProperty
-    def etype_df(self):
-        return self._to_df(self.etypes, ["etype_i", "etype_name"])
+            sm.createDataFrame(enumerate(vec), schema.indexed_strings(field_names))
+        )
 
     @property
     def df(self):
@@ -188,8 +172,7 @@ class NeuronData:
 
         logger.info("Total neurons: %d", len(self))
         mvd_parquet = os.path.join(
-            self._cache,
-            "neurons_{:.1f}k_{}.parquet".format(len(self) / 1000.0, digest)
+            self._cache, "neurons_{:.1f}k_{}.parquet".format(len(self) / 1000.0, digest)
         )
 
         if os.path.exists(mvd_parquet):
@@ -229,17 +212,13 @@ class NeuronData:
             )
 
             # Evaluate (build partial NameMaps) and store
-            mvd = (
-                raw_mvd
-                .write.mode('overwrite')
-                .parquet(adjust_for_spark(mvd_parquet, local=True))
+            mvd = raw_mvd.write.mode("overwrite").parquet(
+                adjust_for_spark(mvd_parquet, local=True)
             )
             raw_mvd.unpersist()
 
             # Mark as "broadcastable" and cache
-            df = F.broadcast(
-                sm.read.parquet(adjust_for_spark(mvd_parquet))
-            ).cache()
+            df = F.broadcast(sm.read.parquet(adjust_for_spark(mvd_parquet))).cache()
         return df
 
 
@@ -274,8 +253,7 @@ class TouchData:
     @property
     def df(self):
         return (
-            self
-            ._loader(*self._args)
+            self._loader(*self._args)
             .withColumnRenamed("pre_neuron_id", "src")
             .withColumnRenamed("post_neuron_id", "dst")
         )
@@ -283,6 +261,7 @@ class TouchData:
     @staticmethod
     def _load_sonata(filename, population):
         import libsonata
+
         p = libsonata.EdgeStorage(filename).open_population(population)
 
         def _type(col):
@@ -300,18 +279,15 @@ class TouchData:
 
         parts = sm.createDataFrame(
             (
-                (PARTITION_SIZE * n,
-                 min(PARTITION_SIZE * (n + 1), p.size))
+                (PARTITION_SIZE * n, min(PARTITION_SIZE * (n + 1), p.size))
                 for n in range(total_parts)
             ),
-            "start: long, end: long"
+            "start: long, end: long",
         )
 
         logger.info("Creating touch data frame...")
-        touches = (
-            parts
-            .groupby("start", "end")
-            .apply(_create_touch_loader(filename, population, columns))
+        touches = parts.groupby("start", "end").apply(
+            _create_touch_loader(filename, population, columns)
         )
         logger.info("Total touches: %d", touches.count())
 
@@ -320,27 +296,22 @@ class TouchData:
     @staticmethod
     def _load_parquet(*files):
         def compatible(s1: T.StructType, s2: T.StructType) -> bool:
-            """Test schema compatibility
-            """
+            """Test schema compatibility"""
             if len(s1.fields) != len(s2.fields):
                 return False
             for f1, f2 in zip(s1.fields, s2.fields):
                 if f1.name != f2.name:
                     return False
             return True
+
         files = [adjust_for_spark(f) for f in files]
         have = sm.read.load(files[0]).schema
         try:
-            want, = [s for s in schema.TOUCH_SCHEMAS if compatible(s, have)]
+            (want,) = [s for s in schema.TOUCH_SCHEMAS if compatible(s, have)]
         except ValueError:
             logger.error("Incompatible schema of input files")
             raise RuntimeError("Incompatible schema of input files")
-        touches = (
-            sm
-            .read
-            .schema(want)
-            .parquet(*files)
-        )
+        touches = sm.read.schema(want).parquet(*files)
         logger.info("Total touches: %d", touches.count())
 
         return touches

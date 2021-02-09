@@ -47,7 +47,7 @@ def test_shift():
 
     population = MagicMock()
     population.df = neurons
-    population.mtypes = mock_mtypes(neurons)
+    population.mtype_values = mock_mtypes(neurons)
 
     c = Circuit(
         population,

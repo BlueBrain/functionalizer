@@ -217,7 +217,6 @@ def setup_package():
             'future',
             'hdfs',
             'jprops',
-            'lazy-property',
             'lxml',
             'morphokit',
             'mvdtool>=2',

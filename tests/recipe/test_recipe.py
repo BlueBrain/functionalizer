@@ -1,11 +1,12 @@
 """Test recipe class and functionality
 """
+from lxml import etree
 from pathlib import Path
 
 import pytest
 
 from recipe import Recipe
-from recipe.property import Property
+from recipe.property import Property, PropertyGroup
 
 
 def test_values():
@@ -39,7 +40,7 @@ def test_alias():
             "a": 0,
             "b": 2
         }
-        _alias = {"c": "b"}
+        _attribute_alias = {"c": "b"}
 
     f = Faker()
     assert f.a == 0
@@ -58,17 +59,19 @@ def test_alias():
     assert str(g) == '<Faker />'
 
 
-MTYPES = [
-    "L1_SLAC",
-    "L23_PC",
-    "L23_MC",
-    "L4_PC",
-    "L4_MC",
-    "L5_TTPC1",
-    "L5_MC",
-    "L6_TPC_L1",
-    "L6_MC",
-]
+def test_renaming():
+    class Foo(Property):
+        _name = "foo"
+        _alias = "bar"
+    class Snafu(PropertyGroup):
+        _name = "snafu"
+        _kind = Foo
+    parser = etree.XMLParser(recover=True, remove_comments=True)
+    tree = etree.fromstring(PROPERTY_ALIASED, parser)
+    data = Snafu.load(tree)
+    assert len(data) == 2
+    for e in data:
+        assert str(e) == "<foo />"
 
 
 def load_recipe(stub: str) -> Recipe:
@@ -86,3 +89,19 @@ def test_load_xml(good_recipe):
     """Test recipe reading
     """
     assert good_recipe.seeds.synapseSeed == 4236279
+
+
+PROPERTY_ALIASED = """\
+<?xml version="1.0"?>
+<blubb>
+  <snafu>
+    <foo />
+    <bar />
+  </snafu>
+  <blarg>
+    <foo />
+    <bar />
+    <bar />
+  </blarg>
+</blubb>
+"""

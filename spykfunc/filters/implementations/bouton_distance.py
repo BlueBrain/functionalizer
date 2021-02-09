@@ -21,7 +21,7 @@ class BoutonDistanceFilter(DatasetOperation):
             """Save index function returning -1 if not found
             """
             try:
-                return circuit.target.cell_classes.index(cls)
+                return circuit.target.sclass_values.index(cls)
             except ValueError:
                 return -1
 

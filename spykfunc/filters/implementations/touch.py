@@ -70,7 +70,7 @@ class TouchRulesFilter(DatasetOperation):
         The rules stored in the recipe are loaded in their abstract form,
         concretization will happen with the acctual circuit.
         """
-        self.rules = recipe.touch_rules.to_matrix(source.mtypes, target.mtypes)
+        self.rules = recipe.touch_rules.to_matrix(source.mtype_values, target.mtype_values)
 
     def apply(self, circuit):
         """ .apply() method (runner) of the filter

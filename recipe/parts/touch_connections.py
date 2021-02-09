@@ -1,9 +1,12 @@
 """
 """
 import fnmatch
+import functools
 import itertools
 import logging
+import operator
 
+from collections import defaultdict
 from typing import Dict, Iterable, Iterator, List, Tuple
 
 from ..property import Property, PropertyGroup
@@ -12,14 +15,21 @@ from ..property import Property, PropertyGroup
 logger = logging.getLogger(__name__)
 
 
-class MTypeRule(Property):
+class ConnectionRule(Property):
     """Class defining parameters to determine reduction and cutting probabilities."""
 
-    _name = "mTypeRule"
+    _name = "rule"
+    _alias = "mTypeRule"
 
     _attributes = {
+        "fromEType": "*",
         "fromMType": "*",
+        "fromRegion": "*",
+        "fromSClass": "*",
+        "toEType": "*",
         "toMType": "*",
+        "toRegion": "*",
+        "toSClass": "*",
         "probability": float,
         "active_fraction": float,
         "bouton_reduction_factor": float,
@@ -30,24 +40,35 @@ class MTypeRule(Property):
         "pMu_A": float,
     }
 
-    _alias = {"from": "fromMType", "to": "toMType"}
+    _attribute_alias = {"from": "fromMType", "to": "toMType"}
+
+    columns = [x + y for (x, y) in itertools.product(
+        ("to", "from"),
+        ("EType", "MType", "Region")
+    )]
 
     def __call__(
-        self, src_mtypes: Iterable[str], dst_mtypes: Iterable[str]
-    ) -> Iterator[Tuple[str, str, "MTypeRule"]]:
-        for src, dst in itertools.product(
-            fnmatch.filter(src_mtypes, self.fromMType),
-            fnmatch.filter(dst_mtypes, self.toMType),
-        ):
-            yield (src, dst, self)
+        self, values: Dict[str, List[str]]
+    ) -> Iterator[Tuple[Dict[str, str], "ConnectionRule"]]:
+        expansions = [
+            [(name, v) for v in fnmatch.filter(values[name], getattr(self, name))]
+            for name in self.columns
+            if name in values
+        ]
+        for cols in itertools.product(*expansions):
+            yield (dict(cols), self)
 
-    def overrides(self, other: "MTypeRule") -> bool:
-        if "*" not in self.fromMType and "*" in other.fromMType:
-            return True
-        elif "*" not in self.toMType and "*" in other.toMType:
-            return True
-        else:
-            return False
+    def overrides(self, other: "ConnectionRule") -> bool:
+        """Returns true if the `other` rule supersedes the current one,
+        false otherwise.
+
+        The more specialized, i.e., the less `columns` contain the global
+        match ``*``, the higher the precedence of a rule.
+        I.e. ``<rule fromMType="L*" …/>`` will override ``<rule fromMType="*" …/>``.
+        """
+        mine = sum(getattr(self, col) == "*" for col in self.columns)
+        theirs = sum(getattr(other, col) == "*" for col in self.columns)
+        return mine < theirs
 
     def validate(self) -> bool:
         # Rule according to validation in ConnectivityPathway::getReduceAndCutParameters
@@ -58,73 +79,82 @@ class MTypeRule(Property):
             {"bouton_reduction_factor", "cv_syns_connection", "probability"},
             {"bouton_reduction_factor", "pMu_A", "p_A"},
         ]
+        possible_fields = functools.reduce(operator.or_, allowed_parameters)
 
         set_parameters = set(
-            attr for attr in self._float_fields if getattr(self, attr) is not None
+            attr for attr in possible_fields if getattr(self, attr) is not None
         )
         if set_parameters not in allowed_parameters:
-            logger.warning(f"The following rule does not conform: {self}")
+            logger.warning(f"The following rule does not conform: {self} ({set_parameters})")
             return False
         return True
 
 
 class ConnectionRules(PropertyGroup):
-    _kind = MTypeRule
+    _kind = ConnectionRule
 
-    def validate(self, src_mtypes: List[str], dst_mtypes: List[str]) -> bool:
-        def _check(mtypes, covered, kind):
-            uncovered = set(mtypes) - covered
+    def validate(
+        self, values: Dict[str, List[str]]
+    ) -> bool:
+        def _check(name, covered):
+            uncovered = set(values[name]) - covered
             if len(uncovered):
                 logger.warning(
-                    f"The following {kind} MTypes are not covered: {', '.join(uncovered)}"
+                    f"The following {name} are not covered: {', '.join(uncovered)}"
                 )
                 return False
             return True
 
-        covered_src = set()
-        covered_dst = set()
+        covered = defaultdict(set)
+        names = self.requires
         valid = True
         for r in self:
             if not r.validate():
                 valid = False
-            values = list(r(src_mtypes, dst_mtypes))
-            if len(values) == 0:
+            expansion = list(r(values))
+            if len(expansion) == 0:
                 logger.warning(f"The following rule does not match anything: {r}")
                 valid = False
-            for src, dst, _ in values:
-                covered_src.add(src)
-                covered_dst.add(dst)
-        return all(
-            [
-                valid,
-                _check(src_mtypes, covered_src, "source"),
-                _check(dst_mtypes, covered_dst, "target"),
-            ]
-        )
+            for keys, _ in expansion:
+                for name, key in keys.items():
+                    covered[name].add(key)
+        return valid and all(_check(name, covered[name]) for name in covered)
+
+    @property
+    def requires(self) -> List[str]:
+        """Returns a list of attributes whose values are required for
+        properly selecting rules, i.e., excluding any attributes that match
+        everything.
+        """
+        cols = []
+        for col in ConnectionRule.columns:
+            values = set(getattr(e, col, None) for e in self)
+            if values != set("*"):
+                cols.append(col)
+        return cols
 
     def to_matrix(
-        self, src_mtypes: List[str], dst_mtypes: List[str]
-    ) -> Dict[int, MTypeRule]:
-        """Construct a connection rule matrix
+        self, values: Dict[str, List[str]]
+    ) -> Dict[int, ConnectionRule]:
+        """Construct a flattened connection rule matrix
 
-        Args:
-            src_mtypes: The morphology types associated with the source population
-            dst_mtypes: The morphology types associated with the target population
-        Returns:
-            A flattenend matrix, in form of a dictionary, where the keys
-            are the numerical equivalent of the source and target mtypes:
-            ``source << 16 | target``.  The actual values are the rules
-            themselves.
+        Requires being passed a full set of allowed parameter values passed
+        as argument `values`.
         """
-        src_mtypes_rev = {mtype: i for i, mtype in enumerate(src_mtypes)}
-        dst_mtypes_rev = {mtype: i for i, mtype in enumerate(dst_mtypes)}
-        concrete_rules = {}
+        concrete = {}
+        reverted = {}
+        required = self.requires
+        for name, allowed in values.items():
+            reverted[name] = {v: i for i, v in enumerate(allowed)}
         for rule in self:
-            for src, dst, _ in rule(src_mtypes, dst_mtypes):
-                key = (src_mtypes_rev[src] << 16) + dst_mtypes_rev[dst]
-                if key in concrete_rules:
-                    if rule.overrides(concrete_rules[key]):
-                        concrete_rules[key] = rule
+            for attrs, _ in rule(values):
+                key = 0
+                factor = 1
+                for name in required:
+                    key += reverted[name][attrs[name]] * factor
+                    factor *= len(reverted[name])
+                if key in concrete and concrete[key].overrides(rule):
+                    pass
                 else:
-                    concrete_rules[key] = rule
-        return concrete_rules
+                    concrete[key] = rule
+        return concrete

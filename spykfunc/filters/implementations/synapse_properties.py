@@ -117,9 +117,9 @@ class SynapseProperties(DatasetOperation):
         shape = []
 
         for direction, population in (("from", source), ("to", target)):
-            mtypes = population.mtypes
-            etypes = population.etypes
-            cclasses = population.cell_classes
+            mtypes = population.mtype_values
+            etypes = population.etype_values
+            cclasses = population.sclass_values
 
             syn_mtype_rev = {name: i for i, name in enumerate(mtypes)}
             syn_etype_rev = {name: i for i, name in enumerate(etypes)}

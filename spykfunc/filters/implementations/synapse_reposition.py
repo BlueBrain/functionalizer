@@ -28,24 +28,27 @@ class SynapseReposition(DatasetOperation):
         """
         axon_shift = _create_axon_section_udf(circuit.morphologies)
 
-        patched = (
-            circuit
-            .with_pathway()
-            .join(self.reposition, "pathway_i", "left_outer")
-            .mapInPandas(axon_shift, circuit.df.schema)
-            .drop("pathway_i", "reposition")
-        )
+        with circuit.pathways(["fromMType", "toMType"]):
+            patched = (
+                circuit
+                .with_pathway()
+                .join(self.reposition, "pathway_i", "left_outer")
+                .mapInPandas(axon_shift, circuit.df.schema)
+                .drop("pathway_i", "reposition")
+            )
 
-        return patched
+            return patched
 
     @staticmethod
     def convert_reposition(source, target, reposition):
         """Loader for pathways that need synapses to be repositioned
         """
-        src_mtype = source.mtypes
+        src_mtype = source.mtype_values
         src_mtype_rev = {name: i for i, name in enumerate(src_mtype)}
-        dst_mtype = target.mtypes
+        dst_mtype = target.mtype_values
         dst_mtype_rev = {name: i for i, name in enumerate(dst_mtype)}
+
+        factor = len(src_mtype)
 
         paths = []
         for shift in reposition:
@@ -58,7 +61,10 @@ class SynapseReposition(DatasetOperation):
             if shift.toMType:
                 dst = [dst_mtype_rev[m] for m in fnmatch.filter(dst_mtype, shift.toMType)]
             paths.extend(itertools.product(src, dst))
-        pathways = sm.createDataFrame([((s << 16) | d, True) for s, d in paths], schema.SYNAPSE_REPOSITION_SCHEMA)
+        pathways = sm.createDataFrame(
+            [(s + factor * d, True) for s, d in paths],
+            schema.SYNAPSE_REPOSITION_SCHEMA
+        )
         return F.broadcast(pathways)
 
 

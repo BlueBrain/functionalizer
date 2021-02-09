@@ -89,23 +89,13 @@ INPUT_COLUMN_MAPPING = [
     ("efferent_morphology_id", "morphology"),
 ] + [(external, internal) for (internal, external, _) in OUTPUT_COLUMN_MAPPING]
 
-
-LAYER_SCHEMA = T.StructType([
-    T.StructField("layer_i", T.ByteType(), False),
-    T.StructField("layer", T.ByteType(), False),
-])
-
-MTYPE_NAMES_SCHEMA = T.StructType([
-    T.StructField("mtype_i", T.IntegerType(), False),
-    T.StructField("mtype", T.StringType(), False),
-])
-
 NEURON_SCHEMA = T.StructType([
     T.StructField("id", T.IntegerType(), False),
-    T.StructField("mtype_i", T.ShortType(), False),
     T.StructField("etype_i", T.ShortType(), False),
-    T.StructField("morphology", T.StringType(), False),
+    T.StructField("mtype_i", T.ShortType(), False),
+    T.StructField("region_i", T.ShortType(), False),
     T.StructField("syn_class_i", T.ShortType(), False),
+    T.StructField("morphology", T.StringType(), False),
     # T.StructField("layer", T.ShortType(), False),
     # T.StructField("position", T.ArrayType(T.DoubleType(), False), False),
     # T.StructField("rotation", T.ArrayType(T.DoubleType(), False), False),
@@ -170,16 +160,6 @@ GAP_JUNCTION_SCHEMA = T.StructType([
     T.StructField("post_offset", T.FloatType(), False),
     T.StructField("pre_junction", T.LongType(), False),
     T.StructField("post_junction", T.LongType(), False),
-])
-
-
-MTYPE_SCHEMA = T.StructType([
-    T.StructField("_i", T.ShortType(), False),
-    T.StructField("index", T.ShortType(), False),
-    T.StructField("name", T.StringType(), False),
-    T.StructField("layer", T.ShortType(), False),
-    T.StructField("morpho_type", T.StringType(), False),
-    T.StructField("end_layer", T.ShortType(), False),
 ])
 
 SYNAPSE_CLASSIFICATION_SCHEMA = T.StructType([

@@ -3,7 +3,7 @@
 import re
 
 from copy import deepcopy
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any, Callable, Dict, Optional, Union, Set
 from textwrap import indent
 
 
@@ -26,8 +26,8 @@ class Property:
     """
     _name: Union[str, None] = None
 
-    _alias: Dict[str, str] = {}
     _attributes: Dict[str, Any] = {}
+    _attribute_alias: Dict[str, str] = {}
 
     _implicit = False
 
@@ -45,19 +45,19 @@ class Property:
                     f"cannot set a default for non-existant attribute {key} in {type(self)}"
                 )
             self._local_attributes[key] = self._convert(key, value)
-        for key, value in self._alias.items():
+        for key, value in self._attribute_alias.items():
             if not hasattr(self, value):
                 raise TypeError(
                     f"cannot alias non-existant {value} to {key} in {type(self)}"
                 )
 
     def __delattr__(self, attr):
-        resolved_name = self._alias.get(attr, attr)
+        resolved_name = self._attribute_alias.get(attr, attr)
         if resolved_name in self._values:
             del self._values[resolved_name]
 
     def __getattr__(self, attr):
-        resolved_name = self._alias.get(attr, attr)
+        resolved_name = self._attribute_alias.get(attr, attr)
         if attr.startswith("_"):
             return self.__dict__[attr]
         elif resolved_name in self._local_attributes:
@@ -69,7 +69,7 @@ class Property:
             raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{attr}'")
 
     def __setattr__(self, attr, value):
-        resolved_name = self._alias.get(attr, attr)
+        resolved_name = self._attribute_alias.get(attr, attr)
         if attr.startswith("_"):
             super().__setattr__(attr, value)
         elif resolved_name in self._local_attributes:
@@ -144,7 +144,10 @@ class PropertyGroup(list):
         if len(root) > 1:
             raise ValueError(f"{cls._name} needs to be defind exactly once")
         defaults = root[0].attrib
-        items = root[0].findall(cls._kind._name)
+        allowed = set([cls._kind._name])
+        if hasattr(cls._kind, "_alias"):
+            allowed.add(cls._kind._alias)
+        items = [i for i in root[0].iter() if i.tag in allowed]
         data = [cls._kind(index=i, defaults=defaults, **item.attrib)
                 for i, item in enumerate(items)]
         return cls(data, defaults=defaults)

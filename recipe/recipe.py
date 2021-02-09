@@ -28,6 +28,43 @@ class Recipe(object):
     All parts of the recipe present are extracted and can be accessed via
     attributes, where optional parts may be set to ``None``.
 
+    Currently, the following parts of the recipe are supported:
+
+    * ``bouton_distances``: Optional definition of the bouton distances
+      from the soma.  See also
+      :class:`~recipe.parts.bouton_density.InitialBoutonDistance`.
+
+    * ``connection_rules``: Optional parameters for the connectivity
+      reduction.  See also
+      :class:`~recipe.parts.touch_connections.ConnectionRules`.
+
+    * ``gap_junction_properties``: Optional definition of attributes for
+      gap junctions.  See also
+      :class:`~recipe.parts.gap_junction_properties.GapJunctionProperties`.
+
+    * ``touch_reduction``: Optional parameter for a simple trimming of
+      touches with a survival probability.  See also
+      :class:`~recipe.parts.touch_connections.ConnectionRules`.
+
+    * ``touch_rules``: Detailed definition of allowed synapses. All touches
+      not matching the definitions here will be removed.  See also
+      :class:`~recipe.parts.touch_rules.TouchRules`.
+
+    * ``seeds``: Seeds to use when generating random numbers during the
+      touch reduction stage.  See also :class:`~recipe.parts.seeds.Seeds`.
+
+    * ``spine_lengths``: Defines percentiles for the length of spines of
+      synapses, i.e., the distance between the surface positions of
+      touches.  See also :class:`~recipe.parts.spine_lengths.SpineLengths`.
+
+    * ``synapse_properties``: Classifies synapses and assigns parameters
+      for the physical properties of the synapses.  See also
+      :class:`~recipe.parts.synapse_properties.SynapseProperties`.
+
+    * ``synapse_reposition``: Definition of re-assignment of somatic
+      synapses to the first axon segment.  See also
+      :class:`~recipe.parts.synapse_reposition.SynapseShifts`.
+
     Args:
         filename: path to an XML file to extract the recipe from
     """

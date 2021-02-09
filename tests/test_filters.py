@@ -11,6 +11,8 @@ import sparkmanager as sm
 
 from spykfunc.definitions import RunningMode as RM
 from spykfunc.functionalizer import Functionalizer
+from spykfunc.utils.spark import cache_broadcast_single_part
+from spykfunc import schema
 
 NUM_AFTER_DISTANCE = 226301
 NUM_AFTER_TOUCH = 221686
@@ -20,7 +22,12 @@ NUM_AFTER_FILTER = 15996
 @pytest.mark.slow
 def test_fixed_probabilities(tmpdir_factory):
     def layer_counts(circuit):
-        mdf = circuit.source.mtype_df
+        mdf = cache_broadcast_single_part(
+            sm.createDataFrame(
+                enumerate(circuit.source.mtype_values),
+                schema.indexed_strings(["mtype_i", "mtype_name"])
+            )
+        )
         res = (
             circuit.df.join(
                 mdf.withColumn("mtype", F.split(mdf.mtype_name, "_").getItem(0)),

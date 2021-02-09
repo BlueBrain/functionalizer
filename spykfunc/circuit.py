@@ -1,13 +1,18 @@
 """Module for circuit related classes, functions
 """
+import contextlib
 
 import pyspark.sql
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
 
+import sparkmanager as sm
+
 from spykfunc.data_loader import NeuronData, TouchData
 from spykfunc.dataio.morphologies import MorphologyDB
 from spykfunc.utils import get_logger
+from spykfunc.utils.spark import cache_broadcast_single_part
+from spykfunc import schema
 
 logger = get_logger(__name__)
 
@@ -91,6 +96,8 @@ class Circuit(object):
         the path to the morphology data of the neurons
     """
 
+    __pathways_defined = False
+
     def __init__(
         self,
         source: NeuronData,
@@ -115,46 +122,93 @@ class Circuit(object):
         self.__circuit = None
         self.__reduced = None
 
-        self.__pathway_columns = None
-        self.__pathway_offsets = []
-
     def with_pathway(self, df=None):
-        if df is None:
-            df = self.df
-
-        def to_pathway_i(col1, col2):
-            """
-            Expression to calculate the pathway index based on the morphologies' index
-            :param col1: The dataframe src morphology index field
-            :param col2: The dataframe dst morphology index field
-            """
-            return (F.shiftLeft(col1, 16) + F.col(col2)).cast(T.IntegerType()).alias("pathway_i")
-
-        return df.withColumn(
-            "pathway_i",
-            to_pathway_i("src_mtype_i", "dst_mtype_i")
-        )
+        raise RuntimeError("with_patway can only be used in a pathway context")
 
     @staticmethod
     def pathway_to_str(df_pathway_i, src_mtypes, dst_mtypes):
-        """
-        Expression to calculate the pathway name from the pathway index.
+        raise RuntimeError("with_patway can only be used in a pathway context")
 
-        Args:
-            df_pathway_i: Pathway index column
-            src_mtypes: mtypes dataframe, with two fields: (index: int, name: str)
-            dst_mtypes: mtypes dataframe, with two fields: (index: int, name: str)
-        """
-        col = "pathway_i"
-        return (
-            df_pathway_i
-            .withColumn("src_morpho_i", F.shiftRight(col, 16))
-            .withColumn("dst_morpho_i", F.col(col).bitwiseAND((1 << 16)-1))
-            .join(src_mtypes.toDF("src_morpho_i", "src_morpho"), "src_morpho_i")
-            .join(dst_mtypes.toDF("dst_morpho_i", "dst_morpho"), "dst_morpho_i")
-            .withColumn("pathway_str", F.concat("src_morpho", F.lit('->'), "dst_morpho"))
-            .drop("src_morpho_i", "src_morpho", "dst_morpho_i", "dst_morpho")
-        )
+    @staticmethod
+    def expand(columns, source, target):
+        for col in columns:
+            if col.startswith("to"):
+                stem = col.lower()[2:]
+                yield col, f"dst_{stem}", f"dst_{stem}_i", getattr(target, f"{stem}_values")
+            elif col.startswith("from"):
+                stem = col.lower()[4:]
+                yield col, f"src_{stem}", f"src_{stem}_i", getattr(source, f"{stem}_values")
+            else:
+                raise RuntimeError(f"cannot determine node column from '{col}'")
+
+    @contextlib.contextmanager
+    def pathways(self, columns):
+        if not columns:
+            columns = ["fromMType", "toMType"]
+
+        if Circuit.__pathways_defined:
+            raise RuntimeError("cannot define pathway columns multiple times")
+
+        sizes = []
+        names = []
+        numerics = []
+        tables = []
+        for _, name, numeric, vals in self.expand(columns, self.source, self.target):
+            names.append(name)
+            numerics.append(numeric)
+            sizes.append(len(vals))
+            tables.append(
+                cache_broadcast_single_part(
+                    sm.createDataFrame(enumerate(vals), schema.indexed_strings([numeric, name]))
+                )
+            )
+
+        def _w_pathway(self, df=None):
+            if df is None:
+                df = self.df
+            factor = 1
+            result = F.lit(0)
+            for numeric, size in zip(numerics, sizes):
+                result += F.lit(factor) * F.col(numeric)
+                factor *= size
+            return df.withColumn("pathway_i", result)
+
+        def _w_pathway_str(df):
+            col = F.col("pathway_i")
+            strcol = None
+            factor = 1
+            result = F.lit(0)
+            to_drop = []
+            for name, numeric, table, size in zip(names, numerics, tables, sizes):
+                df = (
+                    df
+                    .withColumn(numeric, col % size)
+                    .join(table, numeric)
+                    .drop(numeric)
+                )
+                col = col / size
+                if strcol is not None:
+                    strcol = F.concat(strcol, F.lit(f", {name}="), name)
+                else:
+                    strcol = F.concat(F.lit(f"{name}="), name)
+                to_drop.append(name)
+            return (
+                df
+                .withColumn("pathway_str", strcol)
+                .drop(*to_drop)
+            )
+
+        old_w_pathway = Circuit.with_pathway
+        old_w_pathway_str = Circuit.pathway_to_str
+        Circuit.with_pathway = _w_pathway
+        Circuit.pathway_to_str = staticmethod(_w_pathway_str)
+        Circuit.__pathways_defined = True
+        try:
+            yield
+        finally:
+            Circuit.with_pathway = old_w_pathway
+            Circuit.pathway_to_str = old_w_pathway_str
+            Circuit.__pathways_defined = False
 
     @property
     def __src(self):
