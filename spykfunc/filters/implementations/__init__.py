@@ -8,8 +8,6 @@ import pandas
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
 
-from spykfunc.filters.udfs import get_bins, uniform
-
 
 def add_random_column(df, name, seed, key, derivative):
     """Add a random column to a dataframe
@@ -25,6 +23,7 @@ def add_random_column(df, name, seed, key, derivative):
     """
     @F.pandas_udf('float')
     def _fixed_rand(col):
+        from spykfunc.filters.udfs import uniform
         return pandas.Series(uniform(seed, key, col.values))
     return df.withColumn(name, _fixed_rand(derivative.cast(T.LongType())))
 
@@ -43,5 +42,6 @@ def add_bin_column(df, name, boundaries, key):
     bins = numpy.asarray(boundaries, dtype=numpy.single)
     @F.pandas_udf('int')
     def _bin(col):
+        from spykfunc.filters.udfs import get_bins
         return pandas.Series(get_bins(col.values, bins))
     return df.withColumn(name, _bin(key.cast(T.FloatType())))

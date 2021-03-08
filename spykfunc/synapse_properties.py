@@ -10,7 +10,6 @@ from pyspark.sql import types as T
 from .schema import SYNAPSE_CLASS_MAP_SCHEMA as schema
 from .utils import get_logger
 from .utils.spark import cache_broadcast_single_part
-from .filters.udfs import gamma, poisson, truncated_normal
 
 logger = get_logger(__name__)
 
@@ -165,20 +164,22 @@ def _add_connection_properties(connections, seed):
     :param connections: A Spark dataframe holding synapse connections
     :return: The input dataframe with additonal property columns
     """
-    def __generate(key, fct):
+    def __generate(key, fct_name):
         @F.pandas_udf('float')
         def _udf(*args):
+            import spykfunc.filters.udfs as fcts
+            fct = getattr(fcts, fct_name)
             args = [a.values for a in args]
             return pandas.Series(fct(seed, key, *args))
         return _udf
 
     add = [
-        ("gsyn", __generate(0x1001, gamma)),
-        ("d", __generate(0x1002, gamma)),
-        ("f", __generate(0x1003, gamma)),
-        ("u", __generate(0x1004, truncated_normal)),
-        ("dtc", __generate(0x1005, truncated_normal)),
-        ("nrrp", __generate(0x1006, poisson))
+        ("gsyn", __generate(0x1001, "gamma")),
+        ("d", __generate(0x1002, "gamma")),
+        ("f", __generate(0x1003, "gamma")),
+        ("u", __generate(0x1004, "truncated_normal")),
+        ("dtc", __generate(0x1005, "truncated_normal")),
+        ("nrrp", __generate(0x1006, "poisson"))
     ]
 
     connections = connections.sortWithinPartitions("src")
