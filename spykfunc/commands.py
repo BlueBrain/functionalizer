@@ -10,7 +10,6 @@ from .definitions import RunningMode as RM, SortBy
 
 filters.load()
 
-
 def _parse_args(args=None) -> argparse.Namespace:
     """Handle arguments passed through the commandline
 
@@ -75,11 +74,17 @@ def _parse_args(args=None) -> argparse.Namespace:
                             ", ".join(DatasetOperation.modules()),
                        action=_SplitAction)
     ginput = parser.add_argument_group("input options")
-    ginput.add_argument("--circuit", dest="circuit_file",
-                        help="the input circuit file")
-    ginput.add_argument("--from", dest="source", nargs=2,
+    ginput.add_argument("--from", dest="source", nargs=2, required=True,
+                        metavar=('FILENAME', 'POPULATION'),
                         help="path and name for the source population")
-    ginput.add_argument("--to", dest="target", nargs=2,
+    ginput.add_argument("--from-nodesets", dest="source_nodeset", nargs=2,
+                        metavar=('FILENAME', 'NODESET'), default=[None]*2,
+                        help="path and name for the source population")
+    ginput.add_argument("--to", dest="target", nargs=2, required=True,
+                        metavar=('FILENAME', 'POPULATION'),
+                        help="path and name for the target population")
+    ginput.add_argument("--to-nodesets", dest="target_nodeset", nargs=2,
+                        metavar=('FILENAME', 'NODESET'), default=[None]*2,
                         help="path and name for the target population")
     gtouches = ginput.add_mutually_exclusive_group(required=True)
     gtouches.add_argument("--parquet",
@@ -134,18 +139,7 @@ def _parse_args(args=None) -> argparse.Namespace:
                            "to this flag and exit")
     parser.add_argument("morpho_dir", help="the H5 morphology database directory")
 
-    args = parser.parse_args(args)
-
-    if args.circuit_file:
-        if args.source or args.target:
-            parser.error("either --circuit or --from/--to is allowed")
-        args.source = args.target = (args.circuit_file, "All")
-    elif all(a is None for a in (args.source, args.target)):
-        parser.error("either --circuit or --from/--to is required")
-    elif any(a is None for a in (args.source, args.target)):
-        parser.error("both --from and --to are required")
-
-    return args
+    return parser.parse_args(args)
 
 
 # *****************************************************
@@ -167,7 +161,9 @@ def spykfunc() -> int:
         fz = Functionalizer(**args)
         fz.init_data(options.recipe_file,
                      options.source,
+                     options.source_nodeset,
                      options.target,
+                     options.target_nodeset,
                      options.morpho_dir,
                      options.parquet,
                      options.touches)

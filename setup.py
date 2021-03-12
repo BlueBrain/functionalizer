@@ -242,6 +242,7 @@ def setup_package():
             'console_scripts': [
                 'spykfunc = spykfunc.commands:spykfunc',
                 'parquet-compare = spykfunc.tools.compare:run',
+                'parquet-compare-ns = spykfunc.tools.compare_nodesets:run',
                 'parquet-coalesce = spykfunc.tools.coalesce:run',
             ],
         },

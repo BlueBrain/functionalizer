@@ -6,6 +6,7 @@ import os
 import sparkmanager as sm
 import logging
 import pandas as pd
+import math
 from lazy_property import LazyProperty
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
@@ -47,11 +48,11 @@ def _create_neuron_loader(filename, population):
         nodes = libsonata.NodeStorage(filename)
         pop = nodes.open_population(population)
 
-        start, end = data.iloc[0]
-        selection = libsonata.Selection([(start, end)])
+        (_,ids) = data.iloc[0]
+        selection = libsonata.Selection(ids)
         return pd.DataFrame(
             dict(
-                id=range(start, end),
+                id=ids,
                 mtype_i=pop.get_enumeration('mtype', selection),
                 etype_i=pop.get_enumeration('etype', selection),
                 morphology=pop.get_attribute('morphology', selection),
@@ -107,21 +108,23 @@ class NeuronData:
 
     Arguments
     ---------
-    filename
-        the path to the neuron storage container
     population
-        the name of the neuron population
+        a tuple with the path to the neuron storage container and population name
+    nodeset
+        a tuple with the path to the nodesets JSON file and nodeset name
     cache
         a directory name to use for caching generated Parquet
     """
 
-    def __init__(self, filename: str, population: str, cache: str):
-        import libsonata
+    def __init__(self, population: [str,str], nodeset: [str,str], cache: str):
         self._cache = cache
         self._df = None
-        self._filename = filename
-        self._population = population
-        self._pop = libsonata.NodeStorage(filename).open_population(population)
+        (self._filename, self._population) = population
+        (self._ns_filename, self._ns_nodeset) = nodeset
+
+        import libsonata
+        nodes = libsonata.NodeStorage(self._filename)
+        self._pop = nodes.open_population(self._population)
 
         if not os.path.isdir(self._cache):
             os.makedirs(self._cache)
@@ -196,23 +199,32 @@ class NeuronData:
             df.count()  # force materialize
         else:
             logger.info("Building circuit from raw mvd files")
-            total_parts = len(self) // PARTITION_SIZE + 1
-            logger.debug("Partitions: %d", total_parts)
 
+            # Create a default selection, or load it from the NodeSets
+            if not self._ns_filename:
+                ids = [i for i in range(0, len(self))]
+            else:
+                import libsonata
+                nodesets = libsonata.NodeSets.from_file(self._ns_filename)
+                selection = nodesets.materialize(self._ns_nodeset, self._pop)
+                ids = selection.flatten().tolist()
+
+            total_parts = math.ceil(len(ids) / PARTITION_SIZE)
+            logger.debug("Partitions: %d", total_parts)
             parts = sm.createDataFrame(
-                (
-                    (PARTITION_SIZE * n,
-                     min(PARTITION_SIZE * (n + 1), len(self)))
+                enumerate(
+                    ids[PARTITION_SIZE * n :
+                        min(PARTITION_SIZE * (n + 1), len(ids))]
                     for n in range(total_parts)
                 ),
-                "start: int, end: int"
+                ['row','ids']
             )
 
             # Create DF
             logger.info("Creating neuron data frame...")
             raw_mvd = (
                 parts
-                .groupby("start", "end")
+                .groupby("row")
                 .apply(_create_neuron_loader(self._filename, self._population))
             )
 

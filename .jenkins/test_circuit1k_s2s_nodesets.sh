@@ -13,11 +13,14 @@ salloc -Aproj16 -p$part -Cnvme -N1 --exclusive --mem=0 \
                  --checkpoint-dir=$PWD \
                  -p spark.master=spark://\$\(hostname\):7077 \
                  --from $CIRCUIT All --to $CIRCUIT All \
+                 --from-nodeset $BASE/nodesets.json test \
+                 --to-nodeset $BASE/nodesets.json test \
                  $RECIPE $MORPHOS \
                  --parquet $TOUCHES
 
-parquet-coalesce circuit.parquet single.parquet
-parquet-compare \
+parquet-coalesce circuit.parquet single_nodesets.parquet
+parquet-compare-ns \
     $CIRCUIT \
-    single.parquet \
-    $BASE/touches/structural/circuit.parquet
+    $BASE/touches/structural/circuit.parquet \
+    single_nodesets.parquet \
+    4
