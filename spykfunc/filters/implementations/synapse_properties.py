@@ -1,7 +1,7 @@
 """Filters to add properties to synapses
 """
 from collections import defaultdict, OrderedDict
-from typing import List
+from typing import Dict, List
 import fnmatch
 import numpy as np
 
@@ -64,10 +64,7 @@ class SynapseProperties(DatasetOperation):
         self.rules = self.convert_rules(
             source, target, recipe.synapse_properties.rules
         )
-        self.properties = self.convert_properties(
-            recipe.synapse_properties.rules,
-            recipe.synapse_properties.classes
-        )
+        self.properties = self.convert_properties(recipe.synapse_properties)
 
         if "gsynSRSF" in self.properties.columns:
             self._columns.append((None, "gsynSRSF"))
@@ -89,12 +86,12 @@ class SynapseProperties(DatasetOperation):
         return extended_touches
 
     @staticmethod
-    def convert_properties(rules, classes):
+    def convert_properties(props):
         """Merges synapse class assignment and properties
         """
-        prop_df = _load_from_recipe(classes, schema.SYNAPSE_PROPERTY_SCHEMA, trim=True) \
+        prop_df = _load_from_recipe(props.classes, schema.SYNAPSE_PROPERTY_SCHEMA, trim=True) \
             .withColumnRenamed("_i", "_prop_i")
-        class_df = _load_from_recipe(rules, schema.SYNAPSE_CLASSIFICATION_SCHEMA) \
+        class_df = _load_from_recipe(props.rules, schema.SYNAPSE_CLASSIFICATION_SCHEMA) \
             .withColumnRenamed("_i", "_class_i")
 
         # These are small DF, we coalesce to 1 so the sort doesnt require shuffle

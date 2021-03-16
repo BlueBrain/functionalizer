@@ -6,7 +6,7 @@ import logging
 import numpy as np
 
 from collections import Counter
-from typing import Iterable, Iterator, List, Tuple
+from typing import Dict, Iterable, Iterator, List, Tuple
 
 from ..property import Property, PropertyGroup
 
@@ -78,8 +78,8 @@ class SynapseClasses(PropertyGroup):
     _name = "SynapsesClassification"
 
     @classmethod
-    def load(cls, xml):
-        data = super(SynapseClasses, cls).load(xml)
+    def load(cls, xml, strict: bool = True):
+        data = super(SynapseClasses, cls).load(xml, strict)
         for attr in ("gsynSRSF", "uHillCoefficient"):
             values = sum(getattr(d, attr, None) is not None for d in data)
             if values == 0:  # no values, remove attribute
@@ -123,10 +123,15 @@ class SynapseProperties:
     def __str__(self):
         return f"{self.rules}\n{self.classes}"
 
+    def validate(
+        self, values: Dict[str, List[str]]
+    ) -> bool:
+        return True
+
     @classmethod
-    def load(cls, xml):
-        rules = SpynapseRules.load(xml)
-        classes = SynapseClasses.load(xml)
+    def load(cls, xml, strict: bool = True):
+        rules = SpynapseRules.load(xml, strict)
+        classes = SynapseClasses.load(xml, strict)
 
         duplicates = list(cls._duplicated(classes))
         unmatched = list(cls._unmatched(rules, classes))

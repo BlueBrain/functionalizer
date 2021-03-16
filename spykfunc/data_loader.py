@@ -140,6 +140,7 @@ class NeuronData:
 
     mtype_values = property(lambda self: self._pop.enumeration_values("mtype"))
     etype_values = property(lambda self: self._pop.enumeration_values("etype"))
+    region_values = property(lambda self: self._pop.enumeration_values("region"))
     sclass_values = property(lambda self: self._pop.enumeration_values("synapse_class"))
 
     def __len__(self):

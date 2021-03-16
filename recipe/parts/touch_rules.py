@@ -5,9 +5,9 @@ import itertools
 import logging
 import numpy as np
 
-from typing import Iterable, Iterator, List, Tuple
+from typing import Dict, Iterable, Iterator, List, Tuple
 
-from ..property import Property, PropertyGroup
+from ..property import MTypeValidator, Property, PropertyGroup
 
 
 # dendrite mapping here is for historical purposes only, when we
@@ -55,40 +55,11 @@ class TouchRule(Property):
             fnmatch.filter(src_mtypes, self.fromMType),
             fnmatch.filter(dst_mtypes, self.toMType),
         ):
-            yield (src, self.fromBranchType, dst, self.toBranchType)
+            yield (src, dst, self.fromBranchType, self.toBranchType)
 
 
-class TouchRules(PropertyGroup):
+class TouchRules(PropertyGroup, MTypeValidator):
     _kind = TouchRule
-
-    def validate(self, src_mtypes: List[str], dst_mtypes: List[str]) -> bool:
-        def _check(mtypes, covered, kind):
-            uncovered = set(mtypes) - covered
-            if len(uncovered):
-                logger.warning(
-                    f"The following {kind} MTypes are not covered: {', '.join(uncovered)}"
-                )
-                return False
-            return True
-
-        covered_src = set()
-        covered_dst = set()
-        valid = True
-        for r in self:
-            values = list(r(src_mtypes, dst_mtypes))
-            if len(values) == 0:
-                logger.warning(f"The following rule does not match anything: {r}")
-                valid = False
-            for src, _, dst, _ in values:
-                covered_src.add(src)
-                covered_dst.add(dst)
-        return all(
-            [
-                valid,
-                _check(src_mtypes, covered_src, "source"),
-                _check(dst_mtypes, covered_dst, "target"),
-            ]
-        )
 
     def to_matrix(self, src_mtypes: List[str], dst_mtypes: List[str]) -> np.array:
         """Construct a touch rule matrix
@@ -113,7 +84,7 @@ class TouchRules(PropertyGroup):
         )
 
         for r in self:
-            for src_mt, src_bt, dst_mt, dst_bt in r(src_mtypes, dst_mtypes):
+            for src_mt, dst_mt, src_bt, dst_bt in r(src_mtypes, dst_mtypes):
                 for i in BRANCH_TYPES[src_bt]:
                     for j in BRANCH_TYPES[dst_bt]:
                         matrix[

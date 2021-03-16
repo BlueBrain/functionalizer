@@ -127,7 +127,7 @@ class Functionalizer(object):
 
         logger.debug("%s: Data loading...", time.ctime())
         # Load recipe
-        self.recipe = Recipe(recipe_file)
+        self.recipe = Recipe(recipe_file, self._config.strict)
 
         # Load Neurons data
         n_from = NeuronData(source, source_nodeset, self._config.cache_dir)
@@ -140,6 +140,16 @@ class Functionalizer(object):
         touches = TouchData(parquet, sonata)
 
         self.circuit = Circuit(n_from, n_to, touches, morpho_dir)
+
+        if self._config.strict and not self.recipe.validate({
+            "fromMType": n_from.mtype_values,
+            "fromEType": n_from.etype_values,
+            "fromSClass": n_from.sclass_values,
+            "toMType": n_to.mtype_values,
+            "toEType": n_to.etype_values,
+            "toSClass": n_to.sclass_values,
+        }):
+            raise RuntimeError("Recipe validation failed")
 
         return self
 

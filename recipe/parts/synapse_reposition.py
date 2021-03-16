@@ -5,7 +5,7 @@ import itertools
 
 from typing import Iterable, Iterator, List, Tuple
 
-from ..property import Property, PropertyGroup
+from ..property import MTypeValidator, Property, PropertyGroup
 
 
 class Shift(Property):
@@ -27,6 +27,8 @@ class Shift(Property):
             yield (src, dst, self.type)
 
 
-class SynapseShifts(PropertyGroup):
+class SynapseShifts(PropertyGroup, MTypeValidator):
     _name = "SynapsesReposition"
     _kind = Shift
+
+    _mtype_coverage = False  # MTypeValidator will only test the rules

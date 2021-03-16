@@ -3,14 +3,16 @@
 import copy
 import logging
 import textwrap
+from io import StringIO
 from lxml import etree
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, TextIO, Tuple
 
 from .property import NotFound
 from .parts.bouton_density import InitialBoutonDistance
 from .parts.gap_junction_properties import GapJunctionProperties
 from .parts.seeds import Seeds
 from .parts.spine_lengths import SpineLengths
+from .parts.structure import InterBoutonInterval, StructuralSpineLengths
 from .parts.synapse_properties import SynapseProperties
 from .parts.synapse_reposition import SynapseShifts
 from .parts.touch_connections import ConnectionRules
@@ -28,45 +30,16 @@ class Recipe(object):
     All parts of the recipe present are extracted and can be accessed via
     attributes, where optional parts may be set to ``None``.
 
-    Currently, the following parts of the recipe are supported:
-
-    * ``bouton_distances``: Optional definition of the bouton distances
-      from the soma.  See also
-      :class:`~recipe.parts.bouton_density.InitialBoutonDistance`.
-
-    * ``connection_rules``: Optional parameters for the connectivity
-      reduction.  See also
-      :class:`~recipe.parts.touch_connections.ConnectionRules`.
-
-    * ``gap_junction_properties``: Optional definition of attributes for
-      gap junctions.  See also
-      :class:`~recipe.parts.gap_junction_properties.GapJunctionProperties`.
-
-    * ``touch_reduction``: Optional parameter for a simple trimming of
-      touches with a survival probability.  See also
-      :class:`~recipe.parts.touch_connections.ConnectionRules`.
-
-    * ``touch_rules``: Detailed definition of allowed synapses. All touches
-      not matching the definitions here will be removed.  See also
-      :class:`~recipe.parts.touch_rules.TouchRules`.
-
-    * ``seeds``: Seeds to use when generating random numbers during the
-      touch reduction stage.  See also :class:`~recipe.parts.seeds.Seeds`.
-
-    * ``spine_lengths``: Defines percentiles for the length of spines of
-      synapses, i.e., the distance between the surface positions of
-      touches.  See also :class:`~recipe.parts.spine_lengths.SpineLengths`.
-
-    * ``synapse_properties``: Classifies synapses and assigns parameters
-      for the physical properties of the synapses.  See also
-      :class:`~recipe.parts.synapse_properties.SynapseProperties`.
-
-    * ``synapse_reposition``: Definition of re-assignment of somatic
-      synapses to the first axon segment.  See also
-      :class:`~recipe.parts.synapse_reposition.SynapseShifts`.
-
     Args:
         filename: path to an XML file to extract the recipe from
+        strict: will raise when additional attributes are encountered, on
+                by default
+    """
+
+    bouton_interval: InterBoutonInterval
+    """The interval parametrization specifying how touches should be
+    distributed where cell morphologies overlap.  See also
+    :class:`~recipe.parts.structure.InterBoutonInterval`.
     """
 
     bouton_distances: Optional[InitialBoutonDistance] = None
@@ -108,6 +81,11 @@ class Recipe(object):
     See also :class:`~recipe.parts.spine_lengths.SpineLengths`.
     """
 
+    structural_spine_lengths: StructuralSpineLengths
+    """Defines the maximum length of spines used by TouchDetector.
+    See also :class:`~recipe.parts.structure.StructuralSpineLengths`.
+    """
+
     synapse_properties: SynapseProperties
     """Classifies synapses and assigns parameters for the physical
     properties of the synapses.
@@ -120,57 +98,74 @@ class Recipe(object):
     See also :class:`~recipe.parts.synapse_reposition.SynapseShifts`.
     """
 
-    def __init__(self, filename: str):
+    def __init__(self, filename: str, strict: bool = True):
         xml = self._load_from_xml(filename)
         for name, kind in self.__annotations__.items():
             try:
                 if not hasattr(kind, "load"):
                     kind, = [cls for cls in kind.__args__ if cls != type(None)]
-                setattr(self, name, kind.load(xml))
+                setattr(self, name, kind.load(xml, strict=strict))
             except NotFound as e:
                 logger.warning("missing recipe part: %s", e)
 
-    def validate(self, src_mtypes: List[str], dst_mtypes: List[str], **kwargs) -> bool:
+    def validate(
+        self, values: Dict[str, List[str]]
+    ) -> bool:
         """Validate basic functionality of the recipe.
 
         Checks provided here-in test for basic coverage, and provides a
         weak assertion that the recipe should be functional.
 
-        Args:
-            src_mtypes: List of the `mtypes` of the source node population
-            dst_mtypes: List of the `mtypes` of the target node population
+        The parameter `values` should be a dictionary containing all
+        allowed values in the form ``fromMType``
         """
         def _inner():
             for name in self.__annotations__:
                 attr = getattr(self, name, None)
-                if attr and not attr.validate(**kwargs):
+                if attr and not attr.validate(values):
                     yield False
                 yield True
         return all(_inner())
 
-    def dumps(self, split_connectivity: bool = True) -> str:
+    def dump(self, fd: TextIO, connectivity_fd: Optional[TextIO] = None):
+        """Write the recipe to the provided file descriptors.
+
+        If `connectivity_fd` is given, the connection rules of the recipe
+        are written to it, otherwise dump the whole recipe to `fd`.
+        """
         contents = []
+        header = ""
         for name in self.__annotations__:
-            attr = getattr(self, name, None)
-            if attr:
-                text = str(attr)
-                if len(text) > 0:
-                    contents.append(text)
+            if not (hasattr(self, name) and getattr(self, name)):
+                continue
+            text = str(getattr(self, name))
+            if len(text) == 0:
+                continue
+            if name == "connection_rules" and connectivity_fd:
+                connectivity_fd.write(text)
+                contents.append("&connectivity;")
+                header = _CONNECTIVITY_DECLARATION.format(
+                    getattr(connectivity_fd, "name", "UNKNOWN")
+                )
+            else:
+                contents.append(text)
         inner = textwrap.indent("\n".join(contents), "  ")
         if inner:
             inner = "\n" + inner
-        return RECIPE_SHELL.format(inner)
+        fd.write(_RECIPE_SKELETON.format(header, inner))
 
     def __str__(self) -> str:
         """Converts the recipe into XML.
         """
-        return self.dumps(False)
+        output = StringIO()
+        self.dump(output)
+        return output.getvalue()
 
     @staticmethod
     def _load_from_xml(recipe_file):
         try:
             # Parse the given XML file:
-            parser = etree.XMLParser(recover=True, remove_comments=True)
+            parser = etree.XMLParser(remove_comments=True)
             tree = etree.parse(recipe_file, parser)
         except (etree.XMLSyntaxError, etree.ParserError) as err:
             logger.warning(f"could not parse xml of recipe '{recipe_file}'")
@@ -182,8 +177,14 @@ class Recipe(object):
             return tree.getroot()
 
 
-RECIPE_SHELL="""\
-<?xml version="1.0"?>
+_RECIPE_SKELETON = """\
+<?xml version="1.0"?>{}
 <blueColumn>{}
 </blueColumn>
+"""
+
+_CONNECTIVITY_DECLARATION = """
+<!DOCTYPE blueColumn [
+  <!ENTITY connectivity SYSTEM "{}">
+]>\
 """

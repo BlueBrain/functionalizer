@@ -1,0 +1,515 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE blueColumn [
+  <!ENTITY connectivityRecipe SYSTEM "v7connectivity.xml">
+]>
+
+
+
+<!-- @version: -->
+
+<blueColumn>
+<!-- use following line to modify inter-bouton interval algorithm paramters; defaults are min=3, max=7, gap=5
+        <InterBoutonInterval minDistance="5.0" maxDistance="9.0" regionGap="5.0"/>
+-->
+    <InterBoutonInterval minDistance="5.0" maxDistance="7.0" regionGap="5.0"/>
+    <!-- BrunoMagalhaes, BLBLD-42: Inh and Excitatory filtering distances. defaultSynapsesDistances
+         are applied when fromSclass/toSclass/fromMtype rules are not provided
+         (if InitialBoutonDistance XML tree not provided, inhibitorySynapsesDistance = 5.0 and excitatorySynapsesDistance = 25.0
+         will be used (hard-coded on Functionalizer)-->
+    <InitialBoutonDistance defaultInhSynapsesDistance="5.0" defaultExcSynapsesDistance="25.0" />
+
+
+    <NeuronTypes>
+
+        <StructuralType id="L1_DAC" spineLength="2.5"/>
+        <StructuralType id="L1_NGC-DA" spineLength="2.5"/>
+        <StructuralType id="L1_NGC-SA" spineLength="2.5"/>
+        <StructuralType id="L1_HAC" spineLength="2.5"/>
+        <StructuralType id="L1_LAC" spineLength="2.5"/>
+        <StructuralType id="L1_SAC" spineLength="2.5"/>
+        <StructuralType id="L2_TPC:A" spineLength="2.5"/>
+        <StructuralType id="L2_TPC:B" spineLength="2.5"/>
+        <StructuralType id="L2_IPC" spineLength="2.5"/>
+        <StructuralType id="L23_MC" spineLength="2.5"/>
+        <StructuralType id="L23_BTC" spineLength="2.5" />
+        <StructuralType id="L23_DBC" spineLength="0.5"/>
+        <StructuralType id="L23_BP" spineLength="0.5"/>
+        <StructuralType id="L23_NGC" spineLength="0.5"/>
+        <StructuralType id="L23_LBC" spineLength="2.5"/>
+        <StructuralType id="L23_NBC" spineLength="2.5"/>
+        <StructuralType id="L23_SBC" spineLength="2.5"/>
+        <StructuralType id="L23_CHC" spineLength="2.5"/>
+        <StructuralType id="L3_TPC:A" spineLength="2.5"/>
+        <!-- Renamed L3_TPC:B -> L3_TPC:C following latest morphology release :SBP -->
+        <StructuralType id="L3_TPC:C" spineLength="2.5"/>
+        <StructuralType id="L23_MC" spineLength="2.5"/>
+        <StructuralType id="L23_BTC" spineLength="2.5"/>
+        <StructuralType id="L23_DBC" spineLength="0.5"/>
+        <StructuralType id="L23_BP" spineLength="0.5"/>
+        <StructuralType id="L23_NGC" spineLength="0.5"/>
+        <StructuralType id="L23_LBC" spineLength="2.5"/>
+        <StructuralType id="L23_NBC" spineLength="2.5"/>
+        <StructuralType id="L23_SBC" spineLength="2.5"/>
+        <StructuralType id="L23_CHC" spineLength="2.5"/>
+        <StructuralType id="L4_TPC" spineLength="2.5"/>
+        <StructuralType id="L4_UPC" spineLength="2.5"/>
+        <StructuralType id="L4_SSC" spineLength="2.5"/>
+        <StructuralType id="L4_MC" spineLength="2.5"/>
+        <StructuralType id="L4_BTC" spineLength="2.5"/>
+        <StructuralType id="L4_DBC" spineLength="0.5"/>
+        <StructuralType id="L4_BP" spineLength="0.5"/>
+        <StructuralType id="L4_NGC" spineLength="0.5"/>
+        <StructuralType id="L4_LBC" spineLength="2.5"/>
+        <StructuralType id="L4_NBC" spineLength="2.5"/>
+        <StructuralType id="L4_SBC" spineLength="2.5"/>
+        <StructuralType id="L4_CHC" spineLength="2.5"/>
+        <StructuralType id="L5_TPC:A" spineLength="2.5"/>
+        <StructuralType id="L5_TPC:B" spineLength="2.5"/>
+        <StructuralType id="L5_TPC:C" spineLength="2.5"/>
+        <StructuralType id="L5_UPC" spineLength="2.5"/>
+        <StructuralType id="L5_MC" spineLength="2.5"/>
+        <StructuralType id="L5_BTC" spineLength="2.5"/>
+        <StructuralType id="L5_DBC" spineLength="0.5"/>
+        <StructuralType id="L5_BP" spineLength="0.5"/>
+        <StructuralType id="L5_NGC" spineLength="0.5"/>
+        <StructuralType id="L5_LBC" spineLength="2.5"/>
+        <StructuralType id="L5_NBC" spineLength="2.5"/>
+        <StructuralType id="L5_SBC" spineLength="2.5"/>
+        <StructuralType id="L5_CHC" spineLength="2.5"/>
+        <StructuralType id="L6_TPC:A" spineLength="2.5"/>
+        <StructuralType id="L6_TPC:C" spineLength="2.5"/>
+        <StructuralType id="L6_UPC" spineLength="2.5"/>
+        <StructuralType id="L6_IPC" spineLength="2.5"/>
+        <StructuralType id="L6_BPC" spineLength="2.5"/>
+        <StructuralType id="L6_HPC" spineLength="2.5"/>
+        <StructuralType id="L6_MC" spineLength="2.5"/>
+        <StructuralType id="L6_BTC" spineLength="2.5"/>
+        <StructuralType id="L6_DBC" spineLength="0.5"/>
+        <StructuralType id="L6_BP" spineLength="0.5"/>
+        <StructuralType id="L6_NGC" spineLength="0.5"/>
+        <StructuralType id="L6_LBC" spineLength="2.5"/>
+        <StructuralType id="L6_NBC" spineLength="2.5"/>
+        <StructuralType id="L6_SBC" spineLength="2.5"/>
+        <StructuralType id="L6_CHC" spineLength="2.5"/>
+
+    </NeuronTypes>
+
+
+    <SynapsesProperties neuralTransmitterReleaseDelay="0.1" axonalConductionVelocity="300.0">
+
+        <!-- general pathways -->
+        <synapse fromSClass="EXC" toSClass="EXC" type="E2" />
+        <synapse fromSClass="EXC" toSClass="INH" type="E2_INH" />
+        <synapse fromSClass="INH" toSClass="EXC" type="I2" />
+        <synapse fromSClass="INH" toSClass="INH" type="I2" />
+
+
+        <!-- new synapse rules to assign specific USE value for selected PC - PC pathways from literature. SR -->
+        <synapse fromMType="L2_TPC:*" toMType="L2_TPC:*" type="E2_L23PC" />
+        <synapse fromMType="L3_TPC:*" toMType="L3_TPC:*" type="E2_L23PC" />
+        <synapse fromMType="L2_TPC:*" toMType="L3_TPC:*" type="E2_L23PC" />
+        <synapse fromMType="L3_TPC:*" toMType="L2_TPC:*" type="E2_L23PC" />
+        <synapse fromMType="L2_IPC" toMType="L2_IPC" type="E2_L23PC" />
+        <synapse fromMType="L2_IPC" toMType="L2_TPC:*" type="E2_L23PC" />
+        <synapse fromMType="L2_IPC" toMType="L3_TPC:*" type="E2_L23PC" />
+        <synapse fromMType="L2_TPC:*" toMType="L2_IPC" type="E2_L23PC" />
+        <synapse fromMType="L3_TPC:*" toMType="L2_IPC" type="E2_L23PC" />
+
+        <synapse fromMType="L2_IPC" toMType="L5_TPC:A" type="E2_L23PC_L5TTPC" />
+        <synapse fromMType="L2_TPC:*" toMType="L5_TPC:A" type="E2_L23PC_L5TTPC" />
+        <synapse fromMType="L3_TPC:*" toMType="L5_TPC:A" type="E2_L23PC_L5TTPC" />
+        <synapse fromMType="L2_IPC" toMType="L5_TPC:B" type="E2_L23PC_L5TTPC" />
+        <synapse fromMType="L2_TPC:*" toMType="L5_TPC:B" type="E2_L23PC_L5TTPC" />
+        <synapse fromMType="L3_TPC:*" toMType="L5_TPC:B" type="E2_L23PC_L5TTPC" />
+
+        <synapse fromMType="L4_*PC" toMType="L4_*PC" type="E2_L4PC" />
+        <synapse fromMType="L4_*PC" toMType="L4_SSC" type="E2_L4PC" />
+        <synapse fromMType="L4_SSC" toMType="L4_*PC" type="E2_L4PC" />
+        <synapse fromMType="L4_SSC" toMType="L4_SSC" type="E2_L4PC" />
+
+        <synapse fromMType="L4_SSC" toMType="L2_IPC" type="E2_L4SS_L23PC" />
+        <synapse fromMType="L4_SSC" toMType="L2_TPC:*" type="E2_L4SS_L23PC" />
+        <synapse fromMType="L4_SSC" toMType="L3_TPC:*" type="E2_L4SS_L23PC" />
+
+        <synapse fromMType="L4_SSC" toMType="L5_TPC:C" type="E2_L4SS_L5STPC" />
+        <synapse fromMType="L4_SSC" toMType="L5_UPC" type="E2_L4SS_L5STPC" />
+
+        <synapse fromMType="L5_TPC:C" toMType="L5_TPC:C" type="E2_L5STPC" />
+        <synapse fromMType="L5_TPC:C" toMType="L5_UPC" type="E2_L5STPC" />
+        <synapse fromMType="L5_UPC" toMType="L5_TPC:C" type="E2_L5STPC" />
+        <synapse fromMType="L5_UPC" toMType="L5_UPC" type="E2_L5STPC" />
+
+        <synapse fromMType="L5_TPC:A" toMType="L5_TPC:A" type="E2_L5TTPC" />
+        <synapse fromMType="L5_TPC:A" toMType="L5_TPC:B" type="E2_L5TTPC" />
+        <synapse fromMType="L5_TPC:B" toMType="L5_TPC:A" type="E2_L5TTPC" />
+        <synapse fromMType="L5_TPC:B" toMType="L5_TPC:B" type="E2_L5TTPC" />
+
+        <synapse fromMType="L4_SSC" toMType="L6_TPC:A" type="E2_L4SS_L6PC" />
+        <synapse fromMType="L4_SSC" toMType="L6_TPC:C" type="E2_L4SS_L6PC" />
+        <synapse fromMType="L4_SSC" toMType="L6_UPC" type="E2_L4SS_L6PC" />
+        <synapse fromMType="L4_SSC" toMType="L6_IPC" type="E2_L4SS_L6PC" />
+        <synapse fromMType="L4_SSC" toMType="L6_BPC" type="E2_L4SS_L6PC" />
+        <synapse fromMType="L4_SSC" toMType="L6_HPC" type="E2_L4SS_L6PC" />
+
+        <!-- L6 PC - PC connections from TKB's thesis
+        TPC:A - TPC:A has unique USE, D, F while the rest is lumped and they differ only in g_syn AE -->
+        <!-- Fixed toSClass -> toMType for these rules :SBP -->
+        <synapse fromMType="L6_*PC" toMType="L6_*PC" type="E2_L6PC_diff" />
+        <synapse fromMType="L6_*PC" toMType="L6_TPC:*" type="E2_L6PC_diff" />
+        <synapse fromMType="L6_TPC:*" toMType="L6_*PC" type="E2_L6PC_diff" />
+        <synapse fromMType="L6_TPC:C" toMType="L6_TPC:A" type="E2_L6PC_diff" />
+        <synapse fromMType="L6_TPC:A" toMType="L6_TPC:C" type="E2_L6TPCA-C" />  <!-- a bit more specific -->
+        <synapse fromMType="L6_TPC:A" toMType="L6_BPC" type="E2_L6TPCA-BPC" />  <!-- a bit more specific -->
+        <synapse fromMType="L6_TPC:C" toMType="L6_IPC" type="E2_L6TPCC-IPC" />  <!-- a bit more specific -->
+        <synapse fromMType="L6_IPC" toMType="L6_BPC" type="E2_L6IPC-BPC" />  <!-- a bit more specific -->
+        <synapse fromMType="L6_BPC" toMType="L6_TPC:A" type="E2_L6BPC-TPCA" />  <!-- a bit more specific -->
+        <!-- synapse between the same type of L6 PCs seem to be stronger
+        (based on in silico g_syn calibrated for TPC:A-TPC:A TPC:C-TPC:C and IPC-IPC) -->
+        <synapse fromMType="L6_UPC" toMType="L6_UPC" type="E2_L6PC_same" />
+        <synapse fromMType="L6_BPC" toMType="L6_BPC" type="E2_L6PC_same" />
+        <synapse fromMType="L6_HPC" toMType="L6_HPC" type="E2_L6PC_same" />
+        <synapse fromMType="L6_TPC:A" toMType="L6_TPC:A" type="E2_L6TPCA" />  <!-- unique -->
+        <synapse fromMType="L6_TPC:C" toMType="L6_TPC:C" type="E2_L6TPCC" />  <!-- a bit more specific -->
+        <synapse fromMType="L6_IPC" toMType="L6_IPC" type="E2_L6IPC" />  <!-- a bit more specific -->
+
+
+        <!-- new synapse rules to assign specific USE, D, F values (mostly from Gupta et al. 2000)
+        for selected INH (and PC - INH) pathways from literature. SR -->
+        <!-- _DT = Distal/Dendrite targeting (BP, DBC, BTC, MC, NGC?, L1?) -->
+        <synapse fromMType="L*_BP" toSClass="EXC" type="I2_DT" />
+        <!-- <synapse fromSClass="EXC" toMType="L*_BP" type="E2_INH" /> -->
+        <synapse fromSClass="EXC" toMType="L*_BP" toEType="cACint" type="E1_DT" />
+
+        <synapse fromMType="L*_DBC" toSClass="EXC" type="I2_DT" />
+        <!-- <synapse fromSClass="EXC" toMType="L*_DBC" type="E2_INH" /> -->
+        <synapse fromSClass="EXC" toMType="L*_DBC" toEType="cACint" type="E1_DT" />
+
+        <synapse fromMType="L*_BTC" toSClass="EXC" type="I2_DT" />
+        <!-- <synapse fromSClass="EXC" toMType="L*_BTC" type="E2_INH" /> -->
+        <synapse fromSClass="EXC" toMType="L*_BTC" toEType="cACint" type="E1_DT" />
+
+        <synapse fromMType="L*_MC" toSClass="EXC" type="I2_MC" />
+        <synapse fromSClass="EXC" toMType="L*_MC" type="E1_MC" />
+
+        <synapse fromMType="L1_NGC-DA" toSClass="EXC" type="I2_NGC" />
+        <synapse fromMType="L1_NGC-SA" toSClass="EXC" type="I2_NGC" />
+        <synapse fromMType="L*_NGC" toSClass="EXC" type="I2_NGC" />
+        <!-- <synapse fromSClass="EXC" toMType="L*_NGC" type="E2_INH" /> -->
+
+        <synapse fromMType="L1_*AC" toSClass="EXC" type="I2_L1nonNGC" />
+        <synapse fromSClass="EXC" toMType="L1_*AC" type="E2_L1nonNGC" />
+
+        <!-- _PT = Proximal targeting ([LNS]BC, CHC) -->
+        <synapse fromSClass="EXC" toMType="L*_LBC" type="E2_NBC" />
+        <synapse fromSClass="EXC" toMType="L*_LBC" toEType="cACint" type="E1_PT" />
+        <synapse fromSClass="EXC" toMType="L*_LBC" toEType="cIR" type="E1_PT" />
+        <synapse fromSClass="EXC" toMType="L*_LBC" toEType="bAC" type="E1_PT" />
+        <synapse fromSClass="EXC" toMType="L*_LBC" toEType="bIR" type="E1_PT" />
+        <synapse fromSClass="EXC" toMType="L*_LBC" toEType="cNAC" type="E1_PT" />
+
+        <synapse fromSClass="EXC" toMType="L*_NBC" type="E2_NBC" />
+        <synapse fromSClass="EXC" toMType="L*_NBC" toEType="cACint" type="E1_PT" />
+        <synapse fromSClass="EXC" toMType="L*_NBC" toEType="cIR" type="E1_PT" />
+        <synapse fromSClass="EXC" toMType="L*_NBC" toEType="bAC" type="E1_PT" />
+        <synapse fromSClass="EXC" toMType="L*_NBC" toEType="bIR" type="E1_PT" />
+        <synapse fromSClass="EXC" toMType="L*_NBC" toEType="cNAC" type="E1_PT" />
+
+        <synapse fromSClass="EXC" toMType="L*_SBC" type="E2_PT" />
+
+        <synapse fromSClass="EXC" toMType="L*_CHC" type="E2_PT" />
+
+        <synapse fromMType="L*_LBC" toSClass="EXC" type="I2_NBC" />
+        <synapse fromMType="L*_LBC" fromEType="cNAC" toSClass="EXC" type="I3_PT" />
+        <synapse fromMType="L*_LBC" fromEType="dSTUT" toSClass="EXC" type="I3_PT" />
+        <synapse fromMType="L*_LBC" fromEType="cSTUT" toSClass="EXC" type="I3_PT" />
+        <synapse fromMType="L*_LBC" fromEType="bSTUT" toSClass="EXC" type="I3_PT" />
+
+        <synapse fromMType="L*_NBC" toSClass="EXC" type="I2_NBC" />
+        <synapse fromMType="L*_NBC" fromEType="cNAC" toSClass="EXC" type="I3_PT" />
+        <synapse fromMType="L*_NBC" fromEType="dSTUT" toSClass="EXC" type="I3_PT" />
+        <synapse fromMType="L*_NBC" fromEType="cSTUT" toSClass="EXC" type="I3_PT" />
+        <synapse fromMType="L*_NBC" fromEType="bSTUT" toSClass="EXC" type="I3_PT" />
+
+        <synapse fromMType="L*_SBC" toSClass="EXC" type="I3_PT" />
+        <synapse fromMType="L*_SBC" fromEType="cACint" toSClass="EXC" type="I1_PT" />
+        <synapse fromMType="L*_SBC" fromEType="dNAC" toSClass="EXC" type="I2_PT" />
+
+        <!-- L6 PC - BC connections from TKB's thesis -->
+        <!-- Changed _*BC -> _[LNS]BC to match only basket cells and not double bouquet cells (DBC) :SBP -->
+        <!-- Fixed fromSClass -> fromMType for these rules :SBP -->
+        <synapse fromMType="L6_*PC" toMType="L6_[LNS]BC" type="E2_L6EXC-L6BC" />
+        <synapse fromMType="L6_TPC:A" toMType="L6_[LNS]BC" type="E2_L6TPC-L6BC" />
+        <synapse fromMType="L6_TPC:C" toMType="L6_[LNS]BC" type="E2_L6NPC-L6BC" />
+        <synapse fromMType="L6_IPC" toMType="L6_[LNS]BC" type="E2_L6IPC-L6BC" />
+
+        <!-- L6 BC - PC connections from TKB's thesis -->
+        <synapse fromMType="L6_[LNS]BC" toMType="L6_TPC:*" type="I3_L6BC" />
+        <synapse fromMType="L6_[LNS]BC" toMType="L6_*PC" type="I3_L6BC" />
+
+        <!-- L6_[LNS]BC -> L6_[LNS]BC connections are strongly facilitating with I1 dynamics (from TKB's thesis)
+        This is an exception to the general *INH -* INH rule, which prescribes I2 dynamics SR -->
+        <synapse fromMType="L6_[LNS]BC" toMType="L6_[LNS]BC" type="I1" />
+
+    </SynapsesProperties>
+
+
+    <SynapsesClassification>
+
+        <!-- authors: Srikanth Ramaswamy and Andras Ecker, last update: 07.2020 -->
+        <!-- Updated uHillCoefficient = 1.94 for intermediate calcium scaling, as per SSCXDIS-113 :SBP -->
+
+        <!--  INHIBITORY PATHWAYS  -->
+        <!-- general INH synapses: USE, F, D and dtc from Gupa et al. 2000, UVR, Hill coefs. from Rozov et al. 2001,
+        GABA_B only for NGCs (see below), g_syns are the avg. of I2_NBC, I2_MC, and I3_L6BC -->
+        <class id="I1" gsyn="2.25" gsynSD="1.0" nrrp="1.0" dtc="10.4" dtcSD="6.2" u="0.16" uSD="0.1" d="45" dSD="21" f="376" fSD="253" gsynSRSF="0.0" uHillCoefficient="1.94"/>
+        <class id="I2" gsyn="2.25" gsynSD="1.0" nrrp="1.0" dtc="8.30" dtcSD="2.2" u="0.25" uSD="0.13" d="706" dSD="405" f="21" fSD="9" gsynSRSF="0.0" uHillCoefficient="1.94"/>
+
+        <!-- general INH _PT: g_syn is the same as I2_NBC (see USE, D, F, dtc, NRRP, Hill, GABA_A above) -->
+        <class id="I1_PT" gsyn="1.95" gsynSD="1.0" nrrp="1.0" dtc="10.4" dtcSD="6.2" u="0.16" uSD="0.1" d="45" dSD="21" f="376" fSD="253" gsynSRSF="0.0" uHillCoefficient="1.94"/>
+        <class id="I2_PT" gsyn="1.95" gsynSD="1.0" nrrp="1.0" dtc="8.30" dtcSD="2.2" u="0.25" uSD="0.13" d="706" dSD="405" f="21" fSD="9" gsynSRSF="0.0" uHillCoefficient="1.09"/>
+        <class id="I3_PT" gsyn="1.95" gsynSD="1.0" nrrp="1.0" dtc="6.40" dtcSD="1.7" u="0.32" uSD="0.14" d="144" dSD="80" f="62" fSD="31" gsynSRSF="0.0" uHillCoefficient="1.94"/>
+
+        <!-- general INH _DT: g_syn is the same as I2_MC (see USE, D, F, dtc, NRRP, Hill, GABA_A above) -->
+        <class id="I2_DT" gsyn="3.0" gsynSD="1.5" nrrp="1.0" dtc="8.30" dtcSD="2.2" u="0.25" uSD="0.13" d="706" dSD="405" f="21" fSD="9" gsynSRSF="0.0" uHillCoefficient="1.94"/>
+
+        <!-- I2-like NBC - PC: USE, D, F from Wang et al. 2002, g_syn to match Beierlein et al. 2003 (lumped "FS" class) -->
+        <class id="I2_NBC" gsyn="1.95" gsynSD="1.0" nrrp="1.0" dtc="8.3" dtcSD="2.7" u="0.14" uSD="0.05" d="875" dSD="285" f="22" fSD="5" gsynSRSF="0.0" uHillCoefficient="1.94"/>
+
+        <!-- MC - PC (I2): USE, D, F and g_syn (to match) Silberberg & Markram 2007 -->
+        <class id="I2_MC" gsyn="3.0" gsynSD="1.5" nrrp="1.0" dtc="8.3" dtcSD="2.2" u="0.3" uSD="0.08" d="1250" dSD="520" f="2" fSD="4" gsynSRSF="0.0" uHillCoefficient="1.94"/>
+
+        <!-- I2-like NGC - PC: dtc from Szabadics et al. 2007, GABA_B ratio (and kinetics) from Hippocampus, g_syn to match Wozny and Williams 2011 -->
+        <class id="I2_NGC" gsyn="0.2" gsynSD="0.08" nrrp="1.0" dtc="36.5" dtcSD="1.3" u="0.25" uSD="0.13" d="706" dSD="405" f="21" fSD="9" gsynSRSF="0.75" uHillCoefficient="1.94"/>
+
+        <!-- I2-like L1 non NGC - PC: g_syn to match Wozny et al. 2011 (L23 PC) -->
+        <class id="I2_L1nonNGC" gsyn="0.26" gsynSD="0.05" nrrp="1.0" dtc="8.30" dtcSD="2.2" u="0.25" uSD="0.13" d="706" dSD="405" f="21" fSD="9" gsynSRSF="0.0" uHillCoefficient="1.94"/>
+
+        <!-- L6 BC - L6 PC from TKB's thesis. See SSCX-101 SR
+        lumped USE, D, F (rather I3 than general I2), g_syns: same as I3 AE -->
+        <class id="I3_L6BC" gsyn="1.85" gsynSD="1.0" nrrp="1.0" dtc="10.4" dtcSD="6.2" u="0.44" uSD="0.25" d="195" dSD="190" f="200" fSD="320" gsynSRSF="0.0" uHillCoefficient="1.94"/>
+
+
+        <!--  EXCITATORY PATHWAYS  -->
+        <!-- rare facilitating EXC - INH synapses: USE, D, F from Wang et al. 2006, NRRP from Barros-Zulaica et al. 2019,
+        dtc from Hausser and Roth 1997,  Hill coefs. from Rozov et al. 2001, NMDA ratio from Wang and Gao 2009,
+        g_syns: same as E2_NBC (for _PT) and E1_MC (for _DT) -->
+        <class id="E1_PT" gsyn="0.82" gsynSD="0.5" nrrp="2.8" dtc="1.74" dtcSD="0.18" u="0.02" uSD="0.001" d="194" dSD="18" f="507" fSD="37" gsynSRSF="0.8" uHillCoefficient="1.09"/>
+        <class id="E1_DT" gsyn="0.17" gsynSD="0.1" nrrp="2.8" dtc="1.74" dtcSD="0.18" u="0.02" uSD="0.001" d="194" dSD="18" f="507" fSD="37" gsynSRSF="0.8" uHillCoefficient="2.79"/>
+
+        <!-- PC - MC (E1): USE, D, F and g_syn (to match) Silberberg & Markram 2007 -->
+        <class id="E1_MC" gsyn="0.17" gsynSD="0.1" nrrp="2.8" dtc="1.74" dtcSD="0.18" u="0.09" uSD="0.12" d="138" dSD="211" f="670" fSD="830" gsynSRSF="0.8" uHillCoefficient="2.79"/>
+
+        <!-- general EXC - EXC synapse: USE, D, F from Wang et al. 2006, NRRP from Barros-Zulaica et al. 2019,
+        dtc from Hausser and Roth 1997, Hill coef. from Rozov et al. 2001, NMDA ratio is the avg. of E2_L4PC, E2_L4SS_L23PC, and E2_L5TTPC
+        g_syn is the avg. of all the E-E g_syns below -->
+        <class id="E2" gsyn="0.68" gsynSD="0.44" nrrp="2.8" dtc="1.74" dtcSD="0.18" u="0.50" uSD="0.02" d="671" dSD="17" f="17" fSD="5" gsynSRSF="0.7" uHillCoefficient="2.79"/>
+
+        <!-- USE from Koester and Johnston 2005 (Wang et al. 2006 D, F) g_syn to match Feldmeyer et al. 2006 -->
+        <class id="E2_L23PC" gsyn="0.75" gsynSD="0.4" nrrp="2.8" dtc="1.74" dtcSD="0.18" u="0.46" uSD="0.26" d="671" dSD="17" f="17" fSD="5" gsynSRSF="0.7" uHillCoefficient="2.79"/>
+        <!-- USE from Bremaud et al. 2007 (Wang et al. 2006 D, F), NMDA ratio and g_syn (to match) Feldmeyer et al. 1999 -->
+        <class id="E2_L4PC" gsyn="0.51" gsynSD="0.3" nrrp="2.8" dtc="1.74" dtcSD="0.18" u="0.86" uSD="0.09" d="671" dSD="17" f="17" fSD="5" gsynSRSF="0.86" uHillCoefficient="2.79"/>
+        <!-- USE and NRRP from Silver et al. 2003 (Wang et al. 2006 D, F) NMDA ratio and g_syn (to match) Feldmeyer et al. 2002 -->
+        <class id="E2_L4SS_L23PC" gsyn="0.24" gsynSD="0.1" nrrp="1.0" dtc="1.74" dtcSD="0.18" u="0.79" uSD="0.04" d="671" dSD="17" f="17" fSD="5" gsynSRSF="0.5" uHillCoefficient="2.79"/>
+        <!-- USE, D, F and g_syn (to match) Le Be et al. 2007 -->
+        <class id="E2_L5STPC" gsyn="0.9" gsynSD="0.3" nrrp="2.8" dtc="1.74" dtcSD="0.18" u="0.39" uSD="0.03" d="690" dSD="90" f="44" fSD="21" gsynSRSF="0.7" uHillCoefficient="2.79"/>
+        <!-- USE, D, F and NRRP from Barros-Zulaica et al. 2019, NMDA ratio from Myme et al. 2003, g_syn to match Markram et al. 1997 -->
+        <class id="E2_L5TTPC" gsyn="1.94" gsynSD="1.0" nrrp="2.8" dtc="1.74" dtcSD="0.18" u="0.38" uSD="0.1" d="365.6" dSD="100.15" f="25.7" fSD="45.87" gsynSRSF="0.71" uHillCoefficient="2.79"/>
+        <!-- E2 + specific g_syn to match Reyes and Sakmann 1999 -->
+        <class id="E2_L23PC_L5TTPC" gsyn="0.42" gsynSD="0.2" nrrp="2.8" dtc="1.74" dtcSD="0.18" u="0.50" uSD="0.02" d="671" dSD="17" f="17" fSD="5" gsynSRSF="0.7" uHillCoefficient="2.79"/>
+        <!-- E2 + specific g_syn to match Feldmeyer et al. 2005 -->
+        <class id="E2_L4SS_L5STPC" gsyn="0.62" gsynSD="0.3" nrrp="2.8" dtc="1.74" dtcSD="0.18" u="0.50" uSD="0.02" d="671" dSD="17" f="17" fSD="5" gsynSRSF="0.7" uHillCoefficient="2.79"/>
+        <!-- E2 + specific g_syn to match Qi and Feldmeyer 2016 -->
+        <class id="E2_L4SS_L6PC" gsyn="0.43" gsynSD="0.2" nrrp="2.8" dtc="1.74" dtcSD="0.18" u="0.50" uSD="0.02" d="671" dSD="17" f="17" fSD="5" gsynSRSF="0.7" uHillCoefficient="2.79"/>
+        <!-- L6 E - L6 E from TKB's thesis. See SSCX-101 SR and AE -->
+        <!-- TPC:A - TPC:A has unique USE, D, F and g_syn -->
+        <class id="E2_L6TPCA" gsyn="0.95" gsynSD="0.5" nrrp="2.8" dtc="1.74" dtcSD="0.18" u="0.37" uSD="0.11" d="280" dSD="90" f="90" fSD="80" gsynSRSF="0.7" uHillCoefficient="2.79"/>
+        <!-- TPC:C - TPC:C lumped USE, D, F and unique g_syn AE-->
+        <class id="E2_L6TPCC" gsyn="0.45" gsynSD="0.2" nrrp="2.8" dtc="1.74" dtcSD="0.18" u="0.23" uSD="0.06" d="420" dSD="340" f="200" fSD="130" gsynSRSF="0.7" uHillCoefficient="2.79"/>
+        <!-- IPC - IPC lumped USE, D, F and unique g_syn AE-->
+        <class id="E2_L6IPC" gsyn="1.15" gsynSD="0.5" nrrp="2.8" dtc="1.74" dtcSD="0.18" u="0.23" uSD="0.06" d="420" dSD="340" f="200" fSD="130" gsynSRSF="0.7" uHillCoefficient="2.79"/>
+        <!-- lumped USE, D, F and stronger avg. g_syn for synapses between the same L6 PCs AE  -->
+        <class id="E2_L6PC_same" gsyn="0.85" gsynSD="0.3" nrrp="2.8" dtc="1.74" dtcSD="0.18" u="0.23" uSD="0.06" d="420" dSD="340" f="200" fSD="130" gsynSRSF="0.7" uHillCoefficient="2.79"/>
+        <!-- TPC:A - TPC:C lumped USE, D, F and unique g_syn AE-->
+        <class id="E2_L6TPCA-C" gsyn="1.2" gsynSD="0.5" nrrp="2.8" dtc="1.74" dtcSD="0.18" u="0.23" uSD="0.06" d="420" dSD="340" f="200" fSD="130" gsynSRSF="0.7" uHillCoefficient="2.79"/>
+        <!-- TPC:A - BPC lumped USE, D, F and unique g_syn AE-->
+        <class id="E2_L6TPCA-BPC" gsyn="0.46" gsynSD="0.15" nrrp="2.8" dtc="1.74" dtcSD="0.18" u="0.23" uSD="0.06" d="420" dSD="340" f="200" fSD="130" gsynSRSF="0.7" uHillCoefficient="2.79"/>
+        <!-- TPC:C - IPC lumped USE, D, F and unique g_syn AE-->
+        <class id="E2_L6TPCC-IPC" gsyn="0.19" gsynSD="0.05" nrrp="2.8" dtc="1.74" dtcSD="0.18" u="0.23" uSD="0.06" d="420" dSD="340" f="200" fSD="130" gsynSRSF="0.7" uHillCoefficient="2.79"/>
+        <!-- IPC - BPC lumped USE, D, F and unique g_syn AE-->
+        <class id="E2_L6IPC-BPC" gsyn="0.4" gsynSD="0.1" nrrp="2.8" dtc="1.74" dtcSD="0.18" u="0.23" uSD="0.06" d="420" dSD="340" f="200" fSD="130" gsynSRSF="0.7" uHillCoefficient="2.79"/>
+        <!-- BPC - TPC:A lumped USE, D, F and unique g_syn AE-->
+        <class id="E2_L6BPC-TPCA" gsyn="0.25" gsynSD="0.1" nrrp="2.8" dtc="1.74" dtcSD="0.18" u="0.23" uSD="0.06" d="420" dSD="340" f="200" fSD="130" gsynSRSF="0.7" uHillCoefficient="2.79"/>
+        <!-- lumped USE, D, F and weaker avg. g_syn for synapses between diff L6 PC classes AE -->
+        <class id="E2_L6PC_diff" gsyn="0.5" gsynSD="0.35" nrrp="2.8" dtc="1.74" dtcSD="0.18" u="0.23" uSD="0.06" d="420" dSD="340" f="200" fSD="130" gsynSRSF="0.7" uHillCoefficient="2.79"/>
+
+        <!-- general EXC - INH synapse: USE, D, F from Wang et al. 2006, NRRP from Barros-Zulaica et al. 2019,
+        dtc from Hausser and Roth 1997,  Hill coefs. from Rozov et al. 2001, NMDA ratio from Wang and Gao 2009,
+        g_syn is the avg. of E2_NBC, E2_L1nonNGC and E2_L6EXC-L6BC -->
+        <class id="E2_INH" gsyn="0.44" gsynSD="0.27" nrrp="2.8" dtc="1.74" dtcSD="0.18" u="0.50" uSD="0.02" d="671" dSD="17" f="17" fSD="5" gsynSRSF="0.8" uHillCoefficient="1.94"/>
+
+        <!-- general EXC _PT: g_syn is the same as E2_NBC (see USE, D, F, dtc, NRRP, Hill, NMDA above) -->
+        <class id="E2_PT" gsyn="0.82" gsynSD="0.5" nrrp="2.8" dtc="1.74" dtcSD="0.18" u="0.50" uSD="0.02" d="671" dSD="17" f="17" fSD="5" gsynSRSF="0.8" uHillCoefficient="1.09" />
+
+        <!-- E2-like PC - NBC: USE, D, F from Wang et al. 2002 (facilitating ones are modeled with general E1_PT)
+        g_syn to match Wang et al. 2002 (PSP calculated from reported A_SE...)
+        g_syn calibration is also in line with Angulo et al. 1999 and Beierlein et al. 2003 -->
+        <class id="E2_NBC" gsyn="0.82" gsynSD="0.5" nrrp="2.8" dtc="1.74" dtcSD="0.18" u="0.72" uSD="0.12" d="227" dSD="70" f="13" fSD="24" gsynSRSF="0.8" uHillCoefficient="1.09"/>
+
+        <!-- E2_INH + specific g_syn to match Wozny and Williams 2011 -->
+        <class id="E2_L1nonNGC" gsyn="0.18" gsynSD="0.1" nrrp="2.8" dtc="1.74" dtcSD="0.18" u="0.50" uSD="0.02" d="671" dSD="17" f="17" fSD="5" gsynSRSF="0.8" uHillCoefficient="1.94"/>
+
+        <!-- L6 PC - L6 BC from TKB's thesis. See SSCX-101 SR and AE -->
+        <class id="E2_L6TPC-L6BC" gsyn="0.37" gsynSD="0.15" nrrp="2.8" dtc="1.74" dtcSD="0.18" u="0.58" uSD="0.13" d="240" dSD="80" f="70" fSD="90" gsynSRSF="0.8" uHillCoefficient="1.09"/>
+        <class id="E2_L6IPC-L6BC" gsyn="0.23" gsynSD="0.1" nrrp="2.8" dtc="1.74" dtcSD="0.18" u="0.51" uSD="0.20" d="440" dSD="300" f="100" fSD="50" gsynSRSF="0.8" uHillCoefficient="1.09"/>
+        <class id="E2_L6NPC-L6BC" gsyn="0.36" gsynSD="0.15" nrrp="2.8" dtc="1.74" dtcSD="0.18" u="0.36" uSD="0.21" d="380" dSD="310" f="280" fSD="340" gsynSRSF="0.8" uHillCoefficient="1.09"/>
+        <class id="E2_L6EXC-L6BC" gsyn="0.32" gsynSD="0.06" nrrp="2.8" dtc="1.74" dtcSD="0.18" u="0.47" uSD="0.21" d="370" dSD="290" f="155" fSD="215" gsynSRSF="0.8" uHillCoefficient="1.09"/>
+
+        <!-- There is no E3 class -->
+
+    </SynapsesClassification>
+
+    <!-- Shift synapses from chandelier cells to the AIS :SBP -->
+    <SynapsesReposition>
+        <shift fromMType="L*_CHC" toMType="*" type="AIS" />
+    </SynapsesReposition>
+
+
+    &connectivityRecipe;
+
+    <!-- Removed legacy fromLayer/toLayer attributes and renamed type -> toBranchType :SBP -->
+    <!-- Removed touchRules for PROJ_* mtypes, since we don't have those :SBP -->
+    <!-- TouchRules define what touches are kept, anything not matched is discarded -->
+    <TouchRules>
+
+        <touchRule fromMType="L2_*PC" toMType="*" toBranchType="dendrite" />
+        <touchRule fromMType="L4_*PC" toMType="*" toBranchType="dendrite" />
+        <touchRule fromMType="L5_*PC" toMType="*" toBranchType="dendrite" />
+        <touchRule fromMType="L6_*PC" toMType="*" toBranchType="dendrite" />
+        <touchRule fromMType="L*_TPC:A" toMType="*" toBranchType="dendrite" />
+        <touchRule fromMType="L*_TPC:B" toMType="*" toBranchType="dendrite" />
+        <touchRule fromMType="L*_TPC:C" toMType="*" toBranchType="dendrite" />
+        <touchRule fromMType="L4_SSC" toMType="*" toBranchType="dendrite" />
+
+        <touchRule fromMType="L1*" toMType="*" toBranchType="dendrite" />
+        <touchRule fromMType="L*_MC" toMType="*" toBranchType="dendrite" />
+        <touchRule fromMType="L*_BTC" toMType="*" toBranchType="dendrite" />
+        <touchRule fromMType="L*_DBC" toMType="*" toBranchType="dendrite" />
+        <touchRule fromMType="L*_BP" toMType="*" toBranchType="dendrite" />
+        <touchRule fromMType="L*_NGC" toMType="*" toBranchType="dendrite" />
+        <touchRule fromMType="L*_LBC" toMType="*" toBranchType="dendrite" />
+        <touchRule fromMType="L*_NBC" toMType="*" toBranchType="dendrite" />
+        <touchRule fromMType="L*_SBC" toMType="*" toBranchType="dendrite" />
+
+        <touchRule fromMType="L2_*PC" toMType="L1*" toBranchType="soma" />
+        <touchRule fromMType="L4_*PC" toMType="L1*" toBranchType="soma" />
+        <touchRule fromMType="L5_*PC" toMType="L1*" toBranchType="soma" />
+        <touchRule fromMType="L6_*PC" toMType="L1*" toBranchType="soma" />
+        <touchRule fromMType="L*_TPC:A" toMType="L1*" toBranchType="soma" />
+        <touchRule fromMType="L*_TPC:B" toMType="L1*" toBranchType="soma" />
+        <touchRule fromMType="L*_TPC:C" toMType="L1*" toBranchType="soma" />
+        <touchRule fromMType="L4_SSC" toMType="L1*" toBranchType="soma" />
+
+        <touchRule fromMType="L2_*PC" toMType="L*_MC" toBranchType="soma" />
+        <touchRule fromMType="L4_*PC" toMType="L*_MC" toBranchType="soma" />
+        <touchRule fromMType="L5_*PC" toMType="L*_MC" toBranchType="soma" />
+        <touchRule fromMType="L6_*PC" toMType="L*_MC" toBranchType="soma" />
+        <touchRule fromMType="L*_TPC:A" toMType="L*_MC" toBranchType="soma" />
+        <touchRule fromMType="L*_TPC:B" toMType="L*_MC" toBranchType="soma" />
+        <touchRule fromMType="L*_TPC:C" toMType="L*_MC" toBranchType="soma" />
+        <touchRule fromMType="L4_SSC" toMType="L*_MC" toBranchType="soma" />
+
+        <touchRule fromMType="L2_*PC" toMType="L*_BTC" toBranchType="soma" />
+        <touchRule fromMType="L4_*PC" toMType="L*_BTC" toBranchType="soma" />
+        <touchRule fromMType="L5_*PC" toMType="L*_BTC" toBranchType="soma" />
+        <touchRule fromMType="L6_*PC" toMType="L*_BTC" toBranchType="soma" />
+        <touchRule fromMType="L*_TPC:A" toMType="L*_BTC" toBranchType="soma" />
+        <touchRule fromMType="L*_TPC:B" toMType="L*_BTC" toBranchType="soma" />
+        <touchRule fromMType="L*_TPC:C" toMType="L*_BTC" toBranchType="soma" />
+        <touchRule fromMType="L4_SSC" toMType="L*_BTC" toBranchType="soma" />
+
+        <touchRule fromMType="L2_*PC" toMType="L*_DBC" toBranchType="soma" />
+        <touchRule fromMType="L4_*PC" toMType="L*_DBC" toBranchType="soma" />
+        <touchRule fromMType="L5_*PC" toMType="L*_DBC" toBranchType="soma" />
+        <touchRule fromMType="L6_*PC" toMType="L*_DBC" toBranchType="soma" />
+        <touchRule fromMType="L*_TPC:A" toMType="L*_DBC" toBranchType="soma" />
+        <touchRule fromMType="L*_TPC:B" toMType="L*_DBC" toBranchType="soma" />
+        <touchRule fromMType="L*_TPC:C" toMType="L*_DBC" toBranchType="soma" />
+        <touchRule fromMType="L4_SSC" toMType="L*_DBC" toBranchType="soma" />
+
+        <touchRule fromMType="L2_*PC" toMType="L*_BP" toBranchType="soma" />
+        <touchRule fromMType="L4_*PC" toMType="L*_BP" toBranchType="soma" />
+        <touchRule fromMType="L5_*PC" toMType="L*_BP" toBranchType="soma" />
+        <touchRule fromMType="L6_*PC" toMType="L*_BP" toBranchType="soma" />
+        <touchRule fromMType="L*_TPC:A" toMType="L*_BP" toBranchType="soma" />
+        <touchRule fromMType="L*_TPC:B" toMType="L*_BP" toBranchType="soma" />
+        <touchRule fromMType="L*_TPC:C" toMType="L*_BP" toBranchType="soma" />
+        <touchRule fromMType="L4_SSC" toMType="L*_BP" toBranchType="soma" />
+
+        <touchRule fromMType="L2_*PC" toMType="L*_NGC" toBranchType="soma" />
+        <touchRule fromMType="L4_*PC" toMType="L*_NGC" toBranchType="soma" />
+        <touchRule fromMType="L5_*PC" toMType="L*_NGC" toBranchType="soma" />
+        <touchRule fromMType="L6_*PC" toMType="L*_NGC" toBranchType="soma" />
+        <touchRule fromMType="L*_TPC:A" toMType="L*_NGC" toBranchType="soma" />
+        <touchRule fromMType="L*_TPC:B" toMType="L*_NGC" toBranchType="soma" />
+        <touchRule fromMType="L*_TPC:C" toMType="L*_NGC" toBranchType="soma" />
+        <touchRule fromMType="L4_SSC" toMType="L*_NGC" toBranchType="soma" />
+
+        <touchRule fromMType="L2_*PC" toMType="L*_LBC" toBranchType="soma" />
+        <touchRule fromMType="L4_*PC" toMType="L*_LBC" toBranchType="soma" />
+        <touchRule fromMType="L5_*PC" toMType="L*_LBC" toBranchType="soma" />
+        <touchRule fromMType="L6_*PC" toMType="L*_LBC" toBranchType="soma" />
+        <touchRule fromMType="L*_TPC:A" toMType="L*_LBC" toBranchType="soma" />
+        <touchRule fromMType="L*_TPC:B" toMType="L*_LBC" toBranchType="soma" />
+        <touchRule fromMType="L*_TPC:C" toMType="L*_LBC" toBranchType="soma" />
+        <touchRule fromMType="L4_SSC" toMType="L*_LBC" toBranchType="soma" />
+
+        <touchRule fromMType="L2_*PC" toMType="L*_NBC" toBranchType="soma" />
+        <touchRule fromMType="L4_*PC" toMType="L*_NBC" toBranchType="soma" />
+        <touchRule fromMType="L5_*PC" toMType="L*_NBC" toBranchType="soma" />
+        <touchRule fromMType="L6_*PC" toMType="L*_NBC" toBranchType="soma" />
+        <touchRule fromMType="L*_TPC:A" toMType="L*_NBC" toBranchType="soma" />
+        <touchRule fromMType="L*_TPC:B" toMType="L*_NBC" toBranchType="soma" />
+        <touchRule fromMType="L*_TPC:C" toMType="L*_NBC" toBranchType="soma" />
+        <touchRule fromMType="L4_SSC" toMType="L*_NBC" toBranchType="soma" />
+
+        <touchRule fromMType="L2_*PC" toMType="L*_SBC" toBranchType="soma" />
+        <touchRule fromMType="L4_*PC" toMType="L*_SBC" toBranchType="soma" />
+        <touchRule fromMType="L5_*PC" toMType="L*_SBC" toBranchType="soma" />
+        <touchRule fromMType="L6_*PC" toMType="L*_SBC" toBranchType="soma" />
+        <touchRule fromMType="L*_TPC:A" toMType="L*_SBC" toBranchType="soma" />
+        <touchRule fromMType="L*_TPC:B" toMType="L*_SBC" toBranchType="soma" />
+        <touchRule fromMType="L*_TPC:C" toMType="L*_SBC" toBranchType="soma" />
+        <touchRule fromMType="L4_SSC" toMType="L*_SBC" toBranchType="soma" />
+
+        <touchRule fromMType="L2_*PC" toMType="L*_CHC" toBranchType="soma" />
+        <touchRule fromMType="L4_*PC" toMType="L*_CHC" toBranchType="soma" />
+        <touchRule fromMType="L5_*PC" toMType="L*_CHC" toBranchType="soma" />
+        <touchRule fromMType="L6_*PC" toMType="L*_CHC" toBranchType="soma" />
+        <touchRule fromMType="L*_TPC:A" toMType="L*_CHC" toBranchType="soma" />
+        <touchRule fromMType="L*_TPC:B" toMType="L*_CHC" toBranchType="soma" />
+        <touchRule fromMType="L*_TPC:C" toMType="L*_CHC" toBranchType="soma" />
+        <touchRule fromMType="L4_SSC" toMType="L*_CHC" toBranchType="soma" />
+
+        <touchRule fromMType="L1*" toMType="*" toBranchType="soma" />
+        <touchRule fromMType="L*_MC" toMType="*" toBranchType="soma" />
+        <touchRule fromMType="L*_BTC" toMType="*" toBranchType="soma" />
+        <touchRule fromMType="L*_DBC" toMType="*" toBranchType="soma" />
+        <touchRule fromMType="L*_BP" toMType="*" toBranchType="soma" />
+        <touchRule fromMType="L*_NGC" toMType="*" toBranchType="soma" />
+        <touchRule fromMType="L*_LBC" toMType="*" toBranchType="soma" />
+        <touchRule fromMType="L*_NBC" toMType="*" toBranchType="soma" />
+        <touchRule fromMType="L*_SBC" toMType="*" toBranchType="soma" />
+
+        <touchRule fromMType="L*_CHC" toMType="L2_*PC" toBranchType="soma" />
+        <touchRule fromMType="L*_CHC" toMType="L4_*PC" toBranchType="soma" />
+        <touchRule fromMType="L*_CHC" toMType="L5_*PC" toBranchType="soma" />
+        <touchRule fromMType="L*_CHC" toMType="L6_*PC" toBranchType="soma" />
+        <touchRule fromMType="L*_CHC" toMType="L*_TPC:A" toBranchType="soma" />
+        <touchRule fromMType="L*_CHC" toMType="L*_TPC:B" toBranchType="soma" />
+        <touchRule fromMType="L*_CHC" toMType="L*_TPC:C" toBranchType="soma" />
+        <touchRule fromMType="L*_CHC" toMType="L4_SSC" toBranchType="soma" />
+
+    </TouchRules>
+
+
+</blueColumn>

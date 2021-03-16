@@ -23,18 +23,19 @@ _TERMINAL_CTRL = "\033[{}m"
 
 
 class CMakeExtension(Extension):
-    def __init__(self, name, sourcedir=''):
+    def __init__(self, name, sourcedir=""):
         Extension.__init__(self, name, sources=[])
         self.sourcedir = os.path.abspath(sourcedir)
 
 
 def find_cmake():
-    for candidate in ['cmake', 'cmake3']:
+    for candidate in ["cmake", "cmake3"]:
         try:
-            out = subprocess.check_output([candidate, '--version'])
-            cmake_version = LooseVersion(re.search(r'version\s*([\d.]+)',
-                                                   out.decode()).group(1))
-            if cmake_version >= '3.2.0':
+            out = subprocess.check_output([candidate, "--version"])
+            cmake_version = LooseVersion(
+                re.search(r"version\s*([\d.]+)", out.decode()).group(1)
+            )
+            if cmake_version >= "3.2.0":
                 return candidate
         except OSError:
             pass
@@ -51,36 +52,39 @@ class CMakeBuild(build_ext):
     def build_extension(self, ext, cmake):
         source = Path(self.build_temp).resolve() / self.get_ext_filename(ext.name)
         extdir = str(source.parent)
-        cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
-                      '-DPYTHON_EXECUTABLE=' + sys.executable]
+        cmake_args = [
+            "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=" + extdir,
+            "-DPYTHON_EXECUTABLE=" + sys.executable,
+        ]
 
-        cfg = 'Debug' if self.debug else 'Release'
-        build_args = ['--config', cfg]
+        cfg = "Debug" if self.debug else "Release"
+        build_args = ["--config", cfg]
 
-        if 'BOOST_ROOT' in os.environ:
-            cmake_args += ['-DBOOST_ROOT={}'.format(os.environ['BOOST_ROOT'])]
+        if "BOOST_ROOT" in os.environ:
+            cmake_args += ["-DBOOST_ROOT={}".format(os.environ["BOOST_ROOT"])]
 
         if platform.system() == "Windows":
-            cmake_args += ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}'.format(
-                cfg.upper(),
-                extdir)]
-            if sys.maxsize > 2**32:
-                cmake_args += ['-A', 'x64']
-            build_args += ['--', '/m']
+            cmake_args += [
+                "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}".format(cfg.upper(), extdir)
+            ]
+            if sys.maxsize > 2 ** 32:
+                cmake_args += ["-A", "x64"]
+            build_args += ["--", "/m"]
         else:
-            cmake_args += ['-DCMAKE_BUILD_TYPE={}'.format(cfg)]
-            build_args += ['--', '-j']
+            cmake_args += ["-DCMAKE_BUILD_TYPE={}".format(cfg)]
+            build_args += ["--", "-j"]
 
         if not os.path.exists(self.build_temp):
             os.makedirs(self.build_temp)
 
         try:
-            proc = subprocess.Popen(
-                "echo $CXX", shell=True, stdout=subprocess.PIPE)
-            output = subprocess.check_call([cmake, ext.sourcedir] + cmake_args,
-                                           cwd=self.build_temp)
-            output = subprocess.check_call([cmake, '--build', '.'] + build_args,
-                                           cwd=self.build_temp)
+            proc = subprocess.Popen("echo $CXX", shell=True, stdout=subprocess.PIPE)
+            output = subprocess.check_call(
+                [cmake, ext.sourcedir] + cmake_args, cwd=self.build_temp
+            )
+            output = subprocess.check_call(
+                [cmake, "--build", "."] + build_args, cwd=self.build_temp
+            )
         except subprocess.CalledProcessError as exc:
             print("Status : FAIL", exc.returncode, exc.output)
             raise
@@ -109,18 +113,21 @@ class Documentation(Command):
 
     def run(self):
         self._create_metadata_file()
-        self.reinitialize_command('build_ext', inplace=1)
-        self.run_command('build_ext')
-        self.run_command('build_sphinx')  # requires metadata file
+        self.reinitialize_command("build_ext", inplace=1)
+        self.run_command("build_ext")
+        self.run_command("build_sphinx")  # requires metadata file
         if self.upload:
             self._upload()
 
     def _create_metadata_file(self):
         import textwrap
         import time
+
         md = self.distribution.metadata
         with open("docs/metadata.md", "w") as mdf:
-            mdf.write(textwrap.dedent(f"""\
+            mdf.write(
+                textwrap.dedent(
+                    f"""\
                 ---
                 name: {md.name}
                 version: {md.version}
@@ -133,22 +140,25 @@ class Documentation(Command):
                 contributors: {md.maintainer}
                 updated: {time.strftime("%d/%m/%Y")}
                 ---
-                """))
+                """
+                )
+            )
 
     def _upload(self):
         from docs_internal_upload import docs_internal_upload
+
         print("Uploading....")
         docs_internal_upload(
             "docs/_build/html",
             metadata_path="docs/metadata.md",
-            duplicate_version_error=False
+            duplicate_version_error=False,
         )
 
 
 class PyTest(TestCommand):
     user_options = [
-        ('addopts=', None, 'Arguments to pass to pytest'),
-        ('fast', None, 'Skip slow tests')
+        ("addopts=", None, "Arguments to pass to pytest"),
+        ("fast", None, "Skip slow tests"),
     ]
 
     def initialize_options(self):
@@ -160,13 +170,15 @@ class PyTest(TestCommand):
     def finalize_options(self):
         TestCommand.finalize_options(self)
         if not self.fast:
-            self.test_args.append('--run-slow')
+            self.test_args.append("--run-slow")
         if self.addopts:
             import shlex
+
             self.test_args.extend(shlex.split(self.addopts))
 
     def run_tests(self):
         import pytest
+
         errno = pytest.main(self.test_args)
         sys.exit(errno)
 
@@ -175,11 +187,11 @@ class PyTest(TestCommand):
 # Main setup
 # *******************************
 def setup_package():
-    maybe_sphinx = [
-        'sphinx<3.0.0',
-        'sphinx-bluebrain-theme',
-        'docs-internal-upload'
-    ] if 'build_docs' in sys.argv else []
+    maybe_sphinx = (
+        ["sphinx<3.0.0", "sphinx-bluebrain-theme", "docs-internal-upload"]
+        if "build_docs" in sys.argv
+        else []
+    )
 
     setup(
         # name and other metadata are in setup.cfg
@@ -191,52 +203,51 @@ def setup_package():
             "Source": "https://bbpcode.epfl.ch/code/#/admin/projects/building/Spykfunc",
         },
         packages=[
-            'recipe',
-            'recipe.parts',
-            'sparkmanager',
-            'spykfunc',
-            'spykfunc.dataio',
-            'spykfunc.filters',
-            'spykfunc.filters.implementations',
-            'spykfunc.filters.udfs',
-            'spykfunc.tools',
-            'spykfunc.utils',
+            "recipe",
+            "recipe.parts",
+            "sparkmanager",
+            "spykfunc",
+            "spykfunc.dataio",
+            "spykfunc.filters",
+            "spykfunc.filters.implementations",
+            "spykfunc.filters.udfs",
+            "spykfunc.tools",
+            "spykfunc.utils",
         ],
-        package_data={
-            'spykfunc': ['data/*']
-        },
+        package_data={"spykfunc": ["data/*"]},
         data_files=[
-            (EXAMPLES_DESTINATION, glob.glob(osp.join(BASE_DIR, "examples", "*.py")) +
-             glob.glob(osp.join(BASE_DIR, "examples", "*.sh")))
+            (
+                EXAMPLES_DESTINATION,
+                glob.glob(osp.join(BASE_DIR, "examples", "*.py"))
+                + glob.glob(osp.join(BASE_DIR, "examples", "*.sh")),
+            )
         ],
         #  ----- Requirements -----
         install_requires=[
-            'docopt',
+            "docopt",
             'enum34;python_version<"3.4"',
-            'funcsigs',
-            'future',
-            'hdfs',
-            'jprops',
-            'lxml',
-            'morphokit',
-            'mvdtool>=2',
-            'libsonata',
-            'numpy',
-            'pandas',
+            "funcsigs",
+            "future",
+            "hdfs",
+            "jprops",
+            "lxml",
+            "morphokit",
+            "mvdtool>=2",
+            "libsonata",
+            "numpy",
+            "pandas",
             'pathlib2;python_version<"3.4"',
-            'progress',
-            'pyarrow',
-            'pyspark>=3',
-            'six',
+            "progress",
+            "pyarrow",
+            "pyspark>=3",
+            "six",
         ],
-        setup_requires=['setuptools_scm'] + maybe_sphinx,
-        tests_require=['mock', 'pytest', 'pytest-cov'],
-        ext_modules=[CMakeExtension('spykfunc.filters.udfs._udfs', 'spykfunc/filters/udfs')],
-        cmdclass={
-            'build_docs': Documentation,
-            'build_ext': CMakeBuild,
-            'test': PyTest,
-        },
+        setup_requires=["setuptools_scm"] + maybe_sphinx,
+        tests_require=["mock", "pytest", "pytest-cov"],
+        ext_modules=[
+            CMakeExtension("spykfunc.filters.udfs._udfs", "spykfunc/filters/udfs")
+        ],
+        cmdclass={"build_docs": Documentation, "build_ext": CMakeBuild, "test": PyTest},
         entry_points={
             'console_scripts': [
                 'spykfunc = spykfunc.commands:spykfunc',
@@ -246,10 +257,10 @@ def setup_package():
             ],
         },
         scripts=[
-            'scripts/sm_cluster',
-            'scripts/sm_run',
-            'scripts/sm_startup',
-            'scripts/sm_shutdown',
+            "scripts/sm_cluster",
+            "scripts/sm_run",
+            "scripts/sm_startup",
+            "scripts/sm_shutdown",
         ],
         dependency_links=[
             "https://bbpteam.epfl.ch/repository/devpi/simple/docs_internal_upload"
