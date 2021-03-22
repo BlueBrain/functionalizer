@@ -10,6 +10,17 @@ Changes:
     FUNCZ-183_.
   - Sort within each output partition to have completely reproducible
     output. See also FUNCZ-262_.
+  - Change the input parameters to require ``--from <circuit_file> <population>``
+    and ``--to <circuit_file> <population>``. Both source and target parameters
+    can differ, allowing to specify different circuit files and/or populations.
+    Note that the ``--circuit <circuit_file>`` is replaced by this feature.
+  - Add support for NodeSets with ``--from-nodeset <nodesets_file> <nodeset>``
+    and ``--to-nodeset <nodesets_file> <nodeset>``, filtering the populations
+    specified by the ``--from``/``--to`` parameters. Both source and target
+    parameters can differ, allowing different nodesets files and/or nodesets.
+  - Change: Refactoring to introduce support for SONATA files natively through
+    Libsonata. Note that MVD and/or other legacy files are no longer supported.
+    See also FUNCZ-263_.
 
 Version 0.15.9
 ==============
@@ -285,3 +296,4 @@ First working version with 3 base filters:
 .. _FUNCZ-257: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-257
 .. _FUNCZ-258: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-258
 .. _FUNCZ-262: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-262
+.. _FUNCZ-263: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-263

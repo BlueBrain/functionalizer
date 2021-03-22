@@ -94,7 +94,8 @@ class Functionalizer(object):
     # Data loading and Init
     # -------------------------------------------------------------------------
     @sm.assign_to_jobgroup
-    def init_data(self, recipe_file, source, target, morpho_dir, parquet=None, sonata=None):
+    def init_data(self, recipe_file, source, source_nodeset, target, target_nodeset,
+                  morpho_dir, parquet=None, sonata=None):
         """Initialize all data required
 
         Will load the necessary cell collections from `source` and `target`
@@ -129,12 +130,12 @@ class Functionalizer(object):
         self.recipe = Recipe(recipe_file)
 
         # Load Neurons data
-        n_from = NeuronData(*source, self._config.cache_dir)
+        n_from = NeuronData(source, source_nodeset, self._config.cache_dir)
 
         if source == target:
             n_to = n_from
         else:
-            n_to = NeuronData(*target, self._config.cache_dir)
+            n_to = NeuronData(target, target_nodeset, self._config.cache_dir)
 
         touches = TouchData(parquet, sonata)
 
