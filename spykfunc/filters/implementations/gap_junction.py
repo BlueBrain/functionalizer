@@ -6,7 +6,6 @@ import numpy
 from pyspark.sql import functions as F
 
 from spykfunc.filters import DatasetOperation
-from spykfunc.filters.udfs import match_dendrites
 from spykfunc.utils import get_logger
 
 logger = get_logger(__name__)
@@ -140,6 +139,7 @@ class GapJunctionFilter(DatasetOperation):
             """
             if len(data) == 0:
                 return data
+            from spykfunc.filters.udfs import match_dendrites
             accept = match_dendrites(data.src.values,
                                      data.dst.values,
                                      data.pre_section.values,
