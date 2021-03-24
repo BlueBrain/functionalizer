@@ -6,7 +6,9 @@ Version 0.16.0
 ==============
 
 Changes:
-  - Factor the recipe reading code out into its own module. See also
+  - Fix a bug where the afferent section type of too many sections was
+    changed.  See also FUNCZ-269_.
+  - Factor some recipe reading code out into its own module. See also
     FUNCZ-183_.
   - Sort within each output partition to have completely reproducible
     output. See also FUNCZ-262_.
@@ -297,3 +299,4 @@ First working version with 3 base filters:
 .. _FUNCZ-258: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-258
 .. _FUNCZ-262: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-262
 .. _FUNCZ-263: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-263
+.. _FUNCZ-269: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-269

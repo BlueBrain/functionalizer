@@ -78,7 +78,7 @@ def _create_axon_section_udf(morphology_db):
             for i in numpy.nonzero(df.reposition.values)[0]:
                 morpho = df.dst_morphology.iloc[i]
                 (idx, dist, frac, soma) = morphology_db.first_axon_section(morpho)
-                df.post_branch_type = 1  # Axon. Soma is 0, dendrites are higher
+                df.post_branch_type.iloc[i] = 1  # Axon. Soma is 0, dendrites are higher
                 df.post_offset.iloc[i] = dist
                 df.post_section.iloc[i] = idx
                 df.post_segment.iloc[i] = 0  # First segment on the axon
