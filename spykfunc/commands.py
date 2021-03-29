@@ -89,7 +89,7 @@ def _parse_args(args=None) -> argparse.Namespace:
     gtouches = ginput.add_mutually_exclusive_group(required=True)
     gtouches.add_argument("--parquet",
                           help="the touch files (parquets); "
-                               "a litertal blob expression is also accepted.",
+                               "a literal blob expression is also accepted.",
                           nargs="+")
     gtouches.add_argument("--touches",
                           help="the touch file (sonata) and population",
