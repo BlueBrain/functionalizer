@@ -232,7 +232,6 @@ def setup_package():
             "jprops",
             "lxml",
             "morphokit",
-            "mvdtool>=2",
             "libsonata",
             "numpy",
             "pandas",

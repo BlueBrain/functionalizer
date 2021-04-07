@@ -6,6 +6,8 @@ import sys
 import libsonata
 import pandas as pd
 
+from spykfunc.schema import LEGACY_MAPPING
+
 
 def run():
     """Entry point.
@@ -26,20 +28,20 @@ def run():
                         default=0.)
     args = parser.parse_args()
 
-    base = pd.read_parquet(args.baseline)
-    comp = pd.read_parquet(args.comparison)
+    base = pd.read_parquet(args.baseline).rename(columns=LEGACY_MAPPING)
+    comp = pd.read_parquet(args.comparison).rename(columns=LEGACY_MAPPING)
 
     pop = libsonata.NodeStorage(args.circuit.encode()).open_population("All")
     mtypes = pd.DataFrame({'mtype': pop.enumeration_values("mtype")})
 
-    base = base.join(mtypes, on='connected_neurons_pre')
+    base = base.join(mtypes, on='source_node_id')
     base = base.join(mtypes,
-                     on='connected_neurons_post',
+                     on='target_node_id',
                      lsuffix='_pre',
                      rsuffix='_post')
-    comp = comp.join(mtypes, on='connected_neurons_pre')
+    comp = comp.join(mtypes, on='source_node_id')
     comp = comp.join(mtypes,
-                     on='connected_neurons_post',
+                     on='target_node_id',
                      lsuffix='_pre',
                      rsuffix='_post')
 

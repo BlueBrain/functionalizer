@@ -8,9 +8,11 @@ from unittest.mock import MagicMock
 import pyspark.sql.functions as F
 import pytest
 from recipe import Recipe
+
 import sparkmanager as sm
 
 from spykfunc.circuit import Circuit
+from spykfunc.schema import LEGACY_MAPPING
 from spykfunc.utils.conf import Configuration
 
 
@@ -43,6 +45,10 @@ def test_shift():
     neurons = sm.read.json(sm.parallelize(NEURONS))
     touches = sm.read.json(sm.parallelize(TOUCHES))
 
+    for name, alias in LEGACY_MAPPING.items():
+        if name in touches.columns:
+            touches = touches.withColumnRenamed(name, alias)
+
     recipe = Recipe(StringIO(RECIPE))
 
     population = MagicMock()
@@ -60,11 +66,11 @@ def test_shift():
     result = fltr.apply(c).select(touches.columns)
 
     shifted = result.where(result.src == 39167).toPandas()
-    assert shifted["post_section"].unique() == [1]
-    assert shifted["post_segment"].unique() == [0]
-    (offset,) = shifted["post_offset"].unique()
+    assert shifted["afferent_section_id"].unique() == [1]
+    assert shifted["afferent_segment_id"].unique() == [0]
+    (offset,) = shifted["afferent_segment_offset"].unique()
     assert abs(offset - 0.5) < 1e-5
-    (fraction,) = shifted["post_section_fraction"].unique()
+    (fraction,) = shifted["afferent_section_pos"].unique()
     assert abs(fraction - 0.00353) < 1e-5
     (dist,) = shifted["distance_soma"].unique()
     assert abs(dist - 0.5) < 1e-5

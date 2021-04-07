@@ -255,7 +255,7 @@ _slurm_start_cluster() {
         rm -f "$workdir/done"
     fi
 
-    srun $workdir/$script _slurm_start_processes "$workdir" "$master" "$envscript"
+    srun --mpi=none $workdir/$script _slurm_start_processes "$workdir" "$master" "$envscript"
     if [ -n "$SM_EXECUTE" ]; then
         while [[ ! -f "$workdir/done" ]]; do sleep 10s; done
         code=$(cat "$workdir/done")
@@ -441,6 +441,8 @@ _slurm_start_processes() {
     [[ -z "$workdir" ]] && usage
 
     export SM_WORKDIR="$workdir"
+
+    unset $(env|awk -F= '/^PMI_/ {print $1}')
 
     [[ -f "$envscript" ]] && . $envscript
 

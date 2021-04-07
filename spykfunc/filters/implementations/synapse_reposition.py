@@ -79,17 +79,17 @@ def _create_axon_section_udf(morphology_db):
         """Shifts synapses to the first axon section
         """
         for df in dfs:
-            set_section_fraction = "post_section_fraction" in df.columns
+            set_section_fraction = "afferent_section_pos" in df.columns
             set_soma_distance = "distance_soma" in df.columns
             for i in numpy.nonzero(df.reposition.values)[0]:
                 morpho = df.dst_morphology.iloc[i]
                 (idx, dist, frac, soma) = morphology_db.first_axon_section(morpho)
-                df.post_branch_type.iloc[i] = 1  # Axon. Soma is 0, dendrites are higher
-                df.post_offset.iloc[i] = dist
-                df.post_section.iloc[i] = idx
-                df.post_segment.iloc[i] = 0  # First segment on the axon
+                df.afferent_section_id.iloc[i] = idx
+                df.afferent_section_type.iloc[i] = 1  # Axon. Soma is 0, dendrites are higher
+                df.afferent_segment_id.iloc[i] = 0  # First segment on the axon
+                df.afferent_segment_offset.iloc[i] = dist
                 if set_section_fraction:
-                    df.post_section_fraction.iloc[i] = frac
+                    df.afferent_section_pos.iloc[i] = frac
                 if set_soma_distance:
                     df.distance_soma.iloc[i] = soma
             yield df

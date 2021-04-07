@@ -95,32 +95,32 @@ class TouchRulesFilter(DatasetOperation):
         # section (0->soma)
         added = []
         touches = circuit.df
-        if not hasattr(circuit.df, 'pre_branch_type'):
+        if not hasattr(circuit.df, 'efferent_section_type'):
             logger.warning(f"Guessing pre-branch type for touch rules!")
             touches = (
                 touches
-                .withColumn('pre_branch_type',
-                            (touches.pre_section > 0).cast('integer') * 2)
+                .withColumn('efferent_section_type',
+                            (touches.efferent_section_id > 0).cast('integer') * 2)
             )
-            added.append("pre_branch_type")
-        if not hasattr(circuit.df, 'post_branch_type'):
-            if 'branch_type' in touches.columns:
+            added.append("efferent_section_type")
+        if not hasattr(circuit.df, 'afferent_section_type'):
+            if 'section_type' in touches.columns:
                 touches = (
                     touches
-                    .withColumnRenamed('branch_type', 'post_branch_type')
+                    .withColumnRenamed('section_type', 'afferent_section_type')
                 )
             else:
                 logger.warning(f"Guessing post-branch type for touch rules!")
                 touches = (
                     touches
-                    .withColumn('post_branch_type',
-                                (touches.post_section > 0).cast('integer') * 2)
+                    .withColumn('afferent_section_type',
+                                (touches.afferent_section_id > 0).cast('integer') * 2)
                 )
-            added.append("post_branch_type")
+            added.append("afferent_section_type")
         return touches.withColumn("fail",
                                   touches.src_mtype_i * indices[1] +
                                   touches.dst_mtype_i * indices[2] +
-                                  touches.pre_branch_type * indices[3] +
-                                  touches.post_branch_type) \
+                                  touches.efferent_section_type * indices[3] +
+                                  touches.afferent_section_type) \
                       .join(F.broadcast(rules), "fail", "left_anti") \
                       .drop("fail", *added)

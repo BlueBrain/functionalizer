@@ -116,7 +116,7 @@ def compute_additional_h5_fields(circuit, reduced, classification_matrix, proper
         touches = (
             touches
             .withColumn(
-                "axonal_delay",
+                "delay",
                 F.expr("conn.neuralTransmitterReleaseDelay + distance_soma / conn.axonalConductionVelocity")
                 .cast(T.FloatType())
             )
@@ -134,10 +134,13 @@ def compute_additional_h5_fields(circuit, reduced, classification_matrix, proper
     t = (
         touches
         .withColumn(
-            "synapseType",
-            (F.when(F.col("conn.type").substr(0, 1) == F.lit('E'), 100).otherwise(0) +
-             F.col("conn._prop_i")
+            "syn_type_id",
+            (F.when(F.col("conn.type").substr(0, 1) == F.lit('E'), 100).otherwise(0)
              ).cast(T.ShortType())
+        )
+        .withColumn(
+            "syn_property_rule",
+             F.col("conn._prop_i").cast(T.ShortType())
         )
         .drop(
             "type",
@@ -146,9 +149,9 @@ def compute_additional_h5_fields(circuit, reduced, classification_matrix, proper
     )
 
     # Required for SONATA support
-    if not hasattr(t, "synapse_type_id"):
+    if not hasattr(t, "edge_type_id"):
         t = t.withColumn(
-            "synapse_type_id",
+            "edge_type_id",
             F.lit(0)
         )
 

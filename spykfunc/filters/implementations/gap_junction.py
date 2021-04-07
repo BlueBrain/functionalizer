@@ -28,8 +28,8 @@ class GapJunctionFilter(DatasetOperation):
     _checkpoint = True
 
     _columns = [
-        (None, "pre_junction"),
-        (None, "post_junction"),
+        (None, "efferent_junction_id"),
+        (None, "afferent_junction_id"),
     ]
 
     def __init__(self, recipe, source, target, morphos):
@@ -38,8 +38,8 @@ class GapJunctionFilter(DatasetOperation):
     def apply(self, circuit):
         """Apply both the dendrite-soma and dendrite-dendrite filters.
         """
-        touches = circuit.df.withColumn('pre_junction', F.col('synapse_id')) \
-                            .withColumn('post_junction', F.col('synapse_id'))
+        touches = circuit.df.withColumn('efferent_junction_id', F.col('synapse_id')) \
+                            .withColumn('afferent_junction_id', F.col('synapse_id'))
 
         trim = self._create_soma_filter_udf(touches)
         match = self._create_dendrite_match_udf(touches)
@@ -50,8 +50,8 @@ class GapJunctionFilter(DatasetOperation):
                                                           F.col("dst")),
                                                15)) \
                          .apply(match)
-        dendrites = touches.where("post_section > 0 and pre_section > 0")
-        somas = touches.where("post_section == 0 or pre_section == 0") \
+        dendrites = touches.where("afferent_section_id > 0 and efferent_section_id > 0")
+        somas = touches.where("afferent_section_id == 0 or efferent_section_id == 0") \
                        .groupby(F.shiftRight(F.col("src"), 4)) \
                        .apply(trim)
 
@@ -77,12 +77,12 @@ class GapJunctionFilter(DatasetOperation):
 
             src = data.src.values
             dst = data.dst.values
-            sec = data.pre_section.values
-            seg = data.pre_segment.values
-            soma = data.post_section.values
+            sec = data.efferent_section_id.values
+            seg = data.efferent_segment_id.values
+            soma = data.afferent_section_id.values
 
-            jid1 = data.pre_junction.values
-            jid2 = data.post_junction.values
+            jid1 = data.efferent_junction_id.values
+            jid2 = data.afferent_junction_id.values
 
             # This may be passed to us from pyspark as object type,
             # breaking numpy.unique.
@@ -142,12 +142,12 @@ class GapJunctionFilter(DatasetOperation):
             from spykfunc.filters.udfs import match_dendrites
             accept = match_dendrites(data.src.values,
                                      data.dst.values,
-                                     data.pre_section.values,
-                                     data.pre_segment.values,
-                                     data.pre_junction.values,
-                                     data.post_section.values,
-                                     data.post_segment.values,
-                                     data.post_junction.values).astype(bool)
+                                     data.efferent_section_id.values,
+                                     data.efferent_segment_id.values,
+                                     data.efferent_junction_id.values,
+                                     data.afferent_section_id.values,
+                                     data.afferent_segment_id.values,
+                                     data.afferent_junction_id.values).astype(bool)
             return data[accept]
         return match_touches
 

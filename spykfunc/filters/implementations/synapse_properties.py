@@ -51,10 +51,11 @@ class SynapseProperties(DatasetOperation):
         (None, "dtc"),
         (None, "nrrp"),
 
-        ("distance_soma", "axonal_delay"),
+        ("distance_soma", "delay"),
 
-        (None, "synapseType"),
-        (None, "synapse_type_id"),
+        (None, "syn_type_id"),
+        (None, "syn_property_rule"),
+        (None, "edge_type_id"),
     ]
 
     def __init__(self, recipe, source, target, morphos):

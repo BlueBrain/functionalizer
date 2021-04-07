@@ -19,12 +19,12 @@ def test_property_assignment(fz):
                                        fz.circuit.target,
                                        None)[0]
     data = fltr.apply(fz.circuit)
-    have = data.select("src", "dst", "synapseType")
+    have = data.select("src", "dst", "syn_type_id", "syn_property_rule")
     want = sm.read.parquet(os.path.join(DATADIR, "syn_prop_out.parquet")) \
         .groupBy("pre_gid", "post_gid", "synapseType").count()
     comp = have.alias("h").join(want.alias("w"),
         [have.src == want.pre_gid, have.dst == want.post_gid])
-    assert comp.where("h.synapseType != w.synapseType").count() == 0
+    assert comp.where("(h.syn_type_id + h.syn_property_rule) != w.synapseType").count() == 0
 
 
 @pytest.mark.slow

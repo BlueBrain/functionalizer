@@ -3,13 +3,13 @@ from enum import Enum
 
 class SortBy(Enum):
     POST = (
-        "connected_neurons_post",
-        "connected_neurons_pre",
+        "target_node_id",
+        "source_node_id",
         "synapse_id"
     )
     PRE = (
-        "connected_neurons_pre",
-        "connected_neurons_post",
+        "source_node_id",
+        "target_node_id",
         "synapse_id"
     )
 

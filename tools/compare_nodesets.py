@@ -7,6 +7,8 @@ import libsonata
 import pandas as pd
 import numpy as np
 
+from spykfunc.schema import LEGACY_MAPPING
+
 
 def run():
     """Entry point.
@@ -22,9 +24,9 @@ def run():
     regs = pop.get_enumeration("region", libsonata.Selection([[0, len(pop)]]))
     idx = np.argwhere(regs == args.region)
 
-    df = pd.read_parquet(args.full)
-    sel = df.connected_neurons_post.isin(idx) & df.connected_neurons_pre.isin(idx)
-    df_filtered = pd.read_parquet(args.filtered)
+    df = pd.read_parquet(args.full).rename(columns=LEGACY_MAPPING)
+    sel = df.target_node_id.isin(idx) & df.source_node_id.isin(idx)
+    df_filtered = pd.read_parquet(args.filtered).rename(columns=LEGACY_MAPPING)
 
     if len(df[sel]) != len(df_filtered):
         print("\nDifferences in connections")

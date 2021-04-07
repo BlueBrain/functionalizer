@@ -254,18 +254,22 @@ class Functionalizer(object):
         """
         def get_fields(df):
             # Transitional SYN2 spec fields
-            for field, alias, cast in schema.OUTPUT_COLUMN_MAPPING:
-                if hasattr(df, field):
+            for col in df.columns:
+                if col in schema.OUTPUT_MAPPING:
+                    alias, cast = schema.OUTPUT_MAPPING[col]
                     logger.info("Writing field %s", alias)
                     if cast:
-                        yield getattr(df, field).cast(cast).alias(alias)
+                        yield getattr(df, col).cast(cast).alias(alias)
                     else:
-                        yield getattr(df, field).alias(alias)
+                        yield getattr(df, col).alias(alias)
+                else:
+                    logger.info("Writing field %s", col)
+                    yield col
 
         df = (
             self.circuit.touches
-            .withColumnRenamed("src", "pre_gid")
-            .withColumnRenamed("dst", "post_gid")
+            .withColumnRenamed("src", "source_node_id")
+            .withColumnRenamed("dst", "target_node_id")
         )
 
         output_path = os.path.realpath(os.path.join(self.output_directory, filename))

@@ -67,7 +67,7 @@ def test_sonata_properties(tmpdir_factory):
     ).init_data(*ARGS[:-1], sonata=(os.path.join(DATADIR, "edges.h5"), "default"))
     fz.process_filters()
 
-    assert "axonal_delay" in fz.circuit.df.columns
+    assert "delay" in fz.circuit.df.columns
     assert "gsyn" in fz.circuit.df.columns
     assert "u" in fz.circuit.df.columns
     assert "d" in fz.circuit.df.columns
@@ -165,11 +165,11 @@ class TestFilters(object):
 
         df = sm.read.load(os.path.join(fz.output_directory, "circuit.parquet"))
         props = (
-            df.groupBy("connected_neurons_pre", "connected_neurons_post", *cols)
+            df.groupBy("source_node_id", "target_node_id", *cols)
             .count()
             .cache()
         )
-        conns = props.groupBy("connected_neurons_pre", "connected_neurons_post").count()
+        conns = props.groupBy("source_node_id", "target_node_id").count()
 
         assert (
             props.where("count > 1").count() > 0
@@ -180,8 +180,8 @@ class TestFilters(object):
 
         props = (
             df.where(
-                (F.col("connected_neurons_pre") == 58)
-                & (F.col("connected_neurons_post") == 36)
+                (F.col("source_node_id") == 58)
+                & (F.col("target_node_id") == 36)
             )
             .select(*cols)
             .toPandas()

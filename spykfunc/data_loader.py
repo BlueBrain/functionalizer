@@ -8,7 +8,6 @@ import os
 import pandas as pd
 import sparkmanager as sm
 from pyspark.sql import functions as F
-from pyspark.sql import types as T
 
 from . import schema
 from .definitions import MType
@@ -17,15 +16,18 @@ from .utils.spark import cache_broadcast_single_part
 from .utils.filesystem import adjust_for_spark
 
 
+BASIC_EDGE_SCHEMA = ["source_node_id long", "target_node_id long", "synapse_id long"]
+
+
 # Globals
 logger = get_logger(__name__)
 
 _numpy_to_spark = {
-    "int16": T.ShortType,
-    "int32": T.IntegerType,
-    "int64": T.LongType,
-    "float32": T.FloatType,
-    "float64": T.DoubleType,
+    "int16": "short",
+    "int32": "int",
+    "int64": "long",
+    "float32": "float",
+    "float64": "double",
 }
 
 PARTITION_SIZE = 50000
@@ -65,19 +67,16 @@ def _create_neuron_loader(filename, population):
     return loader
 
 
-def _create_touch_loader(filename, population, columns):
+def _create_touch_loader(filename: str, population: str):
     """Create a UDF to load touches from SONATA
 
     Args:
         filename: The name of the touches file
         population: The population to load
-        columns: The schema of the resulting dataframe
     Returns:
         A Pandas UDF to be used over a group by
     """
-
-    @F.pandas_udf(columns, F.PandasUDFType.GROUPED_MAP)
-    def loader(data):
+    def loader(data: pd.DataFrame) -> pd.DataFrame:
         assert len(data) == 1
         start, end = data.iloc[0]
 
@@ -85,19 +84,16 @@ def _create_touch_loader(filename, population, columns):
 
         p = libsonata.EdgeStorage(filename).open_population(population)
         selection = libsonata.Selection([(start, end)])
-        attributes = p.attribute_names
 
         data = dict(
-            pre_neuron_id=p.source_nodes(selection),
-            post_neuron_id=p.target_nodes(selection),
+            source_node_id=p.source_nodes(selection),
+            target_node_id=p.target_nodes(selection),
             synapse_id=selection.flatten(),
         )
 
-        for name, alias in schema.INPUT_COLUMN_MAPPING:
-            if name in attributes:
-                data[alias] = p.get_attribute(name, selection)
+        for name in p.attribute_names:
+            data[name] = p.get_attribute(name, selection)
         return pd.DataFrame(data)
-
     return loader
 
 
@@ -255,8 +251,8 @@ class TouchData:
     def df(self):
         return (
             self._loader(*self._args)
-            .withColumnRenamed("pre_neuron_id", "src")
-            .withColumnRenamed("post_neuron_id", "dst")
+            .withColumnRenamed("source_node_id", "src")
+            .withColumnRenamed("target_node_id", "dst")
         )
 
     @staticmethod
@@ -266,17 +262,15 @@ class TouchData:
         p = libsonata.EdgeStorage(filename).open_population(population)
 
         def _type(col):
-            data = p.get_attribute(col, libsonata.Selection([0]))
-            return _numpy_to_spark[data.dtype.name]()
+            data = p.get_attribute(col, libsonata.Selection([]))
+            return _numpy_to_spark[data.dtype.name]
+
+        def _types(pop):
+            for name in pop.attribute_names:
+                yield f"{name} {_type(name)}"
 
         total_parts = p.size // PARTITION_SIZE + 1
         logger.debug("Partitions: %d", total_parts)
-
-        columns = schema.TOUCH_SCHEMA_V3.fields[:3]
-        for alias, name in schema.INPUT_COLUMN_MAPPING:
-            if alias in p.attribute_names:
-                columns.append(T.StructField(name, _type(alias), False))
-        columns = T.StructType(columns)
 
         parts = sm.createDataFrame(
             (
@@ -285,10 +279,12 @@ class TouchData:
             ),
             "start: long, end: long",
         )
+        columns = ", ".join(BASIC_EDGE_SCHEMA + list(_types(p)))
 
         logger.info("Creating touch data frame...")
-        touches = parts.groupby("start", "end").apply(
-            _create_touch_loader(filename, population, columns)
+        touches = parts.groupby("start", "end").applyInPandas(
+            _create_touch_loader(filename, population),
+            columns
         )
         logger.info("Total touches: %d", touches.count())
 
@@ -296,23 +292,13 @@ class TouchData:
 
     @staticmethod
     def _load_parquet(*files):
-        def compatible(s1: T.StructType, s2: T.StructType) -> bool:
-            """Test schema compatibility"""
-            if len(s1.fields) != len(s2.fields):
-                return False
-            for f1, f2 in zip(s1.fields, s2.fields):
-                if f1.name != f2.name:
-                    return False
-            return True
-
         files = [adjust_for_spark(f) for f in files]
-        have = sm.read.load(files[0]).schema
-        try:
-            (want,) = [s for s in schema.TOUCH_SCHEMAS if compatible(s, have)]
-        except ValueError:
-            logger.error("Incompatible schema of input files")
-            raise RuntimeError("Incompatible schema of input files")
-        touches = sm.read.schema(want).parquet(*files)
+        touches = sm.read.parquet(*files)
+        for old, new in schema.LEGACY_MAPPING.items():
+            if old in touches.columns:
+                touches = touches.withColumnRenamed(old, new)
+        touches = touches.cache()
+        for col in touches.columns:
+            logger.info("Reading field %s", col)
         logger.info("Total touches: %d", touches.count())
-
         return touches
