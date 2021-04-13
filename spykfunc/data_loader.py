@@ -6,7 +6,9 @@ import logging
 import math
 import os
 import pandas as pd
+import pyarrow.parquet as pq
 import sparkmanager as sm
+
 from pyspark.sql import functions as F
 
 from . import schema
@@ -134,6 +136,7 @@ class NeuronData:
         if not os.path.isdir(self._cache):
             os.makedirs(self._cache)
 
+    population = property(lambda self: self._pop.name)
     mtype_values = property(lambda self: self._pop.enumeration_values("mtype"))
     etype_values = property(lambda self: self._pop.enumeration_values("etype"))
     region_values = property(lambda self: self._pop.enumeration_values("region"))
@@ -240,9 +243,11 @@ class TouchData:
             if isinstance(parquet, str):
                 parquet = glob.glob(parquet)
             self._loader = self._load_parquet
+            self._metadata = self._load_parquet_metadata(*parquet)
             self._args = parquet
         elif sonata:
             self._loader = self._load_sonata
+            self._metadata = self._load_sonata_metadata(*sonata)
             self._args = sonata
         else:
             raise ValueError("TouchData needs to be initialized with touch data")
@@ -254,6 +259,20 @@ class TouchData:
             .withColumnRenamed("source_node_id", "src")
             .withColumnRenamed("target_node_id", "dst")
         )
+
+    @property
+    def metadata(self):
+        return self._metadata
+
+    @staticmethod
+    def _load_sonata_metadata(filename, population):
+        # Could be (and save us the dependency on h5py):
+        # import libsonata
+        # p = libsonata.EdgeStorage(filename).open_population(population)
+        # return {n: p.get_metadata(n) for n in p.metadata_names}
+        import h5py
+        with h5py.File(filename) as f:
+            return dict(f[f"/edges/{population}"].attrs)
 
     @staticmethod
     def _load_sonata(filename, population):
@@ -291,6 +310,15 @@ class TouchData:
         return touches
 
     @staticmethod
+    def _load_parquet_metadata(*files):
+        schema = pq.ParquetDataset(list(files)).schema.to_arrow_schema()
+        return {
+            k: v
+            for (k, v) in (schema.metadata or dict()).items()
+            if not k.startswith(b"org.apache.spark")
+        }
+
+    @staticmethod
     def _load_parquet(*files):
         files = [adjust_for_spark(f) for f in files]
         touches = sm.read.parquet(*files)
@@ -298,7 +326,5 @@ class TouchData:
             if old in touches.columns:
                 touches = touches.withColumnRenamed(old, new)
         touches = touches.cache()
-        for col in touches.columns:
-            logger.info("Reading field %s", col)
         logger.info("Total touches: %d", touches.count())
         return touches

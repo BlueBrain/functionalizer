@@ -4,8 +4,12 @@
 from __future__ import absolute_import
 import logging
 import os
+import re
 import time
+import pyarrow.parquet as pq
 import sparkmanager as sm
+
+from pyspark.sql import functions as F
 
 from recipe import Recipe
 
@@ -18,11 +22,13 @@ from .data_loader import NeuronData, TouchData
 from .definitions import CheckpointPhases, SortBy
 from .utils.checkpointing import checkpoint_resume
 from .utils.filesystem import adjust_for_spark, autosense_hdfs
+from .version import version as spykfunc_version
 
 __all__ = ["Functionalizer", "CheckpointPhases"]
 
 logger = utils.get_logger(__name__)
 _MB = 1024 ** 2
+_METADATA_PATTERN = "spykfunc_run{}_{}"
 
 
 class _SpykfuncOptions:
@@ -272,6 +278,20 @@ class Functionalizer(object):
             .withColumnRenamed("dst", "target_node_id")
         )
 
+        required = set(["population_name", "population_size"])
+        if not required.issubset(df.schema["source_node_id"].metadata):
+            logger.info("Augmenting metadata for field source_node_id")
+            df = df.withColumn("source_node_id", F.col("source_node_id").alias("source_node_id", metadata={
+                "population_name": self.circuit.source.population,
+                "population_size": len(self.circuit.source)
+            }))
+        if not required.issubset(df.schema["target_node_id"].metadata):
+            logger.info("Augmenting metadata for field target_node_id")
+            df = df.withColumn("target_node_id", F.col("target_node_id").alias("target_node_id", metadata={
+                "population_name": self.circuit.target.population,
+                "population_size": len(self.circuit.target)
+            }))
+
         output_path = os.path.realpath(os.path.join(self.output_directory, filename))
         logger.info("Exporting touches...")
         df_output = df.select(*get_fields(df)) \
@@ -280,7 +300,32 @@ class Functionalizer(object):
             adjust_for_spark(output_path, local=True),
             mode="overwrite"
         )
+        logger.info("Data written to disk")
+        self._add_metadata(output_path)
+        logger.info("Metadata added to data")
         logger.info("Data export complete")
+
+    def _add_metadata(self, path):
+        schema = pq.ParquetDataset(path).schema.to_arrow_schema()
+        metadata = schema.metadata
+        metadata.update(self.circuit.metadata)
+        this_run = 1
+        previous_run = re.compile(_METADATA_PATTERN.format(r"(\d+)", ""))
+        for key in metadata:
+            if m := previous_run.match(key.decode()):
+                this_run = max(this_run, int(m.group(1)) + 1)
+        metadata.update({
+            "source_population_name": self.circuit.source.population,
+            "source_population_size": str(len(self.circuit.source)),
+            "target_population_name": self.circuit.target.population,
+            "target_population_size": str(len(self.circuit.target)),
+            _METADATA_PATTERN.format(this_run, "version"): spykfunc_version,
+            _METADATA_PATTERN.format(this_run, "filters"): ",".join(self._config.filters),
+            _METADATA_PATTERN.format(this_run, "recipe"): str(self.recipe),
+        })
+        new_schema = schema.with_metadata(metadata)
+        pq.write_metadata(new_schema, os.path.join(path, "_metadata"))
+
 
     # -------------------------------------------------------------------------
     # Helper functions

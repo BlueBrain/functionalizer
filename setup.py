@@ -197,7 +197,9 @@ def setup_package():
         # name and other metadata are in setup.cfg
         name="spykfunc",
         summary="A PySpark implementation of the BBP Functionalizer",
-        use_scm_version=True,
+        use_scm_version={
+            "write_to": "spykfunc/version.py"
+        },
         project_urls={
             "Tracker": "https://bbpteam.epfl.ch/project/issues/projects/FUNCZ/summary",
             "Source": "https://bbpcode.epfl.ch/code/#/admin/projects/building/Spykfunc",
@@ -228,6 +230,7 @@ def setup_package():
             'enum34;python_version<"3.4"',
             "funcsigs",
             "future",
+            "h5py",
             "hdfs",
             "jprops",
             "lxml",

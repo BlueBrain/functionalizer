@@ -117,6 +117,7 @@ class Circuit(object):
 
         self._touches = None
         self._touch_loader = touches
+        self._metadata = self._touch_loader.metadata
 
         # The circuit will be constructed (and grouped by src, dst
         self.__circuit = None
@@ -233,6 +234,12 @@ class Circuit(object):
     @df.setter
     def df(self, df):
         self.dataframe = df
+
+    @property
+    def metadata(self):
+        """:property: metadata associated with the connections
+        """
+        return self._metadata
 
     @property
     def dataframe(self):

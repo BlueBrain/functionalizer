@@ -20,6 +20,10 @@ class MockLoader:
     def __init__(self, touches):
         self.df = touches
 
+    @property
+    def metadata(self):
+        return dict()
+
 
 def mock_mtypes(neurons):
     vals = [(r.mtype_i, r.mtype) for r in neurons.collect()]
