@@ -1,12 +1,9 @@
 #!/bin/bash
 # vim: sw=4 et
 
-if [ -n "$SM_VERBOSE" ]; then
+if [[ -n $SM_VERBOSE ]]; then
     set -x
 fi
-
-export HADOOP_ROOT_LOGGER=WARN,console
-export HADOOP_SECURITY_LOGGER=WARN,console
 
 usage() {
     cat 1>&2 <<EOF
@@ -58,143 +55,18 @@ environment variables to configure behavior:
 allocate resources with SLURM via:
 
     salloc -Aproj16 -pinteractive --exclusive --time 10:00:00 -N4
-
-or using COBALT with:
-
-    qsub -A PlasticNeocortex -t 60 -n 8 -I
 EOF
     exit 1
 }
 
 _detect_allocation() {
-    if [ ! -z "$SLURM_JOBID" ]; then
+    if [[ ! -z $SLURM_JOBID ]]; then
         echo slurm
-    elif [ ! -z "$COBALT_NODEFILE" ]; then
-        echo cobalt
     fi
 }
 
 _detect_memory() {
     awk '/MemAvailable/ {print int($2/1024)}' /proc/meminfo
-}
-
-_cobalt_start_master() {
-    workdir=$1
-    envscript=$2
-    [[ -z "$workdir" ]] && usage
-
-    export SM_WORKDIR="$workdir"
-
-    [[ -a "$envscript" ]] && . $envscript
-
-    export SM_MASTER_MEMORY=${SM_MASTER_MEMORY:-4096}
-    export SPARK_DAEMON_MEMORY=${SM_MASTER_MEMORY}m
-    export SPARK_MASTER_IP=$(hostname)
-
-    echo "spark://$SPARK_MASTER_IP:${SPARK_MASTER_PORT:-7077}" > "$workdir/spark_master"
-
-    $SPARK_HOME/sbin/start-master.sh
-}
-
-_cobalt_start_worker() {
-    workdir=$1
-    envscript=$2
-    [[ -z "$workdir" ]] && usage
-
-    export SM_WORKDIR="$workdir"
-
-    [[ -f "$envscript" ]] && . $envscript
-
-    MASTER_NODE=$(cat $workdir/spark_master)
-
-    echo "> Connecting to ${MASTER_NODE}"
-
-    $SPARK_HOME/sbin/start-slave.sh $MASTER_NODE || exit $?
-}
-
-_cobalt_start_cluster() {
-    workdir=$1
-    envscript=$2
-    [[ -z "$workdir" ]] && usage
-
-    script=$(readlink -f $0)
-    workdir=$(readlink -f $workdir)
-    envscript=$(readlink -f $envscript)
-
-    master=$(grep -oe '\(\w*\.\)\{1,\}\w*'<$workdir/spark_master)
-
-    if [ -z "$(ssh $master jps -lm 2>/dev/null|grep org.apache.spark.deploy.master.Master)" ]; then
-        master=
-    fi
-
-    if [ ! -d "$workdir" ]; then
-        echo ">> Creating working directory '$workdir'"
-        mkdir $workdir
-    fi
-
-    if [ -z "$master" ]; then
-        echo ">> Copying myself to working directory '$workdir'"
-        cp -f $script $workdir
-
-        master=$(head -n 1 "$COBALT_NODEFILE")
-        ssh $master "$workdir/$(basename $script)" _cobalt_start_master "$workdir" "$envscript"
-    else
-        echo "<< Connecting to master $master"
-    fi
-
-    while read host; do
-        ssh $host "$workdir/$(basename $script)" _cobalt_start_master "$workdir "$envscript""
-    done < "$COBALT_NODEFILE"
-}
-
-_cobalt_stop_master() {
-    workdir=$1
-    envscript=$2
-    [[ -z "$workdir" ]] && usage
-
-    export SM_WORKDIR="$workdir"
-
-    [[ -f "$envscript" ]] && . $envscript
-
-    result=$($SPARK_HOME/sbin/stop-master.sh)
-    echo $result
-    if [[ $result == *"to stop"* ]]; then
-        proc=$(ps -A | grep java)
-        [[ ! -z "$proc" ]] && pkill -9 java
-    fi
-}
-
-_cobalt_stop_worker() {
-    envscript=$1
-    workdir=$2
-    [[ -z "$workdir" ]] && usage
-
-    export SM_WORKDIR="$workdir"
-
-    [[ -f "$envscript" ]] && . $envscript
-
-    result=$($SPARK_HOME/sbin/stop-slave.sh)
-    echo $result
-    if [[ $result == *"to stop"* ]]; then
-        proc=$(ps -A | grep java)
-        [[ ! -z "$proc" ]] && pkill -9 java
-    fi
-}
-
-_cobalt_stop_cluster() {
-    workdir=$1
-    envscript=$2
-    [[ -z "$workdir" ]] && usage
-
-    script=$(readlink -f $0)
-    workdir=$(readlink -f $workdir)
-    envscript=$(readlink -f $envscript)
-
-    master=$(head -n 1 "$COBALT_NODEFILE")
-    ssh $master "$script" _cobalt_stop_master "$workdir" "$envscript"
-    while read host; do
-        ssh $host "$script" _cobalt_stop_worker "$workdir" "$envscript"
-    done < "$COBALT_NODEFILE"
 }
 
 _slurm_sleep() {
@@ -211,18 +83,20 @@ _slurm_sleep() {
 }
 
 _slurm_start_cluster() {
-    workdir=$1
-    envscript=$2
-    [[ -z "$workdir" ]] && usage
+    workdir="$1"
+    envscript="$2"
+    [[ -z $workdir ]] && usage
 
-    myself=$(readlink -f $0)
+    myself="$(readlink -f "$0")"
     script=sm_cluster
-    workdir=$(readlink -f $workdir)
-    envscript=$(readlink -f $envscript)
+    workdir="$(readlink -f "$workdir")"
+    if [[ -n $envscript ]]; then
+        envscript="$(readlink -f "$envscript")"
+    fi
 
-    nvme=$(srun ls /|grep nvme)
+    nvme="$(srun ls /|grep nvme)"
 
-    if [[ -z "$SPARK_LOCAL_DIRS" && -n "$nvme" ]]; then
+    if [[ -z $SPARK_LOCAL_DIRS && -n $nvme ]]; then
         export SPARK_LOCAL_DIRS="/nvme/$(whoami)/$SLURM_JOBID/spark-local"
         echo ">> Creating SPARK_LOCAL_DIRS='/nvme/$(whoami)/$SLURM_JOBID'"
         srun mkdir -p "$SPARK_LOCAL_DIRS"
@@ -232,32 +106,32 @@ _slurm_start_cluster() {
     export SPARK_WORKER_DIR="$workdir/workers"
 
     master=none
-    [[ -f "$workdir/spark_master" ]] && master=$(grep -oe '\(\w*\.\)\{1,\}\w*'<$workdir/spark_master)
+    [[ -f $workdir/spark_master ]] && master=$(grep -oe '\(\w*\.\)\{1,\}\w*'<"$workdir/spark_master")
 
-    if [ -z "$(ssh $master jps -lm 2>/dev/null|grep org.apache.spark.deploy.master.Master)" ]; then
+    if [[ -z $(ssh $master jps -lm 2>/dev/null|grep org.apache.spark.deploy.master.Master) ]]; then
         master=none
         rm -f "$workdir/spark_master"
     fi
 
-    if [ ! -d "$workdir" ]; then
+    if [[ ! -d $workdir ]]; then
         echo ">> Creating working directory '$workdir'"
-        mkdir $workdir
+        mkdir "$workdir"
     fi
 
-    if [ "$master" = "none" ]; then
+    if [[ $master = none ]]; then
         echo ">> Copying myself to working directory '$workdir'"
-        cp -f $myself $workdir/$script
+        cp -f "$myself" "$workdir/$script"
     else
         echo "<< Connecting to master $master"
     fi
 
-    if [ -n "$SM_EXECUTE" ]; then
+    if [[ -n $SM_EXECUTE ]]; then
         rm -f "$workdir/done"
     fi
 
-    srun --mpi=none $workdir/$script _slurm_start_processes "$workdir" "$master" "$envscript"
-    if [ -n "$SM_EXECUTE" ]; then
-        while [[ ! -f "$workdir/done" ]]; do sleep 10s; done
+    srun --mpi=none "$workdir/$script" _slurm_start_processes "$workdir" "$master" "$envscript"
+    if [[ -n $SM_EXECUTE ]]; then
+        while [[ ! -f $workdir/done ]]; do sleep 10s; done
         code=$(cat "$workdir/done")
         echo ">> Exiting with $code"
         exit $code
@@ -266,7 +140,7 @@ _slurm_start_cluster() {
 
 _slurm_stop_cluster() {
     workdir=$1
-    [[ -z "$workdir" ]] && usage
+    [[ -z $workdir ]] && usage
     touch "$workdir/done"
 }
 
@@ -274,8 +148,8 @@ _hdfs_configure_mapper() {
     workdir=$1
     host=$2
 
-    [[ -z "$workdir" ]] && usage
-    [[ -z "$HADOOP_HOME" ]] && return
+    [[ -z $workdir ]] && usage
+    [[ -z $HADOOP_HOME ]] && return
     [[ $SLURM_PROCID -ne 0 ]] && return
 
     export HADOOP_CONF_DIR=$workdir/hadoop/conf/$SLURM_JOBID
@@ -351,31 +225,44 @@ _hdfs_start_processes() {
 
     SM_HDFS_DIRS=${SM_HDFS_DIRS:-/nvme/$(whoami)/$SLURM_JOBID/hadoop}
 
-    [[ -z "$workdir" ]] && usage
-    [[ -z "$HADOOP_HOME" ]] && return
+    [[ -z $workdir ]] && usage
+    [[ -z $HADOOP_HOME ]] && return
 
-    if [[ -n "$SM_HDFS_HOST" ]]; then
+    if [[ -n $SM_HDFS_HOST ]]; then
         _hdfs_configure_mapper "$workdir" "$SM_HDFS_HOST"
         return
     fi
 
-    export HDFS_MASTER_NODE=$(scontrol show hostname $SLURM_NODELIST|head -n 1)
-    export HDFS_DATA_DIR=$SM_HDFS_DIRS/data/$SLURM_JOBID.$SLURM_PROCID
-    export HDFS_TMP_DIR=$SM_HDFS_DIRS/tmp/$SLURM_JOBID.$SLURM_PROCID
-    export HDFS_NAME_DIR=$workdir/hadoop/name/
+    export HDFS_MASTER_NODE="$(scontrol show hostname $SLURM_NODELIST|head -n 1)"
+    export HDFS_DATA_DIR="$SM_HDFS_DIRS/data/$SLURM_JOBID.$SLURM_PROCID"
+    export HDFS_TMP_DIR="$SM_HDFS_DIRS/tmp/$SLURM_JOBID.$SLURM_PROCID"
+    export HDFS_NAME_DIR="$workdir/hadoop/name/"
 
-    export HADOOP_CONF_DIR=$workdir/hadoop/conf/$SLURM_JOBID.$SLURM_PROCID
-    export HADOOP_LOG_DIR=$workdir/hadoop/logs
+    export HADOOP_CONF_DIR="$workdir/hadoop/conf/$SLURM_JOBID.$SLURM_PROCID"
+    export HADOOP_LOG_DIR="$workdir/hadoop/logs"
 
     webhost=$HDFS_MASTER_NODE
     # Proxy requires FQDN - assume localized running with the same domain
     # name as localhost.
     if [[ ! *.* = $webhost ]]; then
-        webhost=${webhost}.$(hostname -d)
+        webhost="${webhost}.$(hostname -d)"
     fi
 
     rm -rf "$HDFS_DATA_DIR" "$HDFS_TMP_DIR"
     mkdir -p "$HDFS_DATA_DIR" "$HDFS_TMP_DIR" "$HDFS_NAME_DIR" "$HADOOP_CONF_DIR" "$HADOOP_LOG_DIR"
+
+    # Attempt to translate the name node directory to something that is
+    # closer to a URI. `urllib` is a Python builtin module.
+    HDFS_NAME_DIR=$(python -c "import sys, urllib.parse as up; print(up.quote(sys.argv[1]))" "$HDFS_NAME_DIR")
+
+    cat > "$HADOOP_CONF_DIR/log4j.properties" <<EOF
+hadoop.root.logger=WARN,console
+log4j.rootLogger=WARN,console
+log4j.appender.console=org.apache.log4j.ConsoleAppender
+log4j.appender.console.target=System.err
+log4j.appender.console.layout=org.apache.log4j.PatternLayout
+log4j.appender.console.layout.ConversionPattern=%d{yy/MM/dd HH:mm:ss} %p %c{2}: %m%n
+EOF
 
     cat > "$HADOOP_CONF_DIR/core-site.xml" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -425,26 +312,26 @@ EOF
 EOF
 
     if [[ $SLURM_PROCID -eq 0 ]]; then
-        $HADOOP_HOME/bin/hdfs namenode -format -force -nonInteractive
-        $HADOOP_HOME/sbin/hadoop-daemon.sh --config $HADOOP_CONF_DIR --script hdfs start namenode &
+        "$HADOOP_HOME/bin/hdfs" namenode -format -force -nonInteractive
+        "$HADOOP_HOME/sbin/hadoop-daemon.sh" --config "$HADOOP_CONF_DIR" --script hdfs start namenode &
         sleep 15s
-        touch $workdir/hadoop/namenode
+        touch "$workdir/hadoop/namenode"
     fi
-    while [[ ! -f "$workdir/hadoop/namenode" ]]; do sleep 0.5s; done
-    $HADOOP_HOME/sbin/hadoop-daemon.sh --config $HADOOP_CONF_DIR --script hdfs start datanode &
+    while [[ ! -f $workdir/hadoop/namenode ]]; do sleep 0.5s; done
+    "$HADOOP_HOME/sbin/hadoop-daemon.sh" --config "$HADOOP_CONF_DIR" --script hdfs start datanode &
 }
 
 _slurm_start_processes() {
-    workdir=$1
-    master=$2
-    envscript=$3
-    [[ -z "$workdir" ]] && usage
+    workdir="$1"
+    master="$2"
+    envscript="$3"
+    [[ -z $workdir ]] && usage
 
     export SM_WORKDIR="$workdir"
 
     unset $(env|awk -F= '/^PMI_/ {print $1}')
 
-    [[ -f "$envscript" ]] && . $envscript
+    [[ -f $envscript ]] && . "$envscript"
 
     _hdfs_start_processes "$workdir"
 
@@ -452,25 +339,25 @@ _slurm_start_processes() {
 
     export SM_MASTER_MEMORY=${SM_MASTER_MEMORY:-4096}
 
-    if [[ "$master" = "none" && $SLURM_PROCID -eq 0 ]]; then
+    if [[ $master = "none" && $SLURM_PROCID -eq 0 ]]; then
         export SPARK_DAEMON_MEMORY=${SM_MASTER_MEMORY}m
         export SPARK_MASTER_IP=$(hostname)
 
         output=$($SPARK_HOME/sbin/start-master.sh)
         echo "$output"
         echo "spark://$SPARK_MASTER_IP:${SPARK_MASTER_PORT:-7077}" > "$workdir/spark_master"
-        [[ "$output" == *failed* ]] && exit 1
+        [[ $output == *failed* ]] && exit 1
     fi
 
-    if [[ "$master" = "none" ]]; then
+    if [[ $master = "none" ]]; then
         master=
     fi
 
-    if [[ -n "$SM_WORKER_COUNT" && $SLURM_PROCID -ge $SM_WORKER_COUNT ]]; then
+    if [[ -n $SM_WORKER_COUNT && $SLURM_PROCID -ge $SM_WORKER_COUNT ]]; then
         exit 0
     fi
 
-    while [[ ! -f "$workdir/spark_master" ]]; do sleep 0.5s; done
+    while [[ ! -f $workdir/spark_master ]]; do sleep 0.5s; done
 
     echo ">> Sleeping 10s for master startup"
     sleep 10
@@ -491,46 +378,48 @@ _slurm_start_processes() {
     echo "> Running workers with ${SPARK_WORKER_CORES} cores and ${SPARK_WORKER_MEMORY} memory"
     echo "> Connecting to ${MASTER_NODE}"
 
-    output=$($SPARK_HOME/sbin/start-slave.sh $MASTER_NODE -m ${SPARK_WORKER_MEMORY} -c ${SPARK_WORKER_CORES})
+    output=$($SPARK_HOME/sbin/start-worker.sh $MASTER_NODE -m ${SPARK_WORKER_MEMORY} -c ${SPARK_WORKER_CORES})
     echo "$output"
-    [[ "$output" == *failed* ]] && exit 1
+    [[ $output == *failed* ]] && exit 1
 
-    if [[ -n "$SM_EXECUTE" && $SLURM_PROCID -eq 0 ]]; then
+    export PYSPARK_MASTER=$(cat "$workdir/spark_master")
+
+    if [[ -n $SM_EXECUTE && $SLURM_PROCID -eq 0 ]]; then
         echo ">> Sleeping 5s for cluster startup"
         sleep 5
         echo ">> Running command $SM_EXECUTE"
-        eval "set -o pipefail;$SM_EXECUTE|tee $workdir/stdout; echo \$? > $workdir/done"
+        eval "set -o pipefail;$SM_EXECUTE|tee '$workdir/stdout'; echo \$? > '$workdir/done'"
     else
-        while [[ ! -f "$workdir/done" ]]; do sleep 10s; done
+        while [[ ! -f $workdir/done ]]; do sleep 10s; done
     fi
 }
 
 startup() {
-    workdir=$1
-    envscript=$2
+    workdir="$1"
+    envscript="$2"
     batch=$(_detect_allocation)
 
-    [[ -z "$workdir" ]] && workdir=./_cluster
+    [[ -z $workdir ]] && workdir=./_cluster
 
-    if [ -z "$batch" ]; then
+    if [[ -z $batch ]]; then
         echo "cannot detect batch system"
         exit 2
     fi
 
     test="$workdir/env.sh"
-    [[ -z "$envscript" && -f "$test" ]] && envscript="$test"
+    [[ -z $envscript && -f $test ]] && envscript="$test"
     test="$workdir/spark-env.sh"
-    [[ -z "$envscript" && -f "$test" ]] && envscript="$test"
+    [[ -z $envscript && -f $test ]] && envscript="$test"
     test="$SPARK_CONF_DIR/conf/spark-env.sh"
-    [[ -z "$envscript" && -f "$test" ]] && envscript="$test"
+    [[ -z $envscript && -f $test ]] && envscript="$test"
     test="$SPARK_HOME/conf/spark-env.sh"
-    [[ -z "$envscript" && -f "$test" ]] && envscript="$test"
+    [[ -z $envscript && -f $test ]] && envscript="$test"
 
-    if [ -z "$workdir" ]; then
+    if [[ -z $workdir ]]; then
         usage
     fi
 
-    [[ ! -d "$workdir" ]] && mkdir -p "$workdir"
+    [[ ! -d $workdir ]] && mkdir -p "$workdir"
 
     echo ">>> Running on ${batch}"
     echo ">>> Working directory:  ${workdir}"
@@ -542,21 +431,21 @@ startup() {
 }
 
 shutdown() {
-    workdir=$1
-    envscript=$2
+    workdir="$1"
+    envscript="$2"
     batch=$(_detect_allocation)
 
-    if [ -z "$batch" ]; then
+    if [[ -z $batch ]]; then
         echo "!!! Cannot detect batch system"
         usage
     fi
 
     test="$workdir/env.sh"
-    [[ -z "$envscript" && -f "$test" ]] && envscript="$test"
+    [[ -z $envscript && -f $test ]] && envscript="$test"
     test="$workdir/spark-env.sh"
-    [[ -z "$envscript" && -f "$test" ]] && envscript="$test"
+    [[ -z $envscript && -f $test ]] && envscript="$test"
 
-    if [ -z "$workdir" ]; then
+    if [[ -z $workdir ]]; then
         usage
     fi
 
@@ -601,20 +490,24 @@ run() {
         esac
     done
     shift $(( $OPTIND - 1 ))
-    [ $# -ge 1 ] || usage
-    export SM_EXECUTE="$*"
+    [[ $# -ge 1 ]] || usage
+    SM_EXECUTE=""
+    for arg in "$@"; do
+        SM_EXECUTE="${SM_EXECUTE}${SM_EXECUTE:+ }$(printf "%q" "$arg")"
+    done
+    export SM_EXECUTE
 
     startup "$workdir" "$envscript"
     exit $?
 }
 
-if [ $(basename $0) == "sm_cluster" ]; then
-    cmd=$1
+if [[ $(basename "$0") == "sm_cluster" ]]; then
+    cmd="$1"
     shift
 else
-    base=$(basename $0)
-    cmd=${base##sm_}
+    base="$(basename "$0")"
+    cmd="${base##sm_}"
 fi
 
-[ -z "$(type $cmd 2> /dev/null|grep function)" ] && usage
-$cmd $*
+[[ -z $(type $cmd 2> /dev/null|grep function) ]] && usage
+$cmd "$@"

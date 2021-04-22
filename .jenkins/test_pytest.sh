@@ -14,5 +14,5 @@ part=$([ $(date +%H) -gt 8 -a $(date +%H) -lt 20 ] && echo interactive || echo p
 # srun here rather than salloc since the latter executes on the local
 # machine, with internal sruns running on remote nodes with requested
 # resources.  `sm_run` needs salloc, here we want to be on an /nvme node!
-srun --mpi=none -Aproj16 -p$part -Cnvme -N1 --exclusive --mem=0 \
+srun --mpi=none -p$part -Cnvme -N1 --exclusive --mem=0 \
     sh $script

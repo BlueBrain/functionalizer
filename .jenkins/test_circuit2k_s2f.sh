@@ -6,12 +6,11 @@ export MORPHOS=$BASE/morphologies/h5
 export RECIPE=$BASE/bioname/builderRecipeAllPathways.xml
 export TOUCHES=$BASE/touches/parquet/*.parquet
 
-salloc -Aproj16 -p$part -Cnvme -N1 --exclusive --mem=0 \
-    sm_run -H \
+salloc -p$part -Cnvme -N2 --exclusive --mem=0 \
+    sm_run \
         spykfunc --s2f \
                  --output-dir=$PWD \
                  --checkpoint-dir=$PWD \
-                 -p spark.master=spark://\$\(hostname\):7077 \
                  --from $CIRCUIT All --to $CIRCUIT All \
                  $RECIPE $MORPHOS \
                  --parquet $TOUCHES

@@ -1,15 +1,15 @@
 """Small configuration shim module.
 """
-from __future__ import print_function
 import io
+import os
 import sys
 
 import jprops
-try:
-    from pathlib2 import Path
-except ImportError:
-    from pathlib import Path
-from six import iteritems, text_type
+from pathlib import Path
+
+from .. import utils
+
+logger = utils.get_logger(__name__)
 
 
 class Configuration(dict):
@@ -36,12 +36,12 @@ class Configuration(dict):
             for k, v in jprops.iter_properties(fd):
                 self[k] = v
         if overrides:
-            fd = io.StringIO("\n".join([text_type(s) for s in overrides]))
+            fd = io.StringIO("\n".join([str(s) for s in overrides]))
             for k, v in jprops.iter_properties(fd):
                 self[k] = v
 
         self["spark.driver.extraJavaOptions"] = \
-            "-Dderby.system.home={} {}".format(
+            "\"-Dderby.system.home={}\" {}".format(
                 outdir.resolve(),
                 self.get("spark.driver.extraJavaOptions", ""))
         self.setdefault("spark.eventLog.dir",
@@ -51,11 +51,15 @@ class Configuration(dict):
         for k in ["spark.eventLog.dir", "spark.sql.warehouse.dir"]:
             Path(self[k]).mkdir(parents=True, exist_ok=True)
 
+        if master := os.environ.get("PYSPARK_MASTER"):
+            logger.info("Connecting to PYSPARK_MASTER: %s", master)
+            self.setdefault("spark.master", master)
+
     def __call__(self, prefix):
         """Yield all key, value pairs that match the prefix
         """
         prefix = prefix.split('.')
-        for k, v in iteritems(self):
+        for k, v in self.items():
             path = k.split('.')[:len(prefix)]
             if path == prefix:
                 yield k, v

@@ -6,12 +6,11 @@ export MORPHOS=$BASE/morphologies/h5
 export RECIPE=$BASE/bioname/builderRecipeAllPathways.xml
 export TOUCHES=$BASE/touches/parquet/*.parquet
 
-salloc -Aproj16 -p$part -Cnvme -N1 --exclusive --mem=0 \
+salloc -p$part -Cnvme -N1 --exclusive --mem=0 \
     sm_run -H \
         spykfunc --s2s \
                  --output-dir=$PWD \
                  --checkpoint-dir=$PWD \
-                 -p spark.master=spark://\$\(hostname\):7077 \
                  --from $CIRCUIT All --to $CIRCUIT All \
                  --from-nodeset $BASE/nodesets.json test \
                  --to-nodeset $BASE/nodesets.json test \
