@@ -1,5 +1,0 @@
-# Please set the BASEDIR var
-PYTHONHOME=$BASEDIR/sparkenv
-SPARK_LOG_DIR=$BASE_DIR/logs
-SPARK_WORKER_DIR=$BASE_DIR/workers
-
