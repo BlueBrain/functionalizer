@@ -5,14 +5,14 @@ import sys
 
 import libsonata
 import pandas as pd
+import pyarrow.parquet as pq
 import numpy as np
 
 from spykfunc.schema import LEGACY_MAPPING
 
 
 def run():
-    """Entry point.
-    """
+    """Entry point."""
     parser = argparse.ArgumentParser()
     parser.add_argument("circuit", help="the circuit file with neuron definitions")
     parser.add_argument("full", help="the reference parquet file")
@@ -24,9 +24,14 @@ def run():
     regs = pop.get_enumeration("region", libsonata.Selection([[0, len(pop)]]))
     idx = np.argwhere(regs == args.region)
 
-    df = pd.read_parquet(args.full).rename(columns=LEGACY_MAPPING)
+    df = pq.ParquetDataset(args.full).read().to_pandas().rename(columns=LEGACY_MAPPING)
     sel = df.target_node_id.isin(idx) & df.source_node_id.isin(idx)
-    df_filtered = pd.read_parquet(args.filtered).rename(columns=LEGACY_MAPPING)
+    df_filtered = (
+        pq.ParquetDataset(args.filtered)
+        .read()
+        .to_pandas()
+        .rename(columns=LEGACY_MAPPING)
+    )
 
     if len(df[sel]) != len(df_filtered):
         print("\nDifferences in connections")
@@ -39,5 +44,5 @@ def run():
         sys.exit(0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     run()

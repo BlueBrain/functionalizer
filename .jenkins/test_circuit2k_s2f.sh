@@ -15,8 +15,7 @@ salloc -p$part -Cnvme -N2 --exclusive --mem=0 \
                  $RECIPE $MORPHOS \
                  --parquet $TOUCHES
 
-parquet-coalesce circuit.parquet single.parquet
 parquet-compare \
     $CIRCUIT \
-    single.parquet \
+    circuit.parquet \
     $BASE/touches/functional/circuit.parquet
