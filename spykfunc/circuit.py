@@ -53,7 +53,6 @@ def touches_per_pathway(touches):
             )
         )
 
-    logger.debug("Computing Pathway stats...")
     return pathway_statistics(pathway_connection_counts(touches))
 
 
