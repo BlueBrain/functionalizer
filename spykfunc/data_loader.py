@@ -240,11 +240,12 @@ class TouchData:
 
     def __init__(self, parquet, sonata):
         if parquet:
-            if isinstance(parquet, str):
-                parquet = glob.glob(parquet)
+            all_parquet = []
+            for path in parquet:
+                all_parquet.extend(glob.glob(path))
             self._loader = self._load_parquet
-            self._metadata = self._load_parquet_metadata(*parquet)
-            self._args = parquet
+            self._metadata = self._load_parquet_metadata(*all_parquet)
+            self._args = all_parquet
         elif sonata:
             self._loader = self._load_sonata
             self._metadata = self._load_sonata_metadata(*sonata)

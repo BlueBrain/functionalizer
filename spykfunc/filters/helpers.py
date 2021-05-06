@@ -22,8 +22,8 @@ class CSVWriter:
         end = "" if filename.endswith(".csv") else ".csv"
         filename = f"_debug/{self._stage:02d}_{filename}{end}"
 
-        data = df.toPandas()
-        data.to_csv(filename, index=False)
+        logger.debug("Writing debug information to %s", filename)
+        df.toPandas().to_csv(filename, index=False)
 
         self._stage += 1
 

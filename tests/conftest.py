@@ -21,7 +21,7 @@ ARGS = (
     (os.path.join(DATADIR, "nodes.h5"), "All"),
     (None, None),
     os.path.join(DATADIR, "morphologies/h5"),
-    os.path.join(DATADIR, "touches/*.parquet")
+    [os.path.join(DATADIR, "touches/*.parquet")]
 )
 
 filters.load()
@@ -44,7 +44,7 @@ def gj_fixture(tmpdir_factory):
     tmpdir = tmpdir_factory.mktemp('gap_junctions')
     cdir = tmpdir.join('check')
     odir = tmpdir.join('out')
-    args = list(ARGS[:-1]) + [os.path.join(DATADIR, "gap_junctions/touches*.parquet")]
+    args = list(ARGS[:-1]) + [[os.path.join(DATADIR, "gap_junctions/touches*.parquet")]]
     return Functionalizer(
         filters=RM.GAP_JUNCTIONS.value,
         checkpoint_dir=str(cdir),

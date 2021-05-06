@@ -186,9 +186,9 @@ class Circuit(object):
                     .join(table, numeric)
                     .drop(numeric)
                 )
-                col = col / size
+                col = (col / size).cast("long")
                 if strcol is not None:
-                    strcol = F.concat(strcol, F.lit(f", {name}="), name)
+                    strcol = F.concat(strcol, F.lit(f" {name}="), name)
                 else:
                     strcol = F.concat(F.lit(f"{name}="), name)
                 to_drop.append(name)
