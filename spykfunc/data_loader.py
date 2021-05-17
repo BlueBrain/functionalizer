@@ -177,11 +177,11 @@ class NeuronData:
 
         if os.path.exists(mvd_parquet):
             logger.info("Loading circuit from parquet")
-            mvd = sm.read.parquet(adjust_for_spark(mvd_parquet, local=True)).cache()
-            df = F.broadcast(mvd)
+            mvd = sm.read.parquet(adjust_for_spark(mvd_parquet, local=True))
+            df = F.broadcast(mvd.coalesce(1)).cache()
             df.count()  # force materialize
         else:
-            logger.info("Building circuit from raw mvd files")
+            logger.info("Building circuit from SONATA")
 
             # Create a default selection, or load it from the NodeSets
             if not self._ns_filename:
@@ -307,7 +307,6 @@ class TouchData:
             columns
         )
         logger.info("Total touches: %d", touches.count())
-
         return touches
 
     @staticmethod

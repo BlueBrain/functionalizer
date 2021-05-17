@@ -4,6 +4,7 @@ from collections import defaultdict, OrderedDict
 from typing import Dict, List
 import fnmatch
 import numpy as np
+import pandas as pd
 
 import sparkmanager as sm
 from pyspark.sql import functions as F
@@ -91,19 +92,13 @@ class SynapseProperties(DatasetOperation):
         """Merges synapse class assignment and properties
         """
         prop_df = _load_from_recipe(props.classes, schema.SYNAPSE_PROPERTY_SCHEMA, trim=True) \
-            .withColumnRenamed("_i", "_prop_i")
+            .rename(columns={"_i": "_prop_i"}).sort_values("id")
         class_df = _load_from_recipe(props.rules, schema.SYNAPSE_CLASSIFICATION_SCHEMA) \
-            .withColumnRenamed("_i", "_class_i")
+            .rename(columns={"_i": "_class_i"}).sort_values("type")
 
-        # These are small DF, we coalesce to 1 so the sort doesnt require shuffle
-        class_df = class_df.coalesce(1).sort("type")
-        prop_df = prop_df.coalesce(1).sort("id")
-        merged_props = class_df.join(prop_df, prop_df.id == class_df.type, "left").cache()
-        n_syn_prop = merged_props.count()
-        logger.info("Found {} synapse property entries".format(n_syn_prop))
-
-        merged_props = F.broadcast(merged_props.checkpoint())
-        return merged_props
+        merged_props = class_df.join(prop_df.set_index("id"), on="type")
+        logger.info("Found %d synapse property entries", len(merged_props))
+        return F.broadcast(sm.createDataFrame(merged_props))
 
     @staticmethod
     def convert_rules(source, target, rules):
@@ -201,7 +196,7 @@ def cast_in_eq_py_t(val, spark_t):
     return _spark_t_to_py[spark_t.__class__](val)
 
 
-def _load_from_recipe(recipe_group, group_schema, *, trim: bool = False):
+def _load_from_recipe(recipe_group, group_schema, *, trim: bool = False) -> pd.DataFrame:
     if trim:
         fields = []
         for field in reversed(list(group_schema.fields)):
@@ -217,5 +212,4 @@ def _load_from_recipe(recipe_group, group_schema, *, trim: bool = False):
     data = [tuple(cast_in_eq_py_t(getattr(entry, field.name), field.dataType)
                   for field in group_schema)
             for entry in recipe_group]
-    rdd = sm.parallelize(data)
-    return rdd.toDF(group_schema)
+    return pd.DataFrame.from_records(data, columns=[f.name for f in group_schema])

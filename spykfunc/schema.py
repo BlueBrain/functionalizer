@@ -120,11 +120,6 @@ SYNAPSE_REPOSITION_SCHEMA = T.StructType([
     T.StructField("reposition", T.BooleanType(), False),
 ])
 
-SYNAPSE_CLASS_MAP_SCHEMA = T.StructType([
-    T.StructField("classification_index", T.IntegerType(), False),
-    T.StructField("classification_i", T.ShortType(), False),
-])
-
 SYNAPSE_PROPERTY_SCHEMA = T.StructType([
     T.StructField("_i", T.ShortType(), False),
     T.StructField("id", T.StringType(), False),

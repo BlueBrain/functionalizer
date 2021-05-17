@@ -131,13 +131,10 @@ class Functionalizer(object):
         # for its existence/permission to create
         os.path.isdir(self._config.output_dir) or os.makedirs(self._config.output_dir)
 
-        logger.debug("%s: Data loading...", time.ctime())
-        # Load recipe
         self.recipe = Recipe(recipe_file, self._config.strict)
 
-        # Load Neurons data
+        logger.debug("Starting data loading...")
         n_from = NeuronData(source, source_nodeset, self._config.cache_dir)
-
         if source == target:
             n_to = n_from
         else:

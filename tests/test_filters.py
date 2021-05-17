@@ -161,7 +161,6 @@ class TestFilters(object):
             "decay_time",
             "n_rrp_vesicles",
         ]
-        dtypes = ["float32"] * 5 + ["int16"]
 
         df = sm.read.load(os.path.join(fz.output_directory, "circuit.parquet"))
         props = (
@@ -187,10 +186,10 @@ class TestFilters(object):
             .toPandas()
         )
         want = pd.DataFrame(
-            [(0.16834326, 673.3085, 17.946482, 0.3050348, 1.7670848, 1)], columns=cols
+            [(0.16834326, 673.30847, 17.946482, 0.3050348, 1.7670848, 1)],
+            columns=cols
         )
-        for col, dtype in zip(cols, dtypes):
-            want[col] = want[col].astype(dtype)
+        want["n_rrp_vesicles"] = want["n_rrp_vesicles"].astype("int16")
         have = props.drop_duplicates().round(5)
         want = want.round(5)
         assert have.equals(want)
