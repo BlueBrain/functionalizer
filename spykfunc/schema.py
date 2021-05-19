@@ -1,3 +1,5 @@
+import re
+
 from collections import defaultdict
 from . import utils
 from pyspark.sql import types as T
@@ -5,10 +7,14 @@ from pyspark.sql import functions as F
 from enum import Enum
 
 
-class DataSets:
-    NEURONS = "Dataset.Neurons"
-    TOUCHES = "Dataset.Touches"
-    MORPHOLOGIES = "Dataset.Morphologies"
+METADATA_FIXED_KEYS = (
+    "source_population_name",
+    "source_population_size",
+    "target_population_name",
+    "target_population_size",
+)
+METADATA_PATTERN = "spykfunc_run{}_{}"
+METADATA_PATTERN_RE = re.compile(METADATA_PATTERN.format(r"(\d+(?:\.\d+)*)", ""))
 
 
 # Maps from both old touch files and old spykfunc output (syn2-style) to

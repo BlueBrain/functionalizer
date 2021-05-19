@@ -1,5 +1,6 @@
 #!/usr/bin/env pyspark
 
+import os
 import sys
 import argparse
 from . import filters, utils
@@ -18,6 +19,22 @@ def _parse_args(args=None) -> argparse.Namespace:
     if args is None:
         args = sys.argv[1:]
 
+    class _ValidFile:
+        """Check that a path is a file
+        """
+        def __call__(self, filename):
+            if not os.path.isfile(filename):
+                raise ValueError(f"'{filename}' is not a valid file")
+            return filename
+
+    class _ValidPath:
+        """Check that a path is a file or a directory
+        """
+        def __call__(self, path):
+            if not os.path.isfile(path) and not os.path.isdir(path):
+                raise ValueError(f"'{path}' is not a valid file")
+            return path
+
     class _ConfDumpAction(argparse._HelpAction):
         """Dummy class to list default configuration and exit, just like `--help`.
         """
@@ -33,7 +50,7 @@ def _parse_args(args=None) -> argparse.Namespace:
         """Dummy class to allow spiltting a comma separted list.
         """
         def __call__(self, parser, namespace, values, option_string=None):
-            setattr(namespace, self.dest, values.split(','))
+            setattr(namespace, self.dest, list(filter(len, values.split(','))))
 
     class _Formatter(argparse.HelpFormatter):
         """Dummy class to allow line-breaks in help
@@ -54,7 +71,6 @@ def _parse_args(args=None) -> argparse.Namespace:
         description="spykfunc is a pyspark implementation of functionalizer.",
         formatter_class=_Formatter
     )
-    parser.add_argument("recipe_file", help="the XML recipe file")
     gfilter = parser.add_argument_group("filter options")
     group = gfilter.add_mutually_exclusive_group(required=True)
     group.add_argument("--s2s", "--structural", dest="filters",
@@ -69,31 +85,28 @@ def _parse_args(args=None) -> argparse.Namespace:
                        help="run filters for gap-junctions:\ni|" +
                             ", ".join(RM.GAP_JUNCTIONS.value),
                        action="store_const", const=RM.GAP_JUNCTIONS.value)
+    group.add_argument("--merge", dest="filters",
+                       help="merge input files without running any filters",
+                       action="store_const", const=[])
     group.add_argument("--filters", dest="filters",
                        help="run a list of custom filters (comma-separated), available:\ni|" +
                             ", ".join(DatasetOperation.modules()),
                        action=_SplitAction)
     ginput = parser.add_argument_group("input options")
-    ginput.add_argument("--from", dest="source", nargs=2, required=True,
+    ginput.add_argument("--from", dest="source", nargs=2,
                         metavar=('FILENAME', 'POPULATION'),
                         help="path and name for the source population")
-    ginput.add_argument("--from-nodesets", dest="source_nodeset", nargs=2,
+    ginput.add_argument("--from-nodeset", dest="source_nodeset", nargs=2,
                         metavar=('FILENAME', 'NODESET'), default=[None]*2,
                         help="path and name for the source population")
-    ginput.add_argument("--to", dest="target", nargs=2, required=True,
+    ginput.add_argument("--to", dest="target", nargs=2,
                         metavar=('FILENAME', 'POPULATION'),
                         help="path and name for the target population")
-    ginput.add_argument("--to-nodesets", dest="target_nodeset", nargs=2,
+    ginput.add_argument("--to-nodeset", dest="target_nodeset", nargs=2,
                         metavar=('FILENAME', 'NODESET'), default=[None]*2,
                         help="path and name for the target population")
-    gtouches = ginput.add_mutually_exclusive_group(required=True)
-    gtouches.add_argument("--parquet",
-                          help="the touch files (parquets); "
-                               "a literal blob expression is also accepted.",
-                          nargs="+")
-    gtouches.add_argument("--touches",
-                          help="the touch file (sonata) and population",
-                          nargs=2)
+    ginput.add_argument("--recipe", type=_ValidFile(), help="the XML recipe file")
+    ginput.add_argument("--morphologies", type=_ValidPath(), help="the H5 morphology database path")
     goutput = parser.add_argument_group("output options")
     goutput.add_argument("--cache-dir",
                          help="specify directory to cache circuits converted to parquet, "
@@ -137,9 +150,25 @@ def _parse_args(args=None) -> argparse.Namespace:
     gadv.add_argument("--dump-configuration", action=_ConfDumpAction,
                       help="show the configuration including modifications via options prior "
                            "to this flag and exit")
-    parser.add_argument("morpho_dir", help="the H5 morphology database directory")
+    parser.add_argument("edges", nargs="+",
+                        help="the edge files (SONATA or parquet: also directories for parquet)")
 
-    return parser.parse_args(args)
+    args = parser.parse_args(args)
+
+    if len(args.filters) > 0:
+        missing = []
+        if not args.recipe:
+            missing.append("recipe")
+        if not args.morphologies:
+            missing.append("morphologies")
+        if not args.source:
+            missing.append("source nodes")
+        if not args.target:
+            missing.append("target nodes")
+        if missing:
+            parser.error(f"to use filters, please also specify: {','.join(missing)}.")
+
+    return args
 
 
 # *****************************************************
@@ -159,14 +188,13 @@ def spykfunc() -> int:
     try:
         args = vars(options)
         fz = Functionalizer(**args)
-        fz.init_data(options.recipe_file,
+        fz.init_data(options.recipe,
                      options.source,
                      options.source_nodeset,
                      options.target,
                      options.target_nodeset,
-                     options.morpho_dir,
-                     options.parquet,
-                     options.touches)
+                     options.morphologies,
+                     options.edges)
         fz.process_filters(overwrite="F" in options.overwrite.upper())
         fz.export_results(overwrite="E" in options.overwrite.upper(),
                           order=getattr(SortBy, options.order.upper()))

@@ -8,7 +8,7 @@ from pyspark.sql import types as T
 
 import sparkmanager as sm
 
-from spykfunc.data_loader import NeuronData, TouchData
+from spykfunc.data_loader import NeuronData, EdgeData
 from spykfunc.dataio.morphologies import MorphologyDB
 from spykfunc.utils import get_logger
 from spykfunc.utils.spark import cache_broadcast_single_part
@@ -101,7 +101,7 @@ class Circuit(object):
         self,
         source: NeuronData,
         target: NeuronData,
-        touches: TouchData,
+        touches: EdgeData,
         morphologies: str
     ):
         """Construct a new circuit
@@ -112,7 +112,7 @@ class Circuit(object):
         self.target = target
 
         #: :property: a wrapper around the morphology storage
-        self.morphologies = MorphologyDB(morphologies)
+        self.morphologies = MorphologyDB(morphologies) if morphologies else None
 
         self._touches = None
         self._touch_loader = touches

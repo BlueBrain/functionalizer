@@ -18,6 +18,9 @@ In the most simple case you just want to run Spykfunc in one of three modi:
   :class:`~spykfunc.filters.GapJunction` to produce a circuit based on gap
   junctions.
 
+* **Merging** (command line argument ``--merge``) with no active filters to
+  merge multiple previous executions of Spykfunc.
+
 Custom lists of filters can be run with the ``--filters`` command line
 option, separated only by commas (``,``).  Note that any trailing `Filter`
 should be omitted from class names.
@@ -80,17 +83,15 @@ present in the Spykfunc output directory, and convert them to a
    $ salloc -Aproj16 -pinteractive -t 8:00:00 -N1 -n42
    …some SLURM/shell output…
    $ srun --mpi=pmi2 parquet2hdf5 \
-                --format SONATA \
                 --from from_nodes.sonata FROM_POPULATION \
                 --to to_nodes.sonata TO_POPULATION \
-                -p EDGE_POPULATION \
-                -o edges.sonata \
-                circuit.parquet/*.parquet
+                circuit.parquet \
+                edges.h5 \
+                EDGE_POPULATION
 
 Both ``FROM_POPULATION`` and ``TO_POPULATION`` need to be populations
 present in the respective node files.  The name ``EDGE_POPULATION`` will be
-used in the edge storage file, if the ``-p`` flag is not given,
-``EDGE_POPULATION`` will be set to `default`.
+used in the edge storage file.
 
 Executing Spykfunc on the cluster
 ---------------------------------
@@ -137,12 +138,11 @@ both a Spark and a HDFS cluster:
        sm_run \
            spykfunc --s2f \
                     --output-dir=${PWD} \
-                    -p spark.master=spark://\$\(hostname\):7077 \
                     --from ${NODES} ${NODE_POPULATION} \
                     --to ${NODES} ${NODE_POPULATION} \
-                    --parquet ${TOUCHES} \
-                    ${RECIPE} \
-                    ${MORPHOS}
+                    --recipe ${RECIPE} \
+                    --morphologies ${MORPHOS} \
+                    ${TOUCHES}
 
 .. note::
    The ``sm_run`` script will create auxilliary directories in the current
@@ -189,13 +189,34 @@ Parquet by SONATA and runs only the synapse properties:
        sm_run \
            spykfunc \
                     --output-dir=${PWD} \
-                    -p spark.master=spark://\$\(hostname\):7077 \
                     --from ${NODES} ${NODE_POPULATION} \
                     --to ${NODES} ${NODE_POPULATION} \
-                    --touches ${EDGES} ${EDGE_POPULATION} \
-                    --filters=SynapseProperties \
-                    ${RECIPE} \
-                    ${MORPHOS}
+                    --filters SynapseProperties \
+                    --recipe ${RECIPE} \
+                    --morphologies ${MORPHOS} \
+                    ${EDGES} ${EDGE_POPULATION}
+
+Merging Spykfunc Executions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When merging previous executions of Spykfunc, node files, a recipe, and the
+morphology storage do not have to be provided.  This shortens the execution
+to e.g.:
+
+.. code-block:: bash
+
+   export TOUCHES=$BASE/touches/parquet/*.parquet
+
+   salloc -Aproj16 --ntasks-per-node=1 -Cnvme -N2 --exclusive --mem=0 \
+       sm_run \
+           spykfunc \
+                    --output-dir=${PWD} \
+                    --merge \
+                    first/circuit.parquet second/circuit.parquet
+
+.. warning::
+   Note that the files used as inputs should be from **non-overlapping runs
+   of TouchDetector or Spykfunc**.
 
 SLURM Allocation Size
 ~~~~~~~~~~~~~~~~~~~~~

@@ -120,6 +120,8 @@ class __DatasetOperationType(type):
                 classname = filters[i].__class__.__name__
                 logger.info(f"Found checkpoint for {classname}")
                 break
+        else:
+            i = 0  # force initialization in case filters is empty
         for f in filters[:i]:
             classname = f.__class__.__name__
             logger.info(f"Removing {classname}")
@@ -135,7 +137,7 @@ class __DatasetOperationType(type):
 def _log_touch_count(df):
     """Print information for end users
     """
-    logger.info("Surviving touches: %d", df.count())
+    logger.info("Surviving edges: %d", df.count())
     return df
 
 

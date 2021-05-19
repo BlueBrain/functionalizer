@@ -18,17 +18,17 @@ from . import schema
 from . import utils
 from .filters import DatasetOperation
 from .circuit import Circuit
-from .data_loader import NeuronData, TouchData
+from .data_loader import NeuronData, EdgeData
 from .definitions import CheckpointPhases, SortBy
 from .utils.checkpointing import checkpoint_resume
 from .utils.filesystem import adjust_for_spark, autosense_hdfs
 from .version import version as spykfunc_version
+from .schema import METADATA_PATTERN, METADATA_PATTERN_RE
 
 __all__ = ["Functionalizer", "CheckpointPhases"]
 
 logger = utils.get_logger(__name__)
 _MB = 1024 ** 2
-_METADATA_PATTERN = "spykfunc_run{}_{}"
 
 
 class _SpykfuncOptions:
@@ -101,7 +101,7 @@ class Functionalizer(object):
     # -------------------------------------------------------------------------
     @sm.assign_to_jobgroup
     def init_data(self, recipe_file, source, source_nodeset, target, target_nodeset,
-                  morpho_dir, parquet=None, sonata=None):
+                        morphologies, edges=None):
         """Initialize all data required
 
         Will load the necessary cell collections from `source` and `target`
@@ -118,41 +118,41 @@ class Functionalizer(object):
             The source population path and name
         target
             The target population path and name
-        morpho_dir
+        morphologies
             The storage path to all required morphologies
-        parquet
-            A list of touch files; a single globbing expression can be
-            specified as well
-        sonata
-            Alternative touch representation, consisting of edge population
-            path and name
+        edges
+            A list of files containing edges
         """
         # In "program" mode this dir wont change later, so we can check here
         # for its existence/permission to create
         os.path.isdir(self._config.output_dir) or os.makedirs(self._config.output_dir)
 
-        self.recipe = Recipe(recipe_file, self._config.strict)
-
         logger.debug("Starting data loading...")
-        n_from = NeuronData(source, source_nodeset, self._config.cache_dir)
-        if source == target:
-            n_to = n_from
+        if source and target:
+            n_from = NeuronData(source, source_nodeset, self._config.cache_dir)
+            if source == target and source_nodeset == target_nodeset:
+                n_to = n_from
+            else:
+                n_to = NeuronData(target, target_nodeset, self._config.cache_dir)
         else:
-            n_to = NeuronData(target, target_nodeset, self._config.cache_dir)
+            n_from = None
+            n_to = None
 
-        touches = TouchData(parquet, sonata)
+        touches = EdgeData(*edges)
 
-        self.circuit = Circuit(n_from, n_to, touches, morpho_dir)
+        self.circuit = Circuit(n_from, n_to, touches, morphologies)
 
-        if self._config.strict and not self.recipe.validate({
-            "fromMType": n_from.mtype_values,
-            "fromEType": n_from.etype_values,
-            "fromSClass": n_from.sclass_values,
-            "toMType": n_to.mtype_values,
-            "toEType": n_to.etype_values,
-            "toSClass": n_to.sclass_values,
-        }):
-            raise RuntimeError("Recipe validation failed")
+        if recipe_file:
+            self.recipe = Recipe(recipe_file, self._config.strict)
+            if self._config.strict and not self.recipe.validate({
+                "fromMType": n_from.mtype_values,
+                "fromEType": n_from.etype_values,
+                "fromSClass": n_from.sclass_values,
+                "toMType": n_to.mtype_values,
+                "toEType": n_to.etype_values,
+                "toSClass": n_to.sclass_values,
+            }):
+                raise RuntimeError("Recipe validation failed")
 
         return self
 
@@ -304,22 +304,25 @@ class Functionalizer(object):
 
     def _add_metadata(self, path):
         schema = pq.ParquetDataset(path).schema.to_arrow_schema()
-        metadata = schema.metadata
+        metadata = {k.decode(): v.decode() for k, v in schema.metadata.items()}
         metadata.update(self.circuit.metadata)
         this_run = 1
-        previous_run = re.compile(_METADATA_PATTERN.format(r"(\d+)", ""))
         for key in metadata:
-            if m := previous_run.match(key.decode()):
-                this_run = max(this_run, int(m.group(1)) + 1)
+            if m := METADATA_PATTERN_RE.match(key):
+                # "version" numbers may contain a dot, thus: string → float → int
+                this_run = max(this_run, int(float(m.group(1))) + 1)
         metadata.update({
-            "source_population_name": self.circuit.source.population,
-            "source_population_size": str(len(self.circuit.source)),
-            "target_population_name": self.circuit.target.population,
-            "target_population_size": str(len(self.circuit.target)),
-            _METADATA_PATTERN.format(this_run, "version"): spykfunc_version,
-            _METADATA_PATTERN.format(this_run, "filters"): ",".join(self._config.filters),
-            _METADATA_PATTERN.format(this_run, "recipe"): str(self.recipe),
+            METADATA_PATTERN.format(this_run, "version"): spykfunc_version,
+            METADATA_PATTERN.format(this_run, "filters"): ",".join(self._config.filters),
+            METADATA_PATTERN.format(this_run, "recipe"): str(self.recipe or ""),
         })
+        if self.circuit.source and self.circuit.target:
+            metadata.update({
+                "source_population_name": self.circuit.source.population,
+                "source_population_size": str(len(self.circuit.source)),
+                "target_population_name": self.circuit.target.population,
+                "target_population_size": str(len(self.circuit.target)),
+            })
         new_schema = schema.with_metadata(metadata)
         pq.write_metadata(new_schema, os.path.join(path, "_metadata"))
 
@@ -330,5 +333,7 @@ class Functionalizer(object):
     def _ensure_data_loaded(self):
         """Ensures required data is available
         """
-        if self.recipe is None or self.circuit is None:
+        if self.circuit is None:
             raise RuntimeError("No touches available. Please load data first.")
+        if self._config.filters and self.recipe is None:
+            raise RuntimeError("No recipe available.")

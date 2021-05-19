@@ -10,6 +10,7 @@ extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'sphinx.ext.todo',
               'sphinx.ext.doctest', 'sphinx.ext.ifconfig',
               'sphinx.ext.napoleon']
 
+autodoc_default_options = {'members': True, 'ignore-module-all': True}
 autodoc_mock_imports = ['pyspark', 'pyspark.sql', 'sparkmanager', 'spykfunc.schema', 'spykfunc.utils.checkpointing']
 
 source_suffix = '.rst'

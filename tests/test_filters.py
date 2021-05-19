@@ -64,7 +64,7 @@ def test_sonata_properties(tmpdir_factory):
     odir = tmpdir.join("out")
     fz = Functionalizer(
         filters=["SynapseProperties"], checkpoint_dir=str(cdir), output_dir=str(odir)
-    ).init_data(*ARGS[:-1], sonata=(os.path.join(DATADIR, "edges.h5"), "default"))
+    ).init_data(*ARGS[:-1], edges=(os.path.join(DATADIR, "edges.h5"), "default"))
     fz.process_filters()
 
     assert "delay" in fz.circuit.df.columns

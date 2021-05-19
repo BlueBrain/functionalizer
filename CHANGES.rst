@@ -2,6 +2,27 @@
 Changelog
 =========
 
+Version 0.17.0
+==============
+
+Changes:
+  - Reduce the output of the cluster startup script to display important
+    information more prominently.  Spykfunc will not require the flag
+    ``-p spark.master=…`` any longer when launched with ``sm_run``.
+    See also FUNCZ-275_.
+  - Generalize :class:`~recipe.parts.touch_connections.ConnectionRule`,
+    where ``<mTypeRule to="…" …`` is now superseded by ``<rule toMType="…" …``
+    and additional selection criteria may be specified.
+  - Store metadata about previous tool invocations and add recipe, filters
+    used.  See also HPCTM-1425_.
+  - Rework user interface to require the flags ``--recipe`` and
+    ``--morphologies``, previously positional arguments, when using
+    filters.  Drop ``--parquet`` and ``--touches`` and use positional
+    arguments instead, auto-detecting the input file type.
+  - Allow to not specify any filters or use the ``--merge`` flag to process
+    several inputs of **non-overlapping** edge populations.  See also
+    FUNCZ-279_.
+
 Version 0.16.0
 ==============
 
@@ -300,3 +321,7 @@ First working version with 3 base filters:
 .. _FUNCZ-262: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-262
 .. _FUNCZ-263: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-263
 .. _FUNCZ-269: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-269
+.. _FUNCZ-275: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-275
+.. _FUNCZ-277: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-277
+.. _FUNCZ-279: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-279
+.. _HPCTM-1425: https://bbpteam.epfl.ch/project/issues/browse/HPCTM-1425

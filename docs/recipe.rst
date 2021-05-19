@@ -7,12 +7,12 @@ Programmatic Access to the Recipe
 Recipe components
 -----------------
 
-.. autoclass:: recipe.parts.touch_connections.ConnectionRules
-.. autoclass:: recipe.parts.gap_junction_properties.GapJunctionProperties
-.. autoclass:: recipe.parts.bouton_density.InitialBoutonDistance
-.. autoclass:: recipe.parts.seeds.Seeds
-.. autoclass:: recipe.parts.spine_lengths.SpineLengths
-.. autoclass:: recipe.parts.synapse_properties.SynapseProperties
-.. autoclass:: recipe.parts.synapse_reposition.SynapseShifts
-.. autoclass:: recipe.parts.touch_reduction.TouchReduction
-.. autoclass:: recipe.parts.touch_rules.TouchRules
+.. automodule:: recipe.parts.bouton_density
+.. automodule:: recipe.parts.gap_junction_properties
+.. automodule:: recipe.parts.seeds
+.. automodule:: recipe.parts.spine_lengths
+.. automodule:: recipe.parts.synapse_properties
+.. automodule:: recipe.parts.synapse_reposition
+.. automodule:: recipe.parts.touch_connections
+.. automodule:: recipe.parts.touch_reduction
+.. automodule:: recipe.parts.touch_rules

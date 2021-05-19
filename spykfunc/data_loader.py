@@ -168,6 +168,9 @@ class NeuronData:
         sha.update(self._population.encode())
         sha.update(str(os.stat(fn).st_size).encode())
         sha.update(str(os.stat(fn).st_mtime).encode())
+        if self._ns_filename and self._ns_nodeset:
+            sha.update(self._ns_filename.encode())
+            sha.update(self._ns_nodeset.encode())
         digest = sha.hexdigest()[:8]
 
         logger.info("Total neurons: %d", len(self))
@@ -222,41 +225,99 @@ class NeuronData:
         return df
 
 
-class TouchData:
-    """Touch data loading facilities
+def _grab_parquet(files):
+    """Returns as many parquet files from the front of `files` as possible.
+    """
+    parquets = []
+    while files and files[0].endswith(".parquet") :
+        if os.path.isdir(files[0]):
+            if parquets:
+                return parquets
+            return [files.pop(0)]
+        parquets.append(files.pop(0))
+    return parquets
+
+
+def _grab_sonata_population(filename):
+    """Retrieve the default population in a SONATA files.  Raise an
+    exception if no population present or more than one population is
+    found.
+    """
+    import libsonata
+    populations = libsonata.EdgeStorage(filename).population_names
+    if len(populations) == 1:
+        return populations[0]
+    elif len(populations) > 1:
+        raise ValueError(f"More than one population in '{filename}'")
+    else:
+        raise ValueError(f"No population in '{filename}'")
+
+
+def _grab_sonata(files):
+    """Returns a possible SONATA file from the front of `files`.
+    """
+    if not files:
+        return
+    if not files[0].endswith(".h5"):
+        return
+    filename = files.pop(0)
+    if files and not any(files[0].endswith(ext) for ext in (".h5", ".parquet")):
+        population = files.pop(0)
+    else:
+        population = _grab_sonata_population(filename)
+    return (filename, population)
+
+
+class EdgeData:
+    """Edge data loading facilities
 
     This class represent the connectivity between cell populations, lazily
     loaded.  Access the property :attr:`.NeuronData.df`, to load the data.
 
-    Arguments
-    ---------
-    parquet
-        A list of touch files; a single globbing expression can be
-        specified as well
-    sonata
-        Alternative touch representation, consisting of edge population
-        path and name
+    Args:
+        A list of edge files.
     """
 
-    def __init__(self, parquet, sonata):
-        if parquet:
-            all_parquet = []
-            for path in parquet:
-                all_parquet.extend(glob.glob(path))
-            self._loader = self._load_parquet
-            self._metadata = self._load_parquet_metadata(*all_parquet)
-            self._args = all_parquet
-        elif sonata:
-            self._loader = self._load_sonata
-            self._metadata = self._load_sonata_metadata(*sonata)
-            self._args = sonata
+    def __init__(self, *paths):
+        files = []
+        for path in paths:
+            files.extend(glob.glob(path) or [path])
+        metadata = []
+        self._loaders = []
+        while files:
+            if parquet := _grab_parquet(files):
+                metadata.append(self._load_parquet_metadata(*parquet))
+                self._loaders.append(self._load_parquet(*parquet))
+            elif sonata := _grab_sonata(files):
+                metadata.append(self._load_sonata_metadata(*sonata))
+                self._loaders.append(self._load_sonata(*sonata))
+            else:
+                raise ValueError(f"cannot process {files[0]}")
+        if len(set(frozenset(m.items()) for m in metadata)) == 1:
+            self._metadata = metadata[0]
+        elif metadata:
+            logger.debug("Detected multiple different inputs, prefixing metadata")
+            self._metadata = dict()
+            for key in schema.METADATA_FIXED_KEYS:
+                for m in metadata:
+                    if key not in m:
+                        continue
+                    value = m.pop(key)
+                    if self._metadata.setdefault(key, value) != value:
+                        raise ValueError("conflicting values for metadata " \
+                                        f"{key}: {self._metadata[key]}, {value}")
+            for n, m in enumerate(metadata):
+                self._metadata.update({f"merge{n}_{k}": v for k, v in m.items()})
         else:
-            raise ValueError("TouchData needs to be initialized with touch data")
+            raise ValueError("need to provide at least one file with edges")
 
     @property
     def df(self):
+        df = self._loaders[0]()
+        for loader in self._loaders[1:]:
+            df = df.union(loader())
         return (
-            self._loader(*self._args)
+            df
             .withColumnRenamed("source_node_id", "src")
             .withColumnRenamed("target_node_id", "dst")
         )
@@ -277,54 +338,62 @@ class TouchData:
 
     @staticmethod
     def _load_sonata(filename, population):
-        import libsonata
+        def _loader():
+            import libsonata
 
-        p = libsonata.EdgeStorage(filename).open_population(population)
+            p = libsonata.EdgeStorage(filename).open_population(population)
 
-        def _type(col):
-            data = p.get_attribute(col, libsonata.Selection([]))
-            return _numpy_to_spark[data.dtype.name]
+            def _type(col):
+                data = p.get_attribute(col, libsonata.Selection([]))
+                return _numpy_to_spark[data.dtype.name]
 
-        def _types(pop):
-            for name in pop.attribute_names:
-                yield f"{name} {_type(name)}"
+            def _types(pop):
+                for name in pop.attribute_names:
+                    yield f"{name} {_type(name)}"
 
-        total_parts = p.size // PARTITION_SIZE + 1
-        logger.debug("Partitions: %d", total_parts)
+            total_parts = p.size // PARTITION_SIZE + 1
+            logger.debug("Partitions: %d", total_parts)
 
-        parts = sm.createDataFrame(
-            (
-                (PARTITION_SIZE * n, min(PARTITION_SIZE * (n + 1), p.size))
-                for n in range(total_parts)
-            ),
-            "start: long, end: long",
-        )
-        columns = ", ".join(BASIC_EDGE_SCHEMA + list(_types(p)))
+            parts = sm.createDataFrame(
+                (
+                    (PARTITION_SIZE * n, min(PARTITION_SIZE * (n + 1), p.size))
+                    for n in range(total_parts)
+                ),
+                "start: long, end: long",
+            )
+            columns = ", ".join(BASIC_EDGE_SCHEMA + list(_types(p)))
 
-        logger.info("Creating touch data frame...")
-        touches = parts.groupby("start", "end").applyInPandas(
-            _create_touch_loader(filename, population),
-            columns
-        )
-        logger.info("Total touches: %d", touches.count())
-        return touches
+            logger.info("Creating edge data frame...")
+            edges = parts.groupby("start", "end").applyInPandas(
+                _create_touch_loader(filename, population),
+                columns
+            )
+            logger.info("Total edge count in %s: %d", filename, edges.count())
+            return edges
+        return _loader
 
     @staticmethod
-    def _load_parquet_metadata(*files):
-        schema = pq.ParquetDataset(list(files)).schema.to_arrow_schema()
+    def _load_parquet_metadata(*args):
+        if len(args) == 1:
+            args = args[0]
+        else:
+            args = list(args)
+        schema = pq.ParquetDataset(args).schema.to_arrow_schema()
         return {
-            k: v
+            k.decode(): v.decode()
             for (k, v) in (schema.metadata or dict()).items()
             if not k.startswith(b"org.apache.spark")
         }
 
     @staticmethod
-    def _load_parquet(*files):
-        files = [adjust_for_spark(f) for f in files]
-        touches = sm.read.parquet(*files)
-        for old, new in schema.LEGACY_MAPPING.items():
-            if old in touches.columns:
-                touches = touches.withColumnRenamed(old, new)
-        touches = touches.cache()
-        logger.info("Total touches: %d", touches.count())
-        return touches
+    def _load_parquet(*args):
+        def _loader():
+            files = [adjust_for_spark(f) for f in args]
+            edges = sm.read.parquet(*files)
+            for old, new in schema.LEGACY_MAPPING.items():
+                if old in edges.columns:
+                    edges = edges.withColumnRenamed(old, new)
+            edges = edges.cache()
+            logger.info("Total edge count in %s: %d", ", ".join(files), edges.count())
+            return edges
+        return _loader

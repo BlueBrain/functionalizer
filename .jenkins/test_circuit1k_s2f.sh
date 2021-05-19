@@ -12,8 +12,9 @@ salloc -p$part -Cnvme -N1 --exclusive --mem=0 \
                  --output-dir="$PWD" \
                  --checkpoint-dir="$PWD" \
                  --from $CIRCUIT All --to $CIRCUIT All \
-                 $RECIPE $MORPHOS \
-                 --parquet $TOUCHES
+                 --recipe $RECIPE \
+                 --morphologies $MORPHOS \
+                 $TOUCHES
 
 parquet-compare \
     $CIRCUIT \

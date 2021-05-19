@@ -14,8 +14,9 @@ salloc -p$part -Cnvme -N1 --exclusive --mem=0 \
                  --from $CIRCUIT All --to $CIRCUIT All \
                  --from-nodeset $BASE/nodesets.json test \
                  --to-nodeset $BASE/nodesets.json test \
-                 $RECIPE $MORPHOS \
-                 --parquet $TOUCHES
+                 --recipe $RECIPE \
+                 --morphologies $MORPHOS \
+                 $TOUCHES
 
 parquet-compare-ns \
     $CIRCUIT \
