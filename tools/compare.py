@@ -46,7 +46,11 @@ def run():
     )
 
     pop = libsonata.NodeStorage(args.circuit.encode()).open_population("All")
-    mtypes = pd.DataFrame({"mtype": pop.enumeration_values("mtype")})
+    sel = libsonata.Selection([(0, len(pop))])
+    mtypes = pd.DataFrame({
+        "id": sel.flatten(),
+        "mtype": pop.get_attribute("mtype", sel)
+    }).set_index("id")
 
     base = base.join(mtypes, on="source_node_id")
     base = base.join(mtypes, on="target_node_id", lsuffix="_pre", rsuffix="_post")
@@ -76,12 +80,12 @@ def run():
             print("==========================")
             print(changed.to_string(max_rows=20))
         if len(added) > 0:
-            print("\nConnections added")
-            print("=================")
+            print(f"\nConnections added in {args.comparison}")
+            print("=====================" + "=" * len(args.comparison))
             print(added.to_string(max_rows=20))
         if len(lost) > 0:
-            print("\nConnections removed")
-            print("===================")
+            print(f"\nConnections removed from {args.comparison}")
+            print("=========================" + "=" * len(args.comparison))
             print(lost.to_string(max_rows=20))
 
         sys.exit(1)
