@@ -27,8 +27,8 @@ class BoutonDistanceFilter(DatasetOperation):
 
         # Use broadcast of Neuron version
         return circuit.df.where(
-            "(distance_soma >= {:f} AND dst_syn_class_i = {:d}) OR "
-            "(distance_soma >= {:f} AND dst_syn_class_i = {:d})".format(
+            "(distance_soma >= {:f} AND dst_sclass_i = {:d}) OR "
+            "(distance_soma >= {:f} AND dst_sclass_i = {:d})".format(
                 self.distances.inhibitorySynapsesDistance,
                 pos("INH"),
                 self.distances.excitatorySynapsesDistance,

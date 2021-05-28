@@ -101,7 +101,7 @@ NEURON_SCHEMA = T.StructType([
     T.StructField("etype_i", T.ShortType(), False),
     T.StructField("mtype_i", T.ShortType(), False),
     T.StructField("region_i", T.ShortType(), False),
-    T.StructField("syn_class_i", T.ShortType(), False),
+    T.StructField("sclass_i", T.ShortType(), False),
     T.StructField("morphology", T.StringType(), False),
     # T.StructField("layer", T.ShortType(), False),
     # T.StructField("position", T.ArrayType(T.DoubleType(), False), False),
@@ -110,12 +110,6 @@ NEURON_SCHEMA = T.StructType([
 
 SYNAPSE_CLASSIFICATION_SCHEMA = T.StructType([
     T.StructField("_i", T.ShortType(), False),
-    T.StructField("fromSClass", T.StringType(), True),
-    T.StructField("toSClass", T.StringType(), True),
-    T.StructField("fromMType", T.StringType(), True),
-    T.StructField("toMType", T.StringType(), True),
-    T.StructField("fromEType", T.StringType(), True),
-    T.StructField("toEType", T.StringType(), True),
     T.StructField("type", T.StringType(), False),
     T.StructField("neuralTransmitterReleaseDelay", T.FloatType(), False),
     T.StructField("axonalConductionVelocity", T.FloatType(), False),

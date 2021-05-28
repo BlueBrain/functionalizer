@@ -61,7 +61,7 @@ def _create_neuron_loader(filename, population):
                 etype_i=pop.get_enumeration("etype", selection),
                 mtype_i=pop.get_enumeration("mtype", selection),
                 region_i=pop.get_enumeration("region", selection),
-                syn_class_i=pop.get_enumeration("synapse_class", selection),
+                sclass_i=pop.get_enumeration("synapse_class", selection),
                 morphology=pop.get_attribute("morphology", selection),
             )
         )

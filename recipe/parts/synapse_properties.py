@@ -8,23 +8,25 @@ import numpy as np
 from collections import Counter
 from typing import Dict, Iterable, Iterator, List, Tuple
 
-from ..property import Property, PropertyGroup
+from ..property import PathwayProperty, PathwayPropertyGroup, Property, PropertyGroup
 
 logger = logging.getLogger(__name__)
 
 
-class SynapseRule(Property):
+class SynapseRule(PathwayProperty):
     """Class representing a Synapse property"""
 
     _name = "synapse"
 
     _attributes = {
-        "fromSClass": "*",
-        "toSClass": "*",
-        "fromMType": "*",
-        "toMType": "*",
         "fromEType": "*",
+        "fromMType": "*",
+        "fromRegion": "*",
+        "fromSClass": "*",
         "toEType": "*",
+        "toMType": "*",
+        "toRegion": "*",
+        "toSClass": "*",
         "type": str,
         "neuralTransmitterReleaseDelay": 0.1,
         "axonalConductionVelocity": 300.0,
@@ -37,7 +39,7 @@ class SynapseRule(Property):
             raise ValueError(f"Synapse type needs to start with either 'E' or 'I'")
 
 
-class SpynapseRules(PropertyGroup):
+class SpynapseRules(PathwayPropertyGroup):
     _kind = SynapseRule
     _name = "SynapsesProperties"
 

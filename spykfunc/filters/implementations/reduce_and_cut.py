@@ -1,8 +1,6 @@
 """A default filter plugin
 """
-from __future__ import division
-import fnmatch
-
+import math
 import pandas
 
 from pyspark.sql import functions as F
@@ -12,10 +10,10 @@ import sparkmanager as sm
 from spykfunc.circuit import Circuit, touches_per_pathway
 from spykfunc.definitions import CheckpointPhases
 from spykfunc.filters import DatasetOperation, helpers
-from spykfunc.filters.udfs import reduce_cut_parameter_udf
+from spykfunc.filters.udfs import ReduceAndCutParameters
 from spykfunc.utils import get_logger
 from spykfunc.utils.checkpointing import checkpoint_resume, CheckpointHandler
-from spykfunc.utils.spark import cache_broadcast_single_part
+from spykfunc.utils.spark import cache_broadcast_single_part, number_shuffle_partitions
 
 from . import add_random_column
 
@@ -72,12 +70,13 @@ class ReduceAndCut(DatasetOperation):
     def __init__(self, recipe, source, target, morphos):
         self.seed = recipe.seeds.synapseSeed
         logger.info("Using seed %d for reduce and cut", self.seed)
-        self.columns = recipe.connection_rules.requires
+        self.columns = recipe.connection_rules.required
         logger.info(
             "Using the following columns for reduce and cut: %s",
             ", ".join(self.columns)
         )
-        self.conn_rules = recipe.connection_rules.to_matrix({
+        self.connection_rules = recipe.connection_rules
+        self.connection_index = recipe.connection_rules.to_matrix({
             n: v
             for n, _, _, v in Circuit.expand(self.columns, source, target)
         })
@@ -88,23 +87,25 @@ class ReduceAndCut(DatasetOperation):
         """
         with circuit.pathways(self.columns):
             full_touches = Circuit.only_touch_columns(circuit.with_pathway())
-            self.conn_rules = sm.broadcast(self.conn_rules)
 
             # Get and broadcast Pathway stats
             # NOTE we cache and count to force evaluation in N tasks, while sorting in a single task
-            logger.debug("Computing Pathway stats...")
-            _params = self.compute_reduce_cut_params(full_touches)
-            params_df = F.broadcast(_params)
 
-            # Params ouput for validation
-            _params_out_csv(params_df, "pathway_params")
+            # Spark optimizes better for >2000 shuffle partitions
+            _n_parts = max(int(math.sqrt(full_touches.rdd.getNumPartitions())), 2001)
+            # As we have a groupBy() and some data exchanges resulting in a
+            # single partition, reduce partition count via the intermediate
+            # shuffle.  Reading too many partition results in the final stage
+            # will lead to a slow-down
+            with number_shuffle_partitions(_n_parts):
+                logger.debug("Computing Pathway stats...")
+                params_df = F.broadcast(self.compute_reduce_cut_params(full_touches))
+                _params_out_csv(params_df, "pathway_params")  # Params ouput for validation
 
-            #
             # Reduce
             logger.info("Applying Reduce step...")
             reduced_touches = self.apply_reduce(full_touches, params_df)
 
-            #
             # Cut
             logger.info("Calculating CUT part 1: survival rate")
             cut1_shall_keep_connections = self.calc_cut_survival_rate(
@@ -136,7 +137,7 @@ class ReduceAndCut(DatasetOperation):
 
     # ---
     @sm.assign_to_jobgroup
-    @checkpoint_resume("pathway_stats", bucket_cols="pathway_i", n_buckets=1, child=True)
+    @checkpoint_resume("pathway_stats", child=True)
     def compute_reduce_cut_params(self, full_touches):
         """Computes pathway parameters for reduce and cut
 
@@ -146,30 +147,12 @@ class ReduceAndCut(DatasetOperation):
         :param full_touches: touches with a pathway column
         :return: a dataframe containing reduce and cut parameters
         """
-        # First obtain the pathway (morpho-morpho) stats dataframe
-        _n_parts = max(full_touches.rdd.getNumPartitions() // 20, 100)
-        pathway_stats = touches_per_pathway(full_touches).coalesce(_n_parts)
-
-        # param create udf
-        rc_param_maker = reduce_cut_parameter_udf(self.conn_rules)
-
-        # Run UDF
-        params_df = pathway_stats.select(
-            "*",
-            rc_param_maker(pathway_stats.pathway_i, pathway_stats.average_touches_conn).alias("rc_params")
+        pathway_stats = touches_per_pathway(full_touches)
+        param_maker = ReduceAndCutParameters(
+            self.connection_rules,
+            self.connection_index
         )
-
-        # Return the interesting params
-        params_df = (params_df
-                     .select("pathway_i",
-                             "total_touches",
-                             F.col("average_touches_conn").alias("structural_mean"),
-                             "rc_params.*")
-                     .cache())
-        # materialize in parallel
-        params_df.count()
-        # Save in single partition
-        return params_df.coalesce(1)
+        return pathway_stats.mapInPandas(param_maker, param_maker.schema()).coalesce(1)
 
     # ---
     @sm.assign_to_jobgroup
@@ -318,7 +301,7 @@ class ReduceAndCut(DatasetOperation):
 
 def _params_out_csv(df, filename):
     of_interest = ("pathway_i", "total_touches", "structural_mean", "survival_rate",
-                   "pP_A", "pMu_A", "active_fraction_legacy", "_debug")
+                   "pP_A", "pMu_A", "active_fraction_legacy", "debug")
     cols = []
     for col in of_interest:
         if hasattr(df, col):

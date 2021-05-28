@@ -9,8 +9,10 @@ import pandas as pd
 import sparkmanager as sm
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
+from pyspark.sql import DataFrame
 
 from spykfunc import schema
+from spykfunc.circuit import Circuit
 from spykfunc.filters import DatasetOperation
 from spykfunc.utils import get_logger
 
@@ -63,10 +65,19 @@ class SynapseProperties(DatasetOperation):
         self.seed = recipe.seeds.synapseSeed
         logger.info("Using seed %d for synapse properties", self.seed)
 
-        self.rules = self.convert_rules(
-            source, target, recipe.synapse_properties.rules
+        self.columns = recipe.synapse_properties.rules.required
+        logger.info(
+            "Using the following columns for synapse properties: %s",
+            ", ".join(self.columns)
         )
-        self.properties = self.convert_properties(recipe.synapse_properties)
+
+        # A Pandas dataframe mapping from pathway_i to properties
+        self.properties = self.convert_properties(
+            recipe.synapse_properties,
+            self.columns,
+            source,
+            target
+        )
 
         if "gsynSRSF" in self.properties.columns:
             self._columns.append((None, "gsynSRSF"))
@@ -76,7 +87,72 @@ class SynapseProperties(DatasetOperation):
     def apply(self, circuit):
         """Add properties to the circuit
         """
-        from spykfunc.synapse_properties import compute_additional_h5_fields
+        with circuit.pathways(self.columns):
+            connections = (
+                circuit
+                .with_pathway()
+                .groupBy("src", "dst")
+                .agg(
+                    F.min("pathway_i").alias("pathway_i"),
+                    F.min("synapse_id").alias("synapse_id")
+                )
+                .join(F.broadcast(self.properties), "pathway_i")
+                .drop("pathway_i")
+            )
+            connections = _add_randomized_connection_properties(connections, self.seed)
+
+            touches = (
+                circuit
+                .df
+                .alias("c")
+                .join(
+                    connections
+                    .withColumnRenamed("src", "_src")
+                    .withColumnRenamed("dst", "_dst"),
+                    [F.col("c.src") == F.col("_src"),
+                     F.col("c.dst") == F.col("_dst")]
+                )
+                .drop("_src", "_dst")
+            )
+
+            # Compute delaySomaDistance
+            if "distance_soma" in touches.columns:
+                touches = (
+                    touches
+                    .withColumn(
+                        "delay",
+                        F.expr("neuralTransmitterReleaseDelay + distance_soma / axonalConductionVelocity")
+                        .cast(T.FloatType())
+                    )
+                    .drop(
+                        "distance_soma",
+                        "axonalConductionVelocity",
+                        "neuralTransmitterReleaseDelay",
+                    )
+                )
+            else:
+                logger.warning("Generating the 'axonal_delay' property requires the 'distance_soma' field")
+                touches = touches.drop("axonalConductionVelocity", "neuralTransmitterReleaseDelay")
+
+            # Compute #13: synapseType:  Inhibitory < 100 or  Excitatory >= 100
+            t = (
+                touches
+                .withColumn(
+                    "syn_type_id",
+                    (F.when(F.col("type").substr(0, 1) == F.lit('E'), 100).otherwise(0)
+                     ).cast(T.ShortType())
+                )
+                .withColumn(
+                    "syn_property_rule",
+                     F.col("_prop_i").cast(T.ShortType())
+                )
+                .drop("type", "_prop_i")
+            )
+
+            # Required for SONATA support
+            if not hasattr(t, "edge_type_id"):
+                t = t.withColumn("edge_type_id", F.lit(0))
+            return t
 
         extended_touches = compute_additional_h5_fields(
             circuit.df,
@@ -88,97 +164,37 @@ class SynapseProperties(DatasetOperation):
         return extended_touches
 
     @staticmethod
-    def convert_properties(props):
+    def convert_properties(properties, columns, source, target):
         """Merges synapse class assignment and properties
         """
-        prop_df = _load_from_recipe(props.classes, schema.SYNAPSE_PROPERTY_SCHEMA, trim=True) \
-            .rename(columns={"_i": "_prop_i"}).sort_values("id")
-        class_df = _load_from_recipe(props.rules, schema.SYNAPSE_CLASSIFICATION_SCHEMA) \
-            .rename(columns={"_i": "_class_i"}).sort_values("type")
+        flattened_pathways = properties.rules.to_matrix({
+            n: v
+            for n, _, _, v in Circuit.expand(columns, source, target)
+        })
+        pathways = sm.createDataFrame(pd.DataFrame({
+            "pathway_i": np.arange(flattened_pathways.size),
+            "_class_i": flattened_pathways,
+        }))
 
-        merged_props = class_df.join(prop_df.set_index("id"), on="type")
-        logger.info("Found %d synapse property entries", len(merged_props))
-        return F.broadcast(sm.createDataFrame(merged_props))
+        classification = _load_from_recipe(properties.rules, schema.SYNAPSE_CLASSIFICATION_SCHEMA) \
+            .rename(columns={"_i": "_class_i"})
+        properties = _load_from_recipe(properties.classes, schema.SYNAPSE_PROPERTY_SCHEMA, trim=True) \
+            .rename(columns={"_i": "_prop_i"}) \
+            .set_index("id")
 
-    @staticmethod
-    def convert_rules(source, target, rules):
-        """Expands the synapse classification rules
-        """
-        # shorthand
-        values = dict()
-        reverses = dict()
-        shape = []
-
-        for direction, population in (("from", source), ("to", target)):
-            mtypes = population.mtype_values
-            etypes = population.etype_values
-            cclasses = population.sclass_values
-
-            syn_mtype_rev = {name: i for i, name in enumerate(mtypes)}
-            syn_etype_rev = {name: i for i, name in enumerate(etypes)}
-            syn_sclass_rev = {name: i for i, name in enumerate(cclasses)}
-
-            shape += [len(syn_mtype_rev), len(syn_etype_rev), len(syn_sclass_rev)]
-
-            values[direction] = OrderedDict((("MType", mtypes),
-                                             ("EType", etypes),
-                                             ("SClass", cclasses)))
-            reverses[direction] = {"MType": syn_mtype_rev,
-                                   "EType": syn_etype_rev,
-                                   "SClass": syn_sclass_rev}
-
-        not_covered = max(r._i for r in rules) + 1
-
-        prop_rule_matrix = np.full(
-            # Our 6-dim matrix
-            fill_value=not_covered,
-            shape=shape,
-            dtype="uint16"
+        merged_properties = sm.createDataFrame(
+            classification
+            .join(properties, on="type")
         )
+        logger.info("Found %d synapse property entries", merged_properties.count())
 
-        # Iterate for all rules, expanding * as necessary
-        # We keep rule definition order as required
-        for rule in rules:
-            selectors = [None] * 6
-            for i, direction in enumerate(("from", "to")):
-                expanded_names = defaultdict(dict)
-                field_to_values = values[direction]
-                field_to_reverses = reverses[direction]
-                for j, field_t in enumerate(field_to_values):
-                    field_name = direction + field_t
-                    field_val = getattr(rule, field_name)
-                    if field_val in (None, "*"):
-                        # Slice(None) is numpy way for "all" in that dimension (same as colon)
-                        selectors[i*3+j] = [slice(None)]
-                    else:
-                        # Check if expansion was cached
-                        val_matches = expanded_names[field_t].get(field_val)
-                        if not val_matches:
-                            # Expand it
-                            val_matches = expanded_names[field_t][field_val] = \
-                                fnmatch.filter(field_to_values[field_t], field_val)
-                            if len(val_matches) == 0:
-                                logger.warn(
-                                    f"Synapse classification can't match {field_t}='{field_val}'"
-                                )
-
-                        # Convert to int
-                        selectors[i*3+j] = [field_to_reverses[field_t][v] for v in val_matches]
-
-            # The rule might have been expanded, so now we apply all of them
-            # Assign to the matrix.
-            for m1 in selectors[0]:
-                for e1 in selectors[1]:
-                    for s1 in selectors[2]:
-                        for m2 in selectors[3]:
-                            for e2 in selectors[4]:
-                                for s2 in selectors[5]:
-                                    prop_rule_matrix[m1, e1, s1, m2, e2, s2] = rule._i
-
-        if not_covered in prop_rule_matrix:
-            logger.warning("Synapse classification does not cover all values!")
-
-        return prop_rule_matrix
+        return (
+            pathways
+            .join(merged_properties, pathways._class_i == merged_properties._class_i)
+            .drop("_class_i")
+        )
+        # "_prop_i" could also be dropped, but is required for debug output
+        # later
 
 
 _spark_t_to_py = {
@@ -213,3 +229,26 @@ def _load_from_recipe(recipe_group, group_schema, *, trim: bool = False) -> pd.D
                   for field in group_schema)
             for entry in recipe_group]
     return pd.DataFrame.from_records(data, columns=[f.name for f in group_schema])
+
+
+def _add_randomized_connection_properties(connections: DataFrame, seed: int) -> DataFrame:
+    """Add connection properties drawn from random distributions
+    """
+    def __generate(data):
+        import spykfunc.filters.udfs as fcts
+        for df in data:
+            df["gsyn"] = fcts.gamma(seed, 0x1001, df["synapse_id"], df["gsyn"], df["gsynSD"])
+            df["d"] = fcts.gamma(seed, 0x1002, df["synapse_id"], df["d"], df["dSD"])
+            df["f"] = fcts.gamma(seed, 0x1003, df["synapse_id"], df["f"], df["fSD"])
+            df["u"] = fcts.truncated_normal(seed, 0x1004, df["synapse_id"], df["u"], df["uSD"])
+            df["dtc"] = fcts.truncated_normal(seed, 0x1005, df["synapse_id"], df["dtc"], df["dtcSD"])
+            df["nrrp"] = fcts.poisson(seed, 0x1006, df["synapse_id"], df["nrrp"])
+            yield df
+            del df
+
+    return (
+        connections
+        .sortWithinPartitions("src")
+        .mapInPandas(__generate, connections.schema)
+        .drop("gsynSD", "dSD", "fSD", "uSD", "dtcSD", "synapse_id")
+    )

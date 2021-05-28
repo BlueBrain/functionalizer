@@ -1,16 +1,29 @@
-from __future__ import absolute_import
 """ A module of general purpose spark helper functions
 """
 from contextlib import contextmanager
 import sparkmanager as sm
 from pyspark.sql import functions as F
 
+from . import get_logger
+
+
+logger = get_logger(__name__)
+
 
 @contextmanager
 def number_shuffle_partitions(np):
+    """Temporarily change the number of shuffle partitions
+
+    Note that for this to have any effect, the lazy evaluation of Spark
+    needs to be triggered within the context this function is used with,
+    otherwise calculations will use the restored value for the number of
+    shuffle partitions.
+    """
     previous_np = int(sm.conf.get("spark.sql.shuffle.partitions"))
+    logger.debug("Temporarily using %d shuffle partitions", np)
     sm.conf.set("spark.sql.shuffle.partitions", np)
     yield
+    logger.debug("Restoring usage of %d shuffle partitions", previous_np)
     sm.conf.set("spark.sql.shuffle.partitions", previous_np)
 
 

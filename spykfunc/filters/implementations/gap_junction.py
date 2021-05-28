@@ -1,7 +1,7 @@
 """A default filter plugin
 """
 import math
-import numpy
+import numpy as np
 
 from pyspark.sql import functions as F
 
@@ -85,25 +85,25 @@ class GapJunctionFilter(DatasetOperation):
             jid2 = data.afferent_junction_id.values
 
             # This may be passed to us from pyspark as object type,
-            # breaking numpy.unique.
-            morphos = numpy.asarray(data.src_morphology.values, dtype="U")
-            activated = numpy.zeros_like(src, dtype=bool)
-            distances = numpy.zeros_like(src, dtype=float)
+            # breaking np.unique.
+            morphos = np.asarray(data.src_morphology.values, dtype="U")
+            activated = np.zeros_like(src, dtype=bool)
+            distances = np.zeros_like(src, dtype=float)
 
-            connections = numpy.stack((src, dst, morphos)).T
-            unique_conns = numpy.unique(connections, axis=0)
-            unique_morphos = numpy.unique(connections[:, 2])
+            connections = np.stack((src, dst, morphos)).T
+            unique_conns = np.unique(connections, axis=0)
+            unique_morphos = np.unique(connections[:, 2])
 
             for m in unique_morphos:
                 # Work one morphology at a time to conserve memory
                 mdist = 3 * self.__morphos.soma_radius(m)
 
                 # Resolve from indices matching morphology to connections
-                idxs = numpy.where(unique_conns[:, 2] == m)[0]
+                idxs = np.where(unique_conns[:, 2] == m)[0]
                 conns = unique_conns[idxs]
                 for conn in conns:
                     # Indices where the connections match
-                    idx = numpy.where((connections[:, 0] == conn[0]) &
+                    idx = np.where((connections[:, 0] == conn[0]) &
                                       (connections[:, 1] == conn[1]))[0]
                     # Match up gap-junctions that are reverted at the end
                     if len(idx) == 0 or soma[idx[0]] != 0:
@@ -119,7 +119,7 @@ class GapJunctionFilter(DatasetOperation):
                                 activated[j] = False
                         activated[i] = True
             # Activate reciprocal connections
-            activated[numpy.isin(jid1, jid2[activated])] = True
+            activated[np.isin(jid1, jid2[activated])] = True
             return data[activated]
         return trim_touches
 

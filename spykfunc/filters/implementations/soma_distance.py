@@ -1,7 +1,7 @@
 """A default filter plugin
 """
-import numpy
-import pandas
+import numpy as np
+import pandas as pd
 
 from pyspark.sql import functions as F
 
@@ -44,7 +44,7 @@ class SomaDistanceFilter(DatasetOperation):
         def soma_radius(morphos):
             def r(m):
                 return self.__morphos.soma_radius(m)
-            f = numpy.vectorize(r)
-            return pandas.Series(data=f(morphos.values), dtype="float")
+            f = np.vectorize(r)
+            return pd.Series(data=f(morphos.values), dtype="float")
 
         return soma_radius

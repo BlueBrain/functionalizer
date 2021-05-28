@@ -48,7 +48,7 @@ def touches_per_pathway(touches):
                 F.count("*").alias("total_connections")
             )
             .withColumn(
-                "average_touches_conn",
+                "structural_mean",
                 F.col("total_touches") / F.col("total_connections")
             )
         )

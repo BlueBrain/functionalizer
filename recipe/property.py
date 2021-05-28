@@ -1,10 +1,15 @@
 """Basic components to build XML recipes
 """
+import fnmatch
+import itertools
 import logging
+import math
+import numpy as np
 import re
 
+from collections import defaultdict
 from copy import deepcopy
-from typing import Any, Callable, Dict, List, Optional, Union, Set
+from typing import Any, Callable, Dict, Iterator, List, Optional, Union, Set, Tuple
 from textwrap import indent
 
 
@@ -213,6 +218,117 @@ def singleton(fct: Union[Callable, None] = None, implicit: bool = False) -> Call
     if fct:
         return _deco(fct)
     return _deco
+
+
+_DIRECTIONAL_ATTR = re.compile(r"^(from|to)([A-Z]\w+)$")
+
+
+class PathwayProperty(Property):
+    @classmethod
+    def columns(cls):
+        return sorted(k for k in cls._attributes if _DIRECTIONAL_ATTR.match(k))
+
+    def __call__(
+        self, values: Dict[str, List[str]]
+    ) -> Iterator[Tuple[Dict[str, str], Any]]:
+        expansions = [
+            [(name, v) for v in fnmatch.filter(values[name], getattr(self, name))]
+            for name in self.columns()
+            if name in values
+        ]
+        for cols in itertools.product(*expansions):
+            yield (dict(cols), self)
+
+
+class PathwayPropertyGroup(PropertyGroup):
+    def validate(
+        self, values: Dict[str, List[str]]
+    ) -> bool:
+        def _check(name, covered):
+            uncovered = set(values[name]) - covered
+            if len(uncovered):
+                logger.warning(
+                    f"The following {name} are not covered: {', '.join(uncovered)}"
+                )
+                return False
+            return True
+
+        covered = defaultdict(set)
+        valid = True
+        for r in self:
+            if not r.validate():
+                valid = False
+            expansion = list(r(values))
+            if len(expansion) == 0:
+                logger.warning(f"The following rule does not match anything: {r}")
+                valid = False
+            for keys, _ in expansion:
+                for name, key in keys.items():
+                    covered[name].add(key)
+        return valid and all(_check(name, covered[name]) for name in covered)
+
+    @property
+    def required(self) -> List[str]:
+        """Returns a list of attributes whose values are required for
+        properly selecting rules, i.e., excluding any attributes that match
+        everything.
+        """
+        cols = []
+        for col in self._kind.columns():
+            values = set(getattr(e, col, None) for e in self)
+            if values != set("*"):
+                cols.append(col)
+        return cols
+
+    def to_matrix(
+        self, values: Dict[str, List[str]]
+    ) -> np.array:
+        """Construct a flattened connection rule matrix
+
+        Requires being passed a full set of allowed parameter values passed
+        as argument `values`.  Will raise a :class:`KeyError` if any
+        required attributes listed in
+        :py:property:`~PathwayProperty.required` are not present.
+
+        Returns a :class:`numpy.array` filled with indices into the
+        :class:`PathwayPropertyGroup` for each possible pathway.
+        Values greater than the last index of the
+        :class:`~PathwayPropertyGroup` signify no match with any rule.
+        """
+        required_attributes = self.required
+        not_present = set(required_attributes) - set(values)
+        if not_present:
+            raise KeyError(f"Missing keys: {', '.join(not_present)}")
+        reverted = {}
+        for name, allowed in values.items():
+            if name in required_attributes:
+                reverted[name] = {v: i for i, v in enumerate(allowed)}
+        concrete = np.full(
+            fill_value=len(self),
+            shape=[len(values[r]) for r in required_attributes],
+            dtype="uint32"
+        )
+        default_key = [np.arange(len(values[name])) for name in required_attributes]
+        for rule in self:
+            key = default_key[:]
+            for n, name in enumerate(required_attributes):
+                attr = getattr(rule, name)
+                if attr != "*":
+                    filtered = fnmatch.filter(values[name], attr)
+                    indices = [reverted[name][i] for i in filtered]
+                    key[n] = indices
+            indices = np.ix_(*key)
+            if hasattr(rule, "overrides"):
+                # Provide the opportunity to selectively override previous
+                # rules
+                active_rules = concrete[indices]
+                for old_idx in np.unique(active_rules):
+                    if old_idx >= len(self) or rule.overrides(self[old_idx]):
+                        active_rules = np.where(active_rules == old_idx, rule._i, active_rules)
+                concrete[indices] = active_rules
+            else:
+                concrete[indices] = rule._i
+        return concrete.flatten(order="F")
 
 
 class MTypeValidator:

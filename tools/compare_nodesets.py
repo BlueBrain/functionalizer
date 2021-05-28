@@ -22,7 +22,7 @@ def run():
 
     pop = libsonata.NodeStorage(args.circuit).open_population("All")
     regs = pop.get_enumeration("region", libsonata.Selection([[0, len(pop)]]))
-    idx = np.argwhere(regs == args.region)
+    idx = np.argwhere(regs == args.region).flatten()
 
     df = pq.ParquetDataset(args.full).read().to_pandas().rename(columns=LEGACY_MAPPING)
     sel = df.target_node_id.isin(idx) & df.source_node_id.isin(idx)

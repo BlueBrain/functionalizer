@@ -1,46 +1,61 @@
-from pyspark.sql import functions as F
-from pyspark.sql import types as T
 from math import exp, sqrt
 import logging
-
-# **************************************************
-# Reduce and Cut parameters
-# **************************************************
-
-_RC_params_schema = T.StructType([
-    T.StructField("pP_A", T.FloatType()),
-    T.StructField("pMu_A", T.FloatType()),
-    T.StructField("bouton_reduction_factor", T.FloatType()),
-    T.StructField("active_fraction_legacy", T.FloatType()),
-    T.StructField("debug", T.StringType()),
-])
+import pandas as pd
 
 
-def reduce_cut_parameter_udf(conn_rules_map):
+class ReduceAndCutParameters:
     # Defaults
     activeFraction_default = 0.5
     boutonReductionFactor_default = 0.04
     structuralProbability = 1.0
 
-    # this f will be serialized and transmitted to workers
-    def f(pathway_i, structuralMean):
-        """Calculates the parameters for R&C mtype-mtype
-        :param structuralMean: The average of touches/connection for the given mtype-mtype rule
-        :return: a tuple of (pP_A, pMu_A, bouton_reduction_factor, activeFraction_legacy)
+    _schema = [
+        ("pathway_i", "long"),
+        ("total_touches", "long"),
+        ("structural_mean", "float"),
+        ("pP_A", "float"),
+        ("pMu_A", "float"),
+        ("bouton_reduction_factor", "float"),
+        ("active_fraction_legacy", "float"),
+        ("debug", "string")
+    ]
+
+    def __init__(self, connection_rules, connection_index):
+        self.connection_rules = connection_rules
+        self.connection_index = connection_index
+
+    def __call__(self, iterator):
+        for df in iterator:
+            yield self.apply(df)
+
+    def apply(self, df):
+        data = (self.process(*args) for args in zip(df["pathway_i"], df["total_touches"], df["structural_mean"]))
+        return pd.DataFrame.from_records(data, columns=[c for c, _ in self._schema])
+
+    def process(self, pathway_i, total_touches, structuralMean):
+        """Calculates the parameters for R&C
+
+        Args
+            structuralMean: The average of touches/connection for the given mtype-mtype rule
+        Returns
+            A tuple of `pathway_i, structuralMean, pP_A, pMu_A, bouton_reduction_factor, activeFraction_legacy`
         """
+        def empty_result(reason):
+            return (pathway_i, total_touches, structuralMean, 1.0, None, None, None, reason)
+
         debug = None
 
         # If there are no connections for a pathway (mean=0), cannot compute valid numbers
         if structuralMean == 0:
-            return (1.0, None, None, None, "no structural mean")
+            return empty_result("no structural mean")
 
-        # conn_rules_map is optimized as a Broadcast variable
-        # unfortunately in pyspark it is not transparent, we must use ".value"
-        # key = mtype_src + ">" + mtype_dst
-        rule = conn_rules_map.value.get(pathway_i)
+        # Map from pathway index to rule index, the grab the rule if
+        # possible
+        idx = self.connection_index[pathway_i]
+        if idx < 0 or idx >= len(self.connection_rules):
+            return empty_result("no corresponding rule")
+        rule = self.connection_rules[idx]
 
-        if not rule:
-            return (1.0, None, None, None, "no corresponding rule")
 
         # Directly from recipe
         boutonReductionFactor = rule.bouton_reduction_factor
@@ -64,14 +79,14 @@ def reduce_cut_parameter_udf(conn_rules_map):
                 mu_A = 0.5 + rule.mean_syns_connection - sdt
                 syn_pprime = 1.0 / (sqrt(sdt*sdt + 0.25) + 0.5)
                 p_A = (p / (1.0 - p) * (1.0 - syn_pprime) / syn_pprime) if (p != 1.0) else 1.0   # Control DIV/0
-                pActiveFraction = activeFraction_default
+                pActiveFraction = self.activeFraction_default
                 debug = "s2f 4.2: p=%.3f, pprime=%.3f, pA=%.3f, mu_A=%.3f" % (p, syn_pprime, p_A, mu_A)
 
             elif rule.probability:
                 # unassigned in s2f 2.0
                 # pActiveFraction = exp(...) * boutonReductionFactor*(structuralMean-1)/(structuralMean*modifier);
                 # double modifier = exp(...) * boutonReductionFactor*(structuralMean-1)/(structuralMean*pActiveFraction)
-                modifier = boutonReductionFactor * structuralProbability / rule.probability
+                modifier = boutonReductionFactor * self.structuralProbability / rule.probability
                 pActiveFraction = (exp((1.0 - cv_syns_connection) / cv_syns_connection) * boutonReductionFactor *
                                    (structuralMean - 1.0) / (structuralMean * modifier))
                 p_A = modifier * cv_syns_connection
@@ -82,10 +97,10 @@ def reduce_cut_parameter_udf(conn_rules_map):
 
             else:
                 logging.warning("Rule not supported")
-                return (1.0, None, None, None, "unsupported rule w/ button reduction factor")
+                return empty_result("unsupported rule w/ button reduction factor")
 
         elif boutonReductionFactor is not None and rule.p_A is not None and rule.pMu_A is not None:
-            pActiveFraction = activeFraction_default
+            pActiveFraction = self.activeFraction_default
             mu_A = 0.5 + rule.pMu_A
             p_A = rule.p_A
             debug = "s2f defaulted: pA=%.3f, mu_A=%.3f" % (p_A, mu_A)
@@ -98,12 +113,12 @@ def reduce_cut_parameter_udf(conn_rules_map):
             p = 1.0 / structuralMean
             p_A = (p / (1.0 - p) * (1.0 - pprime) / pprime) if (p != 1.0) else 1.0
             pActiveFraction = rule.active_fraction
-            boutonReductionFactor = boutonReductionFactor_default
+            boutonReductionFactor = self.boutonReductionFactor_default
             debug = "s2f 4.1: p=%.3f, pprime=%.3f, pA=%.3f, mu_A=%.3f" % (p, pprime, p_A, mu_A)
 
         else:
             logging.warning("Rule not supported")
-            return (1.0, None, None, None, "unsupported rule")
+            return empty_result("unsupported rule")
 
         pMu_A = mu_A - 0.5
         if p_A > 1.0:
@@ -112,9 +127,20 @@ def reduce_cut_parameter_udf(conn_rules_map):
             pActiveFraction = 1.0
 
         # ActiveFraction calculated here is legacy and only used if boutonReductionFactor is null
-        return p_A, pMu_A, boutonReductionFactor, pActiveFraction, debug
+        return (
+            pathway_i,
+            total_touches,
+            structuralMean,
+            p_A,
+            pMu_A,
+            boutonReductionFactor,
+            pActiveFraction,
+            debug
+        )
 
-    return F.udf(f, _RC_params_schema)
+    @classmethod
+    def schema(cls):
+        return ", ".join(f"{c} {t}" for (c, t) in cls._schema)
 
 
 def pprime_approximation(r, cv, p):

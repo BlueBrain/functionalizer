@@ -17,7 +17,7 @@ def test_rule_expansion():
 
 def test_rule_requirements():
     r = Recipe(StringIO(SOME_PROPERTIES))
-    assert r.connection_rules.requires == ["toMType", "toRegion"]
+    assert r.connection_rules.required == ["toMType", "toRegion"]
 
 
 def test_rule_validity():
@@ -38,18 +38,20 @@ def test_rule_invalidity():
 
 def test_rule_matrix():
     r = Recipe(StringIO(SOME_PROPERTIES))
-    matrix = r.connection_rules.to_matrix({
+    cr = r.connection_rules
+    matrix = cr.to_matrix({
         "fromMType": ["bar", "foo"],
         "toMType": ["BAR", "BAZ"],
         "toRegion": ["NONE", "SOME", "MANY"]
     })
     assert len(matrix) == 6  # len(toMType) * len(toRegion)
-    assert matrix[0].bouton_reduction_factor == 0.9
-    assert matrix[1].bouton_reduction_factor == 0.3
-    assert matrix[2].bouton_reduction_factor == 0.6
-    assert matrix[3].bouton_reduction_factor == 0.3
-    assert matrix[4].bouton_reduction_factor == 0.6
-    assert matrix[5].bouton_reduction_factor == 0.3
+    # Element order: ["NONE" x ["BAR", "BAZ"]…
+    assert cr[matrix[0]].bouton_reduction_factor == 0.9
+    assert cr[matrix[1]].bouton_reduction_factor == 0.3
+    assert cr[matrix[2]].bouton_reduction_factor == 0.6
+    assert cr[matrix[3]].bouton_reduction_factor == 0.3
+    assert cr[matrix[4]].bouton_reduction_factor == 0.6
+    assert cr[matrix[5]].bouton_reduction_factor == 0.3
 
 
 PARAMETERS_1 = 'bouton_reduction_factor="0.9" pMu_A="0.9" p_A="0.9"'
