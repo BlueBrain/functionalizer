@@ -1,8 +1,6 @@
-"""Exposes basic recipe handling.
-
-This module provides the :class:`Recipe` class to handle recipe reading and
-writing.  A short example to read a recipe and modify the initial bouton
-distance for inhibitory synapses:
+"""The `recipe` module provides the :class:`Recipe` class to handle recipe
+reading and writing.  A short example to read a recipe and modify the
+initial bouton distance for inhibitory synapses:
 
 >>> from recipe import Recipe
 >>> r = Recipe("foo.xml")

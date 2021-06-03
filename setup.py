@@ -188,7 +188,7 @@ class PyTest(TestCommand):
 # *******************************
 def setup_package():
     maybe_sphinx = (
-        ["sphinx<3.0.0", "sphinx-bluebrain-theme", "docs-internal-upload"]
+        ["sphinx>=3", "sphinx-bluebrain-theme", "docs-internal-upload"]
         if "build_docs" in sys.argv
         else []
     )

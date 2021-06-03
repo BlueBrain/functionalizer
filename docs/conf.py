@@ -2,28 +2,47 @@
 #
 import sys, os
 
-sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath(".."))
 
 # -- General configuration -----------------------------------------------------
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'sphinx.ext.todo',
-              'sphinx.ext.autosummary', 'sphinx.ext.viewcode', 'sphinx.ext.coverage',
-              'sphinx.ext.doctest', 'sphinx.ext.ifconfig',
-              'sphinx.ext.napoleon']
+extensions = [
+    "sphinx.ext.autodoc",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.todo",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.coverage",
+    "sphinx.ext.doctest",
+    "sphinx.ext.ifconfig",
+    "sphinx.ext.napoleon",
+]
 
-autodoc_default_options = {'members': True, 'ignore-module-all': True}
-autodoc_mock_imports = ['pyspark', 'pyspark.sql', 'sparkmanager', 'spykfunc.schema', 'spykfunc.utils.checkpointing']
+autodoc_default_options = {
+    "ignore-module-all": True,
+    "members": True,
+    "show-inheritance": True,
+    "special-members": "__call__",
+}
+autodoc_member_order = "groupwise"
+autodoc_mock_imports = [
+    "pyspark",
+    "pyspark.sql",
+    "sparkmanager",
+    "spykfunc.schema",
+    "spykfunc.utils.checkpointing",
+]
 
-source_suffix = '.rst'
+source_suffix = ".rst"
 
-master_doc = 'index'
+master_doc = "index"
 
 # General information about the project.
-project = u'Spykfunc'
+project = u"Spykfunc"
 
-version = ''  # Is set by calling `setup.py docs`
-release = ''  # Is set by calling `setup.py docs`
+version = ""  # Is set by calling `setup.py docs`
+release = ""  # Is set by calling `setup.py docs`
 
-exclude_patterns = ['_build']
+exclude_patterns = ["_build"]
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 # default_role = None
@@ -36,12 +55,12 @@ exclude_patterns = ['_build']
 add_module_names = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = "sphinx"
 
 # A list of ignored prefixes for module index sorting.
 # modindex_common_prefix = []
 
-html_theme = 'sphinx-bluebrain-theme'
+html_theme = "sphinx-bluebrain-theme"
 html_title = "Spykfunc"
 
 try:
@@ -51,17 +70,17 @@ except ImportError:
 else:
     release = version
 
-html_static_path = ['_static']
-htmlhelp_basename = 'spykfunc-doc'
+html_static_path = ["_static"]
+htmlhelp_basename = "spykfunc-doc"
 
 # -- External mapping ------------------------------------------------------------
-python_version = '.'.join(map(str, sys.version_info[0:2]))
+python_version = ".".join(map(str, sys.version_info[0:2]))
 intersphinx_mapping = {
-    'sphinx': ('http://sphinx.pocoo.org', None),
-    'python': ('http://docs.python.org/' + python_version, None),
-    'matplotlib': ('http://matplotlib.sourceforge.net', None),
-    'numpy': ('http://docs.scipy.org/doc/numpy', None),
-    'sklearn': ('http://scikit-learn.org/stable', None),
-    'pandas': ('http://pandas.pydata.org/pandas-docs/stable', None),
-    'scipy': ('http://docs.scipy.org/doc/scipy/reference/', None),
+    "sphinx": ("http://sphinx.pocoo.org", None),
+    "python": ("http://docs.python.org/" + python_version, None),
+    "matplotlib": ("http://matplotlib.sourceforge.net", None),
+    "numpy": ("http://docs.scipy.org/doc/numpy", None),
+    "sklearn": ("http://scikit-learn.org/stable", None),
+    "pandas": ("http://pandas.pydata.org/pandas-docs/stable", None),
+    "scipy": ("http://docs.scipy.org/doc/scipy/reference/", None),
 }

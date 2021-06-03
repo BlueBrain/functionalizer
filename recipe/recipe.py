@@ -1,4 +1,6 @@
-"""Basic definitions for recipe parsing
+"""
+Top-Level Interface for Recipe Handling
+---------------------------------------
 """
 import copy
 import logging
@@ -60,7 +62,7 @@ class Recipe(object):
     touch_reduction: Optional[TouchReduction] = None
     """Optional parameter for a simple trimming of touches with a survival
     probability.
-    See also :class:`~recipe.parts.touch_connections.ConnectionRules`.
+    See also :class:`~recipe.parts.touch_reduction.TouchReduction`.
     """
 
     touch_rules: TouchRules

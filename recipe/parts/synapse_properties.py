@@ -45,7 +45,9 @@ class SpynapseRules(PathwayPropertyGroup):
 
 
 class SynapseClass(Property):
-    """Class representing a Synapse Classification"""
+    """Stores the synaptic properties for a synapse class codified by the
+    property `id`.
+    """
     _name = "class"
 
     _attributes = {
@@ -76,6 +78,7 @@ class SynapseClass(Property):
 
 
 class SynapseClasses(PropertyGroup):
+    """Container for synaptic properties per class."""
     _kind = SynapseClass
     _name = "SynapsesClassification"
 
@@ -115,6 +118,10 @@ class RuleMismatch(Exception):
 
 
 class SynapseProperties:
+    """Container to provide convenient access to the synapse classification
+    rules :class:`~SynapseRules` and classifications
+    :class:`~SynapseClasses`
+    """
     rules: SpynapseRules
     classes: SynapseClasses
 

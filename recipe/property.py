@@ -155,6 +155,10 @@ class PropertyGroup(list):
     def load(cls, xml, strict: bool = True):
         """Load a list of properties defined by the class
         """
+        if isinstance(xml, str):
+            from io import StringIO
+            from .recipe import Recipe
+            xml = Recipe._load_from_xml(StringIO(xml))
         tag = cls._name or cls.__name__
         root = xml.findall(tag)
         if len(root) == 0:
@@ -226,11 +230,30 @@ _DIRECTIONAL_ATTR = re.compile(r"^(from|to)([A-Z]\w+)$")
 class PathwayProperty(Property):
     @classmethod
     def columns(cls):
+        """The attributes of the property that indicate a source / target
+        invocation via the prefixes ``from`` and ``to``.
+
+        >>> class rule(PathwayProperty):
+        ...     _attributes = {'toMType': '*', 'fromEType': '*', 'something': str}
+        >>> r = rule(toMType='B*', fromEType='*')
+        >>> r.columns()
+        ['fromEType', 'toMType']
+        """
         return sorted(k for k in cls._attributes if _DIRECTIONAL_ATTR.match(k))
 
     def __call__(
         self, values: Dict[str, List[str]]
     ) -> Iterator[Tuple[Dict[str, str], Any]]:
+        """Expand the property given the possible matching attribute values
+        in `values`.  Returns an iterator over dictionaries with the
+        attribute values matched and the property itself.
+
+        >>> class rule(PathwayProperty):
+        ...     _attributes = {'toMType': '*', 'fromEType': '*', 'something': str}
+        >>> r = rule(toMType='B*', fromEType='*')
+        >>> list(r({'toMType': ['Foo', 'Bar']}))
+        [({'toMType': 'Bar'}, <rule toMType="B*" fromEType="*" />)]
+        """
         expansions = [
             [(name, v) for v in fnmatch.filter(values[name], getattr(self, name))]
             for name in self.columns()
@@ -244,6 +267,32 @@ class PathwayPropertyGroup(PropertyGroup):
     def validate(
         self, values: Dict[str, List[str]]
     ) -> bool:
+        """Checks that all rules of the group are correct and all values
+        passed are covered.
+
+        >>> from recipe.parts.touch_connections import ConnectionRules
+        >>> rules = ConnectionRules.load('''
+        ... <blueColumn>
+        ...   <ConnectionRules>
+        ...     <mTypeRule fromMType="*" toMType="B*" bouton_reduction_factor="0" pMu_A="1.0" p_A="1.0" />
+        ...     <mTypeRule fromMType="*" toMType="Bar" bouton_reduction_factor="0" pMu_A="1.0" p_A="1.0" />
+        ...     <mTypeRule fromMType="*" toMType="Bar" toRegion="Spam" bouton_reduction_factor="0" pMu_A="1.0" p_A="1.0" />
+        ...   </ConnectionRules>
+        ... </blueColumn>
+        ... ''')
+        >>> values = {
+        ...     'toMType': ['Bar', 'Baz'],
+        ...     'toRegion': ['Ham', 'Eggs', 'Spam']
+        ... }
+        >>> rules.validate(values)
+        True
+        >>> values = {
+        ...     'toMType': ['Foo', 'Bar', 'Baz'],
+        ...     'toRegion': ['Ham', 'Eggs', 'Spam']
+        ... }
+        >>> rules.validate(values)  # Foo is not covered by the rules!
+        False
+        """
         def _check(name, covered):
             uncovered = set(values[name]) - covered
             if len(uncovered):
@@ -270,8 +319,22 @@ class PathwayPropertyGroup(PropertyGroup):
     @property
     def required(self) -> List[str]:
         """Returns a list of attributes whose values are required for
-        properly selecting rules, i.e., excluding any attributes that match
-        everything.
+        properly selecting rules, i.e., all attributes used by the enclosed
+        properties, excluding any that are consistently set to ``"*"``.
+
+        For example:
+
+        >>> from recipe.parts.touch_connections import ConnectionRules
+        >>> ConnectionRules.load('''
+        ... <blueColumn>
+        ...   <ConnectionRules>
+        ...     <mTypeRule fromMType="*" toMType="B*" />
+        ...     <mTypeRule fromMType="*" toMType="Bar" />
+        ...     <mTypeRule fromMType="*" toMType="Bar" toRegion="Spam" />
+        ...   </ConnectionRules>
+        ... </blueColumn>
+        ... ''').required
+        ['toMType', 'toRegion']
         """
         cols = []
         for col in self._kind.columns():
@@ -280,6 +343,88 @@ class PathwayPropertyGroup(PropertyGroup):
                 cols.append(col)
         return cols
 
+    def pathway_index(
+        self,
+        key: Dict[str, str],
+        values: Dict[str, List[str]],
+    ) -> int:
+        """Generate an integer pathway identifier for the provided `key`,
+        and reference `values` for all attributes given by
+        :py:attr:`~required`.
+
+        >>> from recipe.parts.touch_connections import ConnectionRules
+        >>> rules = ConnectionRules.load('''
+        ... <blueColumn>
+        ...   <ConnectionRules>
+        ...     <mTypeRule fromMType="*" toMType="B*" />
+        ...     <mTypeRule fromMType="*" toMType="Bar" />
+        ...     <mTypeRule fromMType="*" toMType="Bar" toRegion="Spam" />
+        ...   </ConnectionRules>
+        ... </blueColumn>
+        ... ''')
+        >>> values = {
+        ...     'toMType': ['Bar', 'Baz'],
+        ...     'toRegion': ['Ham', 'Eggs', 'Spam']
+        ... }
+        >>> rules.pathway_index(
+        ...     key={'toMType': 'Bar', 'toRegion': 'Spam'},
+        ...     values=values
+        ... )
+        4
+        >>> rules.pathway_index(
+        ...     key={'toMType': 'Baz', 'toRegion': 'Spam'},
+        ...     values=values
+        ... )
+        5
+        >>> rules.pathway_index(
+        ...     key={'toMType': 'Baz', 'toRegion': 'Eggs'},
+        ...     values=values
+        ... )
+        3
+        """
+        factor = 1
+        result = 0
+        for attr in self.required:
+            result += values[attr].index(key[attr]) * factor
+            factor *= len(values[attr])
+        return result
+
+    def pathway_values(
+        self,
+        key: int,
+        values: Dict[str, List[str]],
+    ) -> Dict[str, str]:
+        """Generate a dictionaly of attributes and values that need to be
+        set given an integer pathway `key` and reference `values` for all
+        attributes given by :py:attr:`~required`.
+
+        >>> from recipe.parts.touch_connections import ConnectionRules
+        >>> rules = ConnectionRules.load('''
+        ... <blueColumn>
+        ...   <ConnectionRules>
+        ...     <mTypeRule fromMType="*" toMType="B*" />
+        ...     <mTypeRule fromMType="*" toMType="Bar" />
+        ...     <mTypeRule fromMType="*" toMType="Bar" toRegion="Spam" />
+        ...   </ConnectionRules>
+        ... </blueColumn>
+        ... ''')
+        >>> values = {
+        ...     'toMType': ['Bar', 'Baz'],
+        ...     'toRegion': ['Ham', 'Eggs', 'Spam']
+        ... }
+        >>> rules.pathway_values(
+        ...     key=4,
+        ...     values=values
+        ... )
+        {'toMType': 'Bar', 'toRegion': 'Spam'}
+        """
+        result = dict()
+        for attr in self.required:
+            idx = key % len(values[attr])
+            key //= len(values[attr])
+            result[attr] = values[attr][idx]
+        return result
+
     def to_matrix(
         self, values: Dict[str, List[str]]
     ) -> np.array:
@@ -287,13 +432,37 @@ class PathwayPropertyGroup(PropertyGroup):
 
         Requires being passed a full set of allowed parameter values passed
         as argument `values`.  Will raise a :class:`KeyError` if any
-        required attributes listed in
-        :py:property:`~PathwayProperty.required` are not present.
+        required attributes listed by :py:attr:`~required` are not
+        present.
 
         Returns a :class:`numpy.array` filled with indices into the
         :class:`PathwayPropertyGroup` for each possible pathway.
         Values greater than the last index of the
         :class:`~PathwayPropertyGroup` signify no match with any rule.
+
+        >>> from recipe.parts.touch_connections import ConnectionRules
+        >>> rules = ConnectionRules.load('''
+        ... <blueColumn>
+        ...   <ConnectionRules>
+        ...     <mTypeRule fromMType="*" toMType="B*" />
+        ...     <mTypeRule fromMType="*" toMType="Bar" />
+        ...     <mTypeRule fromMType="*" toMType="Bar" toRegion="Spam" />
+        ...   </ConnectionRules>
+        ... </blueColumn>
+        ... ''')
+        >>> values = {
+        ...     'toMType': ['Bar', 'Baz'],
+        ...     'toRegion': ['Ham', 'Eggs', 'Spam']
+        ... }
+        >>> m = rules.to_matrix(values)
+        >>> m
+        array([1, 0, 1, 0, 2, 0], dtype=uint32)
+        >>> # The last rule matches Bar/Spam
+        >>> idx = m[rules.pathway_index({'toMType': 'Bar', 'toRegion': 'Spam'}, values)]
+        >>> idx
+        2
+        >>> rules[idx]
+        <rule fromMType="*" toMType="Bar" toRegion="Spam" />
         """
         required_attributes = self.required
         not_present = set(required_attributes) - set(values)
