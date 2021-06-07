@@ -2,6 +2,7 @@
 """
 import math
 import numpy as np
+import pandas as pd
 
 from pyspark.sql import functions as F
 
@@ -41,115 +42,93 @@ class GapJunctionFilter(DatasetOperation):
         touches = circuit.df.withColumn('efferent_junction_id', F.col('synapse_id')) \
                             .withColumn('afferent_junction_id', F.col('synapse_id'))
 
-        trim = self._create_soma_filter_udf(touches)
-        match = self._create_dendrite_match_udf(touches)
-
         touches = touches.groupby(F.least(F.col("src"),
                                           F.col("dst")),
                                   F.shiftRight(F.greatest(F.col("src"),
                                                           F.col("dst")),
                                                15)) \
-                         .apply(match)
+                         .applyInPandas(self._dendrite_match, touches.schema)
         dendrites = touches.where("afferent_section_id > 0 and efferent_section_id > 0")
         somas = touches.where("afferent_section_id == 0 or efferent_section_id == 0") \
                        .groupby(F.shiftRight(F.col("src"), 4)) \
-                       .apply(trim)
+                       .applyInPandas(self._soma_filter, touches.schema)
 
         return somas.union(dendrites) \
                     .repartition("src", "dst")
 
-    def _create_soma_filter_udf(self, circuit):
-        """Produce UDF to filter soma touches/gap junctions
-
-        Filter dendrite to soma gap junctions, removing junctions that are
-        on parent branches of the dendrite and closer than 3 times the soma
-        radius.
-
-        :param circuit: a dataframe whose schema to re-use for the UDF
+    def _soma_filter(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Filter dendrite to soma gap junctions, removing junctions that
+        are on parent branches of the dendrite and closer than 3 times the
+        soma radius.
         """
-        @F.pandas_udf(circuit.schema, F.PandasUDFType.GROUPED_MAP)
-        def trim_touches(data):
-            """
-            :param data: a Pandas dataframe
-            """
-            if len(data) == 0:
-                return data
+        if len(df) == 0:
+            return df
 
-            src = data.src.values
-            dst = data.dst.values
-            sec = data.efferent_section_id.values
-            seg = data.efferent_segment_id.values
-            soma = data.afferent_section_id.values
+        src = df.src.values
+        dst = df.dst.values
+        sec = df.efferent_section_id.values
+        seg = df.efferent_segment_id.values
+        soma = df.afferent_section_id.values
 
-            jid1 = data.efferent_junction_id.values
-            jid2 = data.afferent_junction_id.values
+        jid1 = df.efferent_junction_id.values
+        jid2 = df.afferent_junction_id.values
 
-            # This may be passed to us from pyspark as object type,
-            # breaking np.unique.
-            morphos = np.asarray(data.src_morphology.values, dtype="U")
-            activated = np.zeros_like(src, dtype=bool)
-            distances = np.zeros_like(src, dtype=float)
+        # This may be passed to us from pyspark as object type,
+        # breaking np.unique.
+        morphos = np.asarray(df.src_morphology.values, dtype="U")
+        activated = np.zeros_like(src, dtype=bool)
+        distances = np.zeros_like(src, dtype=float)
 
-            connections = np.stack((src, dst, morphos)).T
-            unique_conns = np.unique(connections, axis=0)
-            unique_morphos = np.unique(connections[:, 2])
+        connections = np.stack((src, dst, morphos)).T
+        unique_conns = np.unique(connections, axis=0)
+        unique_morphos = np.unique(connections[:, 2])
 
-            for m in unique_morphos:
-                # Work one morphology at a time to conserve memory
-                mdist = 3 * self.__morphos.soma_radius(m)
+        for m in unique_morphos:
+            # Work one morphology at a time to conserve memory
+            mdist = 3 * self.__morphos.soma_radius(m)
 
-                # Resolve from indices matching morphology to connections
-                idxs = np.where(unique_conns[:, 2] == m)[0]
-                conns = unique_conns[idxs]
-                for conn in conns:
-                    # Indices where the connections match
-                    idx = np.where((connections[:, 0] == conn[0]) &
-                                      (connections[:, 1] == conn[1]))[0]
-                    # Match up gap-junctions that are reverted at the end
-                    if len(idx) == 0 or soma[idx[0]] != 0:
-                        continue
-                    for i in idx:
-                        distances[i] = self.__morphos.distance_to_soma(m, sec[i], seg[i])
-                        path = self.__morphos.ancestors(m, sec[i])
-                        for j in idx:
-                            if i == j:
-                                break
-                            if activated[j] and sec[j] in path and \
-                                    abs(distances[i] - distances[j]) < mdist:
-                                activated[j] = False
-                        activated[i] = True
-            # Activate reciprocal connections
-            activated[np.isin(jid1, jid2[activated])] = True
-            return data[activated]
-        return trim_touches
+            # Resolve from indices matching morphology to connections
+            idxs = np.where(unique_conns[:, 2] == m)[0]
+            conns = unique_conns[idxs]
+            for conn in conns:
+                # Indices where the connections match
+                idx = np.where((connections[:, 0] == conn[0]) &
+                                  (connections[:, 1] == conn[1]))[0]
+                # Match up gap-junctions that are reverted at the end
+                if len(idx) == 0 or soma[idx[0]] != 0:
+                    continue
+                for i in idx:
+                    distances[i] = self.__morphos.distance_to_soma(m, sec[i], seg[i])
+                    path = self.__morphos.ancestors(m, sec[i])
+                    for j in idx:
+                        if i == j:
+                            break
+                        if activated[j] and sec[j] in path and \
+                                abs(distances[i] - distances[j]) < mdist:
+                            activated[j] = False
+                    activated[i] = True
+        # Activate reciprocal connections
+        activated[np.isin(jid1, jid2[activated])] = True
+        return df[activated]
 
-    def _create_dendrite_match_udf(self, circuit):
-        """Produce UDF to match dendrite touches/gap junctions
-
-        Filter dendrite to dendrite junctions, keeping only junctions that
-        have a match in both directions, with an optional segment offset of
-        one.
-
-        :param circuit: a dataframe whose schema to re-use for the UDF
+    @staticmethod
+    def _dendrite_match(df: pd.DataFrame) -> pd.DataFrame:
+        """Filter dendrite to dendrite junctions, keeping only junctions
+        that have a match in both directions, with an optional segment
+        offset of one.
         """
-        @F.pandas_udf(circuit.schema, F.PandasUDFType.GROUPED_MAP)
-        def match_touches(data):
-            """
-            :param data: a Pandas dataframe
-            """
-            if len(data) == 0:
-                return data
-            from spykfunc.filters.udfs import match_dendrites
-            accept = match_dendrites(data.src.values,
-                                     data.dst.values,
-                                     data.efferent_section_id.values,
-                                     data.efferent_segment_id.values,
-                                     data.efferent_junction_id.values,
-                                     data.afferent_section_id.values,
-                                     data.afferent_segment_id.values,
-                                     data.afferent_junction_id.values).astype(bool)
-            return data[accept]
-        return match_touches
+        if len(df) == 0:
+            return df
+        from spykfunc.filters.udfs import match_dendrites
+        accept = match_dendrites(df.src.values,
+                                 df.dst.values,
+                                 df.efferent_section_id.values,
+                                 df.efferent_segment_id.values,
+                                 df.efferent_junction_id.values,
+                                 df.afferent_section_id.values,
+                                 df.afferent_segment_id.values,
+                                 df.afferent_junction_id.values).astype(bool)
+        return df[accept]
 
 
 class GapJunctionProperties(DatasetOperation):

@@ -42,8 +42,7 @@ class TouchReductionFilter(DatasetOperation):
             circuit.df,
             "touch_rand",
             self.seed,
-            _KEY_TOUCH,
-            F.col("synapse_id")
+            _KEY_TOUCH
         )
 
         return (

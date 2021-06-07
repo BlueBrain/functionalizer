@@ -1,34 +1,38 @@
 """Reference implementations of filters
 """
-from __future__ import annotations
-
-import numpy
-import pandas
+import numpy as np
+import pandas as pd
+from typing import List
 
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
+from pyspark.sql import DataFrame
 
 
-def add_random_column(df, name, seed, key, derivative):
+def add_random_column(df: DataFrame, name: str, seed: int, key: int) -> DataFrame:
     """Add a random column to a dataframe
+
+    The dataframe is required to contain a column `synapse_id` that is used
+    while seeding the random number generator.
 
     Args:
         df: The dataframe to augment
         name: Name for the random column
-        seed: The seed to use for the RNG
-        key: First key to derive the RNG with
-        derivative: Column for second derivative of the RNG
+        seed: Used to seed the RNG
+        key: Also used to seed the RNG
     Returns:
         The dataframe with a random column
     """
-    @F.pandas_udf('float')
-    def _fixed_rand(col):
-        from spykfunc.filters.udfs import uniform
-        return pandas.Series(uniform(seed, key, col.values))
-    return df.withColumn(name, _fixed_rand(derivative.cast(T.LongType())))
+    def __generate(data):
+        import spykfunc.filters.udfs as fcts
+        for df in data:
+            df[name] = fcts.uniform(seed, key, df["synapse_id"])
+            yield df
+    df = df.withColumn(name, F.lit(0.0))
+    return df.mapInPandas(__generate, df.schema)
 
 
-def add_bin_column(df, name, boundaries, key):
+def add_bin_column(df: DataFrame, name: str, boundaries: List[float], key: str) -> DataFrame:
     """Add a bin column for `key` based on `boundaries`
 
     Args:
@@ -39,9 +43,11 @@ def add_bin_column(df, name, boundaries, key):
     Returns:
         A dataframe with an additional column
     """
-    bins = numpy.asarray(boundaries, dtype=numpy.single)
-    @F.pandas_udf('int')
-    def _bin(col):
-        from spykfunc.filters.udfs import get_bins
-        return pandas.Series(get_bins(col.values, bins))
-    return df.withColumn(name, _bin(key.cast(T.FloatType())))
+    bins = np.asarray(boundaries, dtype=np.single)
+    def __generate(data):
+        import spykfunc.filters.udfs as fcts
+        for df in data:
+            df[name] = fcts.get_bins(df["key"], bins)
+            yield df
+    df = df.withColumn(name, F.lit(-1))
+    return df.mapInPandas(__generate, df.schema)

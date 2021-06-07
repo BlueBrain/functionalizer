@@ -44,9 +44,7 @@ def _create_neuron_loader(filename, population):
     Returns:
         A Pandas UDF to be used over a group by
     """
-
-    @F.pandas_udf(schema.NEURON_SCHEMA, F.PandasUDFType.GROUPED_MAP)
-    def loader(data):
+    def loader(data: pd.DataFrame) -> pd.DataFrame:
         assert len(data) == 1
         import libsonata
 
@@ -65,7 +63,6 @@ def _create_neuron_loader(filename, population):
                 morphology=pop.get_attribute("morphology", selection),
             )
         )
-
     return loader
 
 
@@ -211,7 +208,10 @@ class NeuronData:
             raw_mvd = (
                 parts
                 .groupby("row")
-                .apply(_create_neuron_loader(self._filename, self._population))
+                .applyInPandas(
+                    _create_neuron_loader(self._filename, self._population),
+                    schema.NEURON_SCHEMA
+                )
             )
 
             # Evaluate (build partial NameMaps) and store

@@ -65,11 +65,10 @@ def test_soma_filter(gj):
                                        gj.circuit.morphologies)[0]
     circuit = gj.circuit.df.withColumnRenamed('synapse_id', 'efferent_junction_id') \
                            .withColumn('afferent_junction_id', F.col('efferent_junction_id'))
-    trim_touches = fltr._create_soma_filter_udf(circuit)
 
     for src, dst, expected in SOMA_DATA:
         df = circuit.where(query.format(src, dst)).toPandas()
-        df = trim_touches.func(df)
+        df = fltr._soma_filter(df)
         assert set(expected) == set(zip(df.efferent_section_id, df.efferent_segment_id))
 
 @pytest.mark.slow
@@ -87,17 +86,15 @@ def test_soma_filter_bidirectional(gj):
                                        gj.circuit.morphologies)[0]
     circuit = gj.circuit.df.withColumnRenamed('synapse_id', 'efferent_junction_id') \
                            .withColumn('afferent_junction_id', F.col('efferent_junction_id'))
-    match_touches = fltr._create_dendrite_match_udf(circuit)
-    trim_touches = fltr._create_soma_filter_udf(circuit)
 
     for src, dst, expected in SOMA_DATA_BIDIRECTIONAL:
         df = circuit.where(query.format(src, dst)).toPandas()
         # with pandas.option_context('display.max_rows', None, 'display.max_columns', None):
         #     print(df)
-        df = match_touches.func(df)
+        df = fltr._dendrite_match(df)
         # with pandas.option_context('display.max_rows', None, 'display.max_columns', None):
         #     print(df)
-        df = trim_touches.func(df)
+        df = fltr._soma_filter(df)
         assert 2 * len(expected) == len(df)
 
 
@@ -113,11 +110,10 @@ def test_dendrite_sync(gj):
                                        gj.circuit.morphologies)[0]
     circuit = gj.circuit.df.withColumnRenamed('synapse_id', 'efferent_junction_id') \
                            .withColumn('afferent_junction_id', F.col('efferent_junction_id'))
-    match_touches = fltr._create_dendrite_match_udf(circuit)
 
     for pair, expected in DENDRO_DATA:
         df = circuit.where(query.format(pair)).toPandas()
-        df = match_touches.func(df)
+        df = fltr._dendrite_match(df)
         assert len(df) == expected
 
 

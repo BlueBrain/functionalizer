@@ -42,14 +42,13 @@ class SpineLengthFilter(DatasetOperation):
             circuit.df,
             "spine_bin",
             [b.length for b in self.binnings],
-            F.col("spine_length")
+            "spine_length"
         )
         touches = add_random_column(
             touches,
             "spine_rand",
             self.seed,
             _KEY_SPINE,
-            F.col("synapse_id")
         )
 
         # Extract the desired PDF for spine lengths

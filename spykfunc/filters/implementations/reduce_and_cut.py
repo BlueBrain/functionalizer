@@ -171,8 +171,9 @@ class ReduceAndCut(DatasetOperation):
         logger.debug(" -> Cutting touches")
         return add_random_column(
             all_touches.join(fractions, "pathway_i"),
-            "reduce_rand", self.seed, _KEY_REDUCE,
-            F.col("synapse_id")
+            "reduce_rand",
+            self.seed,
+            _KEY_REDUCE,
         ).where(F.col("pP_A") > F.col("reduce_rand")) \
          .drop("reduce_rand", "pP_A") \
          .repartition("src", "dst")
@@ -229,9 +230,8 @@ class ReduceAndCut(DatasetOperation):
         logger.debug(" -> Computing connections to cut according to survival_rate")
         _df = connection_survival_rate
         cut_connections = add_random_column(
-            _df, "cut_rand", self.seed, _KEY_CUT,
-            F.col("synapse_id"),
-        ).where((_df.survival_rate > .0) & (_df.survival_rate > F.col("cut_rand"))) \
+            _df, "cut_rand", self.seed, _KEY_CUT
+        ).where((F.col("survival_rate") > .0) & (F.col("survival_rate") > F.col("cut_rand"))) \
          .select("src", "dst", "synapse_id", "pathway_i", "reduced_touch_counts_connection")
         # Much smaller data volume but we cant coealesce
         return cut_connections
@@ -291,8 +291,9 @@ class ReduceAndCut(DatasetOperation):
 
         shall_keep_connections = add_random_column(
             cut_touch_counts_connection.join(active_fractions, "pathway_i"),
-            "active_rand", self.seed, _KEY_ACTIVE,
-            F.col("synapse_id"),
+            "active_rand",
+            self.seed,
+            _KEY_ACTIVE,
         ).where(F.col("active_rand") < F.col("active_fraction")) \
          .select("src", "dst")
 
