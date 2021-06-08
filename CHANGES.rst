@@ -5,6 +5,13 @@ Changelog
 Version 0.17.0
 ==============
 
+.. warning:: Changes in this release will yield different results compared
+             to previous versions when re-running circuits.
+
+Breaking Changes:
+  - Replace the random number generating library. Switch to using the tried
+    and tested Random123 library.  See also HPCTM-1294_.
+
 Changes:
   - Produce `debug` output by default.  See also FUNCZ-281_.
   - Reduce the output of the cluster startup script to display important
@@ -25,6 +32,10 @@ Changes:
   - Allow to not specify any filters or use the ``--merge`` flag to process
     several inputs of **non-overlapping** edge populations.  See also
     FUNCZ-279_.
+
+    .. note:: If a source—target connection appears in more than one input,
+              synapses for this input may not be sorted in a reproducible
+              way.
 
 Version 0.16.0
 ==============
@@ -328,4 +339,5 @@ First working version with 3 base filters:
 .. _FUNCZ-275: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-275
 .. _FUNCZ-277: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-277
 .. _FUNCZ-279: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-279
+.. _HPCTM-1294: https://bbpteam.epfl.ch/project/issues/browse/HPCTM-1294
 .. _HPCTM-1425: https://bbpteam.epfl.ch/project/issues/browse/HPCTM-1425

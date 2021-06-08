@@ -1,6 +1,3 @@
-[submodule "deps/hadoken"]
-	path = spykfunc/filters/udfs/deps/hadoken
-	url = https://github.com/adevress/hadoken.git
 [submodule "deps/pybind11"]
 	path = spykfunc/filters/udfs/deps/pybind11
 	url = git@github.com:pybind/pybind11.git
