@@ -155,7 +155,7 @@ class NeuronData:
     @property
     def df(self):
         if not self._df:
-            self._df = self._load_neurons()
+            self._df = F.broadcast(self._load_neurons())
         return self._df
 
     def _load_neurons(self):
@@ -368,7 +368,6 @@ class EdgeData:
                 _create_touch_loader(filename, population),
                 columns
             )
-            logger.info("Total edge count in %s: %d", filename, edges.count())
             return edges
         return _loader
 
@@ -393,7 +392,5 @@ class EdgeData:
             for old, new in schema.LEGACY_MAPPING.items():
                 if old in edges.columns:
                     edges = edges.withColumnRenamed(old, new)
-            edges = edges.cache()
-            logger.info("Total edge count in %s: %d", ", ".join(files), edges.count())
             return edges
         return _loader

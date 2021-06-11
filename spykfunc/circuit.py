@@ -114,13 +114,14 @@ class Circuit(object):
         #: :property: a wrapper around the morphology storage
         self.morphologies = MorphologyDB(morphologies) if morphologies else None
 
-        self._touches = None
-        self._touch_loader = touches
-        self._metadata = self._touch_loader.metadata
-
         # The circuit will be constructed (and grouped by src, dst
         self.__circuit = None
         self.__reduced = None
+
+        self.__touches = touches.df
+        self.__length = self.__touches.count()
+        logger.info(f"Touch count after reading: {self.__length:,d}")
+        self.__metadata = touches.metadata
 
     def with_pathway(self, df=None):
         raise RuntimeError("with_patway can only be used in a pathway context")
@@ -238,7 +239,7 @@ class Circuit(object):
     def metadata(self):
         """:property: metadata associated with the connections
         """
-        return self._metadata
+        return self.__metadata
 
     @property
     def dataframe(self):
@@ -248,9 +249,20 @@ class Circuit(object):
             return self.__circuit
 
         self.__circuit = self.touches.alias("t") \
-                                     .join(F.broadcast(self.__src), "src") \
-                                     .join(F.broadcast(self.__dst), "dst")
+                                     .join(self.__src, "src") \
+                                     .join(self.__dst, "dst")
         return self.__circuit
+
+    @dataframe.setter
+    def dataframe(self, dataframe):
+        self.__length = dataframe.count()
+        self.__touches = self.only_touch_columns(dataframe)
+        if any(n.startswith('src_') or n.startswith('dst_') for n in dataframe.schema.names):
+            self.__circuit = dataframe
+            self.__reduced = None
+        else:
+            self.__circuit = None
+            self.__reduced = None
 
     @property
     def reduced(self):
@@ -262,27 +274,18 @@ class Circuit(object):
         self.__reduced = self.touches.alias("t") \
                                      .groupBy("src", "dst") \
                                      .agg(F.min("synapse_id").alias("synapse_id")) \
-                                     .join(F.broadcast(self.__src), "src") \
-                                     .join(F.broadcast(self.__dst), "dst")
+                                     .join(self.__src, "src") \
+                                     .join(self.__dst, "dst")
         return self.__reduced
-
-    @dataframe.setter
-    def dataframe(self, dataframe):
-        self._touches = self.only_touch_columns(dataframe)
-        if any(n.startswith('src_') or n.startswith('dst_') for n in dataframe.schema.names):
-            self.__circuit = dataframe
-            self.__reduced = None
-        else:
-            self.__circuit = None
-            self.__reduced = None
 
     @property
     def touches(self):
         """:property: touch data as a Spark dataframe
         """
-        if not self._touches:
-            self._touches = self._touch_loader.df
-        return self._touches
+        return self.__touches
+
+    def __len__(self):
+        return self.__length
 
     @staticmethod
     def only_touch_columns(df):

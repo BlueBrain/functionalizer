@@ -45,6 +45,7 @@ class SynapseProperties(DatasetOperation):
     """
 
     _checkpoint = True
+    _reductive = False
 
     _columns = [
         (None, "gsyn"),

@@ -18,6 +18,7 @@ class SynapseReposition(DatasetOperation):
     according to the `SynapsesReposition` rules of the recipe.
     """
 
+    _reductive = False
     _required = False
 
     def __init__(self, recipe, source, target, morphos):

@@ -144,6 +144,8 @@ class GapJunctionProperties(DatasetOperation):
 
     """
 
+    _reductive = False
+
     _columns = [
         (None, "gsyn"),
     ]

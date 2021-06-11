@@ -1,10 +1,9 @@
-from __future__ import print_function, absolute_import
-
 """
 Query interface for Neuron dataframe / graph
 """
 
 from abc import abstractmethod
+from datetime import datetime
 from glob import glob
 import hashlib
 import importlib
@@ -36,10 +35,7 @@ def load(*dirnames: str) -> None:
         filenames = glob(f"{dirname}/*.py")
         for filename in filenames:
             modulename = filename[:-3]
-            relative = min(
-                [os.path.relpath(modulename, p) for p in sys.path],
-                key=len
-            )
+            relative = min([os.path.relpath(modulename, p) for p in sys.path], key=len)
             modulename = relative.replace(os.sep, ".")
             importlib.import_module(modulename)
 
@@ -57,29 +53,38 @@ class __DatasetOperationType(type):
     with a trailing "Filter" stripped of their name.  Set the attribute
     `_visible` to `False` to exclude a filter from appearing in the list.
     """
+
     __filters = dict()
 
     def __init__(cls, name, bases, attrs) -> None:
-        if 'apply' not in attrs:
+        if "apply" not in attrs:
             raise AttributeError(f'class {cls} does not implement "apply(circuit)"')
         try:
-            spec = inspect.getfullargspec(attrs['apply'])
-            if not (spec.varargs is None and
-                    spec.varkw is None and
-                    spec.defaults is None and
-                    spec.args == ['self', 'circuit']):
+            spec = inspect.getfullargspec(attrs["apply"])
+            if not (
+                spec.varargs is None
+                and spec.varkw is None
+                and spec.defaults is None
+                and spec.args == ["self", "circuit"]
+            ):
                 raise TypeError
         except TypeError:
-            raise AttributeError(f'class {cls} does not implement "apply(circuit)" properly')
+            raise AttributeError(
+                f'class {cls} does not implement "apply(circuit)" properly'
+            )
         spec = inspect.getfullargspec(cls.__init__)
-        if not (spec.varargs is None and
-                spec.varkw is None and
-                spec.defaults is None and
-                spec.args == ['self', 'recipe', 'source', 'target', 'morphos']):
-            raise AttributeError(f'class {cls} does not implement "__init__(recipe, source, target, morphos)" properly')
+        if not (
+            spec.varargs is None
+            and spec.varkw is None
+            and spec.defaults is None
+            and spec.args == ["self", "recipe", "source", "target", "morphos"]
+        ):
+            raise AttributeError(
+                f'class {cls} does not implement "__init__(recipe, source, target, morphos)" properly'
+            )
         type.__init__(cls, name, bases, attrs)
-        if attrs.get('_visible', True):
-            cls.__filters[name.replace('Filter', '')] = cls
+        if attrs.get("_visible", True):
+            cls.__filters[name.replace("Filter", "")] = cls
 
     @classmethod
     def initialize(cls, names, *args):
@@ -90,20 +95,22 @@ class __DatasetOperationType(type):
         :return: A list of filter instances
         """
         for fcls in cls.__filters.values():
-            if hasattr(fcls, '_checkpoint_name'):
-                delattr(fcls, '_checkpoint_name')
+            if hasattr(fcls, "_checkpoint_name"):
+                delattr(fcls, "_checkpoint_name")
         key = hashlib.sha256()
-        key.update(b'foobar3000')
+        key.update(b"foobar3000")
         filters = []
         for name in names:
-            fcls = cls.__filters.get(name, cls.__filters.get(name + 'Filter'))
+            fcls = cls.__filters.get(name, cls.__filters.get(name + "Filter"))
             if fcls is None:
                 raise ValueError(f"Cannot find filter '{name}'")
             key.update(fcls.__name__.encode())
             if hasattr(fcls, "_checkpoint_name"):
                 raise ValueError(f"Cannot have more than one {fcls.__name__}")
-            fcls._checkpoint_name = f"{fcls.__name__.replace('Filter', '').lower()}" \
-                                    f"_{key.hexdigest()[:8]}"
+            fcls._checkpoint_name = (
+                f"{fcls.__name__.replace('Filter', '').lower()}"
+                f"_{key.hexdigest()[:8]}"
+            )
             try:
                 filters.append(fcls(*args))
             except Exception as e:
@@ -113,9 +120,9 @@ class __DatasetOperationType(type):
                 logger.warning(f"Disabling optional {fcls.__name__}: {e}")
         for i in range(len(filters) - 1, -1, -1):
             base = Path(checkpoint_resume.directory)
-            parquet = filters[i]._checkpoint_name + '.parquet'
-            table = filters[i]._checkpoint_name + '.ptable'
-            fn = '_SUCCESS'
+            parquet = filters[i]._checkpoint_name + ".parquet"
+            table = filters[i]._checkpoint_name + ".ptable"
+            fn = "_SUCCESS"
             if (base / parquet / fn).exists() or (base / table / fn).exists():
                 classname = filters[i].__class__.__name__
                 logger.info(f"Found checkpoint for {classname}")
@@ -129,16 +136,8 @@ class __DatasetOperationType(type):
 
     @classmethod
     def modules(cls):
-        """List registered subclasses
-        """
+        """List registered subclasses"""
         return sorted(cls.__filters.keys())
-
-
-def _log_touch_count(df):
-    """Print information for end users
-    """
-    logger.info("Surviving edges: %d", df.count())
-    return df
 
 
 class DatasetOperation(object, metaclass=__DatasetOperationType):
@@ -183,6 +182,11 @@ class DatasetOperation(object, metaclass=__DatasetOperationType):
     _visible = False
     """Determines the visibility of the filter to the user.
     """
+
+    _reductive = True
+    """Indicates if the filter is expected to reduce the touch count.
+    """
+
     _required = True
     """If set to `False`, the filter will be skipped if recipe components
     are not found.
@@ -207,14 +211,17 @@ class DatasetOperation(object, metaclass=__DatasetOperationType):
     """
 
     def __init__(self, recipe, source, target, morphos):
-        """Empty constructor supposed to be overriden
-        """
+        """Empty constructor supposed to be overriden"""
         pass
 
     def __call__(self, circuit):
         classname = self.__class__.__name__
         logger.info(f"Applying {classname}")
         with sm.jobgroup(classname):
+            ran_filter = False  # assume loading from disk by default
+            start = datetime.now()
+            old_count = len(circuit)
+
             olds = set(circuit.df.columns)
             to_add = set(a for (c, a) in self._columns if not c or c in olds)
             to_drop = set(c for (c, _) in self._columns if c in olds)
@@ -226,15 +233,21 @@ class DatasetOperation(object, metaclass=__DatasetOperationType):
                 olds -= to_remove
 
             if not self._checkpoint:
+                ran_filter = True
                 circuit.df = self.apply(circuit)
             else:
-                @checkpoint_resume(self._checkpoint_name,
-                                   handlers=[
-                                       CheckpointHandler.before_save(Circuit.only_touch_columns),
-                                       CheckpointHandler.post_resume(_log_touch_count)],
-                                   bucket_cols=self._checkpoint_buckets)
+                @checkpoint_resume(
+                    self._checkpoint_name,
+                    handlers=[
+                        CheckpointHandler.before_save(Circuit.only_touch_columns),
+                    ],
+                    bucket_cols=self._checkpoint_buckets,
+                )
                 def fun():
+                    nonlocal ran_filter
+                    ran_filter = True
                     return self.apply(circuit)
+
                 circuit.df = fun()
             news = set(circuit.df.columns)
 
@@ -249,6 +262,18 @@ class DatasetOperation(object, metaclass=__DatasetOperationType):
                 raise RuntimeError(f"Missing columns: {to_add - added}")
             if added - to_add:
                 raise RuntimeError(f"Additional columns: {added - to_add}")
+
+            if ran_filter:
+                new_count = len(circuit)
+                diff = old_count - new_count
+                if self._reductive:
+                    logger.info(
+                        f"{classname} removed {diff:,d} touches, circuit now contains {new_count:,d}"
+                    )
+                elif diff != 0:
+                    raise RuntimeError(f"{classname} removed touches, but should not")
+                logger.info(f"{classname} application took {datetime.now() - start}")
+
             return circuit
 
     @abstractmethod

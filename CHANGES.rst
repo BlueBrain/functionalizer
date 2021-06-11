@@ -15,6 +15,8 @@ Changes:
     and additional selection criteria may be specified.
   - Store metadata about previous tool invocations and add recipe, filters
     used.  See also HPCTM-1425_.
+  - Track touches dropped and raise an exception if touches are removed
+    filters like synaptic property generation.  See also FUNCZ-274_.
   - Rework user interface to require the flags ``--recipe`` and
     ``--morphologies``, previously positional arguments, when using
     filters.  Drop ``--parquet`` and ``--touches`` and use positional
@@ -321,6 +323,7 @@ First working version with 3 base filters:
 .. _FUNCZ-262: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-262
 .. _FUNCZ-263: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-263
 .. _FUNCZ-269: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-269
+.. _FUNCZ-274: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-274
 .. _FUNCZ-275: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-275
 .. _FUNCZ-277: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-277
 .. _FUNCZ-279: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-279

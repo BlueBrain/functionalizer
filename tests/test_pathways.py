@@ -29,7 +29,13 @@ class _MockNodes:
     region_values = REGIONS
 
 
+class _MockDf:
+    def count(self):
+        return 0
+
+
 class _MockEdges:
+    df = _MockDf()
     metadata = None
 
 
