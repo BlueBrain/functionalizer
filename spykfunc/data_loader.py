@@ -292,7 +292,7 @@ class EdgeData:
                 metadata.append(self._load_sonata_metadata(*sonata))
                 self._loaders.append(self._load_sonata(*sonata))
             else:
-                raise ValueError(f"cannot process {files[0]}")
+                raise ValueError(f"cannot process file(s) {files[0]}")
         if len(set(frozenset(m.items()) for m in metadata)) == 1:
             self._metadata = metadata[0]
         elif metadata:

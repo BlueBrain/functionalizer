@@ -17,20 +17,81 @@ def _parse_args(args=None) -> argparse.Namespace:
 
     Takes a few corner cases into account w.r.t. backwards compatible arguments.
     """
+    import json
+    import libsonata
+
     if args is None:
         args = sys.argv[1:]
 
     class _ValidFile:
         """Check that a path is a file
         """
+        def __repr__(self):
+            return "file"
         def __call__(self, filename):
             if not os.path.isfile(filename):
                 raise ValueError(f"'{filename}' is not a valid file")
             return filename
 
+    class _ValidNodes:
+        """Check that the specified nodes are present
+        """
+        def __init__(self):
+            self.__storage = None
+            self.__population = None
+            self.__what = "node file"
+        def __repr__(self):
+            return self.__what
+        def __call__(self, arg):
+            if self.__storage is None:
+                try:
+                    self.__storage = libsonata.NodeStorage(arg)
+                except:
+                    raise ValueError(f"'{arg}' is not a valid file")
+            elif self.__population is None:
+                try:
+                    self.__population = self.__storage.open_population(arg)
+                except:
+                    self.__what = "node population " \
+                            f"(out of {', '.join(self.__storage.population_names)})"
+                    raise ValueError(f"'{arg}' is not a valid node population")
+            else:
+                self.__what = "node argument"
+                raise ValueError(f"'{arg}' is extraneous")
+            return arg
+
+    class _ValidNodeset:
+        """Check that the specified nodes are present
+        """
+        def __init__(self):
+            self.__json = None
+            self.__key = None
+            self.__what = "nodeset file"
+        def __repr__(self):
+            return self.__what
+        def __call__(self, arg):
+            if self.__json is None:
+                try:
+                    with open(arg) as fd:
+                        self.__json = json.load(fd)
+                except:
+                    raise ValueError(f"'{arg}' is not a valid file")
+            elif self.__key is None:
+                try:
+                    self.__key = self.__json[arg]
+                except:
+                    self.__what = f"nodeset identifier (out of {', '.join(self.__json)})"
+                    raise ValueError(f"'{arg}' is not a valid nodeset identifier")
+            else:
+                self.__what = "nodeset argument"
+                raise ValueError(f"'{arg}' is extraneous")
+            return arg
+
     class _ValidPath:
         """Check that a path is a file or a directory
         """
+        def __repr__(self):
+            return "path"
         def __call__(self, path):
             if not os.path.isfile(path) and not os.path.isdir(path):
                 raise ValueError(f"'{path}' is not a valid file")
@@ -94,16 +155,18 @@ def _parse_args(args=None) -> argparse.Namespace:
                             ", ".join(DatasetOperation.modules()),
                        action=_SplitAction)
     ginput = parser.add_argument_group("input options")
-    ginput.add_argument("--from", dest="source", nargs=2,
+    ginput.add_argument("--from", dest="source", nargs=2, type=_ValidNodes(),
                         metavar=('FILENAME', 'POPULATION'),
                         help="path and name for the source population")
     ginput.add_argument("--from-nodeset", dest="source_nodeset", nargs=2,
+                        type=_ValidNodeset(),
                         metavar=('FILENAME', 'NODESET'), default=[None]*2,
                         help="path and name for the source population")
-    ginput.add_argument("--to", dest="target", nargs=2,
+    ginput.add_argument("--to", dest="target", nargs=2, type=_ValidNodes(),
                         metavar=('FILENAME', 'POPULATION'),
                         help="path and name for the target population")
     ginput.add_argument("--to-nodeset", dest="target_nodeset", nargs=2,
+                        type=_ValidNodeset(),
                         metavar=('FILENAME', 'NODESET'), default=[None]*2,
                         help="path and name for the target population")
     ginput.add_argument("--recipe", type=_ValidFile(), help="the XML recipe file")
