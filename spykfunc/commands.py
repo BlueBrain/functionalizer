@@ -199,8 +199,11 @@ def _parse_args(args=None) -> argparse.Namespace:
                       help="turn any warnings emitted into errors, useful for recipe validation",
                       default=False, action="store_true")
     gadv.add_argument("--debug",
-                      help="enable additional debug output, may slow down execution",
-                      default=False, action="store_true")
+                      help="enable additional debug output, may slow down execution (default)",
+                      default=True, action="store_true", dest="debug")
+    gadv.add_argument("--no-debug",
+                      help="disable additional debug output",
+                      action="store_false", dest="debug")
     gadv.add_argument("--name",
                       help="name that will show up in the Spark logs, "
                            "defaults to 'Functionalizer'")

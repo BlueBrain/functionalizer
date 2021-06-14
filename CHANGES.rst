@@ -6,6 +6,7 @@ Version 0.17.0
 ==============
 
 Changes:
+  - Produce `debug` output by default.  See also FUNCZ-281_.
   - Reduce the output of the cluster startup script to display important
     information more prominently.  Spykfunc will not require the flag
     ``-p spark.master=…`` any longer when launched with ``sm_run``.

@@ -81,7 +81,7 @@ class Functionalizer(object):
         checkpoint_resume.directory = self._config.checkpoint_dir
 
         if self._config.debug:
-            filters.enable_debug()
+            filters.enable_debug(self._config.output_dir)
 
         # Create Spark session with the static config
         report_file = os.path.join(self._config.output_dir, "report.json")
