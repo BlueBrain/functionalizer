@@ -2,6 +2,7 @@
 
 import sys
 import argparse
+from datetime import datetime
 from . import filters, utils
 from .filters import DatasetOperation
 from . import filters # noqa
@@ -151,6 +152,7 @@ def spykfunc() -> int:
         (created if not provided), run the default filters and export.
     """
     from spykfunc.functionalizer import Functionalizer
+    start = datetime.now()
 
     # Will exit with code 2 if problems in args
     options = _parse_args()
@@ -174,7 +176,7 @@ def spykfunc() -> int:
         logger.error(utils.format_cur_exception())
         return 1
 
-    logger.info("Functionalizer job complete.")
+    logger.info(f"Functionalizer job complete in {datetime.now() - start}.")
     return 0
 
 
