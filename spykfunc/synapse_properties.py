@@ -168,6 +168,7 @@ def _add_randomized_connection_properties(connections: DataFrame, seed: int) -> 
             df["dtc"] = fcts.truncated_normal(seed, 0x1005, df["synapse_id"], df["dtc"], df["dtcSD"])
             df["nrrp"] = fcts.poisson(seed, 0x1006, df["synapse_id"], df["nrrp"])
             yield df
+            del df
 
     return (
         connections
