@@ -328,6 +328,16 @@ EOF
     <name>dfs.namenode.handler.count</name>
     <value>100</value>
   </property>
+  <property>
+    <name>dfs.client.use.datanode.hostname</name>
+    <value>true</value>
+    <description>Whether clients should use datanode hostnames when connecting to datanodes.</description>
+  </property>
+  <property>
+    <name>dfs.datanode.use.datanode.hostname</name>
+    <value>true</value>
+    <description>Whether datanodes should use datanode hostnames when connecting to other datanodes for data transfer.</description>
+  </property>
 </configuration>
 EOF
 
@@ -361,7 +371,7 @@ _slurm_start_processes() {
 
     export SPARK_LOG_DIR="$workdir/logs"
 
-    export SM_MASTER_MEMORY=${SM_MASTER_MEMORY:-16384}
+    export SM_MASTER_MEMORY=${SM_MASTER_MEMORY:-65536}
     export SM_MEMORY_MARGIN=${SM_MEMORY_MARGIN:-16384}
 
     if [[ $master = "none" && $SLURM_PROCID -eq 0 ]]; then
