@@ -13,7 +13,7 @@ usage: sm_run [-c SM_WORKER_CORES] [-m SM_WORKER_MEMORY] [-H|-h HADOOP_HOME]
        sm_shutdown
 
 special options:
-  -H   Disabe HADOOP support.
+  -H   Disable HADOOP support.
 
 for other options, see the environment variable given as option argument.
 
@@ -26,7 +26,8 @@ environment variables to configure behavior:
   HADOOP_HOME           If set, will spawn a HADOOP cluster.
 
   SM_HDFS_DIRS          Local directories to use for the HADOOP cluster.
-                        Will default to /nvme/\$(whoami)/\$SLURM_JOBID/hadoop.
+                        Defaults to $SM_TMPDIR/hadoop (e.g., on BB5, equivalent
+                        to /nvme/\$(whoami)/\$SLURM_JOBID/hadoop).
 
   SM_HDFS_HOST          HDFS server to connect to. This will assume the FS
                         running on port 9000 and the web-interface
@@ -101,22 +102,26 @@ _slurm_start_cluster() {
         envscript="$(readlink -f "$envscript")"
     fi
 
-    nvme="$(srun ls /|grep nvme)"
+    # Ensure that the temporary folder is defined for Spark and Hadoop
+    export SM_TMPDIR=$(srun -n 1 bash -c 'echo $TMPDIR')
+    export SM_TMPDIR=${SM_TMPDIR:-"/nvme/$(whoami)/${SLURM_JOB_ID}"}
 
-    if [[ -z $SPARK_LOCAL_DIRS && -n $nvme ]]; then
-        export SPARK_LOCAL_DIRS="/nvme/$(whoami)/$SLURM_JOBID/spark-local"
-        echo ">> Creating SPARK_LOCAL_DIRS='$SPARK_LOCAL_DIRS'"
-        srun mkdir -p "$SPARK_LOCAL_DIRS"
-        srun sh -c 'echo "$(hostname): $(df -h|grep nvme)"'
-    fi
+    # Configure SPARK directories to the temporary folder (e.g., NVMe on BB5)
+    export SPARK_LOCAL_DIRS=${SPARK_LOCAL_DIRS:-$SM_TMPDIR/spark-local}
+    echo ">> Creating SPARK_LOCAL_DIRS='$SPARK_LOCAL_DIRS'"
+    srun mkdir -p "$SPARK_LOCAL_DIRS" \
+        && echo ">> SPARK_LOCAL_DIRS folder created!" \
+        || echo ">> Warning: SPARK_LOCAL_DIRS folder could not be created."
 
-    # This will put a lot of directories into GPFS, it may be best to leave
-    # this as the default (seems to be on /nvme), and only uncomment for
-    # debugging purposes.
-    # export SPARK_WORKER_DIR="$workdir/workers"
-    if [[ -z $SPARK_WORKER_DIR && -n $nvme ]]; then
-        export SPARK_WORKER_DIR="/nvme/$(whoami)/$SLURM_JOBID/spark-worker"
-        echo ">> Using SPARK_WORKER_DIR='$SPARK_WORKER_DIR'"
+    export SPARK_WORKER_DIR=${SPARK_WORKER_DIR:-$SM_TMPDIR/spark-worker}
+    echo ">> Creating SPARK_WORKER_DIR='$SPARK_WORKER_DIR'"
+    srun mkdir -p "$SPARK_WORKER_DIR" \
+        && echo ">> SPARK_WORKER_DIR folder created!" \
+        || echo ">> Warning: SPARK_WORKER_DIR folder could not be created."
+
+    # List the available space on the NVMe drives, whenever possible
+    if [[ -n $(echo $SPARK_LOCAL_DIRS | grep /nvme) ]]; then
+        srun sh -c 'echo "$(hostname): $(df -h | grep /nvme)"'
     fi
 
     master=none
@@ -237,7 +242,8 @@ EOF
 _hdfs_start_processes() {
     workdir=$1
 
-    SM_HDFS_DIRS=${SM_HDFS_DIRS:-/nvme/$(whoami)/$SLURM_JOBID/hadoop}
+    # Configure Hadoop directory to the temporary folder (e.g., NVMe on BB5)
+    SM_HDFS_DIRS=${SM_HDFS_DIRS:-$SM_TMPDIR/hadoop}
 
     [[ -z $workdir ]] && usage
     [[ -z $HADOOP_HOME ]] && return
