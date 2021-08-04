@@ -8,12 +8,16 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-find_package(Boost 1.60 REQUIRED COMPONENTS random)
 find_package(MorphoKit REQUIRED)
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+
+find_path(RANDOM123_INCLUDE_PATH NAMES Random123/threefry.h)
+add_library(Random123 INTERFACE IMPORTED)
+set_target_properties(Random123 PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES ${RANDOM123_INCLUDE_PATH}
+)
 
 add_subdirectory(deps/pybind11)
 
 pybind11_add_module(_udfs SYSTEM _udfs.cpp)
-target_include_directories(_udfs SYSTEM PRIVATE ${CMAKE_SOURCE_DIR}/deps/hadoken/include)
-target_link_libraries(_udfs PUBLIC Boost::random)
+target_link_libraries(_udfs PRIVATE Random123)

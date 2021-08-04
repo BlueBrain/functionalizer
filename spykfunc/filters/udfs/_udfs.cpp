@@ -1,12 +1,58 @@
+#include <random>
+
+#include <Random123/threefry.h>
+
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include <boost/random.hpp>
-#include <hadoken/random/random.hpp>
-
 namespace py = pybind11;
 using namespace py::literals;
+
+
+namespace {
+
+class RNG {
+  public:
+    using result_type = size_t;
+
+    RNG(size_t seed, size_t key, size_t derivate)
+    : key_{seed, seed, key, derivate} {
+    };
+
+    inline result_type operator()() {
+        if (index_ == 0) {
+            for (size_t i = 0; i < counter_.size(); ++i) {
+                if (counter_[i] == max()) {
+                    counter_[i] = 0;
+                } else {
+                    counter_[i] += 1;
+                    break;
+                }
+            }
+            index_ = counter_.size();
+            values_ = rng_(counter_, key_);
+        }
+        return values_[--index_];
+    };
+
+    result_type max() const {
+        return std::numeric_limits<result_type>::max();
+    }
+
+    result_type min() const {
+        return std::numeric_limits<result_type>::min();
+    }
+
+  private:
+    r123::Threefry4x64 rng_ = {};
+    r123::Threefry4x64::ctr_type counter_ = {{}};
+    r123::Threefry4x64::key_type key_ = {{}};
+    r123::Threefry4x64::ctr_type values_ = {{}};
+    size_t index_ = 0;
+};
+
+}  // namespace
 
 
 namespace std {
@@ -27,7 +73,7 @@ namespace fz {
 
 namespace junctions {
 
-using indices = std::pair<std::vector<std::size_t>, std::vector<std::size_t>>;
+using indices = std::pair<std::vector<size_t>, std::vector<size_t>>;
 using key = std::pair<int, int>;
 using index_map = std::unordered_map<key, indices>;
 
@@ -43,7 +89,7 @@ index_map _indices(const py::array_t<int>& src, const py::array_t<int>& dst) {
     const auto _src = src.data(0);
     const auto _dst = dst.data(0);
 
-    for (std::size_t i = 0; i < src.shape(0); ++i) {
+    for (size_t i = 0; i < src.shape(0); ++i) {
         if (_src[i] == _dst[i]) {
             continue;
         } else if (_src[i] > _dst[i]) {
@@ -72,7 +118,7 @@ py::array_t<unsigned char> match_dendrites(const py::array_t<int>& src,
     }
 
     auto _res = accept.mutable_data(0);
-    for (std::size_t i = 0; i < accept.shape(0); ++i) {
+    for (size_t i = 0; i < accept.shape(0); ++i) {
         _res[i] = 0;
     }
 
@@ -86,7 +132,7 @@ py::array_t<unsigned char> match_dendrites(const py::array_t<int>& src,
     auto _post_seg = post_seg.mutable_data(0);
     auto _post_jct = post_jct.mutable_data(0);
 
-    auto match = [&](std::size_t i, std::vector<std::size_t> js) -> long {
+    auto match = [&](size_t i, std::vector<size_t> js) -> long {
         long fuzzy = -1;
         for (const auto j: js) {
             if (_res[i] > 0) {
@@ -131,31 +177,17 @@ py::array_t<unsigned char> match_dendrites(const py::array_t<int>& src,
 
 namespace random {
 
-using mapper = hadoken::random_engine_mapper<boost::uint64_t>;
-
-
-inline mapper init(int seed, int key) {
-    hadoken::counter_engine<hadoken::threefry4x64> threefry;
-    mapper rng(threefry);
-    rng.seed(seed);
-    return rng.derivate(key);
-}
-
-
 py::array_t<float> uniform(int seed, int key, py::array_t<long> subkey) {
     py::array_t<float> result(subkey.shape(0));
 
-    mapper engine(init(seed, key));
     auto _result = result.mutable_data(0);
     auto _subkey = subkey.data(0);
 
-    boost::random::uniform_real_distribution<double> dist(0., 1.);
-
-    for (std::size_t i = 0; i < result.shape(0); ++i) {
-        mapper rng = engine.derivate(_subkey[i]);
-        _result[i] = static_cast<float>(dist(rng));
+    std::uniform_real_distribution<float> dist(0., 1.);
+    for (size_t i = 0; i < result.shape(0); ++i) {
+        RNG rng(seed, key, _subkey[i]);
+        _result[i] = dist(rng);
     }
-
     return result;
 }
 
@@ -163,23 +195,19 @@ py::array_t<float> uniform(int seed, int key, py::array_t<long> subkey) {
 py::array_t<int> poisson(int seed, int key, py::array_t<long> subkey, py::array_t<float> k) {
     py::array_t<int> result(subkey.shape(0));
 
-    mapper engine(init(seed, key));
     auto _result = result.mutable_data(0);
     auto _subkey = subkey.data(0);
     auto _k = k.data(0);
 
-    boost::random::poisson_distribution<int, double> dist;
-
-    for (std::size_t i = 0; i < result.shape(0); ++i) {
+    for (size_t i = 0; i < result.shape(0); ++i) {
         if (_k[i] >= 1.) {
-            const auto p = decltype(dist)::param_type(_k[i] - 1);
-            mapper rng(engine.derivate(_subkey[i]));
-            _result[i] = 1 + dist(rng, p);
+            std::poisson_distribution<> dist(_k[i] - 1);
+            RNG rng(seed, key, _subkey[i]);
+            _result[i] = 1 + dist(rng);
         } else {
             _result[i] = 1;
         }
     }
-
     return result;
 }
 
@@ -191,23 +219,21 @@ py::array_t<float> gamma(int seed,
                          py::array_t<float> sd) {
     py::array_t<float> result(subkey.shape(0));
 
-    mapper engine(init(seed, key));
     auto _result = result.mutable_data(0);
     auto _subkey = subkey.data(0);
 
     auto _m = m.data(0);
     auto _sd = sd.data(0);
 
-    boost::random::gamma_distribution<double> dist(0., 1.);
-
-    for (std::size_t i = 0; i < result.shape(0); ++i) {
+    for (size_t i = 0; i < result.shape(0); ++i) {
         const double _mi = _m[i];
         const double _sdi = _sd[i];
         const double shape = _mi * _mi / (_sdi * _sdi);
         const double scale = _sdi * _sdi / _mi;
-        const auto p = decltype(dist)::param_type(shape, scale);
-        mapper rng(engine.derivate(_subkey[i]));
-        _result[i] = static_cast<float>(dist(rng, p));
+
+        std::gamma_distribution<float> dist(shape, scale);
+        RNG rng(seed, key, _subkey[i]);
+        _result[i] = dist(rng);
     }
 
     return result;
@@ -221,17 +247,15 @@ py::array_t<float> truncated_normal(int seed,
                                     py::array_t<float> sd) {
     py::array_t<float> result(subkey.shape(0));
 
-    mapper engine(init(seed, key));
     auto _result = result.mutable_data(0);
     auto _subkey = subkey.data(0);
 
     auto _m = m.data(0);
     auto _sd = sd.data(0);
 
-    boost::random::normal_distribution<float> dist(0.f, 1.f);
-
-    for (std::size_t i = 0; i < result.shape(0); ++i) {
-        mapper rng(engine.derivate(_subkey[i]));
+    for (size_t i = 0; i < result.shape(0); ++i) {
+        std::normal_distribution<> dist(0.f, 1.f);
+        RNG rng(seed, key, _subkey[i]);
         do {
             float num;
             do {
@@ -254,9 +278,9 @@ py::array_t<int> get_bins(const py::array_t<float>& target, const py::array_t<fl
     const auto bins = boundaries.data(0);
     auto res = result.mutable_data(0);
 
-    for (std::size_t i = 0; i < target.shape(0); ++i) {
+    for (size_t i = 0; i < target.shape(0); ++i) {
         res[i] = -1;
-        for (std::size_t j = boundaries.shape(0); j > 0; --j) {
+        for (size_t j = boundaries.shape(0); j > 0; --j) {
             if (xs[i] >= bins[j - 1]) {
                 res[i] = j - 1;
                 break;

@@ -16,7 +16,7 @@ from spykfunc import schema
 
 NUM_AFTER_DISTANCE = 226301
 NUM_AFTER_TOUCH = 221686
-NUM_AFTER_FILTER = 15996
+NUM_AFTER_FILTER = 16460
 
 
 @pytest.mark.slow
@@ -186,7 +186,7 @@ class TestFilters(object):
             .toPandas()
         )
         want = pd.DataFrame(
-            [(0.16834326, 673.30847, 17.946482, 0.3050348, 1.7670848, 1)],
+            [(0.118928, 635.527222, 20.275032, 0.602809, 1.771395, 1)],
             columns=cols
         )
         want["n_rrp_vesicles"] = want["n_rrp_vesicles"].astype("int16")
