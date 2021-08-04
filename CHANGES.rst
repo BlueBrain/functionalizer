@@ -13,6 +13,9 @@ Breaking Changes:
     and tested Random123 library.  See also HPCTM-1294_.
   - Run the `TouchRules` filter by default in structural mode.  See also
     FUNCZ-255_.
+  - Drop the `SynapseProperties` filter by default in structural mode.
+    Space savings are small, but time savings seem worthwhile.  See
+    also FUNCZ-265_.
 
 Changes:
   - Produce `debug` output by default.  See also FUNCZ-281_.
@@ -337,6 +340,7 @@ First working version with 3 base filters:
 .. _FUNCZ-258: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-258
 .. _FUNCZ-262: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-262
 .. _FUNCZ-263: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-263
+.. _FUNCZ-265: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-265
 .. _FUNCZ-269: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-269
 .. _FUNCZ-274: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-274
 .. _FUNCZ-275: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-275
