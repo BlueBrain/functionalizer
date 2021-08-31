@@ -13,6 +13,15 @@ Breaking Changes:
     and tested Random123 library.  See also HPCTM-1294_.
   - Run the `TouchRules` filter by default in structural mode.  See also
     FUNCZ-255_.
+
+Changes:
+  - Fix a regression that led to duplicated gap-junction ids.  See also
+    FUNCZ-287_.
+
+Version 0.16.99
+===============
+
+Breaking Changes:
   - Drop the `SynapseProperties` filter by default in structural mode.
     Space savings are small, but time savings seem worthwhile.  See
     also FUNCZ-265_.
@@ -347,5 +356,6 @@ First working version with 3 base filters:
 .. _FUNCZ-277: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-277
 .. _FUNCZ-279: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-279
 .. _FUNCZ-281: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-281
+.. _FUNCZ-287: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-287
 .. _HPCTM-1294: https://bbpteam.epfl.ch/project/issues/browse/HPCTM-1294
 .. _HPCTM-1425: https://bbpteam.epfl.ch/project/issues/browse/HPCTM-1425

@@ -1,6 +1,7 @@
 """Test gap-junction mode
 """
 import copy
+import numpy as np
 import pandas
 import pytest
 
@@ -115,6 +116,12 @@ def test_dendrite_sync(gj):
         df = circuit.where(query.format(pair)).toPandas()
         df = fltr._dendrite_match(df)
         assert len(df) == expected
+
+    df = fltr._dendrite_match(circuit.toPandas())
+    for col in ("afferent_junction_id", "efferent_junction_id"):
+        unique_counts = np.unique(np.unique(getattr(df, col), return_counts=True)[1])
+        assert len(unique_counts) == 1
+        assert unique_counts[0] == 1
 
 
 @pytest.mark.slow

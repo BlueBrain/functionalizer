@@ -135,7 +135,7 @@ py::array_t<unsigned char> match_dendrites(const py::array_t<int>& src,
     auto match = [&](size_t i, std::vector<size_t> js) -> long {
         long fuzzy = -1;
         for (const auto j: js) {
-            if (_res[i] > 0) {
+            if (_res[j] > 0) {
                 // skip already accepted connections
                 continue;
             } else if (_pre_sec[i] == _post_sec[j] and _pre_sec[j] == _post_sec[i]) {
