@@ -3,7 +3,6 @@
 from contextlib import contextmanager
 from functools import update_wrapper
 from pyspark.sql import SparkSession, SQLContext
-from six import iteritems
 
 import atexit
 import json
@@ -218,6 +217,8 @@ class SparkManager(object):
 
         :param f: function to decorate
         """
+        if not f.__name__:
+            f.__name__ = "[unknown]"
         n = f.__name__
         d = f.__doc__.strip() if f.__doc__ else ''
 
@@ -257,11 +258,11 @@ class SparkManager(object):
             msg = "Nested cleaning of temporary RDDs is not supported!"
             raise NotImplementedError(msg)
         self.__cleaning = True
-        pre = set(rdd.id() for _, rdd in iteritems(self.sc._jsc.getPersistentRDDs()))
+        pre = set(rdd.id() for _, rdd in self.sc._jsc.getPersistentRDDs().items())
         try:
             yield
         finally:
-            post = set(rdd.id() for _, rdd in iteritems(self.sc._jsc.getPersistentRDDs()))
+            post = set(rdd.id() for _, rdd in self.sc._jsc.getPersistentRDDs().items())
             by_id = {r.id(): r for r in self.sc._jsc.getPersistentRDDs().values()}
             for rdd in post - pre:
                 by_id[rdd].unpersist()
@@ -288,6 +289,6 @@ class SparkManager(object):
     def reset_cache(self):
         """Clear all caches
         """
-        for _, rdd in iteritems(self.sc._jsc.getPersistentRDDs()):
+        for _, rdd in self.sc._jsc.getPersistentRDDs().items():
             rdd.unpersist()
         self.catalog.clearCache()

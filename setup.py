@@ -1,11 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""Setup file for spykfunc.
 """
-    Setup file for spykfunc.
-"""
-import glob
 import os
-import os.path as osp
 import platform
 import re
 import subprocess
@@ -16,10 +13,6 @@ from pathlib import Path
 from setuptools import setup, Command, Extension
 from setuptools.command.build_ext import build_ext
 from setuptools.command.test import test as TestCommand
-
-BASE_DIR = osp.dirname(__file__)
-EXAMPLES_DESTINATION = "share/spykfunc/examples"
-_TERMINAL_CTRL = "\033[{}m"
 
 
 class CMakeExtension(Extension):
@@ -100,175 +93,13 @@ class CMakeBuild(build_ext):
         self.copy_file(source, libs)
 
 
-# *******************************
-# Customize commands
-# *******************************
-class Documentation(Command):
-    description = "Generate & optionally upload documentation to docs server"
-    user_options = [("upload", None, "Upload to BBP internal docs server")]
-    finalize_options = lambda self: None
-
-    def initialize_options(self):
-        self.upload = False
-
-    def run(self):
-        self._create_metadata_file()
-        self.reinitialize_command("build_ext", inplace=1)
-        self.run_command("build_ext")
-        self.run_command("build_sphinx")  # requires metadata file
-        if self.upload:
-            self._upload()
-
-    def _create_metadata_file(self):
-        import textwrap
-        import time
-
-        md = self.distribution.metadata
-        with open("docs/metadata.md", "w") as mdf:
-            mdf.write(
-                textwrap.dedent(
-                    f"""\
-                ---
-                name: {md.name}
-                version: {md.version}
-                description: {md.description}
-                homepage: {md.url}
-                license: {md.license}
-                maintainers: {md.author}
-                repository: {md.project_urls.get("Source", '')}
-                issuesurl: {md.project_urls.get("Tracker", '')}
-                contributors: {md.maintainer}
-                updated: {time.strftime("%d/%m/%Y")}
-                ---
-                """
-                )
-            )
-
-    def _upload(self):
-        from docs_internal_upload import docs_internal_upload
-
-        print("Uploading....")
-        docs_internal_upload(
-            "docs/_build/html",
-            metadata_path="docs/metadata.md",
-            duplicate_version_error=False,
-        )
-
-
-class PyTest(TestCommand):
-    user_options = [
-        ("addopts=", None, "Arguments to pass to pytest"),
-        ("fast", None, "Skip slow tests"),
-    ]
-
-    def initialize_options(self):
-        TestCommand.initialize_options(self)
-        self.addopts = None
-        self.fast = False
-        self.test_args = []
-
-    def finalize_options(self):
-        TestCommand.finalize_options(self)
-        if not self.fast:
-            self.test_args.append("--run-slow")
-        if self.addopts:
-            import shlex
-
-            self.test_args.extend(shlex.split(self.addopts))
-
-    def run_tests(self):
-        import pytest
-
-        errno = pytest.main(self.test_args)
-        sys.exit(errno)
-
-
-# *******************************
-# Main setup
-# *******************************
-def setup_package():
-    maybe_sphinx = (
-        ["sphinx>=3", "sphinx-bluebrain-theme", "docs-internal-upload"]
-        if "build_docs" in sys.argv
-        else []
-    )
-
-    setup(
-        # name and other metadata are in setup.cfg
-        name="spykfunc",
-        summary="A PySpark implementation of the BBP Functionalizer",
-        use_scm_version={
-            "write_to": "spykfunc/version.py"
-        },
-        project_urls={
-            "Tracker": "https://bbpteam.epfl.ch/project/issues/projects/FUNCZ/summary",
-            "Source": "https://bbpcode.epfl.ch/code/#/admin/projects/building/Spykfunc",
-        },
-        packages=[
-            "recipe",
-            "recipe.parts",
-            "sparkmanager",
-            "spykfunc",
-            "spykfunc.dataio",
-            "spykfunc.filters",
-            "spykfunc.filters.implementations",
-            "spykfunc.filters.udfs",
-            "spykfunc.tools",
-            "spykfunc.utils",
-        ],
-        package_data={"spykfunc": ["data/*"]},
-        data_files=[
-            (
-                EXAMPLES_DESTINATION,
-                glob.glob(osp.join(BASE_DIR, "examples", "*.py"))
-                + glob.glob(osp.join(BASE_DIR, "examples", "*.sh")),
-            )
-        ],
-        #  ----- Requirements -----
-        install_requires=[
-            "docopt",
-            'enum34;python_version<"3.4"',
-            "funcsigs",
-            "future",
-            "h5py",
-            "hdfs",
-            "jprops",
-            "lxml",
-            "morphokit",
-            "libsonata",
-            "numpy",
-            "pandas",
-            'pathlib2;python_version<"3.4"',
-            "progress",
-            "pyarrow",
-            "pyspark>=3",
-            "six",
-        ],
-        setup_requires=["setuptools_scm"] + maybe_sphinx,
-        tests_require=["mock", "pytest", "pytest-cov"],
-        ext_modules=[
-            CMakeExtension("spykfunc.filters.udfs._udfs", "spykfunc/filters/udfs")
-        ],
-        cmdclass={"build_docs": Documentation, "build_ext": CMakeBuild, "test": PyTest},
-        entry_points={
-            'console_scripts': [
-                'spykfunc = spykfunc.commands:spykfunc',
-                'parquet-compare = spykfunc.tools.compare:run',
-                'parquet-compare-ns = spykfunc.tools.compare_nodesets:run',
-                'parquet-coalesce = spykfunc.tools.coalesce:run',
-            ],
-        },
-        scripts=[
-            "scripts/sm_cluster",
-            "scripts/sm_run",
-            "scripts/sm_startup",
-            "scripts/sm_shutdown",
-        ],
-        dependency_links=[
-            "https://bbpteam.epfl.ch/repository/devpi/simple/docs_internal_upload"
-        ],
-    )
-
-
-if __name__ == "__main__":
-    setup_package()
+setup(
+    # name and other metadata are in setup.cfg
+    use_scm_version={
+        "write_to": "spykfunc/version.py"
+    },
+    ext_modules=[
+        CMakeExtension("spykfunc.filters.udfs._udfs", "spykfunc/filters/udfs")
+    ],
+    cmdclass={"build_ext": CMakeBuild},
+)

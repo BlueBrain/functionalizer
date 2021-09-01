@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import glob
 import hashlib
 import logging
@@ -9,6 +7,7 @@ import pandas as pd
 import pyarrow.parquet as pq
 import sparkmanager as sm
 
+from typing import Iterable
 from pyspark.sql import functions as F
 
 from . import schema
@@ -120,7 +119,7 @@ class NeuronData:
         a directory name to use for caching generated Parquet
     """
 
-    def __init__(self, population: [str,str], nodeset: [str,str], cache: str):
+    def __init__(self, population: Iterable[str], nodeset: Iterable[str], cache: str):
         self._cache = cache
         self._df = None
         (self._filename, self._population) = population

@@ -56,60 +56,63 @@ class GapJunctionFilter(DatasetOperation):
         return somas.union(dendrites) \
                     .repartition("src", "dst")
 
-    def _soma_filter(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Filter dendrite to soma gap junctions, removing junctions that
-        are on parent branches of the dendrite and closer than 3 times the
-        soma radius.
+    @property
+    def _soma_filter(self):
+        """A filter for dendrite to soma gap junctions, removing junctions
+        that are on parent branches of the dendrite and closer than 3 times
+        the soma radius.
         """
-        if len(df) == 0:
-            return df
+        def _filter(df: pd.DataFrame) -> pd.DataFrame:
+            if len(df) == 0:
+                return df
 
-        src = df.src.values
-        dst = df.dst.values
-        sec = df.efferent_section_id.values
-        seg = df.efferent_segment_id.values
-        soma = df.afferent_section_id.values
+            src = df.src.values
+            dst = df.dst.values
+            sec = df.efferent_section_id.values
+            seg = df.efferent_segment_id.values
+            soma = df.afferent_section_id.values
 
-        jid1 = df.efferent_junction_id.values
-        jid2 = df.afferent_junction_id.values
+            jid1 = df.efferent_junction_id.values
+            jid2 = df.afferent_junction_id.values
 
-        # This may be passed to us from pyspark as object type,
-        # breaking np.unique.
-        morphos = np.asarray(df.src_morphology.values, dtype="U")
-        activated = np.zeros_like(src, dtype=bool)
-        distances = np.zeros_like(src, dtype=float)
+            # This may be passed to us from pyspark as object type,
+            # breaking np.unique.
+            morphos = np.asarray(df.src_morphology.values, dtype="U")
+            activated = np.zeros_like(src, dtype=bool)
+            distances = np.zeros_like(src, dtype=float)
 
-        connections = np.stack((src, dst, morphos)).T
-        unique_conns = np.unique(connections, axis=0)
-        unique_morphos = np.unique(connections[:, 2])
+            connections = np.stack((src, dst, morphos)).T
+            unique_conns = np.unique(connections, axis=0)
+            unique_morphos = np.unique(connections[:, 2])
 
-        for m in unique_morphos:
-            # Work one morphology at a time to conserve memory
-            mdist = 3 * self.__morphos.soma_radius(m)
+            for m in unique_morphos:
+                # Work one morphology at a time to conserve memory
+                mdist = 3 * self.__morphos.soma_radius(m)
 
-            # Resolve from indices matching morphology to connections
-            idxs = np.where(unique_conns[:, 2] == m)[0]
-            conns = unique_conns[idxs]
-            for conn in conns:
-                # Indices where the connections match
-                idx = np.where((connections[:, 0] == conn[0]) &
-                                  (connections[:, 1] == conn[1]))[0]
-                # Match up gap-junctions that are reverted at the end
-                if len(idx) == 0 or soma[idx[0]] != 0:
-                    continue
-                for i in idx:
-                    distances[i] = self.__morphos.distance_to_soma(m, sec[i], seg[i])
-                    path = self.__morphos.ancestors(m, sec[i])
-                    for j in idx:
-                        if i == j:
-                            break
-                        if activated[j] and sec[j] in path and \
-                                abs(distances[i] - distances[j]) < mdist:
-                            activated[j] = False
-                    activated[i] = True
-        # Activate reciprocal connections
-        activated[np.isin(jid1, jid2[activated])] = True
-        return df[activated]
+                # Resolve from indices matching morphology to connections
+                idxs = np.where(unique_conns[:, 2] == m)[0]
+                conns = unique_conns[idxs]
+                for conn in conns:
+                    # Indices where the connections match
+                    idx = np.where((connections[:, 0] == conn[0]) &
+                                      (connections[:, 1] == conn[1]))[0]
+                    # Match up gap-junctions that are reverted at the end
+                    if len(idx) == 0 or soma[idx[0]] != 0:
+                        continue
+                    for i in idx:
+                        distances[i] = self.__morphos.distance_to_soma(m, sec[i], seg[i])
+                        path = self.__morphos.ancestors(m, sec[i])
+                        for j in idx:
+                            if i == j:
+                                break
+                            if activated[j] and sec[j] in path and \
+                                    abs(distances[i] - distances[j]) < mdist:
+                                activated[j] = False
+                        activated[i] = True
+            # Activate reciprocal connections
+            activated[np.isin(jid1, jid2[activated])] = True
+            return df[activated]
+        return _filter
 
     @staticmethod
     def _dendrite_match(df: pd.DataFrame) -> pd.DataFrame:

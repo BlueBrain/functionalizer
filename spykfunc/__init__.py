@@ -18,8 +18,6 @@
 
 """ Spykfunc - An implementation of Functionalizer in PySpark
 """
-
-from __future__ import absolute_import as _, print_function as _, division as _
 import pkg_resources as _pkg
 import logging as _log
 

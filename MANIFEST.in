@@ -1,3 +1,7 @@
-prune java
-prune tools
-exclude tst_neuron_memview.*
+global-exclude *.py[co] .DS_Store
+
+include spykfunc/filters/udfs/CMakeLists.txt
+include spykfunc/filters/udfs/_udfs.cpp
+include spykfunc/filters/udfs/deps/pybind11/CMakeLists.txt
+recursive-include spykfunc/filters/udfs/deps/pybind11/include *
+recursive-include spykfunc/filters/udfs/deps/pybind11/tools *

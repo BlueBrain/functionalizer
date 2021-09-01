@@ -1,7 +1,5 @@
 """Convenience methods for a homogeneous Spark setup
 """
-from __future__ import absolute_import
-
 import sys
 
 from .manager import SparkManager

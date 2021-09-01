@@ -1,7 +1,5 @@
-from __future__ import print_function
 import sys
 import logging as _logging
-from future.builtins import input
 from functools import update_wrapper
 from contextlib import contextmanager
 from .. import config
@@ -72,32 +70,6 @@ def assign_to_property(prop_name, use_as_cache=False):
 # -----------------------------------------------
 # UI utils
 # -----------------------------------------------
-def query_yes_no(question, default=None):
-    """Ask a yes/no question via standard input and return the answer.
-    Returns:
-        A bool indicating whether user has entered yes or no.
-    """
-    default_dict = {  # default => prompt default string
-        None: "[y/n]",
-        True: "[Y/n]",
-        False: "[y/N]",
-    }
-    prompt_str = "%s %s " % (question, default_dict[default])
-
-    while True:
-        choice = input(prompt_str)
-        if not choice:
-            if default is not None:
-                return default
-            continue
-
-        choice = choice[0].lower()
-        if choice == "y":
-            return True
-        elif choice == "n":
-            return False
-
-
 class ConsoleColors:
     BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE, _, DEFAULT = range(10)
     NORMAL, BOLD, DIM, UNDERLINED, BLINK, INVERTED, HIDDEN = [a << 4 for a in range(7)]

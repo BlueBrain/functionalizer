@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import os
 import spykfunc
 from spykfunc.synapse_properties import compute_additional_h5_fields

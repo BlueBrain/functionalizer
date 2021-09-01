@@ -405,7 +405,10 @@ _slurm_start_processes() {
     fi
     sleep 10
 
-    mem=${SM_WORKER_MEMORY:-$((${SLURM_MEM_PER_NODE:-$(($SLURM_CPUS_ON_NODE * $SLURM_MEM_PER_CPU))} - $SM_MASTER_MEMORY - $SM_MEMORY_MARGIN))}
+    # Req(uested)Mem(ory) is given either per n(ode) or c(ore), with the
+    # latter, use total number of cores and nodes to get memory per node
+    slurm_mem=$(sacct -j $SLURM_JOB_ID -o NNodes,NCPUS,ReqMem -P -n -X|awk -F\| '{what=substr($3, length($3));mem=substr($3, 0, length($3)-2);if (what=="n") {print mem} else {print mem*$2/$1}}')
+    mem=${SM_WORKER_MEMORY:-$(($slurm_mem- $SM_MASTER_MEMORY - $SM_MEMORY_MARGIN))}
     detected=$(_detect_memory)
 
     if [[ $(( $mem > $detected )) ]]; then

@@ -227,7 +227,7 @@ class Circuit(object):
 
     @property
     def df(self):
-        """:property: shortcut for :prop:`dataframe`.
+        """:property: shortcut for :attr:`dataframe`.
         """
         return self.dataframe
 

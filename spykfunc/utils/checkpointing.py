@@ -1,10 +1,8 @@
-from __future__ import absolute_import
-
 from collections import namedtuple
 from funcsigs import signature
 from functools import wraps
+import pyspark.sql
 from pyspark.sql.column import _to_seq
-from pyspark.sql import DataFrame
 import sparkmanager as sm
 from . import get_logger
 from .filesystem import exists, isdir, size
@@ -128,7 +126,7 @@ class CheckpointResume:
             _params.status = CheckpointStatus()
 
         def decorator(f):
-            if isinstance(f, DataFrame):
+            if isinstance(f, pyspark.sql.DataFrame):
                 # Support for checkpointing a dataframe directly
                 _params.overwrite = _dec_kw.get('overwrite', self.overwrite)
                 _params.dest = _dec_kw.get('dest', self.directory)

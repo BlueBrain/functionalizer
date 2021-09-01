@@ -346,5 +346,6 @@ First working version with 3 base filters:
 .. _FUNCZ-275: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-275
 .. _FUNCZ-277: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-277
 .. _FUNCZ-279: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-279
+.. _FUNCZ-281: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-281
 .. _HPCTM-1294: https://bbpteam.epfl.ch/project/issues/browse/HPCTM-1294
 .. _HPCTM-1425: https://bbpteam.epfl.ch/project/issues/browse/HPCTM-1425
