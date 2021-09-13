@@ -22,9 +22,6 @@ tox_build:
   needs: [spack_setup]
   script:
     - spack env create tox_env
-    - spack -e tox_env add py-morpho-kit
-    - spack -e tox_env add py-setuptools-scm
-    - spack -e tox_env add py-virtualenv
     - spack -e tox_env add morpho-kit
     - spack -e tox_env add random123
     - spack -e tox_env install
@@ -47,8 +44,6 @@ tox_build:
     - cd $GIT_CLONE_PATH
     - module load unstable boost cmake gcc python-dev
     - spack env activate tox_env
-      # FIXME this includes a hard-coded Python version!
-    - export MORPHOKIT_LOCATION=$(spack location -e tox_env)/.spack-env/view/lib/python3.8/site-packages
     - export SPARK_LOCAL_DIRS=/${TMPDIR}/${SLURM_JOBID}/spark-local
     - export SPARK_WORKER_DIR=/${TMPDIR}/${SLURM_JOBID}/spark-worker
   script: []
@@ -110,5 +105,8 @@ publish_documentation:
     # can't put this in before_script because of the !reference recursion limit of 1.
     - !reference [.setup-docs-ssh]
     - mv docs doc  # FIXME should be changed in git
-    # FIXME
-    - echo tox -e publish_docs
+    - if [[ -n "$CI_COMMIT_TAG" ]]; then
+    -   tox -e publish_docs
+    - else
+    -   echo "Insert fake documentation publishing here."
+    - fi
