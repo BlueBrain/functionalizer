@@ -7,8 +7,10 @@ import pandas as pd
 import pyarrow.parquet as pq
 import sparkmanager as sm
 
-from typing import Iterable
+from distutils.version import LooseVersion
+from typing import Iterable, List
 from pyspark.sql import functions as F
+from pyspark.sql import DataFrame
 
 from . import schema
 from .definitions import MType
@@ -18,7 +20,6 @@ from .utils.filesystem import adjust_for_spark
 
 
 BASIC_EDGE_SCHEMA = ["source_node_id long", "target_node_id long", "synapse_id long"]
-
 
 # Globals
 logger = get_logger(__name__)
@@ -38,6 +39,27 @@ _numpy_to_spark = {
 }
 
 PARTITION_SIZE = 50000
+# Internal calculations rely on branch types being 0-based. Input should
+# follow the SONATA conversion, inherited from MorphIO, where values are
+# 1-based. Thus this offset...
+BRANCH_OFFSET: int = 1
+BRANCH_COLUMNS: List[str] = ["afferent_section_id", "efferent_section_id"]
+BRANCH_SHIFT_MINIMUM_VESION: LooseVersion = LooseVersion("v0.6.1-2")
+
+
+def shift_branch_type(df: DataFrame, shift: int = BRANCH_OFFSET) -> DataFrame:
+    """Shift branch/section types from 1-based to 0-based
+    """
+    for attr in BRANCH_COLUMNS:
+        tmp_attr = f"__tmp__{attr}"
+        if hasattr(df, attr):
+            df = (
+                df
+                .withColumnRenamed(attr, tmp_attr)
+                .withColumn(attr, F.col(tmp_attr) + F.lit(BRANCH_OFFSET))
+                .drop(tmp_attr)
+            )
+    return df
 
 
 def _create_neuron_loader(filename, population):
@@ -291,8 +313,9 @@ class EdgeData:
         self._loaders = []
         while files:
             if parquet := _grab_parquet(files):
-                metadata.append(self._load_parquet_metadata(*parquet))
-                self._loaders.append(self._load_parquet(*parquet))
+                local_metadata = self._load_parquet_metadata(*parquet)
+                metadata.append(local_metadata)
+                self._loaders.append(self._load_parquet(local_metadata, *parquet))
             elif sonata := _grab_sonata(files):
                 metadata.append(self._load_sonata_metadata(*sonata))
                 self._loaders.append(self._load_sonata(*sonata))
@@ -372,8 +395,17 @@ class EdgeData:
             edges = parts.groupby("start", "end").applyInPandas(
                 _create_touch_loader(filename, population),
                 columns
-            )
-            return edges
+            ).cache()
+            values = set()
+            for col in BRANCH_COLUMNS:
+                for v in edges.select(col).distinct().collect():
+                    values.add(v)
+            if 0 in values and 5 in values:
+                raise RuntimeError("Cannot determine section type convention")
+            elif 5 in values:
+                return shift_branch_type(edges, -BRANCH_OFFSET)
+            else:
+                return edges
         return _loader
 
     @staticmethod
@@ -390,12 +422,19 @@ class EdgeData:
         }
 
     @staticmethod
-    def _load_parquet(*args):
+    def _load_parquet(metadata, *args):
+        t2p_version = metadata.get("touch2parquet_version", LooseVersion("v0.0.0"))
+        if t2p_version > BRANCH_SHIFT_MINIMUM_VESION:
+            shift = True
+        else:
+            shift = False
         def _loader():
             files = [adjust_for_spark(f) for f in args]
             edges = sm.read.parquet(*files)
             for old, new in schema.LEGACY_MAPPING.items():
                 if old in edges.columns:
                     edges = edges.withColumnRenamed(old, new)
+            if shift:
+                return shift_branch_type(edges, -BRANCH_OFFSET)
             return edges
         return _loader

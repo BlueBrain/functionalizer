@@ -94,32 +94,18 @@ class TouchRulesFilter(DatasetOperation):
         # section (0->soma)
         added = []
         touches = circuit.df
-        if not hasattr(circuit.df, 'efferent_section_type'):
-            logger.warning(f"Guessing pre-branch type for touch rules!")
-            touches = (
-                touches
-                .withColumn('efferent_section_type',
-                            (touches.efferent_section_id > 0).cast('integer') * 2)
+        if not hasattr(circuit.df, "efferent_section_type") or not hasattr(
+            circuit.df, "afferent_section_type"
+        ):
+            raise RuntimeError(f"TouchRules need [ae]fferent_section_type")
+        return (
+            touches.withColumn(
+                "fail",
+                touches.src_mtype_i * indices[1]
+                + touches.dst_mtype_i * indices[2]
+                + touches.efferent_section_type * indices[3]
+                + touches.afferent_section_type,
             )
-            added.append("efferent_section_type")
-        if not hasattr(circuit.df, 'afferent_section_type'):
-            if 'section_type' in touches.columns:
-                touches = (
-                    touches
-                    .withColumnRenamed('section_type', 'afferent_section_type')
-                )
-            else:
-                logger.warning(f"Guessing post-branch type for touch rules!")
-                touches = (
-                    touches
-                    .withColumn('afferent_section_type',
-                                (touches.afferent_section_id > 0).cast('integer') * 2)
-                )
-            added.append("afferent_section_type")
-        return touches.withColumn("fail",
-                                  touches.src_mtype_i * indices[1] +
-                                  touches.dst_mtype_i * indices[2] +
-                                  touches.efferent_section_type * indices[3] +
-                                  touches.afferent_section_type) \
-                      .join(F.broadcast(rules), "fail", "left_anti") \
-                      .drop("fail", *added)
+            .join(F.broadcast(rules), "fail", "left_anti")
+            .drop("fail", *added)
+        )

@@ -17,7 +17,7 @@ from . import schema
 from . import utils
 from .filters import DatasetOperation
 from .circuit import Circuit
-from .data_loader import NeuronData, EdgeData
+from .data_loader import NeuronData, EdgeData, shift_branch_type
 from .definitions import CheckpointPhases, SortBy
 from .utils.checkpointing import checkpoint_resume
 from .utils.filesystem import adjust_for_spark, autosense_hdfs
@@ -273,6 +273,8 @@ class Functionalizer(object):
             .withColumnRenamed("src", "source_node_id")
             .withColumnRenamed("dst", "target_node_id")
         )
+
+        df = shift_branch_type(df)
 
         required = set(["population_name", "population_size"])
         if not required.issubset(df.schema["source_node_id"].metadata):
