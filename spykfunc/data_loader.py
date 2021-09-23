@@ -23,10 +23,16 @@ BASIC_EDGE_SCHEMA = ["source_node_id long", "target_node_id long", "synapse_id l
 # Globals
 logger = get_logger(__name__)
 
+# Widen unsigned data types to prevent potential dataloss during
+# conversions.
 _numpy_to_spark = {
+    "int8": "byte",
     "int16": "short",
     "int32": "int",
     "int64": "long",
+    "uint8": "short",
+    "uint16": "int",
+    "uint32": "long",
     "float32": "float",
     "float64": "double",
 }
