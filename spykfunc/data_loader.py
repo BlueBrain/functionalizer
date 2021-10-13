@@ -5,6 +5,7 @@ import math
 import os
 import pandas as pd
 import pyarrow.parquet as pq
+import re
 import sparkmanager as sm
 
 from distutils.version import LooseVersion
@@ -20,6 +21,7 @@ from .utils.filesystem import adjust_for_spark
 
 
 BASIC_EDGE_SCHEMA = ["source_node_id long", "target_node_id long", "synapse_id long"]
+VERSION_SCHEMA = re.compile(r'\d+(\.\d+)+(-\d+(-g[0-9a-f]+)?)?')
 
 # Globals
 logger = get_logger(__name__)
@@ -43,8 +45,8 @@ PARTITION_SIZE = 50000
 # follow the SONATA conversion, inherited from MorphIO, where values are
 # 1-based. Thus this offset...
 BRANCH_OFFSET: int = 1
-BRANCH_COLUMNS: List[str] = ["afferent_section_id", "efferent_section_id"]
-BRANCH_SHIFT_MINIMUM_VESION: LooseVersion = LooseVersion("v0.6.1-2")
+BRANCH_COLUMNS: List[str] = ["afferent_section_type", "efferent_section_type"]
+BRANCH_SHIFT_MINIMUM_VERSION: LooseVersion = LooseVersion("0.6.1-2")
 
 
 def shift_branch_type(df: DataFrame, shift: int = BRANCH_OFFSET) -> DataFrame:
@@ -56,7 +58,7 @@ def shift_branch_type(df: DataFrame, shift: int = BRANCH_OFFSET) -> DataFrame:
             df = (
                 df
                 .withColumnRenamed(attr, tmp_attr)
-                .withColumn(attr, F.col(tmp_attr) + F.lit(BRANCH_OFFSET))
+                .withColumn(attr, F.col(tmp_attr) + F.lit(shift))
                 .drop(tmp_attr)
             )
     return df
@@ -423,8 +425,14 @@ class EdgeData:
 
     @staticmethod
     def _load_parquet(metadata, *args):
-        t2p_version = metadata.get("touch2parquet_version", LooseVersion("v0.0.0"))
-        if t2p_version > BRANCH_SHIFT_MINIMUM_VESION:
+        raw_version = metadata.get("touch2parquet_version", "0.0.0")
+        if m := VERSION_SCHEMA.search(raw_version):
+            t2p_version = m.group(0)
+        else:
+            raise RuntimeError(
+                f"Can't determine touch2parquet version from {raw_version}"
+            )
+        if t2p_version >= BRANCH_SHIFT_MINIMUM_VERSION:
             shift = True
         else:
             shift = False
