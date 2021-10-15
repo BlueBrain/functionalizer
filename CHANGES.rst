@@ -2,6 +2,19 @@
 Changelog
 =========
 
+Version 0.17.1
+==============
+
+Breaking Changes:
+  - Write section types out with the correct
+    `MorphIO convention`_.
+    See also FUNCZ-289_.
+
+Changes:
+  - Allow unsigned integer types for SONATA input.  Restricted to a maximum
+    of 32 bits.
+    See also FUNCZ-291_.
+
 Version 0.17.0
 ==============
 
@@ -357,5 +370,9 @@ First working version with 3 base filters:
 .. _FUNCZ-279: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-279
 .. _FUNCZ-281: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-281
 .. _FUNCZ-287: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-287
+.. _FUNCZ-289: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-289
+.. _FUNCZ-291: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-291
 .. _HPCTM-1294: https://bbpteam.epfl.ch/project/issues/browse/HPCTM-1294
 .. _HPCTM-1425: https://bbpteam.epfl.ch/project/issues/browse/HPCTM-1425
+
+.. _MorphIO convention: https://github.com/BlueBrain/MorphIO/blob/dea3ce8/include/morphio/enums.h#L61-L95

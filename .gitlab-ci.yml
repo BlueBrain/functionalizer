@@ -41,7 +41,6 @@ tox_build:
     bb5_ntasks: 1
   before_script:
     - !reference [.spack_test, before_script]
-    - cd $GIT_CLONE_PATH
     - module load unstable boost cmake gcc python-dev
     - spack env activate tox_env
     - export SPARK_LOCAL_DIRS=/${TMPDIR}/${SLURM_JOBID}/spark-local

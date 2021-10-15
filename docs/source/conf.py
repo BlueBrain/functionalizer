@@ -57,5 +57,6 @@ add_module_names = False
 # modindex_common_prefix = []
 
 html_theme = "sphinx-bluebrain-theme"
+html_theme_options = {"metadata_distribution": "spykfunc"}
 html_title = "Spykfunc"
 html_show_sourcelink = False
