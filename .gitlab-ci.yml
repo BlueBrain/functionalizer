@@ -101,8 +101,6 @@ publish_documentation:
     PUBLISH_DOCS_BBPCODE_SSH_USER: bbp-gerrit-docs-rw
     USER: bbp-gerrit-docs-rw  # needed by docs-internal-upload
   script:
-    # can't put this in before_script because of the !reference recursion limit of 1.
-    - mv docs doc  # FIXME should be changed in git
     - if [[ -n "$CI_COMMIT_TAG" ]]; then
     -   tox -e publish_docs
     - else
