@@ -83,8 +83,6 @@ present in the Spykfunc output directory, and convert them to a
    $ salloc -Aproj16 -pinteractive -t 8:00:00 -N1 -n42
    …some SLURM/shell output…
    $ srun --mpi=pmi2 parquet2hdf5 \
-                --from from_nodes.sonata FROM_POPULATION \
-                --to to_nodes.sonata TO_POPULATION \
                 circuit.parquet \
                 edges.h5 \
                 EDGE_POPULATION
