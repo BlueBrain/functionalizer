@@ -87,9 +87,7 @@ present in the Spykfunc output directory, and convert them to a
                 edges.h5 \
                 EDGE_POPULATION
 
-Both ``FROM_POPULATION`` and ``TO_POPULATION`` need to be populations
-present in the respective node files.  The name ``EDGE_POPULATION`` will be
-used in the edge storage file.
+The name ``EDGE_POPULATION`` will be used in the output file.
 
 Executing Spykfunc on the cluster
 ---------------------------------
