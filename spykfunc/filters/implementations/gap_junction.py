@@ -150,6 +150,7 @@ class GapJunctionProperties(DatasetOperation):
     _reductive = False
 
     _columns = [
+        (None, "edge_type_id"),
         (None, "gsyn"),
     ]
 
@@ -166,4 +167,7 @@ class GapJunctionProperties(DatasetOperation):
             .withColumn("gsyn", F.lit(self.conductance))
         )
 
+        # Required for SONATA support
+        if not hasattr(touches, "edge_type_id"):
+            touches = touches.withColumn("edge_type_id", F.lit(0))
         return touches

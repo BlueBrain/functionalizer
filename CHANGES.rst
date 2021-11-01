@@ -2,6 +2,13 @@
 Changelog
 =========
 
+Version 0.17.2
+==============
+
+Changes:
+  - Add the column ``edge_type_id`` to gap-junction output to conform with
+    the SONATA specification.
+
 Version 0.17.1
 ==============
 
