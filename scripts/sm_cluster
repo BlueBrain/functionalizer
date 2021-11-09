@@ -121,7 +121,7 @@ _slurm_start_cluster() {
 
     # List the available space on the NVMe drives, whenever possible
     if [[ -n $(echo $SPARK_LOCAL_DIRS | grep /nvme) ]]; then
-        srun sh -c 'echo "$(hostname): $(df -h | grep /nvme)"'
+        srun sh -c 'echo "$(hostname): $(df -h /nvme)"'
     fi
 
     master=none
@@ -148,7 +148,7 @@ _slurm_start_cluster() {
         rm -f "$workdir/done"
     fi
 
-    srun --mpi=none "$workdir/$script" _slurm_start_processes "$workdir" "$master" "$envscript"
+    srun "$workdir/$script" _slurm_start_processes "$workdir" "$master" "$envscript"
     if [[ -n $SM_EXECUTE ]]; then
         while [[ ! -f $workdir/done ]]; do sleep 10s; done
         code=$(cat "$workdir/done")
