@@ -1,108 +1,13 @@
-include:
-  - project: hpc/gitlab-pipelines
-    file: spack-build.gitlab-ci.yml
-  - project: nse/ci
-    file: ci/lib/functions.yml
-
-variables:
-  SPACK_PACKAGE: spykfunc
-
-.fz_test:
-  extends: .spack_test
-  needs: [spack_build]
-  variables:
-    bb5_constraint: nvme
-    bb5_cpus_per_task: 72
-    bb5_memory: 0
-    bb5_ntasks: 1
-
-tox_build:
-  extends: .spack_test
-  stage: build
-  needs: [spack_setup]
-  script:
-    - spack env create tox_env
-    - spack -e tox_env add morpho-kit
-    - spack -e tox_env add random123
-    - spack -e tox_env install
-
-.fz_tox:
-  extends: .spack_test
-  needs:
-    - !reference [tox_build, needs]
-    - tox_build
-  variables:
-    GIT_STRATEGY: clone
-    GIT_SUBMODULE_STRATEGY: recursive
-    bb5_build_dir: job
-    bb5_constraint: nvme
-    bb5_cpus_per_task: 72
-    bb5_memory: 0
-    bb5_ntasks: 1
-  before_script:
-    - !reference [.spack_test, before_script]
-    - module load unstable boost cmake gcc python-dev
-    - spack env activate tox_env
-    - export SPARK_LOCAL_DIRS=/${TMPDIR}/${SLURM_JOBID}/spark-local
-    - export SPARK_WORKER_DIR=/${TMPDIR}/${SLURM_JOBID}/spark-worker
-  script: []
-
-circuit1k_s2f:
-  extends: .fz_test
-
-circuit1k_s2f_split_and_merge:
-  extends: .fz_test
-
-circuit1k_s2s:
-  extends: .fz_test
-
-circuit1k_s2s_nodesets:
-  extends: .fz_test
-
-circuit2k_s2f:
-  extends: .fz_test
-
-circuit2k_s2s:
-  extends: .fz_test
-
-tests:
-  extends: .fz_tox
+nse_stack:
   stage: test
-  script:
-    - tox -e py38
+  trigger:
+    include:
+      - local: .gitlab-ci.nse.yml
+    strategy: depend
 
-coverage:
-  extends: .fz_tox
+hpc_stack:
   stage: test
-  script:
-    - tox -e coverage
-  # below from nse/ci: ci/jobs/coverage.yml
-  coverage: '/^TOTAL.+?(\d+\%)$/'  # for pytest-cov
-  artifacts:
-    reports:
-      cobertura: coverage.xml
-
-documentation:
-  extends: .fz_tox
-  stage: test
-  script:
-    - tox -e docs
-  artifacts:
-    paths:
-      - docs/build
-
-publish_documentation:
-  extends: .fz_tox
-  stage: deploy
-  needs:
-    - !reference [.fz_tox, needs]
-    - documentation
-  variables:
-    PUBLISH_DOCS_BBPCODE_SSH_USER: bbp-gerrit-docs-rw
-    USER: bbp-gerrit-docs-rw  # needed by docs-internal-upload
-  script:
-    - if [[ -n "$CI_COMMIT_TAG" ]]; then
-    -   tox -e publish_docs
-    - else
-    -   echo "Insert fake documentation publishing here."
-    - fi
+  trigger:
+    include:
+      - local: .gitlab-ci.hpc.yml
+    strategy: depend

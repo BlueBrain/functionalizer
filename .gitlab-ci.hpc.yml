@@ -1,0 +1,33 @@
+include:
+  - project: hpc/gitlab-pipelines
+    file: spack-build.gitlab-ci.yml
+
+variables:
+  SPACK_PACKAGE: spykfunc
+
+.fz_test:
+  extends: .spack_test
+  needs: [spack_build]
+  variables:
+    bb5_constraint: nvme
+    bb5_cpus_per_task: 72
+    bb5_memory: 0
+    bb5_ntasks: 1
+
+circuit1k_s2f:
+  extends: .fz_test
+
+circuit1k_s2f_split_and_merge:
+  extends: .fz_test
+
+circuit1k_s2s:
+  extends: .fz_test
+
+circuit1k_s2s_nodesets:
+  extends: .fz_test
+
+circuit2k_s2f:
+  extends: .fz_test
+
+circuit2k_s2s:
+  extends: .fz_test

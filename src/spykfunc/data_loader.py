@@ -40,7 +40,7 @@ _numpy_to_spark = {
     "float64": "double",
 }
 
-PARTITION_SIZE = 50000
+PARTITION_SIZE = 500_000
 # Internal calculations rely on branch types being 0-based. Input should
 # follow the SONATA conversion, inherited from MorphIO, where values are
 # 1-based. Thus this offset...
@@ -254,6 +254,25 @@ class NeuronData:
         return df
 
 
+def _get_size(files):
+    """Returns the total size on the filesystem for input data given a list
+    of filenames or directories.
+    """
+    size = 0
+    def _add_size(fn):
+        nonlocal size
+        if fn.endswith(".parquet") or fn.endswith(".h5"):
+            size += os.path.getsize(fn)
+    for path in files:
+        if os.path.isfile(path):
+            _add_size(path)
+        else:
+            for root, _, files in os.walk(path):
+                for fn in files:
+                    _add_size(os.path.join(root, fn))
+    return size
+
+
 def _grab_parquet(files):
     """Returns as many parquet files from the front of `files` as possible.
     """
@@ -312,6 +331,7 @@ class EdgeData:
         for path in paths:
             files.extend(glob.glob(path) or [path])
         metadata = []
+        self._size = _get_size(files)
         self._loaders = []
         while files:
             if parquet := _grab_parquet(files):
@@ -351,6 +371,10 @@ class EdgeData:
             .withColumnRenamed("source_node_id", "src")
             .withColumnRenamed("target_node_id", "dst")
         )
+
+    @property
+    def input_size(self):
+        return self._size
 
     @property
     def metadata(self):

@@ -118,6 +118,8 @@ class Circuit(object):
         self.__circuit = None
         self.__reduced = None
 
+        self.__input_size = touches.input_size
+
         self.__touches = touches.df
         self.__length = self.__touches.count()
         logger.info(f"Touch count after reading: {self.__length:,d}")
@@ -224,6 +226,12 @@ class Circuit(object):
         for col in tmp.schema.names:
             tmp = tmp.withColumnRenamed(col, "dst" if col == "id" else f"dst_{col}")
         return tmp
+
+    @property
+    def input_size(self):
+        """:property: the original input size in bytes.
+        """
+        return self.__input_size
 
     @property
     def df(self):

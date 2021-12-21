@@ -6,11 +6,10 @@ import numpy as np
 import pandas as pd
 import pytest
 import pyspark.sql.functions as F
-from conftest import ARGS, DATADIR
+from conftest import ARGS, DATADIR, create_functionalizer
 import sparkmanager as sm
 
 from spykfunc.definitions import RunningMode as RM
-from spykfunc.functionalizer import Functionalizer
 from spykfunc.utils.spark import cache_broadcast_single_part
 from spykfunc import schema
 
@@ -40,11 +39,11 @@ def test_fixed_probabilities(tmpdir_factory):
         return dict(zip(res["mtype"], res["count"]))
 
     tmpdir = tmpdir_factory.mktemp("fixed_probabilities")
-    cdir = tmpdir.join("check")
-    odir = tmpdir.join("out")
-    fz = Functionalizer(
-        filters=["ReduceAndCut"], checkpoint_dir=str(cdir), output_dir=str(odir)
-    ).init_data(os.path.join(DATADIR, "builderRecipeAllPathways_fixed.xml"), *ARGS[1:])
+    fz = create_functionalizer(
+        tmpdir, ["ReduceAndCut"]
+    ).init_data(
+        os.path.join(DATADIR, "builderRecipeAllPathways_fixed.xml"), *ARGS[1:]
+    )
 
     before = layer_counts(fz.circuit)
     fz.process_filters()
@@ -86,11 +85,7 @@ class TestFilters(object):
         """Make sure that resuming "works"
         """
         tmpdir = tmpdir_factory.mktemp("filters")
-        cdir = tmpdir.join("check")
-        odir = tmpdir.join("out")
-        fz2 = Functionalizer(
-            filters=RM.FUNCTIONAL.value, checkpoint_dir=str(cdir), output_dir=str(odir)
-        ).init_data(*ARGS)
+        fz2 = create_functionalizer(tmpdir).init_data(*ARGS)
         fz2.process_filters()
         original = fz.circuit.touches.count()
         count = fz2.circuit.touches.count()
@@ -113,16 +108,7 @@ class TestFilters(object):
         """Test that overwriting checkpointed data works
         """
         tmpdir = tmpdir_factory.mktemp("filters")
-        cdir = tmpdir.join("check")
-        odir = tmpdir.join("out")
-        kwargs = {
-            "functional": None,
-            "checkpoint-dir": str(cdir),
-            "output-dir": str(odir),
-        }
-        fz2 = Functionalizer(
-            filters=RM.FUNCTIONAL.value, checkpoint_dir=str(cdir), output_dir=str(odir)
-        ).init_data(*ARGS)
+        fz2 = create_functionalizer(tmpdir).init_data(*ARGS)
         fz2.process_filters(overwrite=True)
         original = fz.circuit.touches.count()
         count = fz2.circuit.touches.count()

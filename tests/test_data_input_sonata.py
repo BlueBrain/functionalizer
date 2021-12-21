@@ -2,8 +2,7 @@
 """
 import os
 import pytest
-from conftest import ARGS, DATADIR
-from spykfunc.functionalizer import Functionalizer
+from conftest import ARGS, DATADIR, create_functionalizer
 
 
 @pytest.mark.slow
@@ -11,9 +10,11 @@ def test_sonata_properties(tmpdir_factory):
     tmpdir = tmpdir_factory.mktemp("sonata_properties")
     cdir = tmpdir.join("check")
     odir = tmpdir.join("out")
-    fz = Functionalizer(
-        filters=["SynapseProperties"], checkpoint_dir=str(cdir), output_dir=str(odir)
-    ).init_data(*ARGS[:-1], edges=(os.path.join(DATADIR, "edges.h5"), "default"))
+    fz = create_functionalizer(
+        tmpdir, ["SynapseProperties"]
+    ).init_data(
+        *ARGS[:-1], edges=(os.path.join(DATADIR, "edges.h5"), "default")
+    )
     fz.process_filters()
 
     assert "delay" in fz.circuit.df.columns

@@ -9,7 +9,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
 find_package(MorphoKit REQUIRED)
-find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 
 find_path(RANDOM123_INCLUDE_PATH NAMES Random123/threefry.h)
 add_library(Random123 INTERFACE IMPORTED)

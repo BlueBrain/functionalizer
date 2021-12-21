@@ -12,6 +12,7 @@ from spykfunc.definitions import RunningMode as RM
 from spykfunc.functionalizer import Functionalizer
 
 DATADIR = os.path.join(os.path.dirname(__file__), "circuit_1000n")
+CONFIGURATION = os.path.join(os.path.dirname(__file__), '..', 'src', 'spykfunc', 'data', 'desktop.properties')
 
 ARGS = (
     os.path.join(DATADIR, "builderRecipeAllPathways.xml"),
@@ -26,28 +27,34 @@ ARGS = (
 filters.load()
 
 
-@pytest.fixture(scope='session', name='fz')
-def fz_fixture(tmpdir_factory):
-    tmpdir = tmpdir_factory.mktemp('filters')
+def create_functionalizer(tmpdir, filters=None):
+    filters = filters or RM.FUNCTIONAL.value
     cdir = tmpdir.join('check')
     odir = tmpdir.join('out')
     return Functionalizer(
-        filters=RM.FUNCTIONAL.value,
+        filters=filters,
+        configuration=CONFIGURATION,
         checkpoint_dir=str(cdir),
         output_dir=str(odir)
+    )
+
+
+@pytest.fixture(scope='session', name='fz')
+def fz_fixture(tmpdir_factory):
+    tmpdir = tmpdir_factory.mktemp('filters')
+    return create_functionalizer(
+        tmpdir,
+        RM.FUNCTIONAL.value
     ).init_data(*ARGS)
 
 
 @pytest.fixture(scope='session', name='gj')
 def gj_fixture(tmpdir_factory):
     tmpdir = tmpdir_factory.mktemp('gap_junctions')
-    cdir = tmpdir.join('check')
-    odir = tmpdir.join('out')
     args = list(ARGS[:-1]) + [[os.path.join(DATADIR, "gap_junctions/touches*.parquet")]]
-    return Functionalizer(
-        filters=RM.GAP_JUNCTIONS.value,
-        checkpoint_dir=str(cdir),
-        output_dir=str(odir)
+    return create_functionalizer(
+        tmpdir,
+        RM.GAP_JUNCTIONS.value,
     ).init_data(*args)
 
 

@@ -89,18 +89,22 @@ class ReduceAndCut(DatasetOperation):
             full_touches = Circuit.only_touch_columns(circuit.with_pathway())
 
             # Get and broadcast Pathway stats
-            # NOTE we cache and count to force evaluation in N tasks, while sorting in a single task
-
-            # Spark optimizes better for >2000 shuffle partitions
-            _n_parts = max(int(math.sqrt(full_touches.rdd.getNumPartitions())), 2001)
-            # As we have a groupBy() and some data exchanges resulting in a
-            # single partition, reduce partition count via the intermediate
-            # shuffle.  Reading too many partition results in the final stage
-            # will lead to a slow-down
-            with number_shuffle_partitions(_n_parts):
-                logger.debug("Computing Pathway stats...")
-                params_df = F.broadcast(self.compute_reduce_cut_params(full_touches))
-                _params_out_csv(params_df, "pathway_params")  # Params ouput for validation
+            #
+            # NOTE we should cache and count to be evaluated with N tasks,
+            # while sorting in a single task
+            #
+            # Spark optimizes better for >2000 shuffle partitions, and
+            # should do the exchanges with >1 partitions. If not,
+            # computation will slow down and one may have to force the hand
+            # of Spark by using
+            #
+            #     with number_shuffle_partitions(_n_parts):
+            #
+            # also, too many partitions will lead to a slow-down when
+            # aggregating!
+            logger.debug("Computing Pathway stats...")
+            params_df = F.broadcast(self.compute_reduce_cut_params(full_touches))
+            _params_out_csv(params_df, "pathway_params")  # Params ouput for validation
 
             # Reduce
             logger.info("Applying Reduce step...")

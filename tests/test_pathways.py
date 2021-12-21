@@ -37,6 +37,7 @@ class _MockDf:
 class _MockEdges:
     df = _MockDf()
     metadata = None
+    input_size = -1
 
 
 def test_pathway_generation(fz):

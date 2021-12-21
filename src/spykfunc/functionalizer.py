@@ -2,6 +2,7 @@
 #  An implementation of Functionalizer in spark
 # *************************************************************************
 import logging
+import math
 import os
 import re
 import time
@@ -137,9 +138,7 @@ class Functionalizer(object):
             n_from = None
             n_to = None
 
-        touches = EdgeData(*edges)
-
-        self.circuit = Circuit(n_from, n_to, touches, morphologies)
+        self.circuit = Circuit(n_from, n_to, EdgeData(*edges), morphologies)
 
         if recipe_file:
             self.recipe = Recipe(recipe_file, self._config.strict)
@@ -155,20 +154,27 @@ class Functionalizer(object):
 
         return self
 
-    def _configure_shuffle_partitions(self, touches):
+    def _configure_shuffle_partitions(self):
+        """Try to find an optimal setting for the amount of shuffle partitions.
+        """
         # Grow suffle partitions with size of touches DF
         # Min: 100 reducers
         # NOTE: According to some tests we need to cap the amount of reducers to 4000 per node
         # NOTE: Some problems during shuffle happen with many partitions if shuffle compression is enabled!
-        touch_partitions = touches.rdd.getNumPartitions()
-        shuffle_partitions = ((touch_partitions - 1) // 100 + 1) * 100
+        touch_partitions = self.circuit.touches.rdd.getNumPartitions()
         if touch_partitions == 0:
             raise ValueError("No partitions found in touch data")
-        elif touch_partitions <= 100:
-            shuffle_partitions = 100
+
+        # Aim for about half the maximum partition size
+        guessed_partitions_from_data = int(math.ceil(2 * self.circuit.input_size / int(sm.conf.get("spark.sql.files.maxPartitionBytes"))))
+
+        # Aim for data parallelism
+        guessed_partitions_from_cluster = sm.sc.defaultParallelism * 10
+
+        shuffle_partitions = max([guessed_partitions_from_cluster, guessed_partitions_from_data, 1])
 
         logger.info(
-            "Processing %d touch partitions (shuffle counts: %d)",
+            "Processing %d touch partitions (shuffle partitions: %d)",
             touch_partitions,
             shuffle_partitions,
         )
@@ -224,7 +230,7 @@ class Functionalizer(object):
         if self._config.dry_run:
             return
 
-        self._configure_shuffle_partitions(self.circuit.touches)
+        self._configure_shuffle_partitions()
 
         logger.info("Starting Filtering...")
         for f in filters:

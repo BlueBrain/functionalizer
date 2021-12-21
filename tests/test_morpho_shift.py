@@ -19,6 +19,7 @@ from spykfunc.utils.conf import Configuration
 class MockLoader:
     def __init__(self, touches):
         self.df = touches
+        self.input_size = 0
 
     @property
     def metadata(self):
