@@ -1,6 +1,7 @@
 include:
   - project: hpc/gitlab-pipelines
     file: spack-build.gitlab-ci.yml
+    ref: '$GITLAB_PIPELINES_BRANCH'
 
 variables:
   SPACK_PACKAGE: spykfunc

@@ -11,3 +11,5 @@ hpc_stack:
     include:
       - local: .gitlab-ci.hpc.yml
     strategy: depend
+  variables:
+    GITLAB_PIPELINES_BRANCH: $GITLAB_PIPELINES_BRANCH
