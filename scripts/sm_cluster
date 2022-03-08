@@ -349,12 +349,12 @@ EOF
 
     if [[ $SLURM_PROCID -eq 0 ]]; then
         "$HADOOP_HOME/bin/hdfs" namenode -format -force -nonInteractive
-        "$HADOOP_HOME/sbin/hadoop-daemon.sh" --config "$HADOOP_CONF_DIR" --script hdfs start namenode &
+        "$HADOOP_HOME/bin/hdfs" --config "$HADOOP_CONF_DIR" --daemon start namenode &
         sleep 15s
         touch "$workdir/hadoop/namenode"
     fi
     while [[ ! -f $workdir/hadoop/namenode ]]; do sleep 0.5s; done
-    "$HADOOP_HOME/sbin/hadoop-daemon.sh" --config "$HADOOP_CONF_DIR" --script hdfs start datanode &
+    "$HADOOP_HOME/bin/hdfs" --config "$HADOOP_CONF_DIR" --daemon start datanode &
 }
 
 _slurm_start_processes() {
