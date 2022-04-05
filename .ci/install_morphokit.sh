@@ -25,7 +25,7 @@ cd "${INSTALL_DIR}/src"
 (
     git clone --depth=1 --recursive --shallow-submodules git@bbpgitlab.epfl.ch:hpc/morpho-kit.git
     cd morpho-kit
-    cmake -B cmake_build -S . -GNinja -DCMAKE_INSTALL_PREFIX="${1:-${INSTALL_DIR}/morphokit}" -DBUILD_BINDINGS=OFF
+    cmake -B cmake_build -S . -GNinja -DCMAKE_INSTALL_PREFIX="${1:-${INSTALL_DIR}/morphokit}" -DBUILD_BINDINGS=OFF -DBUILD_UTILITIES:BOOL=OFF
     cmake --build cmake_build
     cmake --install cmake_build
 )
