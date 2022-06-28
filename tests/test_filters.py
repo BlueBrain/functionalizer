@@ -19,7 +19,7 @@ NUM_AFTER_FILTER = 16460
 
 
 @pytest.mark.slow
-def test_fixed_probabilities(tmpdir_factory):
+def test_fixed_probabilities(tmp_path_factory):
     def layer_counts(circuit):
         mdf = cache_broadcast_single_part(
             sm.createDataFrame(
@@ -38,7 +38,7 @@ def test_fixed_probabilities(tmpdir_factory):
         )
         return dict(zip(res["mtype"], res["count"]))
 
-    tmpdir = tmpdir_factory.mktemp("fixed_probabilities")
+    tmpdir = tmp_path_factory.mktemp("fixed_probabilities")
     fz = create_functionalizer(
         tmpdir, ["ReduceAndCut"]
     ).init_data(
@@ -81,33 +81,33 @@ class TestFilters(object):
         fz.process_filters(filters=["BoutonDistance", "TouchRules", "ReduceAndCut"])
         assert fz.circuit.df.count() == NUM_AFTER_FILTER
 
-    def test_resume(self, fz, tmpdir_factory):
+    def test_resume(self, fz, tmp_path_factory):
         """Make sure that resuming "works"
         """
-        tmpdir = tmpdir_factory.mktemp("filters")
+        tmpdir = tmp_path_factory.mktemp("filters")
         fz2 = create_functionalizer(tmpdir).init_data(*ARGS)
         fz2.process_filters()
         original = fz.circuit.touches.count()
         count = fz2.circuit.touches.count()
         assert count == original
 
-    def test_checkpoint_schema(self, fz, tmpdir_factory):
+    def test_checkpoint_schema(self, fz, tmp_path_factory):
         """To conserve space, only touch columns should be written to disk
         """
-        basedir = tmpdir_factory.getbasetemp().join("filters0").join("check")
+        basedir = tmp_path_factory.getbasetemp() / "filters0" / "check"
         files = [
             f
             for f in os.listdir(str(basedir))
             if f.endswith(".ptable") or f.endswith(".parquet")
         ]
         for fn in files:
-            df = sm.read.load(str(basedir.join(fn)))
+            df = sm.read.load(str(basedir / fn))
             assert all("src_" not in s and "dst_" not in s for s in df.schema.names)
 
-    def test_overwrite(self, fz, tmpdir_factory):
+    def test_overwrite(self, fz, tmp_path_factory):
         """Test that overwriting checkpointed data works
         """
-        tmpdir = tmpdir_factory.mktemp("filters")
+        tmpdir = tmp_path_factory.mktemp("filters")
         fz2 = create_functionalizer(tmpdir).init_data(*ARGS)
         fz2.process_filters(overwrite=True)
         original = fz.circuit.touches.count()

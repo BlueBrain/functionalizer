@@ -8,6 +8,9 @@ Version 0.17.2
 Changes:
   - Add the column ``edge_type_id`` to gap-junction output to conform with
     the SONATA specification.
+  - Load all node attributes and make them conditional at the same time.
+    Should avoid having to specify bogus attributes when using projections.
+    See also FUNCZ-307_.
 
 Version 0.17.1
 ==============
@@ -379,6 +382,7 @@ First working version with 3 base filters:
 .. _FUNCZ-287: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-287
 .. _FUNCZ-289: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-289
 .. _FUNCZ-291: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-291
+.. _FUNCZ-307: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-307
 .. _HPCTM-1294: https://bbpteam.epfl.ch/project/issues/browse/HPCTM-1294
 .. _HPCTM-1425: https://bbpteam.epfl.ch/project/issues/browse/HPCTM-1425
 

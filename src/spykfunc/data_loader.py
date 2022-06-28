@@ -21,13 +21,16 @@ from .utils.filesystem import adjust_for_spark
 
 
 BASIC_EDGE_SCHEMA = ["source_node_id long", "target_node_id long", "synapse_id long"]
-VERSION_SCHEMA = re.compile(r'\d+(\.\d+)+(-\d+(-g[0-9a-f]+)?)?')
+BASIC_NODE_SCHEMA = ["id long"]
+VERSION_SCHEMA = re.compile(r"\d+(\.\d+)+(-\d+(-g[0-9a-f]+)?)?")
 
 # Globals
 logger = get_logger(__name__)
 
 # Widen unsigned data types to prevent potential dataloss during
 # conversions.
+#
+# FIXME we blatantly assume that objects are strings
 _numpy_to_spark = {
     "int8": "byte",
     "int16": "short",
@@ -36,8 +39,10 @@ _numpy_to_spark = {
     "uint8": "short",
     "uint16": "int",
     "uint32": "long",
+    "uint64": "long",
     "float32": "float",
     "float64": "double",
+    "object": "string",
 }
 
 PARTITION_SIZE = 500_000
@@ -50,18 +55,100 @@ BRANCH_SHIFT_MINIMUM_VERSION: LooseVersion = LooseVersion("0.6.1-2")
 
 
 def shift_branch_type(df: DataFrame, shift: int = BRANCH_OFFSET) -> DataFrame:
-    """Shift branch/section types from 1-based to 0-based
-    """
+    """Shift branch/section types from 1-based to 0-based"""
     for attr in BRANCH_COLUMNS:
         tmp_attr = f"__tmp__{attr}"
         if hasattr(df, attr):
             df = (
-                df
-                .withColumnRenamed(attr, tmp_attr)
+                df.withColumnRenamed(attr, tmp_attr)
                 .withColumn(attr, F.col(tmp_attr) + F.lit(shift))
                 .drop(tmp_attr)
             )
     return df
+
+
+def _accept_node_enumeration(attr: str) -> bool:
+    """Select which enumerations to use, will fall back to attributes otherwise."""
+    if attr == "morphology":
+        return False
+    elif attr == "morph_class":
+        return False
+    else:
+        return True
+
+
+def _accept_node_attribute(attr: str) -> bool:
+    """Accepts all node attributes except for position, rotation ones."""
+    if attr.startswith("rotation_"):
+        return False
+    elif attr.startswith("orientation_"):
+        return False
+    elif attr in ("x", "y", "z"):
+        return False
+    else:
+        return True
+
+
+def _translate_attribute(attr: str) -> str:
+    """Translates certain attributes from the SONATA convention to the nomenclature used
+    in the recipe to account for any mismatch between the two.
+    """
+    if attr == "synapse_class":
+        return "sclass"
+    else:
+        return attr
+
+
+def _get_enumerations(population):
+    """Returns the enumerations for a population."""
+    return sorted(filter(_accept_node_enumeration, population.enumeration_names))
+
+
+def _get_pure_attributes(population):
+    """Returns the attributes for a population that are not enumerations."""
+    return sorted(
+        filter(
+            _accept_node_attribute,
+            population.attribute_names - set(_get_enumerations(population)),
+        )
+    )
+
+
+def _column_type(population, column, accessor):
+    """Determine the Spark datatype for `column` from `population` by getting data for an
+    empty selection via the `accessor` method of `population`.
+    """
+    import libsonata
+
+    data = getattr(population, accessor)(column, libsonata.Selection([]))
+    return _numpy_to_spark[data.dtype.name]
+
+
+def _add_all_attributes(dataframe, population, selection):
+    """Adds all enumeration and pure attributes for a given `selection` of a `population`
+    to the `dataframe` passed in.
+    """
+    for column in _get_pure_attributes(population):
+        name = _translate_attribute(column)
+        dataframe[name] = population.get_attribute(column, selection)
+    for column in _get_enumerations(population):
+        name = _translate_attribute(column)
+        dataframe[f"{name}_i"] = population.get_enumeration(column, selection)
+    return dataframe
+
+
+def _types(population):
+    """Generates a sequence of schema strings for Spark corresponding to the attributes
+    and enumerations of `population`.
+    """
+    for column in _get_pure_attributes(population):
+        kind = _column_type(population, column, "get_attribute")
+        name = _translate_attribute(column)
+        yield f"{name} {kind}"
+    for column in _get_enumerations(population):
+        kind = _column_type(population, column, "get_enumeration")
+        name = _translate_attribute(column)
+        yield f"{name}_i {kind}"
 
 
 def _create_neuron_loader(filename, population):
@@ -73,6 +160,7 @@ def _create_neuron_loader(filename, population):
     Returns:
         A Pandas UDF to be used over a group by
     """
+
     def loader(data: pd.DataFrame) -> pd.DataFrame:
         assert len(data) == 1
         import libsonata
@@ -80,18 +168,11 @@ def _create_neuron_loader(filename, population):
         nodes = libsonata.NodeStorage(filename)
         pop = nodes.open_population(population)
 
-        (_,ids) = data.iloc[0]
+        (_, ids) = data.iloc[0]
         selection = libsonata.Selection(ids)
-        return pd.DataFrame(
-            dict(
-                id=ids,
-                etype_i=pop.get_enumeration("etype", selection),
-                mtype_i=pop.get_enumeration("mtype", selection),
-                region_i=pop.get_enumeration("region", selection),
-                sclass_i=pop.get_enumeration("synapse_class", selection),
-                morphology=pop.get_attribute("morphology", selection),
-            )
-        )
+        data = _add_all_attributes(dict(id=ids), pop, selection)
+        return pd.DataFrame(data)
+
     return loader
 
 
@@ -104,24 +185,23 @@ def _create_touch_loader(filename: str, population: str):
     Returns:
         A Pandas UDF to be used over a group by
     """
+
     def loader(data: pd.DataFrame) -> pd.DataFrame:
         assert len(data) == 1
         start, end = data.iloc[0]
 
         import libsonata
 
-        p = libsonata.EdgeStorage(filename).open_population(population)
+        pop = libsonata.EdgeStorage(filename).open_population(population)
         selection = libsonata.Selection([(start, end)])
-
         data = dict(
-            source_node_id=p.source_nodes(selection),
-            target_node_id=p.target_nodes(selection),
+            source_node_id=pop.source_nodes(selection),
+            target_node_id=pop.target_nodes(selection),
             synapse_id=selection.flatten(),
         )
-
-        for name in p.attribute_names:
-            data[name] = p.get_attribute(name, selection)
+        data = _add_all_attributes(data, pop, selection)
         return pd.DataFrame(data)
+
     return loader
 
 
@@ -156,30 +236,27 @@ class NeuronData:
         (self._ns_filename, self._ns_nodeset) = nodeset
 
         import libsonata
-        nodes = libsonata.NodeStorage(self._filename)
-        self._pop = nodes.open_population(self._population)
+
+        pop = libsonata.NodeStorage(self._filename).open_population(self._population)
+        self._size = len(pop)
+        self._columns = ", ".join(BASIC_NODE_SCHEMA + list(_types(pop)))
+        self._enumerations = {
+            f"{_translate_attribute(attr)}_values": pop.enumeration_values(attr)
+            for attr in _get_enumerations(pop)
+        }
 
         if not os.path.isdir(self._cache):
             os.makedirs(self._cache)
 
-    population = property(lambda self: self._pop.name)
-    mtype_values = property(lambda self: self._pop.enumeration_values("mtype"))
-    etype_values = property(lambda self: self._pop.enumeration_values("etype"))
-    region_values = property(lambda self: self._pop.enumeration_values("region"))
-    sclass_values = property(lambda self: self._pop.enumeration_values("synapse_class"))
+    def __getattr__(self, attr):
+        return self._enumerations[attr]
 
     def __len__(self):
-        return len(self._pop)
+        return self._size
 
-    @staticmethod
-    def _to_df(vec, field_names):
-        """Transforms a small string vector into an indexed dataframe.
-
-        The dataframe is immediately cached and broadcasted as single partition
-        """
-        return cache_broadcast_single_part(
-            sm.createDataFrame(enumerate(vec), schema.indexed_strings(field_names))
-        )
+    @property
+    def population(self):
+        return self._population
 
     @property
     def df(self):
@@ -210,7 +287,7 @@ class NeuronData:
             df = F.broadcast(mvd.coalesce(1)).cache()
             df.count()  # force materialize
         else:
-            logger.info("Building circuit from SONATA")
+            logger.info("Building nodes from SONATA")
 
             # Create a default selection, or load it from the NodeSets
             if not self._ns_filename:
@@ -218,29 +295,24 @@ class NeuronData:
             else:
                 import libsonata
                 nodesets = libsonata.NodeSets.from_file(self._ns_filename)
-                selection = nodesets.materialize(self._ns_nodeset, self._pop)
+                population = libsonata.NodeStorage(self._filename).open_population(self._population)
+                selection = nodesets.materialize(self._ns_nodeset, population)
                 ids = selection.flatten().tolist()
 
             total_parts = math.ceil(len(ids) / PARTITION_SIZE)
             logger.debug("Partitions: %d", total_parts)
             parts = sm.createDataFrame(
                 enumerate(
-                    ids[PARTITION_SIZE * n :
-                        min(PARTITION_SIZE * (n + 1), len(ids))]
+                    ids[PARTITION_SIZE * n : min(PARTITION_SIZE * (n + 1), len(ids))]
                     for n in range(total_parts)
                 ),
-                ['row','ids']
+                ["row", "ids"],
             )
 
             # Create DF
             logger.info("Creating neuron data frame...")
-            raw_mvd = (
-                parts
-                .groupby("row")
-                .applyInPandas(
-                    _create_neuron_loader(self._filename, self._population),
-                    schema.NEURON_SCHEMA
-                )
+            raw_mvd = parts.groupby("row").applyInPandas(
+                _create_neuron_loader(self._filename, self._population), self._columns
             )
 
             # Evaluate (build partial NameMaps) and store
@@ -259,10 +331,12 @@ def _get_size(files):
     of filenames or directories.
     """
     size = 0
+
     def _add_size(fn):
         nonlocal size
         if fn.endswith(".parquet") or fn.endswith(".h5"):
             size += os.path.getsize(fn)
+
     for path in files:
         if os.path.isfile(path):
             _add_size(path)
@@ -274,10 +348,9 @@ def _get_size(files):
 
 
 def _grab_parquet(files):
-    """Returns as many parquet files from the front of `files` as possible.
-    """
+    """Returns as many parquet files from the front of `files` as possible."""
     parquets = []
-    while files and files[0].endswith(".parquet") :
+    while files and files[0].endswith(".parquet"):
         if os.path.isdir(files[0]):
             if parquets:
                 return parquets
@@ -292,6 +365,7 @@ def _grab_sonata_population(filename):
     found.
     """
     import libsonata
+
     populations = libsonata.EdgeStorage(filename).population_names
     if len(populations) == 1:
         return populations[0]
@@ -302,8 +376,7 @@ def _grab_sonata_population(filename):
 
 
 def _grab_sonata(files):
-    """Returns a possible SONATA file from the front of `files`.
-    """
+    """Returns a possible SONATA file from the front of `files`."""
     if not files:
         return
     if not files[0].endswith(".h5"):
@@ -354,8 +427,10 @@ class EdgeData:
                         continue
                     value = m.pop(key)
                     if self._metadata.setdefault(key, value) != value:
-                        raise ValueError("conflicting values for metadata " \
-                                        f"{key}: {self._metadata[key]}, {value}")
+                        raise ValueError(
+                            "conflicting values for metadata "
+                            f"{key}: {self._metadata[key]}, {value}"
+                        )
             for n, m in enumerate(metadata):
                 self._metadata.update({f"merge{n}_{k}": v for k, v in m.items()})
         else:
@@ -366,10 +441,8 @@ class EdgeData:
         df = self._loaders[0]()
         for loader in self._loaders[1:]:
             df = df.union(loader())
-        return (
-            df
-            .withColumnRenamed("source_node_id", "src")
-            .withColumnRenamed("target_node_id", "dst")
+        return df.withColumnRenamed("source_node_id", "src").withColumnRenamed(
+            "target_node_id", "dst"
         )
 
     @property
@@ -387,6 +460,7 @@ class EdgeData:
         # p = libsonata.EdgeStorage(filename).open_population(population)
         # return {n: p.get_metadata(n) for n in p.metadata_names}
         import h5py
+
         with h5py.File(filename) as f:
             return dict(f[f"/edges/{population}"].attrs)
 
@@ -396,14 +470,6 @@ class EdgeData:
             import libsonata
 
             p = libsonata.EdgeStorage(filename).open_population(population)
-
-            def _type(col):
-                data = p.get_attribute(col, libsonata.Selection([]))
-                return _numpy_to_spark[data.dtype.name]
-
-            def _types(pop):
-                for name in pop.attribute_names:
-                    yield f"{name} {_type(name)}"
 
             total_parts = p.size // PARTITION_SIZE + 1
             logger.debug("Partitions: %d", total_parts)
@@ -418,10 +484,11 @@ class EdgeData:
             columns = ", ".join(BASIC_EDGE_SCHEMA + list(_types(p)))
 
             logger.info("Creating edge data frame...")
-            edges = parts.groupby("start", "end").applyInPandas(
-                _create_touch_loader(filename, population),
-                columns
-            ).cache()
+            edges = (
+                parts.groupby("start", "end")
+                .applyInPandas(_create_touch_loader(filename, population), columns)
+                .cache()
+            )
             values = set()
             for col in BRANCH_COLUMNS:
                 for v in edges.select(col).distinct().collect():
@@ -432,6 +499,7 @@ class EdgeData:
                 return shift_branch_type(edges, -BRANCH_OFFSET)
             else:
                 return edges
+
         return _loader
 
     @staticmethod
@@ -460,6 +528,7 @@ class EdgeData:
             shift = True
         else:
             shift = False
+
         def _loader():
             files = [adjust_for_spark(f) for f in args]
             edges = sm.read.parquet(*files)
@@ -469,4 +538,5 @@ class EdgeData:
             if shift:
                 return shift_branch_type(edges, -BRANCH_OFFSET)
             return edges
+
         return _loader

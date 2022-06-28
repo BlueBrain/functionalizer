@@ -29,8 +29,8 @@ filters.load()
 
 def create_functionalizer(tmpdir, filters=None):
     filters = filters or RM.FUNCTIONAL.value
-    cdir = tmpdir.join('check')
-    odir = tmpdir.join('out')
+    cdir = tmpdir / "check"
+    odir = tmpdir / "out"
     return Functionalizer(
         filters=filters,
         configuration=CONFIGURATION,
@@ -40,8 +40,8 @@ def create_functionalizer(tmpdir, filters=None):
 
 
 @pytest.fixture(scope='session', name='fz')
-def fz_fixture(tmpdir_factory):
-    tmpdir = tmpdir_factory.mktemp('filters')
+def fz_fixture(tmp_path_factory):
+    tmpdir = tmp_path_factory.mktemp('filters')
     return create_functionalizer(
         tmpdir,
         RM.FUNCTIONAL.value
@@ -49,8 +49,8 @@ def fz_fixture(tmpdir_factory):
 
 
 @pytest.fixture(scope='session', name='gj')
-def gj_fixture(tmpdir_factory):
-    tmpdir = tmpdir_factory.mktemp('gap_junctions')
+def gj_fixture(tmp_path_factory):
+    tmpdir = tmp_path_factory.mktemp('gap_junctions')
     args = list(ARGS[:-1]) + [[os.path.join(DATADIR, "gap_junctions/touches*.parquet")]]
     return create_functionalizer(
         tmpdir,

@@ -6,10 +6,10 @@ from conftest import ARGS, DATADIR, create_functionalizer
 
 
 @pytest.mark.slow
-def test_sonata_properties(tmpdir_factory):
-    tmpdir = tmpdir_factory.mktemp("sonata_properties")
-    cdir = tmpdir.join("check")
-    odir = tmpdir.join("out")
+def test_sonata_properties(tmp_path_factory):
+    tmpdir = tmp_path_factory.mktemp("sonata_properties")
+    cdir = tmpdir / "check"
+    odir = tmpdir / "out"
     fz = create_functionalizer(
         tmpdir, ["SynapseProperties"]
     ).init_data(

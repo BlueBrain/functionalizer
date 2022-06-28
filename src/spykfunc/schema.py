@@ -95,19 +95,6 @@ OUTPUT_MAPPING = {
     "nrrp": ("n_rrp_vesicles", T.ShortType()),
 }
 
-
-NEURON_SCHEMA = T.StructType([
-    T.StructField("id", T.IntegerType(), False),
-    T.StructField("etype_i", T.ShortType(), False),
-    T.StructField("mtype_i", T.ShortType(), False),
-    T.StructField("region_i", T.ShortType(), False),
-    T.StructField("sclass_i", T.ShortType(), False),
-    T.StructField("morphology", T.StringType(), False),
-    # T.StructField("layer", T.ShortType(), False),
-    # T.StructField("position", T.ArrayType(T.DoubleType(), False), False),
-    # T.StructField("rotation", T.ArrayType(T.DoubleType(), False), False),
-])
-
 SYNAPSE_CLASSIFICATION_SCHEMA = T.StructType([
     T.StructField("_i", T.ShortType(), False),
     T.StructField("type", T.StringType(), False),
