@@ -4,16 +4,26 @@
 import functools
 import morphokit
 from pathlib import Path
+from typing import Optional
 
 
 class MorphologyDB(object):
     """Database wrapper to handle morphology mapping
 
-    :param str db_path: directory that contains the morphologies as .h5
+    Requires the `db_path` to be the path to the cell morphologies, whereas
+    `spine_db_path` is optional and should point to a spine morphology storage directory.
     """
-    def __init__(self, db_path: str):
+    def __init__(self, db_path: str, spine_db_path: Optional[str] = None):
         self.db_path = Path(db_path)
+        if spine_db_path:
+            self.spine_db_path = Path(spine_db_path)
+        else:
+            self.spine_db_path = None
         self._db = {}
+
+    @property
+    def spine_morphology_path(self) -> Optional[Path]:
+        return self.spine_db_path
 
     def __getitem__(self, morpho: str):
         item = self._db.get(morpho)

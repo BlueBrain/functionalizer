@@ -64,7 +64,7 @@ def test_shift():
         population,
         population,
         MockLoader(touches),
-        Path(__file__).parent / "circuit_O1_partial" / "morphologies" / "h5"
+        [Path(__file__).parent / "circuit_O1_partial" / "morphologies" / "h5"]
     )
 
     fltr = SynapseReposition(recipe, c.source, c.target, c.morphologies)

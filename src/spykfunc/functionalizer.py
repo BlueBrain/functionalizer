@@ -119,7 +119,8 @@ class Functionalizer(object):
         target
             The target population path and name
         morphologies
-            The storage path to all required morphologies
+            a iterable containing the storage for node morphologies, and, optionally, for
+            spine morphologies
         edges
             A list of files containing edges
         """
@@ -279,6 +280,10 @@ class Functionalizer(object):
             .withColumnRenamed("src", "source_node_id")
             .withColumnRenamed("dst", "target_node_id")
         )
+
+        # Required for SONATA support
+        if not hasattr(df, "edge_type_id"):
+            df = df.withColumn("edge_type_id", F.lit(0))
 
         df = shift_branch_type(df)
 

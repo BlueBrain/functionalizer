@@ -59,7 +59,6 @@ class SynapseProperties(DatasetOperation):
 
         (None, "syn_type_id"),
         (None, "syn_property_rule"),
-        (None, "edge_type_id"),
     ]
 
     def __init__(self, recipe, source, target, morphos):
@@ -149,10 +148,6 @@ class SynapseProperties(DatasetOperation):
                 )
                 .drop("type", "_prop_i")
             )
-
-            # Required for SONATA support
-            if not hasattr(t, "edge_type_id"):
-                t = t.withColumn("edge_type_id", F.lit(0))
             return t
 
         extended_touches = compute_additional_h5_fields(

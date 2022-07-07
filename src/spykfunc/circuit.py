@@ -5,6 +5,7 @@ import contextlib
 import pyspark.sql
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
+from typing import Iterable
 
 import sparkmanager as sm
 
@@ -92,7 +93,8 @@ class Circuit(object):
     touches
         the synaptic connections
     morphologies
-        the path to the morphology data of the neurons
+        a iterable containing the storage for node morphologies, and, optionally, for
+        spine morphologies
     """
 
     __pathways_defined = False
@@ -102,7 +104,7 @@ class Circuit(object):
         source: NeuronData,
         target: NeuronData,
         touches: EdgeData,
-        morphologies: str
+        morphologies: Iterable[str],
     ):
         """Construct a new circuit
         """
@@ -112,7 +114,9 @@ class Circuit(object):
         self.target = target
 
         #: :property: a wrapper around the morphology storage
-        self.morphologies = MorphologyDB(morphologies) if morphologies else None
+        self.morphologies = None
+        if morphologies:
+            self.morphologies = MorphologyDB(*morphologies)
 
         # The circuit will be constructed (and grouped by src, dst
         self.__circuit = None

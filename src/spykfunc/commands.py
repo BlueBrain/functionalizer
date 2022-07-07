@@ -170,7 +170,8 @@ def _parse_args(args=None) -> argparse.Namespace:
                         metavar=('FILENAME', 'NODESET'), default=[None]*2,
                         help="path and name for the target population")
     ginput.add_argument("--recipe", type=_ValidFile(), help="the XML recipe file")
-    ginput.add_argument("--morphologies", type=_ValidPath(), help="the H5 morphology database path")
+    ginput.add_argument("--morphologies", type=_ValidPath(), nargs="+",
+                        help="the morphology database path, and optionally the spine morphology directory")
     goutput = parser.add_argument_group("output options")
     goutput.add_argument("--cache-dir",
                          help="specify directory to cache circuits converted to parquet, "
@@ -234,6 +235,8 @@ def _parse_args(args=None) -> argparse.Namespace:
             missing.append("target nodes")
         if missing:
             parser.error(f"to use filters, please also specify: {','.join(missing)}.")
+        if len(args.morphologies) > 2:
+            parser.error("can only pass regular and spine morphologies")
 
     return args
 

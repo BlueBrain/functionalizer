@@ -277,10 +277,10 @@ class DatasetOperation(object, metaclass=__DatasetOperationType):
             return circuit
 
     @abstractmethod
-    def apply(self, circuit):
+    def apply(self, circuit: Circuit):
         """Needs actual implementation of the operation.
 
-        :param circuit: An instance of the `Circuit` class
-        :return: A Spark dataframe representing the updated circuit
+        Takes a `Circuit`, applies some operations to it, and returns Spark dataframe
+        representing the updated circuit.
         """
         pass

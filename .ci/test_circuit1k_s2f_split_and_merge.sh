@@ -14,7 +14,7 @@ for half in empty full; do
                  --from $NODES All --to $NODES All \
                  --recipe $RECIPE \
                  --morphologies $MORPHOS \
-                 $TOUCHES
+                 -- $TOUCHES
 done
 
 sm_run -H \

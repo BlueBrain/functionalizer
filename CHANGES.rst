@@ -5,7 +5,12 @@ Changelog
 Version 0.17.2
 ==============
 
+.. warning:: Changes in this release may require an additional ``--`` after the
+             ``--morphologies`` flag for proper command line argument parsing.
+
 Changes:
+  - Add a new filter that allows to assign morphologies to spines.
+    See also FUNCZ-301_.
   - Add the column ``edge_type_id`` to gap-junction output to conform with
     the SONATA specification.
   - Load all node attributes and make them conditional at the same time.
@@ -382,6 +387,7 @@ First working version with 3 base filters:
 .. _FUNCZ-287: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-287
 .. _FUNCZ-289: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-289
 .. _FUNCZ-291: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-291
+.. _FUNCZ-301: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-301
 .. _FUNCZ-307: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-307
 .. _HPCTM-1294: https://bbpteam.epfl.ch/project/issues/browse/HPCTM-1294
 .. _HPCTM-1425: https://bbpteam.epfl.ch/project/issues/browse/HPCTM-1425

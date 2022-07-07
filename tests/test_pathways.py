@@ -49,7 +49,7 @@ def test_pathway_generation(fz):
         "toRegion": REGIONS
     })
 
-    c = Circuit(_MockNodes(), _MockNodes(), _MockEdges(), None)
+    c = Circuit(_MockNodes(), _MockNodes(), _MockEdges(), "/")
 
     df = pd.DataFrame.from_records(
         data=[(m, r, MTYPES[m], REGIONS[r])

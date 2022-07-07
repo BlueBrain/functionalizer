@@ -11,7 +11,7 @@ sm_run -H \
              --from $CIRCUIT All --to $CIRCUIT All \
              --recipe $RECIPE \
              --morphologies $MORPHOS \
-             $TOUCHES
+             -- $TOUCHES
 
 parquet-compare \
     $CIRCUIT \

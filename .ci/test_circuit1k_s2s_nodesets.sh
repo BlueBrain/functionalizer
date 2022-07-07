@@ -13,7 +13,7 @@ sm_run -H \
              --to-nodeset $BASE/nodesets.json test \
              --recipe $RECIPE \
              --morphologies $MORPHOS \
-             $TOUCHES
+             -- $TOUCHES
 
 parquet-compare-ns \
     $CIRCUIT \

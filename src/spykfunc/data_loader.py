@@ -368,7 +368,7 @@ def _grab_sonata_population(filename):
 
     populations = libsonata.EdgeStorage(filename).population_names
     if len(populations) == 1:
-        return populations[0]
+        return next(iter(populations))
     elif len(populations) > 1:
         raise ValueError(f"More than one population in '{filename}'")
     else:
