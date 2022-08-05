@@ -30,9 +30,7 @@ def test_spine_morphology_attributes(spine_path):
     names, df = _read_spine_morphology_attributes(spine_path)
 
     morpho_idx = np.argwhere(names == "spine_1")[0][0]
-    npt.assert_almost_equal(
-        df["spine_length"][df["spine_morphology"] == morpho_idx], [3.2322371]
-    )
+    npt.assert_almost_equal(df["spine_length"][df["spine_morphology"] == morpho_idx], [3.2322371])
 
     npt.assert_almost_equal(
         np.sort(df["spine_length"]),
@@ -54,9 +52,7 @@ def test_spine_morphology_attributes(spine_path):
         ],
     )
 
-    spine_name_id = [
-        (names[a], b) for a, b in zip(df["spine_morphology"], df["spine_psd_id"])
-    ]
+    spine_name_id = [(names[a], b) for a, b in zip(df["spine_morphology"], df["spine_psd_id"])]
     assert sorted(spine_name_id) == [
         ("spine_1", 0),
         ("spine_12", 0),
@@ -82,6 +78,6 @@ def test_spine_morphology_assignment(spine_path, synapse_df):
     spine_morphology = names[result["spine_morphology"]]
     spine_psd_ids = np.array(result["spine_psd_id"])
     spine_sharing_ids = np.array(result["spine_sharing_id"])
-    npt.assert_equal(spine_morphology, ['', 'spine_2', 'spine_6', '', '', ''])
+    npt.assert_equal(spine_morphology, ["", "spine_2", "spine_6", "", "", ""])
     npt.assert_equal(spine_psd_ids, [-1, 1, 1, -1, -1, -1])
     npt.assert_equal(spine_sharing_ids, [-1, -1, -1, -1, -1, -1])

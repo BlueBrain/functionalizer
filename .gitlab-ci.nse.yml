@@ -1,4 +1,7 @@
 include:
+  - project: nse/ci
+    file:
+      - /ci/jobs/lint.yml
   - project: hpc/gitlab-pipelines
     file:
       - tox-nse-docs.gitlab-ci.yml
@@ -16,3 +19,8 @@ variables:
       sh .ci/install_morphokit.sh
       &&
       export CMAKE_PREFIX_PATH="$(<morphokit_location.txt):${CMAKE_PREFIX_PATH:+:}${CMAKE_PREFIX_PATH}"
+
+build-wheels:
+  parallel:
+    matrix:
+      - PY_VERSION: [py39, py310]

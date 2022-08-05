@@ -1,14 +1,13 @@
 import fnmatch
 import itertools
+import numpy as np
 
-import numpy
-import pandas
-
-import sparkmanager as sm
 from pyspark.sql import functions as F
 
 from spykfunc import schema
 from spykfunc.filters import DatasetOperation
+
+import sparkmanager as sm
 
 
 class SynapseReposition(DatasetOperation):
@@ -22,17 +21,16 @@ class SynapseReposition(DatasetOperation):
     _required = False
 
     def __init__(self, recipe, source, target, morphos):
+        super().__init__(recipe, source, target, morphos)
         self.reposition = self.convert_reposition(source, target, recipe.synapse_reposition)
 
     def apply(self, circuit):
-        """Actually reposition the synapses
-        """
+        """Actually reposition the synapses"""
         axon_shift = _create_axon_section_udf(circuit.morphologies)
 
         with circuit.pathways(["fromMType", "toMType"]):
             patched = (
-                circuit
-                .with_pathway()
+                circuit.with_pathway()
                 .join(self.reposition, "pathway_i", "left_outer")
                 .mapInPandas(axon_shift, circuit.df.schema)
                 .drop("pathway_i", "reposition")
@@ -42,8 +40,7 @@ class SynapseReposition(DatasetOperation):
 
     @staticmethod
     def convert_reposition(source, target, reposition):
-        """Loader for pathways that need synapses to be repositioned
-        """
+        """Loader for pathways that need synapses to be repositioned"""
         src_mtype = source.mtype_values
         src_mtype_rev = {name: i for i, name in enumerate(src_mtype)}
         dst_mtype = target.mtype_values
@@ -55,7 +52,7 @@ class SynapseReposition(DatasetOperation):
         for shift in reposition:
             src = src_mtype_rev.values()
             dst = dst_mtype_rev.values()
-            if shift.type != 'AIS':
+            if shift.type != "AIS":
                 continue
             if shift.fromMType:
                 src = [src_mtype_rev[m] for m in fnmatch.filter(src_mtype, shift.fromMType)]
@@ -63,26 +60,25 @@ class SynapseReposition(DatasetOperation):
                 dst = [dst_mtype_rev[m] for m in fnmatch.filter(dst_mtype, shift.toMType)]
             paths.extend(itertools.product(src, dst))
         pathways = sm.createDataFrame(
-            [(s + factor * d, True) for s, d in paths],
-            schema.SYNAPSE_REPOSITION_SCHEMA
+            [(s + factor * d, True) for s, d in paths], schema.SYNAPSE_REPOSITION_SCHEMA
         )
         return F.broadcast(pathways)
 
 
 def _create_axon_section_udf(morphology_db):
-    """ Creates a UDF for a given morphologyDB that looks up
+    """Creates a UDF for a given morphologyDB that looks up
         the first axon section in a morphology given its name
 
     :param morphology_db: the morphology db
     :return: a function than can be used by ``mapInPandas`` to shift synapses
     """
+
     def _shift_to_axon_section(dfs):
-        """Shifts synapses to the first axon section
-        """
+        """Shifts synapses to the first axon section"""
         for df in dfs:
             set_section_fraction = "afferent_section_pos" in df.columns
             set_soma_distance = "distance_soma" in df.columns
-            for i in numpy.nonzero(df.reposition.values)[0]:
+            for i in np.nonzero(df.reposition.values)[0]:
                 morpho = df.dst_morphology.iloc[i]
                 (idx, dist, frac, soma) = morphology_db.first_axon_section(morpho)
                 df.afferent_section_id.iloc[i] = idx
@@ -94,4 +90,5 @@ def _create_axon_section_udf(morphology_db):
                 if set_soma_distance:
                     df.distance_soma.iloc[i] = soma
             yield df
+
     return _shift_to_axon_section

@@ -8,9 +8,9 @@ DATA_2M = "/gpfs/bbp.cscs.ch/scratch/gss/leite/circuit_2M"
 print("Path for touches: " + path.join(DATA_31K, "circuit_spark/*.parquet"))
 args = (
     path.join(BASE_DIR, "recipe/builderRecipeAllPathways.xml"),  # recipe file
-    path.join(DATA_31K, "nodes.h5"),                             # circuit file
-    path.join(BASE_DIR, "morphologies/h5"),                      # morpho dir
-    path.join(DATA_31K, "circuit_spark/*.parquet")               # touch files
+    path.join(DATA_31K, "nodes.h5"),  # circuit file
+    path.join(BASE_DIR, "morphologies/h5"),  # morpho dir
+    path.join(DATA_31K, "circuit_spark/*.parquet"),  # touch files
 )
 
 if __name__ == "__main__":

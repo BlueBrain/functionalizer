@@ -1,10 +1,6 @@
 import re
 
-from collections import defaultdict
-from . import utils
 from pyspark.sql import types as T
-from pyspark.sql import functions as F
-from enum import Enum
 
 
 METADATA_FIXED_KEYS = (
@@ -95,40 +91,49 @@ OUTPUT_MAPPING = {
     "nrrp": ("n_rrp_vesicles", T.ShortType()),
 }
 
-SYNAPSE_CLASSIFICATION_SCHEMA = T.StructType([
-    T.StructField("_i", T.ShortType(), False),
-    T.StructField("type", T.StringType(), False),
-    T.StructField("neuralTransmitterReleaseDelay", T.FloatType(), False),
-    T.StructField("axonalConductionVelocity", T.FloatType(), False),
-])
+SYNAPSE_CLASSIFICATION_SCHEMA = T.StructType(
+    [
+        T.StructField("_i", T.ShortType(), False),
+        T.StructField("type", T.StringType(), False),
+        T.StructField("neuralTransmitterReleaseDelay", T.FloatType(), False),
+        T.StructField("axonalConductionVelocity", T.FloatType(), False),
+    ]
+)
 
-SYNAPSE_REPOSITION_SCHEMA = T.StructType([
-    T.StructField("pathway_i", T.IntegerType(), False),
-    T.StructField("reposition", T.BooleanType(), False),
-])
+SYNAPSE_REPOSITION_SCHEMA = T.StructType(
+    [
+        T.StructField("pathway_i", T.IntegerType(), False),
+        T.StructField("reposition", T.BooleanType(), False),
+    ]
+)
 
-SYNAPSE_PROPERTY_SCHEMA = T.StructType([
-    T.StructField("_i", T.ShortType(), False),
-    T.StructField("id", T.StringType(), False),
-    T.StructField("gsyn", T.FloatType(), False),
-    T.StructField("gsynSD", T.FloatType(), False),
-    T.StructField("dtc", T.FloatType(), False),
-    T.StructField("dtcSD", T.FloatType(), False),
-    T.StructField("u", T.FloatType(), False),
-    T.StructField("uSD", T.FloatType(), False),
-    T.StructField("d", T.FloatType(), False),
-    T.StructField("dSD", T.FloatType(), False),
-    T.StructField("f", T.FloatType(), False),
-    T.StructField("fSD", T.FloatType(), False),
-    T.StructField("nrrp", T.FloatType(), False),
-    T.StructField("gsynSRSF", T.FloatType(), False),
-    T.StructField("uHillCoefficient", T.FloatType(), False),
-])
+SYNAPSE_PROPERTY_SCHEMA = T.StructType(
+    [
+        T.StructField("_i", T.ShortType(), False),
+        T.StructField("id", T.StringType(), False),
+        T.StructField("gsyn", T.FloatType(), False),
+        T.StructField("gsynSD", T.FloatType(), False),
+        T.StructField("dtc", T.FloatType(), False),
+        T.StructField("dtcSD", T.FloatType(), False),
+        T.StructField("u", T.FloatType(), False),
+        T.StructField("uSD", T.FloatType(), False),
+        T.StructField("d", T.FloatType(), False),
+        T.StructField("dSD", T.FloatType(), False),
+        T.StructField("f", T.FloatType(), False),
+        T.StructField("fSD", T.FloatType(), False),
+        T.StructField("nrrp", T.FloatType(), False),
+        T.StructField("gsynSRSF", T.FloatType(), False),
+        T.StructField("uHillCoefficient", T.FloatType(), False),
+    ]
+)
 
 
 def indexed_strings(names):
-    """Create a schema mapping int to str
-    """
+    """Create a schema mapping int to str"""
     assert len(names) == 2
-    return T.StructType([T.StructField(names[0], T.IntegerType(), False),
-                         T.StructField(names[1], T.StringType(), False)])
+    return T.StructType(
+        [
+            T.StructField(names[0], T.IntegerType(), False),
+            T.StructField(names[1], T.StringType(), False),
+        ]
+    )

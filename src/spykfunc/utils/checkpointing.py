@@ -1,6 +1,6 @@
 from collections import namedtuple
-from funcsigs import signature
 from functools import wraps
+from funcsigs import signature
 import pyspark.sql
 from pyspark.sql.column import _to_seq
 import sparkmanager as sm
@@ -12,21 +12,23 @@ class CheckpointStatus:
     """A CheckpointStatus object shall be passed to the decorator in order to retrieve information
     Note: A state of error doesnt invalidate the dataframe, and resume is attempted
     """
-    INVALID = 0             # Not initialized
-    RESTORED_PARQUET = 1    # Not computed, restored from parquet
-    RESTORED_TABLE = 2      # Not computed, restored from a Table
-    COMPUTED = 3            # Computed, no checkpoint available
-    ERROR = -1              # CheckPoint not available and error creating/loading it
+
+    INVALID = 0  # Not initialized
+    RESTORED_PARQUET = 1  # Not computed, restored from parquet
+    RESTORED_TABLE = 2  # Not computed, restored from a Table
+    COMPUTED = 3  # Computed, no checkpoint available
+    ERROR = -1  # CheckPoint not available and error creating/loading it
 
     def __init__(self):
-        self.state = self.INVALID   # property: The Checkpointing end state
-        self.error = None           # property: The Exception if any thrown during checkpointing"""
+        self.state = self.INVALID  # property: The Checkpointing end state
+        self.error = None  # property: The Exception if any thrown during checkpointing"""
 
 
 class CheckpointHandler:
     """A Handler for a checkpoint.
     A list of such handlers can be passed to CheckpointResume for any of the enumerated events.
     """
+
     BEFORE_LOAD = 0
     BEFORE_SAVE = 1
     POST_RESUME = 2
@@ -65,11 +67,11 @@ class CheckpointHandler:
 
 
 class CheckpointResume:
-    """ Class implementing checkpointing and restore, to parquet and parquet-based tables
-    """
+    """Class implementing checkpointing and restore, to parquet and parquet-based tables"""
 
     class _RunParams:
-        """ Parameters for a single checkpoint call, since the object is shared"""
+        """Parameters for a single checkpoint call, since the object is shared"""
+
         dest = None
         overwrite = False
         break_exec_plan = True
@@ -97,30 +99,46 @@ class CheckpointResume:
         self.overwrite = overwrite
         self.last_status = None
 
-    def __call__(self, name, dest=None, overwrite=False, break_exec_plan=True,
-                 bucket_cols=False, n_buckets=True,  # True -> Same nr partitions
-                 handlers=None, filename_suffix="",
-                 logger=None, status=None, child=None):
-        """ Decorator for checkpointing_resume routines
+    def __call__(
+        self,
+        name,
+        dest=None,
+        overwrite=False,
+        break_exec_plan=True,
+        bucket_cols=False,
+        n_buckets=True,  # True -> Same nr partitions
+        handlers=None,
+        filename_suffix="",
+        logger=None,
+        status=None,
+        child=None,
+    ):
+        """Decorator for checkpointing_resume routines
 
         :param name: The name of the checkpoint, preferably no whitespaces
-        :param child: Will look for the attribute `_checkpoint_name` of the first argument and prepend it to name
+        :param child: Will look for the attribute `_checkpoint_name` of the first argument
+            and prepend it to name
         :param dest: The destination path for data files
-        :param overwrite: If True will not attempt to resume and forces reevaluating df. Default: False
-        :param break_exec_plan: If True (default) will reload the saved data to break the execution plan
+        :param overwrite: If True will not attempt to resume and forces reevaluating df.
+        Default: False
+        :param break_exec_plan: If True (default) will reload the saved data to break the
+        execution plan
         :param bucket_cols: A tuple defining the columns to which partition the data.
             NOTE: This option activates storing as Table (default: False)
-        :param n_buckets: The number of partition buckets. Default: True, which uses the df number of partitions
-            NOTE: The number of buckets will multiply the number of output files if the df is not properly
-            partitioned. Use this option (and bucket_cols) with caution, consider repartition() before
-        :param handlers: A list of CheckpointHandler functions to run on respective Checkpointing phases
+        :param n_buckets: The number of partition buckets. Default: True, which uses the
+        df number of partitions NOTE: The number of buckets will multiply the number of
+        output files if the df is not properly partitioned. Use this option (and
+        bucket_cols) with caution, consider repartition() before :param handlers: A list
+        of CheckpointHandler functions to run on respective Checkpointing phases
         :param logger: A logger object. Defaults to spykfunc master logger
-        :param status: A CheckPointStatus object can be passed if checkpointing process information is desirable
-        :return: The checkpointed dataframe, built from the created files unless break_exec_plan was set False
+        :param status: A CheckPointStatus object can be passed if checkpointing process
+        information is desirable
+        :return: The checkpointed dataframe, built from the created files unless
+        break_exec_plan was set False
         """
 
         _dec_kw = {k: v for k, v in locals().items() if v is not None}
-        _dec_kw.pop('self')
+        _dec_kw.pop("self")
         _params = self._RunParams(**_dec_kw)
         if _params.status is None:
             _params.status = CheckpointStatus()
@@ -128,8 +146,8 @@ class CheckpointResume:
         def decorator(f):
             if isinstance(f, pyspark.sql.DataFrame):
                 # Support for checkpointing a dataframe directly
-                _params.overwrite = _dec_kw.get('overwrite', self.overwrite)
-                _params.dest = _dec_kw.get('dest', self.directory)
+                _params.overwrite = _dec_kw.get("overwrite", self.overwrite)
+                _params.dest = _dec_kw.get("dest", self.directory)
 
                 # When overwrite is True all subsequent checkpoints shall be overwritten
                 if _params.overwrite:
@@ -145,17 +163,19 @@ class CheckpointResume:
                 all_args = dict(zip(signature(f).parameters.keys(), args))
                 all_args.update(kw)
 
-                _params.overwrite = all_args.get('overwrite', self.overwrite)
+                _params.overwrite = all_args.get("overwrite", self.overwrite)
                 # If True then change the global default, so subsequent steps are recomputed
                 if _params.overwrite:
                     self.overwrite = True
 
-                _params.dest = _dec_kw.get('dest', self.directory)  # If None in decorator, use the current
+                _params.dest = _dec_kw.get(
+                    "dest", self.directory
+                )  # If None in decorator, use the current
                 if _params.dest is None:
                     _params.logger.error("Checkpoints dir has not been set. Assuming _checkpoints.")
                     _params.dest = "_checkpoints"
 
-                if child and hasattr(args[0], '_checkpoint_name'):
+                if child and hasattr(args[0], "_checkpoint_name"):
                     new_name = f"{args[0]._checkpoint_name}_{name}"
                 else:
                     new_name = name
@@ -163,13 +183,14 @@ class CheckpointResume:
                 return self._run(self._Runnable(f, args, kw), new_name, _params)
 
             return new_f
+
         return decorator
 
     # ---
     @classmethod
     def _run(cls, df, name, params):
         # type: (object, str, CheckpointResume._RunConfig) -> DataFrame
-        """ Checkpoints a dataframe (internal)
+        """Checkpoints a dataframe (internal)
 
         :param df: The df or the tuple with the calling info to create it
             Note: We avoid creating the DF before since it might have intermediate implications
@@ -177,9 +198,9 @@ class CheckpointResume:
         :param params: The params of the current checkpoint_resume run
         """
         params.table_name = name.lower()
-        basename = '/'.join([params.dest, params.table_name])
+        basename = "/".join([params.dest, params.table_name])
         if params.filename_suffix:
-            basename += '_' + str(params.filename_suffix)
+            basename += "_" + str(params.filename_suffix)
         params.table_path = basename + ".ptable"
         params.parquet_file_path = basename + ".parquet"
 
@@ -200,7 +221,7 @@ class CheckpointResume:
 
         try:
             df = cls._do_checkpoint(df, name, params)
-            sm.record({'checkpoints_size': size(params.dest)})
+            sm.record({"checkpoints_size": size(params.dest)})
             if params.break_exec_plan:
                 df = cls._try_restore(name, params, info=False)
             params.status.state = CheckpointStatus.COMPUTED
@@ -216,7 +237,7 @@ class CheckpointResume:
     # --
     @staticmethod
     def _try_restore(name, params, info=True):
-        """ Tries to restore a dataframe, from table or raw parquet, according to the params object
+        """Tries to restore a dataframe, from table or raw parquet, according to the params object
 
         :param name: the name of the stage
         :param params: the checkpoint_restore session params
@@ -266,7 +287,7 @@ class CheckpointResume:
 
         if params.bucket_cols:
             params.logger.debug("Checkpointing to TABLE %s...", table_name)
-            with sm.jobgroup("checkpointing {} to TABLE".format(table_name)):
+            with sm.jobgroup(f"checkpointing {table_name} to TABLE"):
                 # For the moment limited support exists, we need intermediate Hive tables
                 if isinstance(bucket_cols, (tuple, list)):
                     col1 = bucket_cols[0]
@@ -275,16 +296,20 @@ class CheckpointResume:
                     col1 = bucket_cols
                     other_cols = []
 
-                num_buckets = df.rdd.getNumPartitions() if params.n_buckets is True \
-                    else params.n_buckets
+                num_buckets = (
+                    df.rdd.getNumPartitions() if params.n_buckets is True else params.n_buckets
+                )
 
-                (df.write.mode("overwrite").option("path", params.table_path)._jwrite
-                 .bucketBy(num_buckets, col1, _to_seq(sm.sc, other_cols))
-                 .sortBy(col1, _to_seq(sm.sc, other_cols))
-                 .saveAsTable(table_name))
+                (
+                    df.write.mode("overwrite")
+                    .option("path", params.table_path)
+                    ._jwrite.bucketBy(num_buckets, col1, _to_seq(sm.sc, other_cols))
+                    .sortBy(col1, _to_seq(sm.sc, other_cols))
+                    .saveAsTable(table_name)
+                )
         else:
             params.logger.debug("Checkpointing to PARQUET %s...", name.lower())
-            with sm.jobgroup("checkpointing {} to PARQUET".format(name.lower())):
+            with sm.jobgroup(f"checkpointing {name.lower()} to PARQUET"):
                 df.write.parquet(params.parquet_file_path, mode="overwrite")
 
         params.logger.debug("Checkpoint Finished")

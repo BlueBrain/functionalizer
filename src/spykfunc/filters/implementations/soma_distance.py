@@ -16,11 +16,11 @@ class SomaDistanceFilter(DatasetOperation):
     """
 
     def __init__(self, recipe, source, target, morphos):
+        super().__init__(recipe, source, target, morphos)
         self.__morphos = morphos
 
     def apply(self, circuit):
-        """Remove touches within the soma.
-        """
+        """Remove touches within the soma."""
         soma_radius = self._create_soma_radius_udf()
         radii = (
             circuit.target.df.select("morphology")
@@ -37,13 +37,13 @@ class SomaDistanceFilter(DatasetOperation):
         )
 
     def _create_soma_radius_udf(self):
-        """Produce a UDF to calculate soma radii
-        """
+        """Produce a UDF to calculate soma radii"""
 
         @F.pandas_udf("float")
         def soma_radius(morphos):
             def r(m):
                 return self.__morphos.soma_radius(m)
+
             f = np.vectorize(r)
             return pd.Series(data=f(morphos.values), dtype="float")
 

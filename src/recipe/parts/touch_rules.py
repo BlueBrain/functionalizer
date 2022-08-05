@@ -3,9 +3,10 @@
 import fnmatch
 import itertools
 import logging
-import numpy as np
 
-from typing import Dict, Iterable, Iterator, List, Tuple
+from typing import Iterable, Iterator, List, Tuple
+
+import numpy as np
 
 from ..property import MTypeValidator, Property, PropertyGroup
 
@@ -42,7 +43,7 @@ class TouchRule(Property):
     _attribute_alias = {"type": "toBranchType"}
 
     def __init__(self, *args, **kwargs):
-        super(self.__class__, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if self.fromLayer != "*":
             raise ValueError("fromLayer is deprecated and needs to be '*'")
         if self.toLayer != "*":
@@ -87,11 +88,6 @@ class TouchRules(PropertyGroup, MTypeValidator):
             for src_mt, dst_mt, src_bt, dst_bt in r(src_mtypes, dst_mtypes):
                 for i in BRANCH_TYPES[src_bt]:
                     for j in BRANCH_TYPES[dst_bt]:
-                        matrix[
-                            src_mtype_rev[src_mt],
-                            dst_mtype_rev[dst_mt],
-                            i,
-                            j
-                        ] = 1
+                        matrix[src_mtype_rev[src_mt], dst_mtype_rev[dst_mt], i, j] = 1
 
         return matrix

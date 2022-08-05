@@ -1,13 +1,10 @@
 """
 """
-import fnmatch
-import itertools
 import logging
-import numpy as np
 
-from collections import Counter
-from typing import Dict, Iterable, Iterator, List, Tuple
+from typing import Dict, List
 
+from .common import NODE_FIELDS
 from ..property import PathwayProperty, PathwayPropertyGroup, Property, PropertyGroup
 
 logger = logging.getLogger(__name__)
@@ -18,25 +15,17 @@ class SynapseRule(PathwayProperty):
 
     _name = "synapse"
 
-    _attributes = {
-        "fromEType": "*",
-        "fromMType": "*",
-        "fromRegion": "*",
-        "fromSClass": "*",
-        "toEType": "*",
-        "toMType": "*",
-        "toRegion": "*",
-        "toSClass": "*",
+    _attributes = NODE_FIELDS | {
         "type": str,
         "neuralTransmitterReleaseDelay": 0.1,
         "axonalConductionVelocity": 300.0,
     }
 
     def __init__(self, *args, **kwargs):
-        super(self.__class__, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         if not self.type or self.type[0] not in "EI":
-            raise ValueError(f"Synapse type needs to start with either 'E' or 'I'")
+            raise ValueError("Synapse type needs to start with either 'E' or 'I'")
 
 
 class SpynapseRules(PathwayPropertyGroup):
@@ -48,6 +37,7 @@ class SynapseClass(Property):
     """Stores the synaptic properties for a synapse class codified by the
     property `id`.
     """
+
     _name = "class"
 
     _attributes = {
@@ -79,6 +69,7 @@ class SynapseClass(Property):
 
 class SynapseClasses(PropertyGroup):
     """Container for synaptic properties per class."""
+
     _kind = SynapseClass
     _name = "SynapsesClassification"
 
@@ -91,8 +82,9 @@ class SynapseClasses(PropertyGroup):
                 for d in data:
                     del d._local_attributes[attr]
             elif values != len(data):
-                raise ValueError(f"Attribute {attr} needs to be set/unset"
-                                 f" for all {cls._name} simultaneously")
+                raise ValueError(
+                    f"Attribute {attr} needs to be set/unset" f" for all {cls._name} simultaneously"
+                )
         return data
 
 
@@ -122,6 +114,7 @@ class SynapseProperties:
     rules :class:`~SynapseRules` and classifications
     :class:`~SynapseClasses`
     """
+
     rules: SpynapseRules
     classes: SynapseClasses
 
@@ -132,9 +125,7 @@ class SynapseProperties:
     def __str__(self):
         return f"{self.rules}\n{self.classes}"
 
-    def validate(
-        self, values: Dict[str, List[str]]
-    ) -> bool:
+    def validate(self, _: Dict[str, List[str]] = None) -> bool:
         return True
 
     @classmethod
@@ -150,8 +141,7 @@ class SynapseProperties:
 
     @staticmethod
     def _duplicated(rules):
-        """Yields rules that are present more than once
-        """
+        """Yields rules that are present more than once"""
         seen = set()
         for rule in rules:
             if rule.id in seen:
@@ -160,8 +150,7 @@ class SynapseProperties:
 
     @staticmethod
     def _unmatched(rules, classes):
-        """Yields rules that do not match up
-        """
+        """Yields rules that do not match up"""
         types = set(r.type for r in rules)
         ids = set(c.id for c in classes)
         for r in rules:

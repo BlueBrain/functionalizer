@@ -1,8 +1,8 @@
 """Reference implementations of filters
 """
+from typing import List
 import numpy as np
 import pandas as pd
-from typing import List
 
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
@@ -23,11 +23,14 @@ def add_random_column(df: DataFrame, name: str, seed: int, key: int) -> DataFram
     Returns:
         The dataframe with a random column
     """
+
     def __generate(data):
         import spykfunc.filters.udfs as fcts
+
         for df in data:
             df[name] = fcts.uniform(seed, key, df["synapse_id"])
             yield df
+
     df = df.withColumn(name, F.lit(0.0))
     return df.mapInPandas(__generate, df.schema)
 
@@ -44,10 +47,13 @@ def add_bin_column(df: DataFrame, name: str, boundaries: List[float], key: str) 
         A dataframe with an additional column
     """
     bins = np.asarray(boundaries, dtype=np.single)
+
     def __generate(data):
         import spykfunc.filters.udfs as fcts
+
         for df in data:
-            df[name] = fcts.get_bins(df["key"], bins)
+            df[name] = fcts.get_bins(df[key], bins)
             yield df
+
     df = df.withColumn(name, F.lit(-1))
     return df.mapInPandas(__generate, df.schema)

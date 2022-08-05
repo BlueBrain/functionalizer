@@ -10,8 +10,7 @@ from recipe import Recipe
 
 
 def load_recipe(stub: str, strict: bool = True) -> Recipe:
-    """Centralized recipe location handling
-    """
+    """Centralized recipe location handling"""
     return Recipe(str(Path(__file__).parent / "data" / (stub + ".xml")), strict)
 
 
@@ -21,8 +20,7 @@ def legacy_recipe():
 
 
 def test_load_legacy_xml(legacy_recipe):
-    """Test recipe reading
-    """
+    """Test recipe reading"""
     assert legacy_recipe.seeds.synapseSeed == 4236279
 
 
@@ -32,20 +30,17 @@ def modern_recipe():
 
 
 def test_load_modern_xml(modern_recipe):
-    """Test recipe reading
-    """
+    """Test recipe reading"""
     assert modern_recipe.structural_spine_lengths[0].spineLength == 2.5
 
 
 def test_validate_modern_xml(modern_recipe):
-    """Test recipe validation
-    """
+    """Test recipe validation"""
     assert modern_recipe.validate(dict(fromMType=MTYPES_V7, toMType=MTYPES_V7))
 
 
 def test_validate_modern_xml_incomplete_mtypes(modern_recipe):
-    """Test recipe validation
-    """
+    """Test recipe validation"""
     assert not modern_recipe.validate(dict(fromMType=MTYPES_V7[:-5], toMType=MTYPES_V7[:-5]))
 
 

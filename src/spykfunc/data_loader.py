@@ -1,22 +1,20 @@
 import glob
 import hashlib
-import logging
 import math
 import os
-import pandas as pd
-import pyarrow.parquet as pq
 import re
-import sparkmanager as sm
-
 from distutils.version import LooseVersion
 from typing import Iterable, List
+
+import pandas as pd
+import pyarrow.parquet as pq
 from pyspark.sql import functions as F
 from pyspark.sql import DataFrame
 
+import sparkmanager as sm
+
 from . import schema
-from .definitions import MType
-from .utils import get_logger, make_slices, to_native_str
-from .utils.spark import cache_broadcast_single_part
+from .utils import get_logger
 from .utils.filesystem import adjust_for_spark
 
 
@@ -71,22 +69,20 @@ def _accept_node_enumeration(attr: str) -> bool:
     """Select which enumerations to use, will fall back to attributes otherwise."""
     if attr == "morphology":
         return False
-    elif attr == "morph_class":
+    if attr == "morph_class":
         return False
-    else:
-        return True
+    return True
 
 
 def _accept_node_attribute(attr: str) -> bool:
     """Accepts all node attributes except for position, rotation ones."""
     if attr.startswith("rotation_"):
         return False
-    elif attr.startswith("orientation_"):
+    if attr.startswith("orientation_"):
         return False
-    elif attr in ("x", "y", "z"):
+    if attr in ("x", "y", "z"):
         return False
-    else:
-        return True
+    return True
 
 
 def _translate_attribute(attr: str) -> str:
@@ -95,8 +91,7 @@ def _translate_attribute(attr: str) -> str:
     """
     if attr == "synapse_class":
         return "sclass"
-    else:
-        return attr
+    return attr
 
 
 def _get_enumerations(population):
@@ -278,7 +273,7 @@ class NeuronData:
 
         logger.info("Total neurons: %d", len(self))
         mvd_parquet = os.path.join(
-            self._cache, "neurons_{:.1f}k_{}.parquet".format(len(self) / 1000.0, digest)
+            self._cache, f"neurons_{len(self) / 1000.0:.1f}k_{digest}.parquet"
         )
 
         if os.path.exists(mvd_parquet):
@@ -291,9 +286,10 @@ class NeuronData:
 
             # Create a default selection, or load it from the NodeSets
             if not self._ns_filename:
-                ids = [i for i in range(0, len(self))]
+                ids = list(range(0, len(self)))
             else:
                 import libsonata
+
                 nodesets = libsonata.NodeSets.from_file(self._ns_filename)
                 population = libsonata.NodeStorage(self._filename).open_population(self._population)
                 selection = nodesets.materialize(self._ns_nodeset, population)
@@ -301,13 +297,14 @@ class NeuronData:
 
             total_parts = math.ceil(len(ids) / PARTITION_SIZE)
             logger.debug("Partitions: %d", total_parts)
-            parts = sm.createDataFrame(
-                enumerate(
-                    ids[PARTITION_SIZE * n : min(PARTITION_SIZE * (n + 1), len(ids))]
-                    for n in range(total_parts)
-                ),
-                ["row", "ids"],
-            )
+
+            def generate_ids():
+                for n in range(total_parts):
+                    start = PARTITION_SIZE * n
+                    end = min(PARTITION_SIZE * (n + 1), len(ids))
+                    yield n, ids[start:end]
+
+            parts = sm.createDataFrame(generate_ids(), ["row", "ids"])
 
             # Create DF
             logger.info("Creating neuron data frame...")
@@ -316,9 +313,7 @@ class NeuronData:
             )
 
             # Evaluate (build partial NameMaps) and store
-            mvd = raw_mvd.write.mode("overwrite").parquet(
-                adjust_for_spark(mvd_parquet, local=True)
-            )
+            mvd = raw_mvd.write.mode("overwrite").parquet(adjust_for_spark(mvd_parquet, local=True))
             raw_mvd.unpersist()
 
             # Mark as "broadcastable" and cache
@@ -341,8 +336,8 @@ def _get_size(files):
         if os.path.isfile(path):
             _add_size(path)
         else:
-            for root, _, files in os.walk(path):
-                for fn in files:
+            for root, _, filenames in os.walk(path):
+                for fn in filenames:
                     _add_size(os.path.join(root, fn))
     return size
 
@@ -369,18 +364,17 @@ def _grab_sonata_population(filename):
     populations = libsonata.EdgeStorage(filename).population_names
     if len(populations) == 1:
         return next(iter(populations))
-    elif len(populations) > 1:
+    if len(populations) > 1:
         raise ValueError(f"More than one population in '{filename}'")
-    else:
-        raise ValueError(f"No population in '{filename}'")
+    raise ValueError(f"No population in '{filename}'")
 
 
 def _grab_sonata(files):
     """Returns a possible SONATA file from the front of `files`."""
     if not files:
-        return
+        return None
     if not files[0].endswith(".h5"):
-        return
+        return None
     filename = files.pop(0)
     if files and not any(files[0].endswith(ext) for ext in (".h5", ".parquet")):
         population = files.pop(0)
@@ -420,7 +414,7 @@ class EdgeData:
             self._metadata = metadata[0]
         elif metadata:
             logger.debug("Detected multiple different inputs, prefixing metadata")
-            self._metadata = dict()
+            self._metadata = {}
             for key in schema.METADATA_FIXED_KEYS:
                 for m in metadata:
                     if key not in m:
@@ -495,10 +489,9 @@ class EdgeData:
                     values.add(v)
             if 0 in values and 5 in values:
                 raise RuntimeError("Cannot determine section type convention")
-            elif 5 in values:
+            if 5 in values:
                 return shift_branch_type(edges, -BRANCH_OFFSET)
-            else:
-                return edges
+            return edges
 
         return _loader
 
@@ -508,10 +501,10 @@ class EdgeData:
             args = args[0]
         else:
             args = list(args)
-        schema = pq.ParquetDataset(args).schema.to_arrow_schema()
+        meta = pq.ParquetDataset(args).schema.to_arrow_schema().metadata
         return {
             k.decode(): v.decode()
-            for (k, v) in (schema.metadata or dict()).items()
+            for (k, v) in (meta or {}).items()
             if not k.startswith(b"org.apache.spark")
         }
 
@@ -521,13 +514,8 @@ class EdgeData:
         if m := VERSION_SCHEMA.search(raw_version):
             t2p_version = m.group(0)
         else:
-            raise RuntimeError(
-                f"Can't determine touch2parquet version from {raw_version}"
-            )
-        if t2p_version >= BRANCH_SHIFT_MINIMUM_VERSION:
-            shift = True
-        else:
-            shift = False
+            raise RuntimeError(f"Can't determine touch2parquet version from {raw_version}")
+        shift = t2p_version >= BRANCH_SHIFT_MINIMUM_VERSION
 
         def _loader():
             files = [adjust_for_spark(f) for f in args]

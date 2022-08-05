@@ -38,19 +38,18 @@ class StructuralSpineLengths(PropertyGroup):
     _kind = StructuralSpineLength
 
     def validate(self, values: Dict[str, List[str]]) -> bool:
-        """Checks that all morphology types have well defined spine lengths.
-        """
+        """Checks that all morphology types have well defined spine lengths."""
         mtypes = set(values["fromMType"]) | set(values["toMType"])
-        covered = dict()
+        covered = {}
         valid = True
         for rule in self:
             if (length := covered.get(rule.mType)) and length != rule.spineLength:
                 msg = f"{rule.mType}; {length} vs {rule.spineLength}"
-                logger.warning(f"Conflicting spine lengths defined for: {msg}")
+                logger.warning("Conflicting spine lengths defined for: %s", msg)
                 valid = False
             covered[rule.mType] = rule.spineLength
         uncovered = mtypes - set(covered)
         if uncovered:
-            logger.warning(f"No spine lengths defined for: {', '.join(uncovered)}")
+            logger.warning("No spine lengths defined for: %s", ", ".join(uncovered))
             valid = False
         return valid

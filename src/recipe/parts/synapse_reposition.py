@@ -3,7 +3,7 @@
 import fnmatch
 import itertools
 
-from typing import Iterable, Iterator, List, Tuple
+from typing import Iterable, Iterator, Tuple
 
 from ..property import MTypeValidator, Property, PropertyGroup
 
@@ -11,11 +11,7 @@ from ..property import MTypeValidator, Property, PropertyGroup
 class Shift(Property):
     _name = "shift"
 
-    _attributes = {
-        "fromMType": "*",
-        "toMType": "*",
-        "type": "*"
-    }
+    _attributes = {"fromMType": "*", "toMType": "*", "type": "*"}
 
     def __call__(
         self, src_mtypes: Iterable[str], dst_mtypes: Iterable[str]

@@ -1,10 +1,8 @@
 """A default filter plugin
 """
-import fnmatch
-import numpy as np
-import sparkmanager as sm
-
 from pyspark.sql import functions as F
+
+import sparkmanager as sm
 
 from spykfunc.filters import DatasetOperation
 from spykfunc.utils import get_logger
@@ -31,25 +29,16 @@ class TouchReductionFilter(DatasetOperation):
         The rules stored in the recipe are loaded in their abstract form,
         concretization will happen with the acctual circuit.
         """
+        super().__init__(recipe, source, target, morphos)
         self.survival = recipe.touch_reduction.survival_rate
         self.seed = recipe.seeds.synapseSeed
         logger.info("Using seed %d for trimming touches", self.seed)
 
     def apply(self, circuit):
-        """Actually reduce the touches of the circuit
-        """
-        touches = add_random_column(
-            circuit.df,
-            "touch_rand",
-            self.seed,
-            _KEY_TOUCH
-        )
+        """Actually reduce the touches of the circuit"""
+        touches = add_random_column(circuit.df, "touch_rand", self.seed, _KEY_TOUCH)
 
-        return (
-            touches
-            .where(F.col("touch_rand") <= F.lit(self.survival))
-            .drop("touch_rand")
-        )
+        return touches.where(F.col("touch_rand") <= F.lit(self.survival)).drop("touch_rand")
 
 
 class TouchRulesFilter(DatasetOperation):
@@ -69,18 +58,16 @@ class TouchRulesFilter(DatasetOperation):
         The rules stored in the recipe are loaded in their abstract form,
         concretization will happen with the acctual circuit.
         """
+        super().__init__(recipe, source, target, morphos)
         self.rules = recipe.touch_rules.to_matrix(source.mtype_values, target.mtype_values)
 
     def apply(self, circuit):
-        """ .apply() method (runner) of the filter
-        """
+        """.apply() method (runner) of the filter"""
         indices = list(self.rules.shape)
         for i in reversed(range(len(indices) - 1)):
             indices[i] *= indices[i + 1]
 
-        rdd = sm.parallelize(((i,)
-                              for i, v in enumerate(self.rules.flatten())
-                              if v == 0), 200)
+        rdd = sm.parallelize(((i,) for i, v in enumerate(self.rules.flatten()) if v == 0), 200)
         rules = sm.createDataFrame(rdd, schema=["fail"])
         # For each neuron we require:
         # - preMType
@@ -97,7 +84,7 @@ class TouchRulesFilter(DatasetOperation):
         if not hasattr(circuit.df, "efferent_section_type") or not hasattr(
             circuit.df, "afferent_section_type"
         ):
-            raise RuntimeError(f"TouchRules need [ae]fferent_section_type")
+            raise RuntimeError("TouchRules need [ae]fferent_section_type")
         return (
             touches.withColumn(
                 "fail",

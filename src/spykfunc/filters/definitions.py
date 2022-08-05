@@ -35,7 +35,7 @@ def load(*dirnames: str) -> None:
         filenames = glob(f"{dirname}/*.py")
         for filename in filenames:
             modulename = filename[:-3]
-            relative = min([os.path.relpath(modulename, p) for p in sys.path], key=len)
+            relative = min((os.path.relpath(modulename, p) for p in sys.path), key=len)
             modulename = relative.replace(os.sep, ".")
             importlib.import_module(modulename)
 
@@ -54,7 +54,7 @@ class __DatasetOperationType(type):
     `_visible` to `False` to exclude a filter from appearing in the list.
     """
 
-    __filters = dict()
+    __filters = {}
 
     def __init__(cls, name, bases, attrs) -> None:
         if "apply" not in attrs:
@@ -68,10 +68,8 @@ class __DatasetOperationType(type):
                 and spec.args == ["self", "circuit"]
             ):
                 raise TypeError
-        except TypeError:
-            raise AttributeError(
-                f'class {cls} does not implement "apply(circuit)" properly'
-            )
+        except TypeError as e:
+            raise AttributeError(f'class {cls} does not implement "apply(circuit)" properly') from e
         spec = inspect.getfullargspec(cls.__init__)
         if not (
             spec.varargs is None
@@ -80,7 +78,8 @@ class __DatasetOperationType(type):
             and spec.args == ["self", "recipe", "source", "target", "morphos"]
         ):
             raise AttributeError(
-                f'class {cls} does not implement "__init__(recipe, source, target, morphos)" properly'
+                f"class {cls} does not implement "
+                '"__init__(recipe, source, target, morphos)" properly'
             )
         type.__init__(cls, name, bases, attrs)
         if attrs.get("_visible", True):
@@ -108,16 +107,15 @@ class __DatasetOperationType(type):
             if hasattr(fcls, "_checkpoint_name"):
                 raise ValueError(f"Cannot have more than one {fcls.__name__}")
             fcls._checkpoint_name = (
-                f"{fcls.__name__.replace('Filter', '').lower()}"
-                f"_{key.hexdigest()[:8]}"
+                f"{fcls.__name__.replace('Filter', '').lower()}" f"_{key.hexdigest()[:8]}"
             )
             try:
                 filters.append(fcls(*args))
             except Exception as e:
                 if fcls._required:
-                    logger.exception(f"Could not instantiate {fcls.__name__}")
+                    logger.exception("Could not instantiate %s", fcls.__name__)
                     raise
-                logger.warning(f"Disabling optional {fcls.__name__}: {e}")
+                logger.warning("Disabling optional %s: %s", fcls.__name__, e)
         for i in range(len(filters) - 1, -1, -1):
             base = Path(checkpoint_resume.directory)
             parquet = filters[i]._checkpoint_name + ".parquet"
@@ -125,13 +123,13 @@ class __DatasetOperationType(type):
             fn = "_SUCCESS"
             if (base / parquet / fn).exists() or (base / table / fn).exists():
                 classname = filters[i].__class__.__name__
-                logger.info(f"Found checkpoint for {classname}")
+                logger.info("Found checkpoint for %s", classname)
                 break
         else:
             i = 0  # force initialization in case filters is empty
         for f in filters[:i]:
             classname = f.__class__.__name__
-            logger.info(f"Removing {classname}")
+            logger.info("Removing %s", classname)
         return filters[i:]
 
     @classmethod
@@ -140,7 +138,7 @@ class __DatasetOperationType(type):
         return sorted(cls.__filters.keys())
 
 
-class DatasetOperation(object, metaclass=__DatasetOperationType):
+class DatasetOperation(metaclass=__DatasetOperationType):
     """Basis for synapse filters
 
     Every filter should derive from :class:`~spykfunc.filters.DatasetOperation`,
@@ -212,11 +210,10 @@ class DatasetOperation(object, metaclass=__DatasetOperationType):
 
     def __init__(self, recipe, source, target, morphos):
         """Empty constructor supposed to be overriden"""
-        pass
 
     def __call__(self, circuit):
         classname = self.__class__.__name__
-        logger.info(f"Applying {classname}")
+        logger.info("Applying %s", classname)
         with sm.jobgroup(classname):
             ran_filter = False  # assume loading from disk by default
             start = datetime.now()
@@ -228,7 +225,7 @@ class DatasetOperation(object, metaclass=__DatasetOperationType):
             to_remove = olds & to_add
 
             if to_remove:
-                logger.warning(f"Removing columns {', '.join(to_remove)}")
+                logger.warning("Removing columns %s", ", ".join(to_remove))
                 circuit.df = circuit.df.drop(*to_remove)
                 olds -= to_remove
 
@@ -236,6 +233,7 @@ class DatasetOperation(object, metaclass=__DatasetOperationType):
                 ran_filter = True
                 circuit.df = self.apply(circuit)
             else:
+
                 @checkpoint_resume(
                     self._checkpoint_name,
                     handlers=[
@@ -267,12 +265,13 @@ class DatasetOperation(object, metaclass=__DatasetOperationType):
                 new_count = len(circuit)
                 diff = old_count - new_count
                 if self._reductive:
-                    logger.info(
-                        f"{classname} removed {diff:,d} touches, circuit now contains {new_count:,d}"
+                    logger.info(  # pylint: disable=logging-fstring-interpolation
+                        f"{classname} removed {diff:,d} touches, "
+                        f"circuit now contains {new_count:,d}"
                     )
                 elif diff != 0:
                     raise RuntimeError(f"{classname} removed touches, but should not")
-                logger.info(f"{classname} application took {datetime.now() - start}")
+                logger.info("%s application took %s", classname, datetime.now() - start)
 
             return circuit
 
@@ -283,4 +282,3 @@ class DatasetOperation(object, metaclass=__DatasetOperationType):
         Takes a `Circuit`, applies some operations to it, and returns Spark dataframe
         representing the updated circuit.
         """
-        pass

@@ -18,13 +18,10 @@
 
 """ Spykfunc - An implementation of Functionalizer in PySpark
 """
-import pkg_resources as _pkg
 import logging as _log
+import pkg_resources as _pkg
 
-try:
-    __version__ = _pkg.get_distribution(__name__).version
-except Exception:
-    __version__ = 'unknown'
+__version__ = _pkg.get_distribution(__name__).version
 
 
 # General logging

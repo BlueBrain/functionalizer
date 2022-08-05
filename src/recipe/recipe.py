@@ -2,12 +2,12 @@
 Top-Level Interface for Recipe Handling
 ---------------------------------------
 """
-import copy
 import logging
 import textwrap
 from io import StringIO
+from typing import Dict, List, Optional, TextIO
+
 from lxml import etree
-from typing import Dict, List, Optional, TextIO, Tuple
 
 from .property import NotFound
 from .parts.bouton_density import InitialBoutonDistance
@@ -24,7 +24,7 @@ from .parts.touch_rules import TouchRules
 logger = logging.getLogger(__name__)
 
 
-class Recipe(object):
+class Recipe:
     """Recipe information used for functionalizing circuits
 
     Instances of this class can be used to parse the XML description of our
@@ -105,14 +105,12 @@ class Recipe(object):
         for name, kind in self.__annotations__.items():
             try:
                 if not hasattr(kind, "load"):
-                    kind, = [cls for cls in kind.__args__ if cls != type(None)]
+                    (kind,) = [cls for cls in kind.__args__ if cls != type(None)]  # noqa
                 setattr(self, name, kind.load(xml, strict=strict))
             except NotFound as e:
                 logger.warning("missing recipe part: %s", e)
 
-    def validate(
-        self, values: Dict[str, List[str]]
-    ) -> bool:
+    def validate(self, values: Dict[str, List[str]]) -> bool:
         """Validate basic functionality of the recipe.
 
         Checks provided here-in test for basic coverage, and provides a
@@ -121,12 +119,14 @@ class Recipe(object):
         The parameter `values` should be a dictionary containing all
         allowed values in the form ``fromMType``
         """
+
         def _inner():
             for name in self.__annotations__:
                 attr = getattr(self, name, None)
                 if attr and not attr.validate(values):
                     yield False
                 yield True
+
         return all(_inner())
 
     def dump(self, fd: TextIO, connectivity_fd: Optional[TextIO] = None):
@@ -157,8 +157,7 @@ class Recipe(object):
         fd.write(_RECIPE_SKELETON.format(header, inner))
 
     def __str__(self) -> str:
-        """Converts the recipe into XML.
-        """
+        """Converts the recipe into XML."""
         output = StringIO()
         self.dump(output)
         return output.getvalue()
@@ -170,10 +169,10 @@ class Recipe(object):
             parser = etree.XMLParser(remove_comments=True)
             tree = etree.parse(recipe_file, parser)
         except (etree.XMLSyntaxError, etree.ParserError) as err:
-            logger.warning(f"could not parse xml of recipe '{recipe_file}'")
+            logger.warning("could not parse xml of recipe '%s'", recipe_file)
             raise err
         except IOError as err:
-            logger.warning(f"error while reading xml: {err}")
+            logger.warning("error while reading xml: %s", err)
             raise err
         else:
             return tree.getroot()

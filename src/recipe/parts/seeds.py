@@ -5,8 +5,7 @@ from ..property import Property, singleton
 
 @singleton(implicit=True)
 class Seeds(Property):
-    """Property to store seeds
-    """
+    """Property to store seeds"""
 
     _attributes = {
         "recipeSeed": 0,

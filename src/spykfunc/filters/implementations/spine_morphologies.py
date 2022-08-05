@@ -8,7 +8,6 @@ import numpy as np
 import pandas as pd
 
 from pyspark.sql import functions as F
-from pyspark.sql import types as T
 
 from spykfunc.filters import DatasetOperation
 
@@ -55,6 +54,7 @@ class SpineMorphologies(DatasetOperation):
     ]
 
     def __init__(self, recipe, source, target, morphos):
+        super().__init__(recipe, source, target, morphos)
         self._morphologies, self._filter = _create_spine_morphology_udf(
             morphos.spine_morphology_path
         )
@@ -70,23 +70,22 @@ class SpineMorphologies(DatasetOperation):
         #     .add("spine_sharing_id", T.IntegerType(), False)
         # )
         df = (
-            circuit.df
-            .withColumn("spine_morphology", F.lit(0))
+            circuit.df.withColumn("spine_morphology", F.lit(0))
             .withColumn("spine_psd_id", F.lit(0))
             .withColumn("spine_sharing_id", F.lit(0))
         )
         df = df.mapInPandas(self._filter, df.schema).withColumn(
             "spine_morphology",
             F.col("spine_morphology").alias(
-                "spine_morphology", metadata={"enumeration_values": list(self._morphologies)}
+                "spine_morphology",
+                metadata={"enumeration_values": list(self._morphologies)},
             ),
         )
         return df
 
 
 def _get_spine_lengths(filename):
-    """Get all spine lengths from a single spine morphology file
-    """
+    """Get all spine lengths from a single spine morphology file"""
     import morphio
 
     spine_morph = morphio.DendriticSpine(filename)

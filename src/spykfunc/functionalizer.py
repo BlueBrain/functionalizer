@@ -1,20 +1,14 @@
 # *************************************************************************
 #  An implementation of Functionalizer in spark
 # *************************************************************************
-import logging
 import math
 import os
-import re
-import time
 import pyarrow.parquet as pq
-import sparkmanager as sm
-
 from pyspark.sql import functions as F
 
+import sparkmanager as sm
 from recipe import Recipe
 
-from . import filters
-from . import schema
 from . import utils
 from .filters import DatasetOperation
 from .circuit import Circuit
@@ -23,12 +17,12 @@ from .definitions import CheckpointPhases, SortBy
 from .utils.checkpointing import checkpoint_resume
 from .utils.filesystem import adjust_for_spark, autosense_hdfs
 from .version import version as spykfunc_version
-from .schema import METADATA_PATTERN, METADATA_PATTERN_RE
+from .schema import METADATA_PATTERN, METADATA_PATTERN_RE, OUTPUT_MAPPING
 
 __all__ = ["Functionalizer", "CheckpointPhases"]
 
 logger = utils.get_logger(__name__)
-_MB = 1024 ** 2
+_MB = 1024**2
 
 
 class _SpykfuncOptions:
@@ -64,9 +58,8 @@ class _SpykfuncOptions:
             raise AttributeError("Need to have filters specified!")
 
 
-class Functionalizer(object):
-    """ Functionalizer Session class
-    """
+class Functionalizer:
+    """Functionalizer Session class"""
 
     circuit = None
     """:property: ciruit containing neuron and touch data"""
@@ -81,27 +74,33 @@ class Functionalizer(object):
         checkpoint_resume.directory = self._config.checkpoint_dir
 
         if self._config.debug:
+            from . import filters
+
             filters.enable_debug(self._config.output_dir)
 
         # Create Spark session with the static config
         report_file = os.path.join(self._config.output_dir, "report.json")
-        sm.create(
-            self._config.name, self._config.properties("spark"), report=report_file
-        )
+        sm.create(self._config.name, self._config.properties("spark"), report=report_file)
 
         # Configuring Spark runtime
         sm.setLogLevel("WARN")
-        sm.setCheckpointDir(
-            adjust_for_spark(os.path.join(self._config.checkpoint_dir, "tmp"))
-        )
+        sm.setCheckpointDir(adjust_for_spark(os.path.join(self._config.checkpoint_dir, "tmp")))
         sm._jsc.hadoopConfiguration().setInt("parquet.block.size", 64 * _MB)
 
     # -------------------------------------------------------------------------
     # Data loading and Init
     # -------------------------------------------------------------------------
     @sm.assign_to_jobgroup
-    def init_data(self, recipe_file, source, source_nodeset, target, target_nodeset,
-                        morphologies, edges=None):
+    def init_data(
+        self,
+        recipe_file,
+        source,
+        source_nodeset,
+        target,
+        target_nodeset,
+        morphologies,
+        edges=None,
+    ):
         """Initialize all data required
 
         Will load the necessary cell collections from `source` and `target`
@@ -126,7 +125,8 @@ class Functionalizer(object):
         """
         # In "program" mode this dir wont change later, so we can check here
         # for its existence/permission to create
-        os.path.isdir(self._config.output_dir) or os.makedirs(self._config.output_dir)
+        if not os.path.isdir(self._config.output_dir):
+            os.makedirs(self._config.output_dir)
 
         logger.debug("Starting data loading...")
         if source and target:
@@ -143,31 +143,37 @@ class Functionalizer(object):
 
         if recipe_file:
             self.recipe = Recipe(recipe_file, self._config.strict)
-            if self._config.strict and not self.recipe.validate({
-                "fromMType": n_from.mtype_values,
-                "fromEType": n_from.etype_values,
-                "fromSClass": n_from.sclass_values,
-                "toMType": n_to.mtype_values,
-                "toEType": n_to.etype_values,
-                "toSClass": n_to.sclass_values,
-            }):
+            if self._config.strict and not self.recipe.validate(
+                {
+                    "fromMType": n_from.mtype_values,
+                    "fromEType": n_from.etype_values,
+                    "fromSClass": n_from.sclass_values,
+                    "toMType": n_to.mtype_values,
+                    "toEType": n_to.etype_values,
+                    "toSClass": n_to.sclass_values,
+                }
+            ):
                 raise RuntimeError("Recipe validation failed")
 
         return self
 
     def _configure_shuffle_partitions(self):
-        """Try to find an optimal setting for the amount of shuffle partitions.
-        """
+        """Try to find an optimal setting for the amount of shuffle partitions."""
         # Grow suffle partitions with size of touches DF
         # Min: 100 reducers
         # NOTE: According to some tests we need to cap the amount of reducers to 4000 per node
-        # NOTE: Some problems during shuffle happen with many partitions if shuffle compression is enabled!
+        # NOTE: Some problems during shuffle happen with many partitions if shuffle
+        #       compression is enabled!
         touch_partitions = self.circuit.touches.rdd.getNumPartitions()
         if touch_partitions == 0:
             raise ValueError("No partitions found in touch data")
 
         # Aim for about half the maximum partition size
-        guessed_partitions_from_data = int(math.ceil(2 * self.circuit.input_size / int(sm.conf.get("spark.sql.files.maxPartitionBytes"))))
+        guessed_partitions_from_data = int(
+            math.ceil(
+                2 * self.circuit.input_size / int(sm.conf.get("spark.sql.files.maxPartitionBytes"))
+            )
+        )
 
         # Aim for data parallelism
         guessed_partitions_from_cluster = sm.sc.defaultParallelism * 10
@@ -183,14 +189,12 @@ class Functionalizer(object):
 
     @property
     def output_directory(self):
-        """:property: the directory to save results in
-        """
+        """:property: the directory to save results in"""
         return self._config.output_dir
 
     @property
     def touches(self):
-        """:property: The current touch set without additional neuron data as Dataframe.
-        """
+        """:property: The current touch set without additional neuron data as Dataframe."""
         return self.circuit.touches
 
     # -------------------------------------------------------------------------
@@ -229,7 +233,7 @@ class Functionalizer(object):
         if self._config.strict or self._config.dry_run:
             utils.Enforcer().check()
         if self._config.dry_run:
-            return
+            return self.circuit
 
         self._configure_shuffle_partitions()
 
@@ -243,29 +247,28 @@ class Functionalizer(object):
     # -------------------------------------------------------------------------
     @sm.assign_to_jobgroup
     def export_results(
-            self,
-            output_path=None,
-            overwrite=False,
-            order: SortBy = SortBy.POST,
-            filename: str = "circuit.parquet"):
+        self,
+        output_path=None,
+        order: SortBy = SortBy.POST,
+        filename: str = "circuit.parquet",
+    ):
         """Writes the touches of the circuit to disk
 
         Arguments
         ---------
         output_path
             Allows to change the default output directory
-        overwrite
-            Write over previous results
         order
             The sorting of the touches
         filename
             Allows to change the default output name
         """
+
         def get_fields(df):
             # Transitional SYN2 spec fields
             for col in df.columns:
-                if col in schema.OUTPUT_MAPPING:
-                    alias, cast = schema.OUTPUT_MAPPING[col]
+                if col in OUTPUT_MAPPING:
+                    alias, cast = OUTPUT_MAPPING[col]
                     logger.info("Writing field %s", alias)
                     if cast:
                         yield getattr(df, col).cast(cast).alias(alias)
@@ -275,10 +278,8 @@ class Functionalizer(object):
                     logger.info("Writing field %s", col)
                     yield col
 
-        df = (
-            self.circuit.touches
-            .withColumnRenamed("src", "source_node_id")
-            .withColumnRenamed("dst", "target_node_id")
+        df = self.circuit.touches.withColumnRenamed("src", "source_node_id").withColumnRenamed(
+            "dst", "target_node_id"
         )
 
         # Required for SONATA support
@@ -290,25 +291,33 @@ class Functionalizer(object):
         required = set(["population_name", "population_size"])
         if not required.issubset(df.schema["source_node_id"].metadata):
             logger.info("Augmenting metadata for field source_node_id")
-            df = df.withColumn("source_node_id", F.col("source_node_id").alias("source_node_id", metadata={
-                "population_name": self.circuit.source.population,
-                "population_size": len(self.circuit.source)
-            }))
+            df = df.withColumn(
+                "source_node_id",
+                F.col("source_node_id").alias(
+                    "source_node_id",
+                    metadata={
+                        "population_name": self.circuit.source.population,
+                        "population_size": len(self.circuit.source),
+                    },
+                ),
+            )
         if not required.issubset(df.schema["target_node_id"].metadata):
             logger.info("Augmenting metadata for field target_node_id")
-            df = df.withColumn("target_node_id", F.col("target_node_id").alias("target_node_id", metadata={
-                "population_name": self.circuit.target.population,
-                "population_size": len(self.circuit.target)
-            }))
+            df = df.withColumn(
+                "target_node_id",
+                F.col("target_node_id").alias(
+                    "target_node_id",
+                    metadata={
+                        "population_name": self.circuit.target.population,
+                        "population_size": len(self.circuit.target),
+                    },
+                ),
+            )
 
         output_path = os.path.realpath(os.path.join(self.output_directory, filename))
         logger.info("Exporting touches...")
-        df_output = df.select(*get_fields(df)) \
-                      .sort(*(order.value))
-        df_output.write.parquet(
-            adjust_for_spark(output_path, local=True),
-            mode="overwrite"
-        )
+        df_output = df.select(*get_fields(df)).sort(*(order.value))
+        df_output.write.parquet(adjust_for_spark(output_path, local=True), mode="overwrite")
         logger.info("Data written to disk")
         self._add_metadata(output_path)
         logger.info("Metadata added to data")
@@ -323,28 +332,30 @@ class Functionalizer(object):
             if m := METADATA_PATTERN_RE.match(key):
                 # "version" numbers may contain a dot, thus: string → float → int
                 this_run = max(this_run, int(float(m.group(1))) + 1)
-        metadata.update({
-            METADATA_PATTERN.format(this_run, "version"): spykfunc_version,
-            METADATA_PATTERN.format(this_run, "filters"): ",".join(self._config.filters),
-            METADATA_PATTERN.format(this_run, "recipe"): str(self.recipe or ""),
-        })
+        metadata.update(
+            {
+                METADATA_PATTERN.format(this_run, "version"): spykfunc_version,
+                METADATA_PATTERN.format(this_run, "filters"): ",".join(self._config.filters),
+                METADATA_PATTERN.format(this_run, "recipe"): str(self.recipe or ""),
+            }
+        )
         if self.circuit.source and self.circuit.target:
-            metadata.update({
-                "source_population_name": self.circuit.source.population,
-                "source_population_size": str(len(self.circuit.source)),
-                "target_population_name": self.circuit.target.population,
-                "target_population_size": str(len(self.circuit.target)),
-            })
+            metadata.update(
+                {
+                    "source_population_name": self.circuit.source.population,
+                    "source_population_size": str(len(self.circuit.source)),
+                    "target_population_name": self.circuit.target.population,
+                    "target_population_size": str(len(self.circuit.target)),
+                }
+            )
         new_schema = schema.with_metadata(metadata)
         pq.write_metadata(new_schema, os.path.join(path, "_metadata"))
-
 
     # -------------------------------------------------------------------------
     # Helper functions
     # -------------------------------------------------------------------------
     def _ensure_data_loaded(self):
-        """Ensures required data is available
-        """
+        """Ensures required data is available"""
         if self.circuit is None:
             raise RuntimeError("No touches available. Please load data first.")
         if self._config.filters and self.recipe is None:

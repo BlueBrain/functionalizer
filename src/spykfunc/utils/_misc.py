@@ -39,13 +39,13 @@ def make_slices(length, total):
 # -----------------------------------------------
 class classproperty(property):
     def __get__(self, obj, objtype=None):
-        return super(classproperty, self).__get__(objtype)
+        return super().__get__(objtype)
 
     def __set__(self, obj, value):
-        super(classproperty, self).__set__(type(obj), value)
+        super().__set__(type(obj), value)
 
     def __delete__(self, obj):
-        super(classproperty, self).__delete__(type(obj))
+        super().__delete__(type(obj))
 
 
 # -----------------------------------------------
@@ -63,7 +63,9 @@ def assign_to_property(prop_name, use_as_cache=False):
             val = f(self, *args, **kw)
             setattr(self, prop_name, val)
             return val
+
         return update_wrapper(newf, f)
+
     return decorator
 
 
@@ -89,8 +91,8 @@ class ConsoleColors:
     @classmethod
     def format_text(cls, text, color, style=None):
         if color > 7:
-            style = (color >> 4)
-            color = color & 0xf
+            style = color >> 4
+            color = color & 0xF
         format_seq = "" if style is None else cls._CHANGE_SEQ.format(style)
 
         return format_seq + cls.set_text_color(color) + text + cls._RESET_SEQ
@@ -99,6 +101,7 @@ class ConsoleColors:
 # ---
 def format_cur_exception():
     import traceback
+
     if config.log_level == _logging.DEBUG:
         return traceback.format_exc()
     exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -109,27 +112,18 @@ def format_cur_exception():
 # -----------------------------------------------
 # Logging
 # -----------------------------------------------
-class InteractiveErrorHandler(_logging.StreamHandler):
-    def emit(self, record):
-        super(InteractiveErrorHandler, self).emit(record)
-        if not query_yes_no("An error occurred. Do you want to continue execution?"):
-            print("Exiting...")
-            _logging.shutdown()
-            sys.exit(1)
-
-
 class ColoredFormatter(_logging.Formatter):
     COLORS = {
-        'WARNING': ConsoleColors.YELLOW,
-        'INFO': ConsoleColors.DEFAULT + ConsoleColors.BOLD,
-        'DEBUG': ConsoleColors.BLUE,
-        'ERROR': ConsoleColors.RED,
-        'CRITICAL': ConsoleColors.RED
+        "WARNING": ConsoleColors.YELLOW,
+        "INFO": ConsoleColors.DEFAULT + ConsoleColors.BOLD,
+        "DEBUG": ConsoleColors.BLUE,
+        "ERROR": ConsoleColors.RED,
+        "CRITICAL": ConsoleColors.RED,
     }
 
     def format(self, record):
         levelname = record.levelname
-        msg = super(ColoredFormatter, self).format(record)
+        msg = super().format(record)
         if levelname == "WARNING":
             msg = "[WARNING] " + msg
         if levelname in self.COLORS:
@@ -137,11 +131,9 @@ class ColoredFormatter(_logging.Formatter):
         return msg
 
 
-ContinueAbortErrorLogHandler = InteractiveErrorHandler()
-ContinueAbortErrorLogHandler.setLevel(_logging.ERROR)
 DefaultHandler = _logging.StreamHandler(sys.stdout)
 DefaultHandler.setLevel(_logging.DEBUG)
-DefaultHandler.setFormatter(ColoredFormatter('(%(asctime)s) %(message)s', '%H:%M:%S'))
+DefaultHandler.setFormatter(ColoredFormatter("(%(asctime)s) %(message)s", "%H:%M:%S"))
 
 
 class Singleton(type):
@@ -180,4 +172,4 @@ def show_wait_message(mesg):
     print(mesg + " Please wait...", end="\r")
     sys.stdout.flush()
     yield
-    print(" "*(len(mesg) + 15), end="\r")  # Clear
+    print(" " * (len(mesg) + 15), end="\r")  # Clear

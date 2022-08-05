@@ -10,9 +10,7 @@ def test_sonata_properties(tmp_path_factory):
     tmpdir = tmp_path_factory.mktemp("sonata_properties")
     cdir = tmpdir / "check"
     odir = tmpdir / "out"
-    fz = create_functionalizer(
-        tmpdir, ["SynapseProperties"]
-    ).init_data(
+    fz = create_functionalizer(tmpdir, ["SynapseProperties"]).init_data(
         *ARGS[:-1], edges=(os.path.join(DATADIR, "edges.h5"), "default")
     )
     fz.process_filters()

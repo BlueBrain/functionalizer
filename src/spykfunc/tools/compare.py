@@ -1,3 +1,5 @@
+# pylint: disable=unsupported-assignment-operation,unsubscriptable-object
+# pandas seems to trigger these warnings in 1.4+
 """Compare two outputs of Spykfunc (coalesced)
 """
 import argparse
@@ -32,25 +34,14 @@ def run():
     )
     args = parser.parse_args()
 
-    base = (
-        pq.ParquetDataset(args.baseline)
-        .read()
-        .to_pandas()
-        .rename(columns=LEGACY_MAPPING)
-    )
-    comp = (
-        pq.ParquetDataset(args.comparison)
-        .read()
-        .to_pandas()
-        .rename(columns=LEGACY_MAPPING)
-    )
+    base = pq.ParquetDataset(args.baseline).read().to_pandas().rename(columns=LEGACY_MAPPING)
+    comp = pq.ParquetDataset(args.comparison).read().to_pandas().rename(columns=LEGACY_MAPPING)
 
     pop = libsonata.NodeStorage(args.circuit.encode()).open_population("All")
     sel = libsonata.Selection([(0, len(pop))])
-    mtypes = pd.DataFrame({
-        "id": sel.flatten(),
-        "mtype": pop.get_attribute("mtype", sel)
-    }).set_index("id")
+    mtypes = pd.DataFrame(
+        {"id": sel.flatten(), "mtype": pop.get_attribute("mtype", sel)}
+    ).set_index("id")
 
     base = base.join(mtypes, on="source_node_id")
     base = base.join(mtypes, on="target_node_id", lsuffix="_pre", rsuffix="_post")
@@ -65,9 +56,7 @@ def run():
     combined["diff_rel"] = combined.diff_abs / combined[["base", "comp"]].max(1)
     combined = combined.fillna(0).sort_values(["diff_rel", "diff_abs"], ascending=False)
 
-    combined = combined[
-        (combined.diff_abs > args.thres_abs) & (combined.diff_rel > args.thres_rel)
-    ]
+    combined = combined[(combined.diff_abs > args.thres_abs) & (combined.diff_rel > args.thres_rel)]
 
     if len(combined) > 0:
         added = combined[combined.base == 0]

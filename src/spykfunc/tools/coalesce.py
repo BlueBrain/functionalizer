@@ -8,11 +8,11 @@ import tempfile
 
 import sparkmanager as sm
 
+
 def run():
-    """Entry point.
-    """
+    """Entry point."""
     try:
-        infiles, outfile = sys.argv[1:]
+        infiles, outfile = sys.argv[1:]  # pylint: disable=unbalanced-tuple-unpacking
     except ValueError:
         print(f"usage: {os.path.basename(sys.argv[0])} directory parquetfile")
         sys.exit(1)
@@ -22,11 +22,11 @@ def run():
     sm.create("foo")
     sm.read.load(infiles).coalesce(1).write.parquet(tmpname)
 
-    filename, = glob.glob(f"{tmpname}/*.parquet")
+    (filename,) = glob.glob(f"{tmpname}/*.parquet")
 
     shutil.move(filename, outfile)
     shutil.rmtree(tmpname)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     run()

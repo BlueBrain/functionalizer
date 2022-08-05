@@ -4,8 +4,7 @@ import sparkmanager as sm
 
 
 def test_bench():
-    """Test the benchmarking
-    """
+    """Test the benchmarking"""
     sm.create("test")
 
     with sm.benchmark():

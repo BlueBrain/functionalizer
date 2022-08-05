@@ -4,14 +4,13 @@ import argparse
 import sys
 
 import libsonata
-import pandas as pd
 import pyarrow.parquet as pq
 import numpy as np
 
 from spykfunc.schema import LEGACY_MAPPING
 
 
-def run():
+def compare_nodesets():
     """Entry point."""
     parser = argparse.ArgumentParser()
     parser.add_argument("circuit", help="the circuit file with neuron definitions")
@@ -26,18 +25,13 @@ def run():
 
     df = pq.ParquetDataset(args.full).read().to_pandas().rename(columns=LEGACY_MAPPING)
     sel = df.target_node_id.isin(idx) & df.source_node_id.isin(idx)
-    df_filtered = (
-        pq.ParquetDataset(args.filtered)
-        .read()
-        .to_pandas()
-        .rename(columns=LEGACY_MAPPING)
-    )
+    df_filtered = pq.ParquetDataset(args.filtered).read().to_pandas().rename(columns=LEGACY_MAPPING)
 
     if len(df[sel]) != len(df_filtered):
         print("\nDifferences in connections")
         print("==========================")
-        print("Expected Dataframe Size: {:10d}".format(len(df[sel])))
-        print("Filtered Dataframe Size: {:10d}".format(len(df_filtered)))
+        print(f"Expected Dataframe Size: {len(df[sel]):10d}")
+        print(f"Filtered Dataframe Size: {len(df_filtered):10d}")
 
         sys.exit(1)
     else:
@@ -45,4 +39,4 @@ def run():
 
 
 if __name__ == "__main__":
-    run()
+    compare_nodesets()

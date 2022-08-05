@@ -1,14 +1,12 @@
 """
 """
-import fnmatch
 import functools
-import itertools
 import logging
 import operator
 
-from collections import defaultdict
-from typing import Dict, Iterable, Iterator, List, Tuple
+from typing import Dict, List
 
+from .common import NODE_FIELDS
 from ..property import PathwayProperty, PathwayPropertyGroup
 
 
@@ -21,15 +19,7 @@ class ConnectionRule(PathwayProperty):
     _name = "rule"
     _alias = "mTypeRule"
 
-    _attributes = {
-        "fromEType": "*",
-        "fromMType": "*",
-        "fromRegion": "*",
-        "fromSClass": "*",
-        "toEType": "*",
-        "toMType": "*",
-        "toRegion": "*",
-        "toSClass": "*",
+    _attributes = NODE_FIELDS | {
         "probability": float,
         "active_fraction": float,
         "bouton_reduction_factor": float,
@@ -54,7 +44,7 @@ class ConnectionRule(PathwayProperty):
         theirs = sum(getattr(other, col) == "*" for col in self.columns())
         return mine <= theirs
 
-    def validate(self) -> bool:
+    def validate(self, _: Dict[str, List[str]] = None) -> bool:
         # Rule according to validation in ConnectivityPathway::getReduceAndCutParameters
         allowed_parameters = [
             {"mean_syns_connection", "stdev_syns_connection", "active_fraction"},
@@ -65,11 +55,9 @@ class ConnectionRule(PathwayProperty):
         ]
         possible_fields = functools.reduce(operator.or_, allowed_parameters)
 
-        set_parameters = set(
-            attr for attr in possible_fields if getattr(self, attr) is not None
-        )
+        set_parameters = set(attr for attr in possible_fields if getattr(self, attr) is not None)
         if set_parameters not in allowed_parameters:
-            logger.warning(f"The following rule does not conform: {self} ({set_parameters})")
+            logger.warning("The following rule does not conform: %s (%s)", self, set_parameters)
             return False
         return True
 

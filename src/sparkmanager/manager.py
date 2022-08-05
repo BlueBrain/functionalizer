@@ -2,19 +2,20 @@
 """
 from contextlib import contextmanager
 from functools import update_wrapper
-from pyspark.sql import SparkSession, SQLContext
 
 import atexit
 import json
 import os
 import time
 
+from pyspark.sql import SparkSession, SQLContext
+
 from .eventlog import EventLog
 
 
-class SparkReport(object):
-    """Save time differences to a file
-    """
+class SparkReport:
+    """Save time differences to a file"""
+
     def __init__(self, filename, manager):
         """Create a new instance
 
@@ -23,50 +24,52 @@ class SparkReport(object):
         """
         self.__filename = filename
         self.__report = {
-            'runtime': [],
-            'timing': [[]],
-            'spark': {
-                'version': manager.spark.version,
-                'parallelism': manager.defaultParallelism,
-                'executors': manager._jsc.sc().getExecutorMemoryStatus().size(),
+            "runtime": [],
+            "timing": [[]],
+            "spark": {
+                "version": manager.spark.version,
+                "parallelism": manager.defaultParallelism,
+                "executors": manager._jsc.sc().getExecutorMemoryStatus().size(),
             },
-            'app': {},
-            'slurm': {
-                'jobid': os.environ.get('SLURM_JOBID', ''),
-                'nodes': os.environ.get('SLURM_NODELIST', ''),
-            }
+            "app": {},
+            "slurm": {
+                "jobid": os.environ.get("SLURM_JOBID", ""),
+                "nodes": os.environ.get("SLURM_NODELIST", ""),
+            },
         }
         self.__start = time.time()
         self.__eventlog = None
-        logdir = manager.getConf().get('spark.eventLog.dir')
+        logdir = manager.getConf().get("spark.eventLog.dir")
         if logdir:
-            self.__eventlog = os.path.join(logdir, manager.getConf().get('spark.app.id') + '.inprogress')
+            self.__eventlog = os.path.join(
+                logdir, manager.getConf().get("spark.app.id") + ".inprogress"
+            )
         if not os.path.exists(os.path.dirname(filename)):
             os.makedirs(os.path.dirname(filename))
         elif os.path.exists(filename):
-            with open(filename, 'r') as fd:
+            with open(filename, "r") as fd:
                 data = json.load(fd)
-                self.__report['timing'] = data.get('timing', []) + [[]]
-                self.__report['runtime'] = data.get('runtime', [])
+                self.__report["timing"] = data.get("timing", []) + [[]]
+                self.__report["runtime"] = data.get("runtime", [])
 
         def finish():
-            """Save the final runtime upon object deletion
-            """
+            """Save the final runtime upon object deletion"""
             now = time.time()
-            self.__report['runtime'].append((now - self.__start, self.__start, now))
+            self.__report["runtime"].append((now - self.__start, self.__start, now))
             if os.path.exists(self.__eventlog):
                 try:
                     log = EventLog(self.__eventlog)
-                    self.__report['spark']['shuffle'] = log.shuffle_size
-                    self.__report['spark']['rows_max'] = log.max_rows
-                    self.__report['spark']['rows_last'] = log.last_rows
+                    self.__report["spark"]["shuffle"] = log.shuffle_size
+                    self.__report["spark"]["rows_max"] = log.max_rows
+                    self.__report["spark"]["rows_last"] = log.last_rows
                 except Exception as e:
-                    self.__report['spark']['processing_error'] = str(e)
-                    self.__report['spark']['shuffle'] = float('nan')
-                    self.__report['spark']['rows_max'] = float('nan')
-                    self.__report['spark']['rows_last'] = float('nan')
-            with open(self.__filename, 'w') as fd:
+                    self.__report["spark"]["processing_error"] = str(e)
+                    self.__report["spark"]["shuffle"] = float("nan")
+                    self.__report["spark"]["rows_max"] = float("nan")
+                    self.__report["spark"]["rows_last"] = float("nan")
+            with open(self.__filename, "w") as fd:
                 json.dump(self.__report, fd)
+
         atexit.register(finish)
 
     def add_info(self, data):
@@ -74,7 +77,7 @@ class SparkReport(object):
 
         :param data: a dictionary to store under the key `app`
         """
-        self.__report['app'].update(data)
+        self.__report["app"].update(data)
 
     def __call__(self, name, start, end):
         """Update stored information
@@ -83,14 +86,14 @@ class SparkReport(object):
         :param start: beginning timestamp
         :param end: end timestamp
         """
-        self.__report['timing'][-1].append((name, (end - start, start, end)))
-        with open(self.__filename, 'w') as fd:
+        self.__report["timing"][-1].append((name, (end - start, start, end)))
+        with open(self.__filename, "w") as fd:
             json.dump(self.__report, fd)
 
 
-class SparkManager(object):
-    """Manage Spark with a singular object
-    """
+class SparkManager:
+    """Manage Spark with a singular object"""
+
     def __init__(self):
         self.__session = None
         self.__context = None
@@ -106,27 +109,23 @@ class SparkManager(object):
 
     @property
     def spark(self):
-        """:property: the Spark session
-        """
+        """:property: the Spark session"""
         return self.__session
 
     @property
     def sc(self):
-        """:property: the Spark context
-        """
+        """:property: the Spark context"""
         return self.__context
 
     @property
     def sqlContext(self):
-        """:property:
-        """
+        """:property:"""
         if not self.__sqlcontext:
             self.__sqlcontext = SQLContext.getOrCreate(self.sc)
         return self.__sqlcontext
 
     def __getattr__(self, attr):
-        """Provide convenient access to Spark functions
-        """
+        """Provide convenient access to Spark functions"""
         if attr in self.__dict__:
             return self.__dict__[attr]
         if self.__overlap is None:
@@ -134,8 +133,10 @@ class SparkManager(object):
         if attr in self.__overlap:
             raise AttributeError("Cannot resolve attribute unambiguously!")
         if attr not in self.__allowed:
-            raise AttributeError("Cannot resolve attribute '{}'! Allowed attributes: {}".format(
-                attr, ", ".join(sorted(self.__allowed))))
+            allowed = ", ".join(sorted(self.__allowed))
+            raise AttributeError(
+                f"Cannot resolve attribute '{attr}'! Allowed attributes: {allowed}"
+            )
         try:
             return getattr(self.__session, attr)
         except AttributeError:
@@ -165,7 +166,7 @@ class SparkManager(object):
             raise ValueError("need a name for a new spark session")
 
         if options:
-            os.environ['PYSPARK_SUBMIT_ARGS'] = options + ' pyspark-shell'
+            os.environ["PYSPARK_SUBMIT_ARGS"] = options + " pyspark-shell"
 
         session = SparkSession.builder.appName(name)
 
@@ -182,8 +183,9 @@ class SparkManager(object):
         self.__allowed = s_attr | c_attr
         self.__overlap = s_attr & c_attr
 
-        identical = set(i for i in self.__overlap
-                        if getattr(self.__session, i) is getattr(self.__context, i))
+        identical = set(
+            i for i in self.__overlap if getattr(self.__session, i) is getattr(self.__context, i)
+        )
         self.__overlap -= identical
         self.__allowed |= identical
 
@@ -220,11 +222,12 @@ class SparkManager(object):
         if not f.__name__:
             f.__name__ = "[unknown]"
         n = f.__name__
-        d = f.__doc__.strip() if f.__doc__ else ''
+        d = f.__doc__.strip() if f.__doc__ else ""
 
         def new_f(*args, **kwargs):
             with self.jobgroup(n, d):
                 return f(*args, **kwargs)
+
         return update_wrapper(new_f, f)
 
     @contextmanager
@@ -277,8 +280,8 @@ class SparkManager(object):
         """
         self.__context.setJobGroup(name, desc)
         self.__gstack.append((name, desc))
+        start = time.time()
         try:
-            start = time.time()
             yield
         finally:
             if self.__report:
@@ -287,8 +290,7 @@ class SparkManager(object):
             self.__context.setJobGroup(*self.__gstack[-1])
 
     def reset_cache(self):
-        """Clear all caches
-        """
+        """Clear all caches"""
         for _, rdd in self.sc._jsc.getPersistentRDDs().items():
             rdd.unpersist()
         self.catalog.clearCache()

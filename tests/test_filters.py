@@ -24,7 +24,7 @@ def test_fixed_probabilities(tmp_path_factory):
         mdf = cache_broadcast_single_part(
             sm.createDataFrame(
                 enumerate(circuit.source.mtype_values),
-                schema.indexed_strings(["mtype_i", "mtype_name"])
+                schema.indexed_strings(["mtype_i", "mtype_name"]),
             )
         )
         res = (
@@ -39,9 +39,7 @@ def test_fixed_probabilities(tmp_path_factory):
         return dict(zip(res["mtype"], res["count"]))
 
     tmpdir = tmp_path_factory.mktemp("fixed_probabilities")
-    fz = create_functionalizer(
-        tmpdir, ["ReduceAndCut"]
-    ).init_data(
+    fz = create_functionalizer(tmpdir, ["ReduceAndCut"]).init_data(
         os.path.join(DATADIR, "builderRecipeAllPathways_fixed.xml"), *ARGS[1:]
     )
 
@@ -59,31 +57,26 @@ def test_fixed_probabilities(tmp_path_factory):
 @pytest.mark.slow
 @pytest.mark.incremental
 class TestFilters(object):
-    """Sequential tests of filters.
-    """
+    """Sequential tests of filters."""
 
     def test_distance(self, fz):
-        """Test the distance rules: deterministic
-        """
+        """Test the distance rules: deterministic"""
         fz.process_filters(filters=["BoutonDistance"])
         fz.circuit.df.show()
         assert fz.circuit.df.count() == NUM_AFTER_DISTANCE
 
     def test_touch_filter(self, fz):
-        """Test the bouton touch filter: deterministic
-        """
+        """Test the bouton touch filter: deterministic"""
         fz.process_filters(filters=["BoutonDistance", "TouchRules"])
         assert fz.circuit.df.count() == NUM_AFTER_TOUCH
 
     def test_reduce_and_cut(self, fz):
-        """Test the reduce and cut filter: not deterministic
-        """
+        """Test the reduce and cut filter: not deterministic"""
         fz.process_filters(filters=["BoutonDistance", "TouchRules", "ReduceAndCut"])
         assert fz.circuit.df.count() == NUM_AFTER_FILTER
 
     def test_resume(self, fz, tmp_path_factory):
-        """Make sure that resuming "works"
-        """
+        """Make sure that resuming "works" """
         tmpdir = tmp_path_factory.mktemp("filters")
         fz2 = create_functionalizer(tmpdir).init_data(*ARGS)
         fz2.process_filters()
@@ -92,21 +85,17 @@ class TestFilters(object):
         assert count == original
 
     def test_checkpoint_schema(self, fz, tmp_path_factory):
-        """To conserve space, only touch columns should be written to disk
-        """
+        """To conserve space, only touch columns should be written to disk"""
         basedir = tmp_path_factory.getbasetemp() / "filters0" / "check"
         files = [
-            f
-            for f in os.listdir(str(basedir))
-            if f.endswith(".ptable") or f.endswith(".parquet")
+            f for f in os.listdir(str(basedir)) if f.endswith(".ptable") or f.endswith(".parquet")
         ]
         for fn in files:
             df = sm.read.load(str(basedir / fn))
             assert all("src_" not in s and "dst_" not in s for s in df.schema.names)
 
     def test_overwrite(self, fz, tmp_path_factory):
-        """Test that overwriting checkpointed data works
-        """
+        """Test that overwriting checkpointed data works"""
         tmpdir = tmp_path_factory.mktemp("filters")
         fz2 = create_functionalizer(tmpdir).init_data(*ARGS)
         fz2.process_filters(overwrite=True)
@@ -115,8 +104,7 @@ class TestFilters(object):
         assert count == original
 
     def test_writeout(self, fz):
-        """Simple test that saving results works.
-        """
+        """Simple test that saving results works."""
         fz.process_filters()
         fz.export_results()
 
@@ -130,11 +118,7 @@ class TestFilters(object):
         ]
 
         df = sm.read.load(os.path.join(fz.output_directory, "circuit.parquet"))
-        props = (
-            df.groupBy("source_node_id", "target_node_id", *cols)
-            .count()
-            .cache()
-        )
+        props = df.groupBy("source_node_id", "target_node_id", *cols).count().cache()
         conns = props.groupBy("source_node_id", "target_node_id").count()
 
         assert (
@@ -145,16 +129,12 @@ class TestFilters(object):
         ), "can only have one property setting per connection"
 
         props = (
-            df.where(
-                (F.col("source_node_id") == 58)
-                & (F.col("target_node_id") == 36)
-            )
+            df.where((F.col("source_node_id") == 58) & (F.col("target_node_id") == 36))
             .select(*cols)
             .toPandas()
         )
         want = pd.DataFrame(
-            [(0.118928, 635.527222, 20.275032, 0.602809, 1.771395, 1)],
-            columns=cols
+            [(0.118928, 635.527222, 20.275032, 0.602809, 1.771395, 1)], columns=cols
         )
         want["n_rrp_vesicles"] = want["n_rrp_vesicles"].astype("int16")
         have = props.drop_duplicates().round(5)

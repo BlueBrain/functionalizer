@@ -3,14 +3,14 @@
 import fnmatch
 import itertools
 import logging
-import math
-import numpy as np
 import re
 
 from collections import defaultdict
 from copy import deepcopy
-from typing import Any, Callable, Dict, Iterator, List, Optional, Union, Set, Tuple
+from typing import Any, Callable, Dict, Iterator, List, Optional, Union, Tuple
 from textwrap import indent
+
+import numpy as np
 
 
 SURROUNDING_ZEROS = re.compile(r"^0*([1-9][0-9]*|0(?=\.))(?:|.0+|(.[0-9]*[1-9]+)0*)$")
@@ -31,8 +31,8 @@ class NotFound(Exception):
 
 
 class Property:
-    """Generic property class that should be inherited from.
-    """
+    """Generic property class that should be inherited from."""
+
     _name: Union[str, None] = None
 
     _attributes: Dict[str, Any] = {}
@@ -60,9 +60,7 @@ class Property:
             self._local_attributes[key] = self._convert(key, value)
         for key, value in self._attribute_alias.items():
             if not hasattr(self, value):
-                raise TypeError(
-                    f"cannot alias non-existant {value} to {key} in {type(self)}"
-                )
+                raise TypeError(f"cannot alias non-existant {value} to {key} in {type(self)}")
 
     def __delattr__(self, attr):
         resolved_name = self._attribute_alias.get(attr, attr)
@@ -73,13 +71,12 @@ class Property:
         resolved_name = self._attribute_alias.get(attr, attr)
         if attr.startswith("_"):
             return self.__dict__[attr]
-        elif resolved_name in self._local_attributes:
+        if resolved_name in self._local_attributes:
             default = self._local_attributes[resolved_name]
             if isinstance(default, type):
                 default = None
             return self._values.get(resolved_name, default)
-        else:
-            raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{attr}'")
+        raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{attr}'")
 
     def __setattr__(self, attr, value):
         resolved_name = self._attribute_alias.get(attr, attr)
@@ -104,6 +101,7 @@ class Property:
             yield ""
             for key, value in self._values.items():
                 yield f'{key}="{value}"'
+
         attrs = " ".join(vals())
         if self._implicit and len(attrs) == 0:
             return ""
@@ -118,18 +116,17 @@ class Property:
         round_trip = type(value)(new_value)
         if _sanitize(round_trip) != _sanitize(value):
             raise TypeError(
-                "conversion mismatch: {}={}({}) results in {}"
-                .format(attr, kind.__name__, value, new_value)
+                f"conversion mismatch: {attr}={kind.__name__}({value}) results in {new_value}"
             )
         return new_value
 
-    def validate(self, *args, **kwargs) -> bool:
+    def validate(self, _: Dict[str, List[str]] = None) -> bool:
         return True
 
 
 class PropertyGroup(list):
-    """A container to group settings.
-    """
+    """A container to group settings."""
+
     _kind: Property
     _name: Optional[str] = None
     _alias: Optional[str] = None
@@ -144,6 +141,7 @@ class PropertyGroup(list):
             yield ""
             for key, value in self._defaults.items():
                 yield f'{key}="{value}"'
+
         attrs = " ".join(vals())
         inner = "\n".join(str(e) for e in self)
         if inner:
@@ -153,11 +151,11 @@ class PropertyGroup(list):
 
     @classmethod
     def load(cls, xml, strict: bool = True):
-        """Load a list of properties defined by the class
-        """
+        """Load a list of properties defined by the class"""
         if isinstance(xml, str):
             from io import StringIO
-            from .recipe import Recipe
+            from .recipe import Recipe  # pylint: disable=cyclic-import
+
             xml = Recipe._load_from_xml(StringIO(xml))
         tag = cls._name or cls.__name__
         root = xml.findall(tag)
@@ -181,8 +179,10 @@ class PropertyGroup(list):
         if hasattr(cls._kind, "_alias"):
             allowed.add(cls._kind._alias)
         items = [i for i in root[0].iter() if i.tag in allowed]
-        data = [cls._kind(strict=strict, index=i, defaults=defaults, **item.attrib)
-                for i, item in enumerate(items)]
+        data = [
+            cls._kind(strict=strict, index=i, defaults=defaults, **item.attrib)
+            for i, item in enumerate(items)
+        ]
         return cls(data, defaults=defaults)
 
 
@@ -196,13 +196,14 @@ def singleton(fct: Union[Callable, None] = None, implicit: bool = False) -> Call
         implicit: will create the decorated element with default parameters
                   if it is not found
     """
+
     def _deco(cls):
         def _loader(*args, **kwargs):
             strict = kwargs.pop("strict", True)
             tag = cls._name or cls.__name__
             if (len(args) > 0) == (len(kwargs) > 0):
                 raise TypeError("check call signature")
-            elif args:
+            if args:
                 if len(args) > 1:
                     raise TypeError("check call signature")
                 items = args[0].findall(tag)
@@ -211,14 +212,15 @@ def singleton(fct: Union[Callable, None] = None, implicit: bool = False) -> Call
                         obj = cls()
                         obj._implicit = True
                         return obj
-                    else:
-                        raise NotFound(cls)
-                elif len(items) > 1:
+                    raise NotFound(cls)
+                if len(items) > 1:
                     raise ValueError(f"singleton expected for {cls}")
                 return cls(strict=strict, **items[0].attrib)
             return cls(strict=strict, **kwargs)
+
         cls.load = _loader
         return cls
+
     if fct:
         return _deco(fct)
     return _deco
@@ -241,9 +243,7 @@ class PathwayProperty(Property):
         """
         return sorted(k for k in cls._attributes if _DIRECTIONAL_ATTR.match(k))
 
-    def __call__(
-        self, values: Dict[str, List[str]]
-    ) -> Iterator[Tuple[Dict[str, str], Any]]:
+    def __call__(self, values: Dict[str, List[str]]) -> Iterator[Tuple[Dict[str, str], Any]]:
         """Expand the property given the possible matching attribute values
         in `values`.  Returns an iterator over dictionaries with the
         attribute values matched and the property itself.
@@ -264,9 +264,7 @@ class PathwayProperty(Property):
 
 
 class PathwayPropertyGroup(PropertyGroup):
-    def validate(
-        self, values: Dict[str, List[str]]
-    ) -> bool:
+    def validate(self, values: Dict[str, List[str]]) -> bool:
         """Checks that all rules of the group are correct and all values
         passed are covered.
 
@@ -274,9 +272,12 @@ class PathwayPropertyGroup(PropertyGroup):
         >>> rules = ConnectionRules.load('''
         ... <blueColumn>
         ...   <ConnectionRules>
-        ...     <mTypeRule fromMType="*" toMType="B*" bouton_reduction_factor="0" pMu_A="1.0" p_A="1.0" />
-        ...     <mTypeRule fromMType="*" toMType="Bar" bouton_reduction_factor="0" pMu_A="1.0" p_A="1.0" />
-        ...     <mTypeRule fromMType="*" toMType="Bar" toRegion="Spam" bouton_reduction_factor="0" pMu_A="1.0" p_A="1.0" />
+        ...     <mTypeRule fromMType="*" toMType="B*"
+        ...       bouton_reduction_factor="0" pMu_A="1.0" p_A="1.0" />
+        ...     <mTypeRule fromMType="*" toMType="Bar"
+        ...       bouton_reduction_factor="0" pMu_A="1.0" p_A="1.0" />
+        ...     <mTypeRule fromMType="*" toMType="Bar"
+        ...       toRegion="Spam" bouton_reduction_factor="0" pMu_A="1.0" p_A="1.0" />
         ...   </ConnectionRules>
         ... </blueColumn>
         ... ''')
@@ -293,12 +294,11 @@ class PathwayPropertyGroup(PropertyGroup):
         >>> rules.validate(values)  # Foo is not covered by the rules!
         False
         """
+
         def _check(name, covered):
             uncovered = set(values[name]) - covered
             if len(uncovered):
-                logger.warning(
-                    f"The following {name} are not covered: {', '.join(uncovered)}"
-                )
+                logger.warning("The following %s are not covered: %s", name, ", ".join(uncovered))
                 return False
             return True
 
@@ -309,7 +309,7 @@ class PathwayPropertyGroup(PropertyGroup):
                 valid = False
             expansion = list(r(values))
             if len(expansion) == 0:
-                logger.warning(f"The following rule does not match anything: {r}")
+                logger.warning("The following rule does not match anything: %s", r)
                 valid = False
             for keys, _ in expansion:
                 for name, key in keys.items():
@@ -418,16 +418,14 @@ class PathwayPropertyGroup(PropertyGroup):
         ... )
         {'toMType': 'Bar', 'toRegion': 'Spam'}
         """
-        result = dict()
+        result = {}
         for attr in self.required:
             idx = key % len(values[attr])
             key //= len(values[attr])
             result[attr] = values[attr][idx]
         return result
 
-    def to_matrix(
-        self, values: Dict[str, List[str]]
-    ) -> np.array:
+    def to_matrix(self, values: Dict[str, List[str]]) -> np.array:
         """Construct a flattened connection rule matrix
 
         Requires being passed a full set of allowed parameter values passed
@@ -475,7 +473,7 @@ class PathwayPropertyGroup(PropertyGroup):
         concrete = np.full(
             fill_value=len(self),
             shape=[len(values[r]) for r in required_attributes],
-            dtype="uint32"
+            dtype="uint32",
         )
         default_key = [np.arange(len(values[name])) for name in required_attributes]
         for rule in self:
@@ -510,14 +508,14 @@ class MTypeValidator:
     ``False``, the latter part of the validation will be skipped.
     """
 
-    def validate(
-        self, values: Dict[str, List[str]]
-    ) -> bool:
+    def validate(self, values: Dict[str, List[str]]) -> bool:
         def _check(mtypes, covered, kind):
             uncovered = set(mtypes) - covered
             if len(uncovered):
                 logger.warning(
-                    f"The following {kind} MTypes are not covered: {', '.join(uncovered)}"
+                    "The following %s MTypes are not covered: %s",
+                    kind,
+                    ", ".join(uncovered),
                 )
                 return False
             return True
@@ -528,10 +526,10 @@ class MTypeValidator:
         covered_src = set()
         covered_dst = set()
         valid = True
-        for r in self:
+        for r in iter(self):
             values = list(r(src_mtypes, dst_mtypes))
             if len(values) == 0:
-                logger.warning(f"The following rule does not match anything: {r}")
+                logger.warning("The following rule does not match anything: %s", r)
                 valid = False
             for src, dst, *_ in values:
                 covered_src.add(src)

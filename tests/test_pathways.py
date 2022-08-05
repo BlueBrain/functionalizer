@@ -12,7 +12,9 @@ from spykfunc.circuit import Circuit
 MTYPES = ["BAR", "BAZ"]
 REGIONS = ["NONE", "SOME", "MANY"]
 
-PROPERTY = '<mTypeRule toMType="{}" toRegion="{}" bouton_reduction_factor="0.9" pMu_A="0.9" p_A="0.9" />'
+PROPERTY = (
+    '<mTypeRule toMType="{}" toRegion="{}" bouton_reduction_factor="0.9" pMu_A="0.9" p_A="0.9" />'
+)
 
 SOME_PROPERTIES = """\
 <?xml version="1.0"?>
@@ -21,7 +23,9 @@ SOME_PROPERTIES = """\
 {}
   </ConnectionRules>
 </blueColumn>
-""".format("\n".join(PROPERTY.format(m, r) for m, r in product(MTYPES, REGIONS)))
+""".format(
+    "\n".join(PROPERTY.format(m, r) for m, r in product(MTYPES, REGIONS))
+)
 
 
 class _MockNodes:
@@ -44,17 +48,16 @@ def test_pathway_generation(fz):
     r = Recipe(StringIO(SOME_PROPERTIES))
 
     cr = r.connection_rules
-    matrix = cr.to_matrix({
-        "toMType": MTYPES,
-        "toRegion": REGIONS
-    })
+    matrix = cr.to_matrix({"toMType": MTYPES, "toRegion": REGIONS})
 
     c = Circuit(_MockNodes(), _MockNodes(), _MockEdges(), "/")
 
     df = pd.DataFrame.from_records(
-        data=[(m, r, MTYPES[m], REGIONS[r])
-              for m, r in product(range(len(MTYPES)), range(len(REGIONS)))],
-        columns=["dst_mtype_i", "dst_region_i", "dst_mtype", "dst_region"]
+        data=[
+            (m, r, MTYPES[m], REGIONS[r])
+            for m, r in product(range(len(MTYPES)), range(len(REGIONS)))
+        ],
+        columns=["dst_mtype_i", "dst_region_i", "dst_mtype", "dst_region"],
     )
 
     with c.pathways(["toMType", "toRegion"]):

@@ -12,7 +12,9 @@ from spykfunc.definitions import RunningMode as RM
 from spykfunc.functionalizer import Functionalizer
 
 DATADIR = os.path.join(os.path.dirname(__file__), "circuit_1000n")
-CONFIGURATION = os.path.join(os.path.dirname(__file__), '..', 'src', 'spykfunc', 'data', 'desktop.properties')
+CONFIGURATION = os.path.join(
+    os.path.dirname(__file__), "..", "src", "spykfunc", "data", "desktop.properties"
+)
 
 ARGS = (
     os.path.join(DATADIR, "builderRecipeAllPathways.xml"),
@@ -21,7 +23,7 @@ ARGS = (
     (os.path.join(DATADIR, "nodes.h5"), "All"),
     (None, None),
     [os.path.join(DATADIR, "morphologies/h5")],
-    [os.path.join(DATADIR, "touches/*.parquet")]
+    [os.path.join(DATADIR, "touches/*.parquet")],
 )
 
 filters.load()
@@ -35,22 +37,19 @@ def create_functionalizer(tmpdir, filters=None):
         filters=filters,
         configuration=CONFIGURATION,
         checkpoint_dir=str(cdir),
-        output_dir=str(odir)
+        output_dir=str(odir),
     )
 
 
-@pytest.fixture(scope='session', name='fz')
+@pytest.fixture(scope="session", name="fz")
 def fz_fixture(tmp_path_factory):
-    tmpdir = tmp_path_factory.mktemp('filters')
-    return create_functionalizer(
-        tmpdir,
-        RM.FUNCTIONAL.value
-    ).init_data(*ARGS)
+    tmpdir = tmp_path_factory.mktemp("filters")
+    return create_functionalizer(tmpdir, RM.FUNCTIONAL.value).init_data(*ARGS)
 
 
-@pytest.fixture(scope='session', name='gj')
+@pytest.fixture(scope="session", name="gj")
 def gj_fixture(tmp_path_factory):
-    tmpdir = tmp_path_factory.mktemp('gap_junctions')
+    tmpdir = tmp_path_factory.mktemp("gap_junctions")
     args = list(ARGS[:-1]) + [[os.path.join(DATADIR, "gap_junctions/touches*.parquet")]]
     return create_functionalizer(
         tmpdir,
@@ -59,14 +58,11 @@ def gj_fixture(tmp_path_factory):
 
 
 def pytest_addoption(parser):
-    parser.addoption("--run-slow", action="store_true",
-                     default=False, help="run slow tests")
+    parser.addoption("--run-slow", action="store_true", default=False, help="run slow tests")
 
 
 def pytest_configure(config):
-    config.addinivalue_line(
-        "markers", "slow: mark test as slow"
-    )
+    config.addinivalue_line("markers", "slow: mark test as slow")
 
 
 def pytest_collection_modifyitems(config, items):

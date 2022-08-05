@@ -1,6 +1,5 @@
 """A default filter plugin
 """
-import math
 import numpy as np
 import pandas as pd
 
@@ -34,27 +33,27 @@ class GapJunctionFilter(DatasetOperation):
     ]
 
     def __init__(self, recipe, source, target, morphos):
+        super().__init__(recipe, source, target, morphos)
         self.__morphos = morphos
 
     def apply(self, circuit):
-        """Apply both the dendrite-soma and dendrite-dendrite filters.
-        """
-        touches = circuit.df.withColumn('efferent_junction_id', F.col('synapse_id')) \
-                            .withColumn('afferent_junction_id', F.col('synapse_id'))
+        """Apply both the dendrite-soma and dendrite-dendrite filters."""
+        touches = circuit.df.withColumn("efferent_junction_id", F.col("synapse_id")).withColumn(
+            "afferent_junction_id", F.col("synapse_id")
+        )
 
-        touches = touches.groupby(F.least(F.col("src"),
-                                          F.col("dst")),
-                                  F.shiftRight(F.greatest(F.col("src"),
-                                                          F.col("dst")),
-                                               15)) \
-                         .applyInPandas(self._dendrite_match, touches.schema)
+        touches = touches.groupby(
+            F.least(F.col("src"), F.col("dst")),
+            F.shiftRight(F.greatest(F.col("src"), F.col("dst")), 15),
+        ).applyInPandas(self._dendrite_match, touches.schema)
         dendrites = touches.where("afferent_section_id > 0 and efferent_section_id > 0")
-        somas = touches.where("afferent_section_id == 0 or efferent_section_id == 0") \
-                       .groupby(F.shiftRight(F.col("src"), 4)) \
-                       .applyInPandas(self._soma_filter, touches.schema)
+        somas = (
+            touches.where("afferent_section_id == 0 or efferent_section_id == 0")
+            .groupby(F.shiftRight(F.col("src"), 4))
+            .applyInPandas(self._soma_filter, touches.schema)
+        )
 
-        return somas.union(dendrites) \
-                    .repartition("src", "dst")
+        return somas.union(dendrites).repartition("src", "dst")
 
     @property
     def _soma_filter(self):
@@ -62,6 +61,7 @@ class GapJunctionFilter(DatasetOperation):
         that are on parent branches of the dendrite and closer than 3 times
         the soma radius.
         """
+
         def _filter(df: pd.DataFrame) -> pd.DataFrame:
             if len(df) == 0:
                 return df
@@ -94,8 +94,9 @@ class GapJunctionFilter(DatasetOperation):
                 conns = unique_conns[idxs]
                 for conn in conns:
                     # Indices where the connections match
-                    idx = np.where((connections[:, 0] == conn[0]) &
-                                      (connections[:, 1] == conn[1]))[0]
+                    idx = np.where((connections[:, 0] == conn[0]) & (connections[:, 1] == conn[1]))[
+                        0
+                    ]
                     # Match up gap-junctions that are reverted at the end
                     if len(idx) == 0 or soma[idx[0]] != 0:
                         continue
@@ -105,13 +106,17 @@ class GapJunctionFilter(DatasetOperation):
                         for j in idx:
                             if i == j:
                                 break
-                            if activated[j] and sec[j] in path and \
-                                    abs(distances[i] - distances[j]) < mdist:
+                            if (
+                                activated[j]
+                                and sec[j] in path
+                                and abs(distances[i] - distances[j]) < mdist
+                            ):
                                 activated[j] = False
                         activated[i] = True
             # Activate reciprocal connections
             activated[np.isin(jid1, jid2[activated])] = True
             return df[activated]
+
         return _filter
 
     @staticmethod
@@ -123,14 +128,17 @@ class GapJunctionFilter(DatasetOperation):
         if len(df) == 0:
             return df
         from spykfunc.filters.udfs import match_dendrites
-        accept = match_dendrites(df.src.values,
-                                 df.dst.values,
-                                 df.efferent_section_id.values,
-                                 df.efferent_segment_id.values,
-                                 df.efferent_junction_id.values,
-                                 df.afferent_section_id.values,
-                                 df.afferent_segment_id.values,
-                                 df.afferent_junction_id.values).astype(bool)
+
+        accept = match_dendrites(
+            df.src.values,
+            df.dst.values,
+            df.efferent_section_id.values,
+            df.efferent_segment_id.values,
+            df.efferent_junction_id.values,
+            df.afferent_section_id.values,
+            df.afferent_segment_id.values,
+            df.afferent_junction_id.values,
+        ).astype(bool)
         return df[accept]
 
 
@@ -154,15 +162,11 @@ class GapJunctionProperties(DatasetOperation):
     ]
 
     def __init__(self, recipe, source, target, morphos):
+        super().__init__(recipe, source, target, morphos)
         self.conductance = recipe.gap_junction_properties.gsyn
 
     def apply(self, circuit):
-        """Add properties to the circuit
-        """
+        """Add properties to the circuit"""
 
-        touches = (
-            circuit
-            .df
-            .withColumn("gsyn", F.lit(self.conductance))
-        )
+        touches = circuit.df.withColumn("gsyn", F.lit(self.conductance))
         return touches

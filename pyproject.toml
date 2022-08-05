@@ -1,0 +1,7 @@
+[build-system]
+requires = ["cmake", "setuptools", "setuptools_scm", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+extend-exclude = 'src\/spykfunc\/filters\/udfs\/deps\/.*$'
+line_length = 100

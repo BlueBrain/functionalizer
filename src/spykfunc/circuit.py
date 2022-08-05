@@ -1,11 +1,10 @@
 """Module for circuit related classes, functions
 """
 import contextlib
+from typing import Iterable
 
-import pyspark.sql
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
-from typing import Iterable
 
 import sparkmanager as sm
 
@@ -29,35 +28,29 @@ def touches_per_pathway(touches):
         * connections (unique src/dst)
         * the mean (touches/connection)
     """
+
     def pathway_connection_counts(touches):
-        """Get connections (src/dst) counts
-        """
-        connections_counts = (
-            touches
-            .groupBy("pathway_i", "src", "dst")
-            .agg(F.count("*").cast(T.IntegerType()).alias("count"))
+        """Get connections (src/dst) counts"""
+        connections_counts = touches.groupBy("pathway_i", "src", "dst").agg(
+            F.count("*").cast(T.IntegerType()).alias("count")
         )
         return connections_counts
 
     def pathway_statistics(counts):
-        """Gather statistics
-        """
+        """Gather statistics"""
         return (
-            counts
-            .groupBy("pathway_i").agg(
+            counts.groupBy("pathway_i")
+            .agg(
                 F.sum("count").alias("total_touches"),
-                F.count("*").alias("total_connections")
+                F.count("*").alias("total_connections"),
             )
-            .withColumn(
-                "structural_mean",
-                F.col("total_touches") / F.col("total_connections")
-            )
+            .withColumn("structural_mean", F.col("total_touches") / F.col("total_connections"))
         )
 
     return pathway_statistics(pathway_connection_counts(touches))
 
 
-class Circuit(object):
+class Circuit:
     """Representation of a circuit
 
     Simple data container to simplify and future-proof the API.  Objects of
@@ -106,8 +99,7 @@ class Circuit(object):
         touches: EdgeData,
         morphologies: Iterable[str],
     ):
-        """Construct a new circuit
-        """
+        """Construct a new circuit"""
         #: :property: the source neuron population
         self.source = source
         #: :property: the target neuron population
@@ -126,14 +118,14 @@ class Circuit(object):
 
         self.__touches = touches.df
         self.__length = self.__touches.count()
-        logger.info(f"Touch count after reading: {self.__length:,d}")
+        logger.info(f"Touch count after reading: %d{self.__length:,d}")  # pylint: disable=W1203
         self.__metadata = touches.metadata
 
     def with_pathway(self, df=None):
         raise RuntimeError("with_patway can only be used in a pathway context")
 
     @staticmethod
-    def pathway_to_str(df_pathway_i, src_mtypes, dst_mtypes):
+    def pathway_to_str(df_pathway_i):
         raise RuntimeError("with_patway can only be used in a pathway context")
 
     @staticmethod
@@ -183,27 +175,16 @@ class Circuit(object):
         def _w_pathway_str(df):
             col = F.col("pathway_i")
             strcol = None
-            factor = 1
-            result = F.lit(0)
             to_drop = []
             for name, numeric, table, size in zip(names, numerics, tables, sizes):
-                df = (
-                    df
-                    .withColumn(numeric, col % size)
-                    .join(table, numeric)
-                    .drop(numeric)
-                )
+                df = df.withColumn(numeric, col % size).join(table, numeric).drop(numeric)
                 col = (col / size).cast("long")
                 if strcol is not None:
                     strcol = F.concat(strcol, F.lit(f" {name}="), name)
                 else:
                     strcol = F.concat(F.lit(f"{name}="), name)
                 to_drop.append(name)
-            return (
-                df
-                .withColumn("pathway_str", strcol)
-                .drop(*to_drop)
-            )
+            return df.withColumn("pathway_str", strcol).drop(*to_drop)
 
         old_w_pathway = Circuit.with_pathway
         old_w_pathway_str = Circuit.pathway_to_str
@@ -233,14 +214,12 @@ class Circuit(object):
 
     @property
     def input_size(self):
-        """:property: the original input size in bytes.
-        """
+        """:property: the original input size in bytes."""
         return self.__input_size
 
     @property
     def df(self):
-        """:property: shortcut for :attr:`dataframe`.
-        """
+        """:property: shortcut for :attr:`dataframe`."""
         return self.dataframe
 
     @df.setter
@@ -249,27 +228,23 @@ class Circuit(object):
 
     @property
     def metadata(self):
-        """:property: metadata associated with the connections
-        """
+        """:property: metadata associated with the connections"""
         return self.__metadata
 
     @property
     def dataframe(self):
-        """:property: return a dataframe representing the circuit
-        """
+        """:property: return a dataframe representing the circuit"""
         if self.__circuit:
             return self.__circuit
 
-        self.__circuit = self.touches.alias("t") \
-                                     .join(self.__src, "src") \
-                                     .join(self.__dst, "dst")
+        self.__circuit = self.touches.alias("t").join(self.__src, "src").join(self.__dst, "dst")
         return self.__circuit
 
     @dataframe.setter
     def dataframe(self, dataframe):
         self.__length = dataframe.count()
         self.__touches = self.only_touch_columns(dataframe)
-        if any(n.startswith('src_') or n.startswith('dst_') for n in dataframe.schema.names):
+        if any(n.startswith("src_") or n.startswith("dst_") for n in dataframe.schema.names):
             self.__circuit = dataframe
             self.__reduced = None
         else:
@@ -278,22 +253,22 @@ class Circuit(object):
 
     @property
     def reduced(self):
-        """:property: a reduced circuit with only one connection per src, dst
-        """
+        """:property: a reduced circuit with only one connection per src, dst"""
         if self.__reduced:
             return self.__reduced
 
-        self.__reduced = self.touches.alias("t") \
-                                     .groupBy("src", "dst") \
-                                     .agg(F.min("synapse_id").alias("synapse_id")) \
-                                     .join(self.__src, "src") \
-                                     .join(self.__dst, "dst")
+        self.__reduced = (
+            self.touches.alias("t")
+            .groupBy("src", "dst")
+            .agg(F.min("synapse_id").alias("synapse_id"))
+            .join(self.__src, "src")
+            .join(self.__dst, "dst")
+        )
         return self.__reduced
 
     @property
     def touches(self):
-        """:property: touch data as a Spark dataframe
-        """
+        """:property: touch data as a Spark dataframe"""
         return self.__touches
 
     def __len__(self):
@@ -305,6 +280,8 @@ class Circuit(object):
 
         :param df: a dataframe to trim
         """
+
         def belongs_to_neuron(col):
             return col.startswith("src_") or col.startswith("dst_")
+
         return df.select([col for col in df.schema.names if not belongs_to_neuron(col)])

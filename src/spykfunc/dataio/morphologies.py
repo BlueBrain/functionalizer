@@ -2,17 +2,22 @@
 """
 
 import functools
-import morphokit
 from pathlib import Path
 from typing import Optional
 
+import morphokit
 
-class MorphologyDB(object):
+
+_MAXIMUM_LRU_SIZE = 10_000
+
+
+class MorphologyDB:
     """Database wrapper to handle morphology mapping
 
     Requires the `db_path` to be the path to the cell morphologies, whereas
     `spine_db_path` is optional and should point to a spine morphology storage directory.
     """
+
     def __init__(self, db_path: str, spine_db_path: Optional[str] = None):
         self.db_path = Path(db_path)
         if spine_db_path:
@@ -35,14 +40,14 @@ class MorphologyDB(object):
     def __getstate__(self):
         state = self.__dict__.copy()
         # Remove the unpicklable entries.
-        del state['_db']
+        del state["_db"]
         return state
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        self._db = dict()
+        self._db = {}
 
-    @functools.lru_cache(None)
+    @functools.lru_cache(_MAXIMUM_LRU_SIZE)
     def first_axon_section(self, morpho: str):
         """Return distances for a synapse on the first axon segment.
 
@@ -64,20 +69,20 @@ class MorphologyDB(object):
             section_index + 1,  # MorphoK does not include the soma!
             section_distance,
             section_distance / section_length,
-            section.distance_to_soma() + section_distance
+            section.distance_to_soma() + section_distance,
         )
 
-    @functools.lru_cache(None)
+    @functools.lru_cache(_MAXIMUM_LRU_SIZE)
     def soma_radius(self, morpho: str):
         soma = self[morpho].soma
         return soma.max_distance
 
-    @functools.lru_cache(None)
+    @functools.lru_cache(_MAXIMUM_LRU_SIZE)
     def distance_to_soma(self, morpho: str, section: int, segment: int):
         sec = self[morpho].section(section - 1)
         return sec.distance_to_soma(segment)
 
-    @functools.lru_cache(None)
+    @functools.lru_cache(_MAXIMUM_LRU_SIZE)
     def ancestors(self, morpho: str, section: int):
         sec = self[morpho].section(section - 1)
         return list(s.id + 1 for s in sec.iter(morphokit.upstream))

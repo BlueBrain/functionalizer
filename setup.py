@@ -40,12 +40,8 @@ class CMakeBuild(build_ext):
         if not os.path.exists(self.build_temp):
             os.makedirs(self.build_temp)
 
-        output = subprocess.check_call(
-            ["cmake", ext.sourcedir] + cmake_args, cwd=self.build_temp
-        )
-        output = subprocess.check_call(
-            ["cmake", "--build", "."] + build_args, cwd=self.build_temp
-        )
+        output = subprocess.check_call(["cmake", ext.sourcedir] + cmake_args, cwd=self.build_temp)
+        output = subprocess.check_call(["cmake", "--build", "."] + build_args, cwd=self.build_temp)
 
         # Put into the local source directory
         target = Path(self.get_ext_fullpath(ext.name)).resolve()
@@ -60,11 +56,7 @@ class CMakeBuild(build_ext):
 
 setup(
     # name and other metadata are in setup.cfg
-    use_scm_version={
-        "write_to": "src/spykfunc/version.py"
-    },
-    ext_modules=[
-        CMakeExtension("spykfunc.filters.udfs._udfs", "src/spykfunc/filters/udfs")
-    ],
+    use_scm_version={"write_to": "src/spykfunc/version.py"},
+    ext_modules=[CMakeExtension("spykfunc.filters.udfs._udfs", "src/spykfunc/filters/udfs")],
     cmdclass={"build_ext": CMakeBuild},
 )

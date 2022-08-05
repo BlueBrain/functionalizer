@@ -1,0 +1,26 @@
+[MESSAGES CONTROL]
+# ignore the following, all others should be fixed over time
+#   - import-error: triggered by tox somehow, packages still listed as installed
+#   - import-outside-toplevel: required by some Spark parts
+disable =
+    import-error,
+    import-outside-toplevel,
+    broad-except,
+    c-extension-no-member,
+    deprecated-module,
+    empty-docstring,
+    fixme,
+    invalid-name,
+    missing-class-docstring,
+    missing-function-docstring,
+    missing-module-docstring,
+    no-member,
+    no-name-in-module,
+    protected-access,
+    too-few-public-methods,
+    too-many-arguments,
+    too-many-branches,
+    too-many-instance-attributes,
+    too-many-locals,
+    too-many-statements,
+    unspecified-encoding,

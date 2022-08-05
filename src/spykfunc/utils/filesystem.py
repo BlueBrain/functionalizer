@@ -6,9 +6,11 @@ of a Hadoop cluster.
 """
 from datetime import datetime
 import glob
-import lxml.etree
 import logging
 import os
+
+import lxml.etree
+
 try:
     from pathlib2 import Path
 except Exception:
@@ -22,11 +24,11 @@ L = logging.getLogger(__name__)
 
 
 class AutoClient(hdfs.InsecureClient):
-    """Simple client that attempts to parse the Hadoop configuration.
-    """
+    """Simple client that attempts to parse the Hadoop configuration."""
+
     def __init__(self):
-        super(AutoClient, self).__init__(self._find_host())
-        self.status('/')  # attempt to access file system to verify connection
+        super().__init__(self._find_host())
+        self.status("/")  # attempt to access file system to verify connection
 
     @staticmethod
     def _find_host():
@@ -34,28 +36,27 @@ class AutoClient(hdfs.InsecureClient):
             tree = lxml.etree.parse(str(AutoClient._find_config()))
             return tree.xpath('//property[name="dfs.namenode.http-address"]/value').pop().text
         except IndexError:
-            return 'localhost:50070'
+            return "localhost:50070"
 
     @staticmethod
     def _find_config():
-        """Determine Hadoop configuration location.
-        """
+        """Determine Hadoop configuration location."""
         cdir = os.environ.get("HADOOP_CONF_DIR", None)
         home = os.environ.get("HADOOP_HOME", None)
         if cdir:
-            return Path(cdir) / 'hdfs-site.xml'
-        elif home:
-            return Path(home) / 'conf' / 'hdfs-site.xml'
-        else:
-            raise RuntimeError("cannot determine HADOOP setup")
+            return Path(cdir) / "hdfs-site.xml"
+        if home:
+            return Path(home) / "conf" / "hdfs-site.xml"
+        raise RuntimeError("cannot determine HADOOP setup")
 
 
-class AttemptedInstance(object):
+class AttemptedInstance:
     """Class to automatically instantiate objects
 
     Only create the underlying object when requested, pass through all
     attribute requests.
     """
+
     def __init__(self, cls):
         self.__cls = cls
         self.__obj = None
@@ -73,7 +74,7 @@ class AttemptedInstance(object):
             return
         try:
             self.__obj = self.__cls()
-        except Exception as e:
+        except Exception:
             L.warning("No HDFS cluster found, deactivating support")
             self.__obj = False
 
@@ -91,7 +92,7 @@ def autosense_hdfs(local_p, hdfs_p):
     :param hdfs_p: a path to use with HDFS
     """
     if __client:
-        return hdfs_p.format(date=datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+        return hdfs_p.format(date=datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
     return local_p
 
 
@@ -107,29 +108,28 @@ def adjust_for_spark(p, local=None):
     p = str(p)
     if p.startswith("hdfs://"):
         if not __client:
-            msg = "cannot use a fully qualified path '{}' without a running Hadoop cluster!".format(p)
+            msg = f"cannot use a fully qualified path '{p}' without a running Hadoop cluster!"
             raise ValueError(msg)
         return p.replace("hdfs://", "")
-    elif p.startswith("file://"):
+    if p.startswith("file://"):
         if not __client:
             return p.replace("file://", "")
         return p
-    elif __client:
+    if __client:
         if local or len(glob.glob(p)) > 0:
             return "file://" + os.path.abspath(p)
     return p
 
 
 def exists(p):
-    """Check if a path exists.
-    """
+    """Check if a path exists."""
     if p.startswith("file://") or not __client:
         return os.path.exists(p.replace("file://", ""))
     try:
         __client.status(p)
         return True
     except hdfs.util.HdfsError as err:
-        if err.exception == 'FileNotFoundException':
+        if err.exception == "FileNotFoundException":
             return False
         raise
 
@@ -145,14 +145,13 @@ def size(p):
 
 
 def isdir(p):
-    """Check if a path exists and is a directory.
-    """
+    """Check if a path exists and is a directory."""
     if p.startswith("file://") or not __client:
         return os.path.isdir(p.replace("file://", ""))
     try:
         s = __client.status(p)
-        return s['type'] == 'DIRECTORY'
+        return s["type"] == "DIRECTORY"
     except hdfs.util.HdfsError as err:
-        if err.exception == 'FileNotFoundException':
+        if err.exception == "FileNotFoundException":
             return False
         raise
