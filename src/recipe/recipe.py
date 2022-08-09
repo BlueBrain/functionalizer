@@ -1,7 +1,4 @@
-"""
-Top-Level Interface for Recipe Handling
----------------------------------------
-"""
+"""Top-Level Interface for Recipe Handling."""
 import logging
 import textwrap
 from io import StringIO
@@ -25,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 class Recipe:
-    """Recipe information used for functionalizing circuits
+    """Recipe information used for functionalizing circuits.
 
     Instances of this class can be used to parse the XML description of our
     brain circuits, passed in via the parameter `filename`.
@@ -101,6 +98,7 @@ class Recipe:
     """
 
     def __init__(self, filename: str, strict: bool = True):
+        """Create a new instance from `filename`."""
         xml = self._load_from_xml(filename)
         for name, kind in self.__annotations__.items():
             try:

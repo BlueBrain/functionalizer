@@ -1,5 +1,4 @@
-#!/usr/bin/env pyspark
-
+"""Command line interface for Spykfunc."""
 import os
 import sys
 import argparse
@@ -13,9 +12,10 @@ filters.load()
 
 
 def _parse_args(args=None) -> argparse.Namespace:
-    """Handle arguments passed through the commandline
+    """Handle arguments passed through the commandline.
 
-    Takes a few corner cases into account w.r.t. backwards compatible arguments.
+    Takes a few corner cases into account w.r.t. backwards compatible arguments, and adds
+    SONATA specific checks to arguments.
     """
     import json
     import libsonata
@@ -24,7 +24,7 @@ def _parse_args(args=None) -> argparse.Namespace:
         args = sys.argv[1:]
 
     class _ValidFile:
-        """Check that a path is a file"""
+        """Check that a path is a file."""
 
         def __repr__(self):
             return "file"
@@ -35,7 +35,7 @@ def _parse_args(args=None) -> argparse.Namespace:
             return filename
 
     class _ValidNodes:
-        """Check that the specified nodes are present"""
+        """Check that the specified nodes are present."""
 
         def __init__(self):
             self.__storage = None
@@ -65,7 +65,7 @@ def _parse_args(args=None) -> argparse.Namespace:
             return arg
 
     class _ValidNodeset:
-        """Check that the specified nodes are present"""
+        """Check that the specified nodes are present."""
 
         def __init__(self):
             self.__json = None
@@ -94,7 +94,7 @@ def _parse_args(args=None) -> argparse.Namespace:
             return arg
 
     class _ValidPath:
-        """Check that a path is a file or a directory"""
+        """Check that a path is a file or a directory."""
 
         def __repr__(self):
             return "path"
@@ -123,7 +123,7 @@ def _parse_args(args=None) -> argparse.Namespace:
             setattr(namespace, self.dest, list(filter(len, values.split(","))))
 
     class _Formatter(argparse.HelpFormatter):
-        """Dummy class to allow line-breaks in help
+        """Dummy class to allow line-breaks in help.
 
         An optional leading 'i|' will indent lines by four spaces.
         """
@@ -340,8 +340,10 @@ def _parse_args(args=None) -> argparse.Namespace:
 
 
 def spykfunc() -> int:
-    """The main entry-point Spykfunc script. It will launch Spykfunc with a spark instance
-    (created if not provided), run the default filters and export.
+    """The main entry-point Spykfunc script.
+
+    It will launch Spykfunc with a spark instance (created if not provided), run the
+    default filters and export.
     """
     from spykfunc.functionalizer import Functionalizer
 

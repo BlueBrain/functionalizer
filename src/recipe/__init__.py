@@ -1,4 +1,6 @@
-"""The `recipe` module provides the :class:`Recipe` class to handle recipe
+"""Circuit building recipe handling.
+
+The `recipe` module provides the :class:`Recipe` class to handle recipe
 reading and writing.  A short example to read a recipe and modify the
 initial bouton distance for inhibitory synapses:
 

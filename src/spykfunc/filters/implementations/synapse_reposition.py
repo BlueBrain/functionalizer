@@ -1,3 +1,4 @@
+"""Shift synapses."""
 import fnmatch
 import itertools
 import numpy as np
@@ -11,7 +12,7 @@ import sparkmanager as sm
 
 
 class SynapseReposition(DatasetOperation):
-    """Reposition synapses
+    """Reposition synapses.
 
     Shifts the post-section of synapses for ChC and SpAA cells to the soma
     according to the `SynapsesReposition` rules of the recipe.
@@ -21,11 +22,12 @@ class SynapseReposition(DatasetOperation):
     _required = False
 
     def __init__(self, recipe, source, target, morphos):
+        """Initialize the filter, extracting the reposition part of the recipe."""
         super().__init__(recipe, source, target, morphos)
         self.reposition = self.convert_reposition(source, target, recipe.synapse_reposition)
 
     def apply(self, circuit):
-        """Actually reposition the synapses"""
+        """Actually reposition the synapses."""
         axon_shift = _create_axon_section_udf(circuit.morphologies)
 
         with circuit.pathways(["fromMType", "toMType"]):
@@ -40,7 +42,7 @@ class SynapseReposition(DatasetOperation):
 
     @staticmethod
     def convert_reposition(source, target, reposition):
-        """Loader for pathways that need synapses to be repositioned"""
+        """Loader for pathways that need synapses to be repositioned."""
         src_mtype = source.mtype_values
         src_mtype_rev = {name: i for i, name in enumerate(src_mtype)}
         dst_mtype = target.mtype_values
@@ -66,15 +68,17 @@ class SynapseReposition(DatasetOperation):
 
 
 def _create_axon_section_udf(morphology_db):
-    """Creates a UDF for a given morphologyDB that looks up
-        the first axon section in a morphology given its name
+    """Creates a UDF to look up the first axon section in a morphology.
 
-    :param morphology_db: the morphology db
-    :return: a function than can be used by ``mapInPandas`` to shift synapses
+    Args:
+        morphology_db: the morphology db
+
+    Returns:
+        a function than can be used by ``mapInPandas`` to shift synapses
     """
 
     def _shift_to_axon_section(dfs):
-        """Shifts synapses to the first axon section"""
+        """Shifts synapses to the first axon section."""
         for df in dfs:
             set_section_fraction = "afferent_section_pos" in df.columns
             set_soma_distance = "distance_soma" in df.columns

@@ -1,5 +1,4 @@
-"""A default filter plugin
-"""
+"""Filter that matches distributions of synapses."""
 from pyspark.sql import functions as F
 
 import sparkmanager as sm
@@ -23,7 +22,7 @@ _KEY_ACTIVE = 0x102
 
 
 class ReduceAndCut(DatasetOperation):
-    """Reduce and cut touch distributions
+    """Reduce and cut touch distributions.
 
     Goes through the touches and matches up distributions present and
     expected by random sampling. Steps:
@@ -65,6 +64,11 @@ class ReduceAndCut(DatasetOperation):
     _checkpoint_buckets = ("src", "dst")
 
     def __init__(self, recipe, source, target, morphos):
+        """Initializes the filter.
+
+        Uses the synapse seed from the recipe to initialize random number generators, and
+        extracts the connection rules from the recipe.
+        """
         super().__init__(recipe, source, target, morphos)
         self.seed = recipe.seeds.synapseSeed
         logger.info("Using seed %d for reduce and cut", self.seed)
@@ -79,9 +83,7 @@ class ReduceAndCut(DatasetOperation):
         )
 
     def apply(self, circuit):
-        """Filter the circuit according to the logic described in the
-        class.
-        """
+        """Filter the circuit according to the logic described in the class."""
         with circuit.pathways(self.columns):
             full_touches = Circuit.only_touch_columns(circuit.with_pathway())
 
@@ -130,7 +132,7 @@ class ReduceAndCut(DatasetOperation):
     @sm.assign_to_jobgroup
     @checkpoint_resume("pathway_stats", child=True)
     def compute_reduce_cut_params(self, full_touches):
-        """Computes pathway parameters for reduce and cut
+        """Computes pathway parameters for reduce and cut.
 
         Based on the number of touches per pathway and the total number of
         connections (unique pathways).
@@ -152,7 +154,7 @@ class ReduceAndCut(DatasetOperation):
         child=True,
     )
     def apply_reduce(self, all_touches, params_df):
-        """Applying reduce as a sampling"""
+        """Applying reduce as a sampling."""
         # Reducing touches on a single neuron is equivalent as reducing on
         # the global set of touches within a pathway (morpho-morpho association)
         logger.debug(" -> Building reduce fractions")
@@ -174,8 +176,8 @@ class ReduceAndCut(DatasetOperation):
     # ---
     @sm.assign_to_jobgroup
     def calc_cut_survival_rate(self, reduced_touches, params_df):
-        """
-        Apply cut filter
+        """Apply cut filter.
+
         Cut computes a survivalRate and activeFraction for each post neuron
         And filters out those not passing the random test
         """
@@ -238,16 +240,16 @@ class ReduceAndCut(DatasetOperation):
     @sm.assign_to_jobgroup
     @checkpoint_resume("shall_keep_connections", bucket_cols=("src", "dst"), child=True)
     def calc_cut_active_fraction(self, cut_touch_counts_connection, params_df):
-        """Cut according to the active_fractions
+        """Cut according to the active_fractions.
 
         Args:
             params_df: the parameters DF (pA, uA, active_fraction_legacy)
             cut_touch_counts_connection: the DF with the cut touch counts
                 per connection (built previously in an optimized way)
+
         Returns:
             The final cut touches
         """
-
         cut_touch_counts_pathway = cut_touch_counts_connection.groupBy("pathway_i").agg(
             F.sum("reduced_touch_counts_connection").alias("cut_touch_counts_pathway")
         )

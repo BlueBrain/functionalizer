@@ -1,5 +1,4 @@
-"""
-"""
+"""Parametrization of synapse connectivity."""
 import functools
 import logging
 import operator
@@ -33,8 +32,7 @@ class ConnectionRule(PathwayProperty):
     _attribute_alias = {"from": "fromMType", "to": "toMType"}
 
     def overrides(self, other: "ConnectionRule") -> bool:
-        """Returns true if the current rule supersedes the `other` one,
-        false otherwise.
+        """Returns true if the current rule supersedes the `other` one, false otherwise.
 
         The more specialized, i.e., the less `columns` contain the global
         match ``*``, the higher the precedence of a rule.
@@ -45,6 +43,7 @@ class ConnectionRule(PathwayProperty):
         return mine <= theirs
 
     def validate(self, _: Dict[str, List[str]] = None) -> bool:
+        """Verifies that every rule uses only allowed attribute combinations."""
         # Rule according to validation in ConnectivityPathway::getReduceAndCutParameters
         allowed_parameters = [
             {"mean_syns_connection", "stdev_syns_connection", "active_fraction"},
@@ -63,4 +62,6 @@ class ConnectionRule(PathwayProperty):
 
 
 class ConnectionRules(PathwayPropertyGroup):
+    """Group of `ConnectionRule`."""
+
     _kind = ConnectionRule

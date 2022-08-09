@@ -1,5 +1,4 @@
-"""Extrac
-"""
+"""Extract eventlog data."""
 import json
 import logging
 
@@ -8,23 +7,26 @@ L = logging.getLogger(__name__)
 
 
 class Stage:
-    """Dummy object representing a stage"""
+    """Dummy object representing a stage."""
 
     __slots__ = ["input_rows", "output_rows", "shuffle_read", "shuffle_write"]
 
     def __init__(self):
+        """Creates a dummy stage."""
         self.output_rows = 0
         self.shuffle_read = 0
         self.shuffle_write = 0
 
     def __repr__(self):
+        """More legible representation."""
         return f"<Stage shuffle={self.shuffle_read}, {self.shuffle_write} out={self.output_rows}>"
 
 
 class EventLog:
-    """Process an event log from Apache Spark"""
+    """Process an event log from Apache Spark."""
 
     def __init__(self, fn):
+        """Creates an eventlog using `fn`, but not processing it yet."""
         self._filename = fn
         self._stages = {}
 
@@ -38,7 +40,7 @@ class EventLog:
         self._processed = False
 
     def _load_data(self):
-        """Load data from the file if not done already"""
+        """Load data from the file if not done already."""
         if self._processed:
             return
         with open(self._filename) as fd:
@@ -53,7 +55,7 @@ class EventLog:
         self._processed = True
 
     def _process_stage(self, data):
-        """Extract stage metrics"""
+        """Extract stage metrics."""
         id_ = data["Stage Info"]["Stage ID"]
         stage = Stage()
         for metric in data["Stage Info"]["Accumulables"]:
@@ -72,23 +74,23 @@ class EventLog:
         self._stages[id_] = stage
 
     def _process_event(self, data):
-        """Dummy default method"""
+        """Dummy default method."""
 
     @property
     def shuffle_size(self):
-        """:property: the maximum shuffle size seen"""
+        """:property: the maximum shuffle size seen."""
         self._load_data()
         return max([0] + [max(s.shuffle_read, s.shuffle_write) for s in self._stages.values()])
 
     @property
     def max_rows(self):
-        """:property: the number of output records of the last stage having measured some"""
+        """:property: the number of output records of the last stage having measured some."""
         self._load_data()
         return max([0] + [s.output_rows for s in self._stages.values()])
 
     @property
     def last_rows(self):
-        """:property: the number of output records of the last stage having measured some"""
+        """:property: the number of output records of the last stage having measured some."""
         self._load_data()
         for s in sorted(self._stages, reverse=True):
             if self._stages[s].output_rows > 0:
@@ -97,7 +99,7 @@ class EventLog:
 
 
 def run():
-    """Print simple information from eventlogs passed as command line arguments"""
+    """Print simple information from eventlogs passed as command line arguments."""
     import sys
 
     logging.basicConfig(level=logging.DEBUG)

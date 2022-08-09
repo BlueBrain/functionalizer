@@ -1,6 +1,4 @@
-"""
-Query interface for Neuron dataframe / graph
-"""
+"""Query interface for Neuron dataframe / graph."""
 
 from abc import abstractmethod
 from datetime import datetime
@@ -22,7 +20,7 @@ logger = get_logger(__name__)
 
 
 def load(*dirnames: str) -> None:
-    """Load plugins from a list of directories
+    """Load plugins from a list of directories.
 
     If no directories are given, load a default set of plugins.
 
@@ -44,7 +42,7 @@ def load(*dirnames: str) -> None:
 # Dataset operations
 # ---------------------------------------------------
 class __DatasetOperationType(type):
-    """Forced unification of classes
+    """Forced unification of classes.
 
     The structure of the constructor and application function to circuits
     is pre-defined to be able to construct and apply filters automatically.
@@ -134,12 +132,12 @@ class __DatasetOperationType(type):
 
     @classmethod
     def modules(cls):
-        """List registered subclasses"""
+        """List registered subclasses."""
         return sorted(cls.__filters.keys())
 
 
 class DatasetOperation(metaclass=__DatasetOperationType):
-    """Basis for synapse filters
+    """Basis for synapse filters.
 
     Every filter should derive from :class:`~spykfunc.filters.DatasetOperation`,
     which will enforce the right format for the constructor
@@ -156,17 +154,6 @@ class DatasetOperation(metaclass=__DatasetOperationType):
     If filters add or remove columns from the dataframe, this should be
     communicated via the :attr:`._columns` attribute, otherwise the general
     invocation of the filters will fail, as column consistency is checked.
-
-    Arguments
-    ---------
-    recipe
-        Wrapper around an XML document with parametrization information
-    source
-        The source node population
-    target
-        The target node population
-    morphos
-        A morphology storage object
     """
 
     _checkpoint = False
@@ -209,9 +196,17 @@ class DatasetOperation(metaclass=__DatasetOperationType):
     """
 
     def __init__(self, recipe, source, target, morphos):
-        """Empty constructor supposed to be overriden"""
+        """Empty constructor supposed to be overriden.
+
+        Args:
+            recipe: Wrapper around an XML document with parametrization information
+            source: The source node population
+            target: The target node population
+            morphos: A morphology storage object
+        """
 
     def __call__(self, circuit):
+        """Apply the operation to `circuit`."""
         classname = self.__class__.__name__
         logger.info("Applying %s", classname)
         with sm.jobgroup(classname):

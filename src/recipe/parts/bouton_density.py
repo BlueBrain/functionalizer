@@ -1,11 +1,10 @@
-"""Specifications for synapse distance from the soma
-"""
+"""Specifications for synapse distance from the soma."""
 from ..property import Property, singleton
 
 
 @singleton(implicit=True)
 class InitialBoutonDistance(Property):
-    """Minimum distances of synapses from the soma"""
+    """Minimum distances of synapses from the soma."""
 
     _attribute_alias = {
         "defaultInhSynapsesDistance": "inhibitorySynapsesDistance",

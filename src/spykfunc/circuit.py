@@ -1,5 +1,4 @@
-"""Module for circuit related classes, functions
-"""
+"""Module for circuit related classes, functions."""
 import contextlib
 from typing import Iterable
 
@@ -18,7 +17,7 @@ logger = get_logger(__name__)
 
 
 def touches_per_pathway(touches):
-    """Calculate touch statistics for every pathway (src-dst mtype)
+    """Calculate touch statistics for every pathway (src-dst mtype).
 
     Args:
         touches: A DataFrame with touch columns
@@ -30,14 +29,14 @@ def touches_per_pathway(touches):
     """
 
     def pathway_connection_counts(touches):
-        """Get connections (src/dst) counts"""
+        """Get connections (src/dst) counts."""
         connections_counts = touches.groupBy("pathway_i", "src", "dst").agg(
             F.count("*").cast(T.IntegerType()).alias("count")
         )
         return connections_counts
 
     def pathway_statistics(counts):
-        """Gather statistics"""
+        """Gather statistics."""
         return (
             counts.groupBy("pathway_i")
             .agg(
@@ -51,7 +50,7 @@ def touches_per_pathway(touches):
 
 
 class Circuit:
-    """Representation of a circuit
+    """Representation of a circuit.
 
     Simple data container to simplify and future-proof the API.  Objects of
     this class will hold both nodes and edges of the initial brain
@@ -77,17 +76,12 @@ class Circuit:
     `dst`) identifier pair.  Each connection will provide the miniumum of
     the `synapse_id` to be able to generate reproducible random numbers.
 
-    Arguments
-    ---------
-    source
-        the source neuron population
-    target
-        the target neuron population
-    touches
-        the synaptic connections
-    morphologies
-        a iterable containing the storage for node morphologies, and, optionally, for
-        spine morphologies
+    Args:
+        source: the source neuron population
+        target: the target neuron population
+        touches: the synaptic connections
+        morphologies: a iterable containing the storage for node morphologies, and,
+            optionally, for spine morphologies
     """
 
     __pathways_defined = False
@@ -99,7 +93,7 @@ class Circuit:
         touches: EdgeData,
         morphologies: Iterable[str],
     ):
-        """Construct a new circuit"""
+        """Construct a new circuit."""
         #: :property: the source neuron population
         self.source = source
         #: :property: the target neuron population
@@ -122,14 +116,26 @@ class Circuit:
         self.__metadata = touches.metadata
 
     def with_pathway(self, df=None):
+        """Stub to add a pathway column to a PySpark dataframe."""
         raise RuntimeError("with_patway can only be used in a pathway context")
 
     @staticmethod
     def pathway_to_str(df_pathway_i):
+        """Stub to convert a pathway index to its string representation."""
         raise RuntimeError("with_patway can only be used in a pathway context")
 
     @staticmethod
     def expand(columns, source, target):
+        """Expand recipe-convention `columns` to names and data from dataframes.
+
+        For each column name in `columns`, given in the convention of the recipe, returns a tuple
+        with:
+
+        * the recipe names
+        * the appropriate `source` or `target` name
+        * the appropriate `source` or `target` name containing indices to library values
+        * the library values to be used with the indexed column
+        """
         for col in columns:
             if col.startswith("to"):
                 stem = col.lower()[2:]
@@ -142,6 +148,12 @@ class Circuit:
 
     @contextlib.contextmanager
     def pathways(self, columns):
+        """Context manager to set up pathway related facilities.
+
+        Will change `with_pathway` and `pathway_to_str` to implementations that add a
+        ``pathway`` column based on the passed `columns`, and translate said column back
+        into a string.
+        """
         if not columns:
             columns = ["fromMType", "toMType"]
 
@@ -228,12 +240,12 @@ class Circuit:
 
     @property
     def metadata(self):
-        """:property: metadata associated with the connections"""
+        """:property: metadata associated with the connections."""
         return self.__metadata
 
     @property
     def dataframe(self):
-        """:property: return a dataframe representing the circuit"""
+        """:property: return a dataframe representing the circuit."""
         if self.__circuit:
             return self.__circuit
 
@@ -253,7 +265,7 @@ class Circuit:
 
     @property
     def reduced(self):
-        """:property: a reduced circuit with only one connection per src, dst"""
+        """:property: a reduced circuit with only one connection per src, dst."""
         if self.__reduced:
             return self.__reduced
 
@@ -268,15 +280,16 @@ class Circuit:
 
     @property
     def touches(self):
-        """:property: touch data as a Spark dataframe"""
+        """:property: touch data as a Spark dataframe."""
         return self.__touches
 
     def __len__(self):
+        """The number of touches."""
         return self.__length
 
     @staticmethod
     def only_touch_columns(df):
-        """Remove neuron columns from a dataframe
+        """Remove neuron columns from a dataframe.
 
         :param df: a dataframe to trim
         """

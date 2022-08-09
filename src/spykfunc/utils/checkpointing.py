@@ -1,3 +1,4 @@
+"""Checkpoint handling to save intermediate calculations."""
 from collections import namedtuple
 from functools import wraps
 from funcsigs import signature
@@ -9,8 +10,11 @@ from .filesystem import exists, isdir, size
 
 
 class CheckpointStatus:
-    """A CheckpointStatus object shall be passed to the decorator in order to retrieve information
-    Note: A state of error doesnt invalidate the dataframe, and resume is attempted
+    """Status holding object.
+
+    A CheckpointStatus object shall be passed to the decorator in order to retrieve information.
+
+    Note: A state of error doesnt invalidate the dataframe, and resume is attempted.
     """
 
     INVALID = 0  # Not initialized
@@ -20,13 +24,16 @@ class CheckpointStatus:
     ERROR = -1  # CheckPoint not available and error creating/loading it
 
     def __init__(self):
+        """Initialize the checkpoint status."""
         self.state = self.INVALID  # property: The Checkpointing end state
         self.error = None  # property: The Exception if any thrown during checkpointing"""
 
 
 class CheckpointHandler:
     """A Handler for a checkpoint.
-    A list of such handlers can be passed to CheckpointResume for any of the enumerated events.
+
+    A list of such handlers can be passed to CheckpointResume for any of the enumerated
+    events.
     """
 
     BEFORE_LOAD = 0
@@ -34,29 +41,36 @@ class CheckpointHandler:
     POST_RESUME = 2
     POST_COMPUTE = 3
 
-    def __init__(self, handler_type, handker_f):
+    def __init__(self, handler_type, handler_f):
+        """Initialize the checkpoint handler.
+
+        Args:
+            handler_type: type of the handler.
+            handler_f: function to apply.
+        """
         self.type = handler_type
-        self.f = handker_f
+        self.f = handler_f
 
     def __call__(self, *args, **kwargs):
+        """Apply the stored function."""
         return self.f(*args, **kwargs)
 
     @classmethod
     def apply_all(cls, df, handlers, handler_type):
-        """Recursively applies all handlers matching a given type to the dataframe"""
+        """Recursively applies all handlers matching a given type to the dataframe."""
         for h in cls.filter(handlers, handler_type):  # type: CheckpointHandler
             df = h(df)
         return df
 
     @classmethod
     def run_all(cls, handlers, handler_type):
-        """Runs all the handlers which match a given type"""
+        """Runs all the handlers which match a given type."""
         for h in cls.filter(handlers, handler_type):  # type: CheckpointHandler
             h()
 
     @classmethod
     def filter(cls, handlers, handler_type):
-        """Returns the subset of handlers which match the given type"""
+        """Returns the subset of handlers which match the given type."""
         return [h for h in handlers if h.type == handler_type]
 
     # Helpers
@@ -67,10 +81,10 @@ class CheckpointHandler:
 
 
 class CheckpointResume:
-    """Class implementing checkpointing and restore, to parquet and parquet-based tables"""
+    """Class implementing checkpointing and restore, to parquet and parquet-based tables."""
 
     class _RunParams:
-        """Parameters for a single checkpoint call, since the object is shared"""
+        """Parameters for a single checkpoint call, since the object is shared."""
 
         dest = None
         overwrite = False
@@ -95,6 +109,12 @@ class CheckpointResume:
 
     # =========
     def __init__(self, directory=None, overwrite=False):
+        """Create a checkpoint wrapper.
+
+        Args:
+            directory: path to store checkpoints under
+            overwrite: write over existing older checkpoints
+        """
         self.directory = directory
         self.overwrite = overwrite
         self.last_status = None
@@ -113,30 +133,33 @@ class CheckpointResume:
         status=None,
         child=None,
     ):
-        """Decorator for checkpointing_resume routines
+        """Decorator for checkpointing_resume routines.
 
-        :param name: The name of the checkpoint, preferably no whitespaces
-        :param child: Will look for the attribute `_checkpoint_name` of the first argument
-            and prepend it to name
-        :param dest: The destination path for data files
-        :param overwrite: If True will not attempt to resume and forces reevaluating df.
-        Default: False
-        :param break_exec_plan: If True (default) will reload the saved data to break the
-        execution plan
-        :param bucket_cols: A tuple defining the columns to which partition the data.
-            NOTE: This option activates storing as Table (default: False)
-        :param n_buckets: The number of partition buckets. Default: True, which uses the
-        df number of partitions NOTE: The number of buckets will multiply the number of
-        output files if the df is not properly partitioned. Use this option (and
-        bucket_cols) with caution, consider repartition() before :param handlers: A list
-        of CheckpointHandler functions to run on respective Checkpointing phases
-        :param logger: A logger object. Defaults to spykfunc master logger
-        :param status: A CheckPointStatus object can be passed if checkpointing process
-        information is desirable
-        :return: The checkpointed dataframe, built from the created files unless
-        break_exec_plan was set False
+        Args:
+            name: The name of the checkpoint
+            child: Will look for the attribute `_checkpoint_name` of the first argument
+                and prepend it to name
+            dest: The destination path for data files
+            overwrite: If ``True`` will not attempt to resume and forces reevaluating `df`.
+                Default: ``False``
+            break_exec_plan: If ``True`` (default) will reload the saved data to break the
+                execution plan
+            bucket_cols: A tuple defining the columns to which partition the data.
+                NOTE: This option activates storing as Table (default: ``False``)
+            n_buckets: The number of partition buckets. Default: ``True``, which uses the
+                `df` number of partitions NOTE: The number of buckets will multiply the
+                number of output files if the df is not properly partitioned. Use this
+                option (and `bucket_cols`) with caution, consider ``repartition()`` before
+                handlers: A list of `CheckpointHandler` functions to run on respective
+                checkpointing phases
+            logger: A logger object. Defaults to the spykfunc default logger
+            status: A `CheckPointStatus` object can be passed if checkpointing process
+                information is desirable
+
+        Returns:
+            The checkpointed dataframe, built from the created files unless
+            `break_exec_plan` was set ``False``
         """
-
         _dec_kw = {k: v for k, v in locals().items() if v is not None}
         _dec_kw.pop("self")
         _params = self._RunParams(**_dec_kw)
@@ -190,7 +213,7 @@ class CheckpointResume:
     @classmethod
     def _run(cls, df, name, params):
         # type: (object, str, CheckpointResume._RunConfig) -> DataFrame
-        """Checkpoints a dataframe (internal)
+        """Checkpoints a dataframe (internal).
 
         :param df: The df or the tuple with the calling info to create it
             Note: We avoid creating the DF before since it might have intermediate implications
@@ -237,7 +260,7 @@ class CheckpointResume:
     # --
     @staticmethod
     def _try_restore(name, params, info=True):
-        """Tries to restore a dataframe, from table or raw parquet, according to the params object
+        """Tries to restore a dataframe, from table or raw parquet, according to the params object.
 
         :param name: the name of the stage
         :param params: the checkpoint_restore session params

@@ -1,5 +1,4 @@
-"""Module doing the actual Spark management
-"""
+"""Module doing the actual Spark management."""
 from contextlib import contextmanager
 from functools import update_wrapper
 
@@ -14,10 +13,10 @@ from .eventlog import EventLog
 
 
 class SparkReport:
-    """Save time differences to a file"""
+    """Save time differences to a file."""
 
     def __init__(self, filename, manager):
-        """Create a new instance
+        """Create a new instance.
 
         :param filename: filename to store data in
         :param manager: spark manager to query for additional data
@@ -53,7 +52,7 @@ class SparkReport:
                 self.__report["runtime"] = data.get("runtime", [])
 
         def finish():
-            """Save the final runtime upon object deletion"""
+            """Save the final runtime upon object deletion."""
             now = time.time()
             self.__report["runtime"].append((now - self.__start, self.__start, now))
             if os.path.exists(self.__eventlog):
@@ -73,14 +72,14 @@ class SparkReport:
         atexit.register(finish)
 
     def add_info(self, data):
-        """Add additional information to the report
+        """Add additional information to the report.
 
         :param data: a dictionary to store under the key `app`
         """
         self.__report["app"].update(data)
 
     def __call__(self, name, start, end):
-        """Update stored information
+        """Update stored information.
 
         :param name: key to use
         :param start: beginning timestamp
@@ -92,9 +91,10 @@ class SparkReport:
 
 
 class SparkManager:
-    """Manage Spark with a singular object"""
+    """Manage Spark with a singular object."""
 
     def __init__(self):
+        """Creates a new manager instance."""
         self.__session = None
         self.__context = None
         self.__sqlcontext = None
@@ -109,23 +109,23 @@ class SparkManager:
 
     @property
     def spark(self):
-        """:property: the Spark session"""
+        """:property: the Spark session."""
         return self.__session
 
     @property
     def sc(self):
-        """:property: the Spark context"""
+        """:property: the Spark context."""
         return self.__context
 
     @property
     def sqlContext(self):
-        """:property:"""
+        """:property: the SQL context."""
         if not self.__sqlcontext:
             self.__sqlcontext = SQLContext.getOrCreate(self.sc)
         return self.__sqlcontext
 
     def __getattr__(self, attr):
-        """Provide convenient access to Spark functions"""
+        """Provide convenient access to Spark functions."""
         if attr in self.__dict__:
             return self.__dict__[attr]
         if self.__overlap is None:
@@ -143,7 +143,7 @@ class SparkManager:
             return getattr(self.__context, attr)
 
     def create(self, name=None, config=None, options=None, report=None, reset=False):
-        """Create a new Spark session if needed
+        """Create a new Spark session if needed.
 
         Will use the name and configuration options provided to create a new
         spark session and populate the global module variables.
@@ -195,7 +195,7 @@ class SparkManager:
         return self.__session
 
     def record(self, data):
-        """Pass application data through to the report (if enabled)
+        """Pass application data through to the report (if enabled).
 
         :param data: a dictionary to save in the report JSON
         """
@@ -203,7 +203,7 @@ class SparkManager:
             self.__report.add_info(data)
 
     def register_java_functions(self, fcts):
-        """Register java functions with the SQL context of Spark
+        """Register java functions with the SQL context of Spark.
 
         :param fcts: a list of tuples containing function alias and java class
         """
@@ -211,11 +211,9 @@ class SparkManager:
             self.sqlContext.registerJavaFunction(alias, name)
 
     def assign_to_jobgroup(self, f):
-        """Assign a spark job group to the jobs started within the decorated
-        function
+        """Assign a spark job group to the jobs started within the decorated function.
 
-        The job group will be named after the function, with the docstring as
-        description.
+        The job group will be named after the function, with the docstring as description.
 
         :param f: function to decorate
         """
@@ -232,7 +230,7 @@ class SparkManager:
 
     @contextmanager
     def benchmark(self):
-        """Create a setup for benchmarking
+        """Create a setup for benchmarking.
 
         Performs a little warmup procedure.
 
@@ -251,7 +249,7 @@ class SparkManager:
 
     @contextmanager
     def clean_cache(self):
-        """Clean the rdd cache
+        """Clean the rdd cache.
 
         .. warning::
 
@@ -273,7 +271,7 @@ class SparkManager:
 
     @contextmanager
     def jobgroup(self, name, desc=""):
-        """Temporarily assign a job group to spark jobs within the context
+        """Temporarily assign a job group to spark jobs within the context.
 
         :param name: the name of the spark group to use
         :param desc: a longer description of the job group
@@ -290,7 +288,7 @@ class SparkManager:
             self.__context.setJobGroup(*self.__gstack[-1])
 
     def reset_cache(self):
-        """Clear all caches"""
+        """Clear all caches."""
         for _, rdd in self.sc._jsc.getPersistentRDDs().items():
             rdd.unpersist()
         self.catalog.clearCache()

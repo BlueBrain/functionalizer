@@ -1,5 +1,4 @@
-"""Reference implementations of filters
-"""
+"""Reference implementations of filters."""
 from typing import List
 import numpy as np
 import pandas as pd
@@ -10,7 +9,7 @@ from pyspark.sql import DataFrame
 
 
 def add_random_column(df: DataFrame, name: str, seed: int, key: int) -> DataFrame:
-    """Add a random column to a dataframe
+    """Add a random column to a dataframe.
 
     The dataframe is required to contain a column `synapse_id` that is used
     while seeding the random number generator.
@@ -36,7 +35,7 @@ def add_random_column(df: DataFrame, name: str, seed: int, key: int) -> DataFram
 
 
 def add_bin_column(df: DataFrame, name: str, boundaries: List[float], key: str) -> DataFrame:
-    """Add a bin column for `key` based on `boundaries`
+    """Add a bin column for `key` based on `boundaries`.
 
     Args:
         df: The dataframe to augment

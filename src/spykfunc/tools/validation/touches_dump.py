@@ -1,5 +1,4 @@
-"""Dump output stats
-"""
+"""Dump output stats."""
 import argparse
 import cPickle
 import os
@@ -73,6 +72,7 @@ neurons = neuron_data.df
 
 
 def prefixed(pre):
+    """Prefix all columns except `id` with `pre`."""
     tmp = neurons
     for col in tmp.schema.names:
         tmp = tmp.withColumnRenamed(col, pre if col == "id" else "{}_{}".format(pre, col))
@@ -94,11 +94,20 @@ circuit_new = (
 
 
 def count(circuit, fix):
+    """Count unique `{src,dst}_morphology` connections in `circuit`.
+
+    Creates a column `count_<fix>` in the returned dataframe.
+    """
     res = circuit.groupBy("src_morphology", "dst_morphology")
     return res.count().withColumnRenamed("count", "count_" + fix)
 
 
 def avgs(circuit, columns, fix):
+    """Calculate averages for `{src,dst}_morphology` connections in `circuit`.
+
+    Creates columns `count_avg_<fix>` and `count_dev_<fix>` in the returned dataframe, for
+    averages and standard deviation, respectively.
+    """
     res = circuit.groupBy("src_morphology", "dst_morphology")
     aggs = []
     for column in columns:

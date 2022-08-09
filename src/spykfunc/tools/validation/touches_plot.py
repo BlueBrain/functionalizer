@@ -1,3 +1,4 @@
+"""Helper script to analyze performance."""
 import argparse
 import glob
 import os.path
@@ -6,6 +7,7 @@ import matplotlib.pyplot as plt
 
 
 def plot(stub):
+    """Produce comparison plots between PySpark and C functionalizer."""
     cdata = pandas.read_pickle(stub + "_old.pkl")
     pydata = pandas.read_pickle(stub + "_new.pkl")
     outfile = stub + "_kde.png"

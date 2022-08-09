@@ -3,5 +3,4 @@ global-exclude *.py[co] .DS_Store
 include src/spykfunc/filters/udfs/CMakeLists.txt
 include src/spykfunc/filters/udfs/_udfs.cpp
 include src/spykfunc/filters/udfs/deps/pybind11/CMakeLists.txt
-recursive-include src/spykfunc/filters/udfs/deps/pybind11/include *
-recursive-include src/spykfunc/filters/udfs/deps/pybind11/tools *
+recursive-include deps/pybind11 *

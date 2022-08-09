@@ -16,8 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 ################################################################################
 
-""" Spykfunc - An implementation of Functionalizer in PySpark
-"""
+"""Spykfunc - An implementation of Functionalizer in PySpark."""
 import logging as _log
 import pkg_resources as _pkg
 
@@ -29,4 +28,6 @@ _log.basicConfig(level=_log.WARN)
 
 
 class config:
+    """Simple configuration holder."""
+
     log_level = _log.DEBUG

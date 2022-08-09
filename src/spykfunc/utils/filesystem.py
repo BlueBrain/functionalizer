@@ -1,4 +1,4 @@
-"""Auxiliary module to manage paths
+"""Auxiliary module to manage paths.
 
 This module ensures compatibility when running with/without a Hadoop
 cluster, since the underlying Spark API behaves differently in the presence
@@ -27,6 +27,7 @@ class AutoClient(hdfs.InsecureClient):
     """Simple client that attempts to parse the Hadoop configuration."""
 
     def __init__(self):
+        """Initialize the client."""
         super().__init__(self._find_host())
         self.status("/")  # attempt to access file system to verify connection
 
@@ -51,21 +52,24 @@ class AutoClient(hdfs.InsecureClient):
 
 
 class AttemptedInstance:
-    """Class to automatically instantiate objects
+    """Class to automatically instantiate objects.
 
     Only create the underlying object when requested, pass through all
     attribute requests.
     """
 
     def __init__(self, cls):
+        """Initialize the wrapper for class `cls`."""
         self.__cls = cls
         self.__obj = None
 
     def __bool__(self):
+        """Evaluates to `True` if a valid class is present."""
         self.__ensure_instance()
         return (self.__obj is not False) and (self.__obj is not None)
 
     def __getattr__(self, attr):
+        """Protected access to wrapped attributes."""
         self.__ensure_instance()
         return getattr(self.__obj, attr)
 
@@ -97,7 +101,7 @@ def autosense_hdfs(local_p, hdfs_p):
 
 
 def adjust_for_spark(p, local=None):
-    """Adjust a file path to be used with both HDFS and local filesystems
+    """Adjust a file path to be used with both HDFS and local filesystems.
 
     Add a "file://" prefix if the underlying directory exists and a HDFS
     setup is detected, and remove optional "hdfs://" prefixes.
@@ -135,7 +139,7 @@ def exists(p):
 
 
 def size(p):
-    """Return the size of a directory in HDFS
+    """Return the size of a directory in HDFS.
 
     Deactivated for other file systems due to performance concerns.
     """

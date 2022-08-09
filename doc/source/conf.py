@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys, os
-from pkg_resources import get_distribution
+from importlib.metadata import version as get_version
 
 # -- General configuration -----------------------------------------------------
 extensions = [
@@ -44,7 +44,7 @@ autodoc_mock_imports = [
 
 project = "Spykfunc"
 
-version = get_distribution("spykfunc").version
+version = get_version("spykfunc")
 release = version
 
 exclude_patterns = []

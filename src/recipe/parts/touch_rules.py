@@ -1,5 +1,4 @@
-"""
-"""
+"""Removing touches with simple rules."""
 import fnmatch
 import itertools
 import logging
@@ -27,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 class TouchRule(Property):
-    """Class representing a Touch rule"""
+    """Class representing a Touch rule."""
 
     _name = "touchRule"
 
@@ -43,6 +42,11 @@ class TouchRule(Property):
     _attribute_alias = {"type": "toBranchType"}
 
     def __init__(self, *args, **kwargs):
+        """Create a new touch rule.
+
+        Enforces that the deprecated attributes `fromLayer` and `toLayer` are set to
+        ``*``, and raises a `ValueError` if not.
+        """
         super().__init__(*args, **kwargs)
         if self.fromLayer != "*":
             raise ValueError("fromLayer is deprecated and needs to be '*'")
@@ -52,6 +56,15 @@ class TouchRule(Property):
     def __call__(
         self, src_mtypes: Iterable[str], dst_mtypes: Iterable[str]
     ) -> Iterator[Tuple[str, str, str, str]]:
+        """Expands the rule for the given mtypes.
+
+        Will yield one tuple for every possible combination, containing:
+
+        * source mtype
+        * target mtype
+        * source branch types allowed
+        * target branch types allowed
+        """
         for src, dst in itertools.product(
             fnmatch.filter(src_mtypes, self.fromMType),
             fnmatch.filter(dst_mtypes, self.toMType),
@@ -60,10 +73,12 @@ class TouchRule(Property):
 
 
 class TouchRules(PropertyGroup, MTypeValidator):
+    """A collection of `TouchRule` elements."""
+
     _kind = TouchRule
 
     def to_matrix(self, src_mtypes: List[str], dst_mtypes: List[str]) -> np.array:
-        """Construct a touch rule matrix
+        """Construct a touch rule matrix.
 
         Args:
             src_mtypes: The morphology types associated with the source population

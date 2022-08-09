@@ -1,6 +1,4 @@
-"""
-Assign spine morphologies to synapses for all neurons in a circuit
-"""
+"""Assign spine morphologies to synapses for all neurons in a circuit."""
 
 from pathlib import Path
 
@@ -13,7 +11,7 @@ from spykfunc.filters import DatasetOperation
 
 
 class SpineMorphologies(DatasetOperation):
-    """Map synapses to the spine that is the closest in length
+    """Map synapses to the spine that is the closest in length.
 
     Following `this paper <https://pubmed.ncbi.nlm.nih.gov/28721455/>`_ for the recipe:
 
@@ -54,13 +52,14 @@ class SpineMorphologies(DatasetOperation):
     ]
 
     def __init__(self, recipe, source, target, morphos):
+        """Initializes the filter using the morphology database."""
         super().__init__(recipe, source, target, morphos)
         self._morphologies, self._filter = _create_spine_morphology_udf(
             morphos.spine_morphology_path
         )
 
     def apply(self, circuit):
-        """Return a circuit dataframe with spine morphologies assigned"""
+        """Return a circuit dataframe with spine morphologies assigned."""
         # Ideally, adding this to the current schema would be sufficient. For some reason
         # though, Spark only accepts adding empty columns and populating those.
         # schema = (
@@ -85,7 +84,7 @@ class SpineMorphologies(DatasetOperation):
 
 
 def _get_spine_lengths(filename):
-    """Get all spine lengths from a single spine morphology file"""
+    """Get all spine lengths from a single spine morphology file."""
     import morphio
 
     spine_morph = morphio.DendriticSpine(filename)
@@ -102,8 +101,9 @@ def _get_spine_lengths(filename):
 
 
 def _read_spine_morphology_attributes(spine_morpho_path: Path):
-    """Reads all spine morphologies from the input path and returns a dataframe with spine
-    morphology properties
+    """Reads all spine morphologies from the input path.
+
+    Returns a dataframe with spine morphology properties.
     """
     files = sorted(spine_morpho_path.glob("*.h5"))
     ids = np.ndarray((0,), dtype=int)
@@ -126,7 +126,7 @@ def _read_spine_morphology_attributes(spine_morpho_path: Path):
 
 
 def _create_spine_morphology_udf(spine_morpho_path: Path):
-    """Return a generating function that can be used to assign spine morphologies"""
+    """Return a generating function that can be used to assign spine morphologies."""
     names, spine_data = _read_spine_morphology_attributes(spine_morpho_path)
 
     def __generate(dfs):

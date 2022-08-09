@@ -1,5 +1,4 @@
-"""
-"""
+"""Specification of synaptic properties and classification."""
 import logging
 
 from typing import Dict, List
@@ -11,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class SynapseRule(PathwayProperty):
-    """Class representing a Synapse property"""
+    """Class representing a Synapse property."""
 
     _name = "synapse"
 
@@ -22,6 +21,11 @@ class SynapseRule(PathwayProperty):
     }
 
     def __init__(self, *args, **kwargs):
+        """Creates a new synapse rule.
+
+        Enforces that the classification starts with either ``E`` or ``I``, for exitatory
+        or inhibitory synapses, respectively.
+        """
         super().__init__(*args, **kwargs)
 
         if not self.type or self.type[0] not in "EI":
@@ -29,14 +33,14 @@ class SynapseRule(PathwayProperty):
 
 
 class SpynapseRules(PathwayPropertyGroup):
+    """A group of `SynapseRule`."""
+
     _kind = SynapseRule
     _name = "SynapsesProperties"
 
 
 class SynapseClass(Property):
-    """Stores the synaptic properties for a synapse class codified by the
-    property `id`.
-    """
+    """Stores the synaptic properties for a synapse class codified by the property `id`."""
 
     _name = "class"
 
@@ -75,6 +79,11 @@ class SynapseClasses(PropertyGroup):
 
     @classmethod
     def load(cls, xml, strict: bool = True):
+        """Extract the synapse properties from `xml`.
+
+        Enforces that the attributes ``gsynSRSF`` and ``uHillCoefficient`` are set for
+        either none or all of the properties.
+        """
         data = super(SynapseClasses, cls).load(xml, strict)
         for attr in ("gsynSRSF", "uHillCoefficient"):
             values = sum(getattr(d, attr, None) is not None for d in data)
@@ -89,7 +98,15 @@ class SynapseClasses(PropertyGroup):
 
 
 class RuleMismatch(Exception):
+    """Exception to handle mismatches between rules."""
+
     def __init__(self, duplicated, mismatch):
+        """Create a new exception.
+
+        Args:
+            duplicated: rules that occur more than once
+            mismatch: rules that have an identifier that is not matched by other rules
+        """
         self.duplicated = duplicated
         self.mismatch = mismatch
 
@@ -106,30 +123,44 @@ class RuleMismatch(Exception):
         super().__init__(msg)
 
     def __reduce__(self):
+        """Allows to pickle exceptions."""
         return (RuleMismatch, self.duplicated, self.mismatch)
 
 
 class SynapseProperties:
-    """Container to provide convenient access to the synapse classification
-    rules :class:`~SynapseRules` and classifications
-    :class:`~SynapseClasses`
+    """Container to provide access to the synapse classification and properties.
+
+    See also the classification rules :class:`~SynapseRules` and classification properties
+    :class:`~SynapseClasses`.
     """
 
     rules: SpynapseRules
     classes: SynapseClasses
 
     def __init__(self, rules, classes):
+        """Create a new container."""
         self.classes = classes
         self.rules = rules
 
     def __str__(self):
+        """An XML like representation of the properties."""
         return f"{self.rules}\n{self.classes}"
 
     def validate(self, _: Dict[str, List[str]] = None) -> bool:
+        """Validate synapse properties.
+
+        As rule mismatch is already handled at loading time, this function always returns
+        `True`.
+        """
         return True
 
     @classmethod
     def load(cls, xml, strict: bool = True):
+        """Extract synapes classification and properties from `xml`.
+
+        Will check if any of the classification rules and property rules are unmatched or
+        duplicated.
+        """
         rules = SpynapseRules.load(xml, strict)
         classes = SynapseClasses.load(xml, strict)
 
@@ -141,7 +172,7 @@ class SynapseProperties:
 
     @staticmethod
     def _duplicated(rules):
-        """Yields rules that are present more than once"""
+        """Yields rules that are present more than once."""
         seen = set()
         for rule in rules:
             if rule.id in seen:
@@ -150,7 +181,7 @@ class SynapseProperties:
 
     @staticmethod
     def _unmatched(rules, classes):
-        """Yields rules that do not match up"""
+        """Yields rules that do not match up."""
         types = set(r.type for r in rules)
         ids = set(c.id for c in classes)
         for r in rules:

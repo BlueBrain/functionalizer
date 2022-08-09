@@ -1,5 +1,4 @@
-"""Convert a multi-parquet circuit into a single file
-"""
+"""Convert a multi-parquet circuit into a single file."""
 import glob
 import os
 import shutil

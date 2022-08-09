@@ -16,7 +16,7 @@ set_target_properties(Random123 PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES ${RANDOM123_INCLUDE_PATH}
 )
 
-add_subdirectory(deps/pybind11)
+add_subdirectory(${CMAKE_SOURCE_DIR}/../../../../deps/pybind11 deps/pybind11)
 
 pybind11_add_module(_udfs SYSTEM _udfs.cpp)
 target_link_libraries(_udfs PRIVATE Random123)

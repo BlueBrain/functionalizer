@@ -1,5 +1,4 @@
-"""A plugin to filter by spine length
-"""
+"""A plugin to filter by spine length."""
 from operator import attrgetter
 
 import pandas as pd
@@ -20,11 +19,16 @@ _KEY_SPINE = 0x200
 
 
 class SpineLengthFilter(DatasetOperation):
-    """Filter synapses by spine length"""
+    """Filter synapses by spine length to match a desired distribution."""
 
     _required = False
 
     def __init__(self, recipe, source, target, morphos):
+        """Set up the filter.
+
+        Uses the synapse seed to generate random numbers, and the spine length part of the
+        recipe to obtain the desired distribution of spine lengths to match.
+        """
         super().__init__(recipe, source, target, morphos)
         self.seed = recipe.seeds.synapseSeed
         logger.info("Using seed %d for spine length adjustment", self.seed)
@@ -32,6 +36,13 @@ class SpineLengthFilter(DatasetOperation):
         self.binnings = sorted(recipe.spine_lengths, key=attrgetter("length"))
 
     def apply(self, circuit):
+        """Reduce edges until the real spine length distribution matches the desired one.
+
+        Determines the survival rate of edges by dividing the desired spine length
+        distribution by the one found in the data, scaling to the value for each bin to
+        `[1.0, 0.0]`.  Then generates random numbers and selects the edges below the cut
+        threshold.
+        """
         # Augment circuit with both a random value (used for survival) and
         # assign a bin based on spine length
         touches = add_bin_column(
@@ -62,6 +73,7 @@ class SpineLengthFilter(DatasetOperation):
         # Calculate the survival rate
         have = have.join(want, how="inner")
         have["survival_rate"] = have.want / have.have
+        # After the above division, scaling
         have.survival_rate /= have.survival_rate.max()
         have.survival_rate.fillna(value=0.0, inplace=True)
         have["surviving"] = have.survival_rate * have.have

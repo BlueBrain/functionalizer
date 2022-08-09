@@ -1,5 +1,4 @@
-"""Small configuration shim module.
-"""
+"""Small configuration shim module."""
 import io
 import os
 import sys
@@ -19,7 +18,7 @@ class Configuration(dict):
     """:property: filename storing the defaults"""
 
     def __init__(self, outdir, filename=None, overrides=None):
-        """Provide a configuaration dictionary
+        """Provide a configuaration dictionary.
 
         Optionally provided `kwargs` will override information loaded from
         the file provided by `filename`.
@@ -53,7 +52,7 @@ class Configuration(dict):
             self.setdefault("spark.master", master)
 
     def __call__(self, prefix):
-        """Yield all key, value pairs that match the prefix"""
+        """Yield all key, value pairs that match the prefix."""
         prefix = prefix.split(".")
         for k, v in self.items():
             path = k.split(".")[: len(prefix)]
@@ -61,7 +60,7 @@ class Configuration(dict):
                 yield k, v
 
     def dump(self):
-        """Dump the default configuration to the terminal"""
+        """Dump the default configuration to the terminal."""
 
         def path2str(s):
             if isinstance(s, Path):

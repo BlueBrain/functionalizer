@@ -1,5 +1,4 @@
-"""A default filter plugin
-"""
+"""Filters reducing touches."""
 from pyspark.sql import functions as F
 
 import sparkmanager as sm
@@ -17,14 +16,14 @@ _KEY_TOUCH = 0x202
 
 
 class TouchReductionFilter(DatasetOperation):
-    """Filter touches based on a simple probability
+    """Filter touches based on a simple probability.
 
     Defined in the recipe as `TouchReduction`, restrict connections
     according to the `survival_rate` defined.
     """
 
     def __init__(self, recipe, source, target, morphos):
-        """Initilize the filter by parsing the recipe
+        """Initilize the filter by parsing the recipe.
 
         The rules stored in the recipe are loaded in their abstract form,
         concretization will happen with the acctual circuit.
@@ -35,14 +34,14 @@ class TouchReductionFilter(DatasetOperation):
         logger.info("Using seed %d for trimming touches", self.seed)
 
     def apply(self, circuit):
-        """Actually reduce the touches of the circuit"""
+        """Actually reduce the touches of the circuit."""
         touches = add_random_column(circuit.df, "touch_rand", self.seed, _KEY_TOUCH)
 
         return touches.where(F.col("touch_rand") <= F.lit(self.survival)).drop("touch_rand")
 
 
 class TouchRulesFilter(DatasetOperation):
-    """Filter touches based on recipe rules
+    """Filter touches based on recipe rules.
 
     Defined in the recipe as `TouchRules`, restrict connections between
     mtypes and types (dendrite/soma).  Any touches not allowed are removed.
@@ -53,7 +52,7 @@ class TouchRulesFilter(DatasetOperation):
     _checkpoint = True
 
     def __init__(self, recipe, source, target, morphos):
-        """Initilize the filter by parsing the recipe
+        """Initilize the filter by parsing the recipe.
 
         The rules stored in the recipe are loaded in their abstract form,
         concretization will happen with the acctual circuit.
@@ -62,7 +61,7 @@ class TouchRulesFilter(DatasetOperation):
         self.rules = recipe.touch_rules.to_matrix(source.mtype_values, target.mtype_values)
 
     def apply(self, circuit):
-        """.apply() method (runner) of the filter"""
+        """Filter the circuit edges according to the touch rules."""
         indices = list(self.rules.shape)
         for i in reversed(range(len(indices) - 1)):
             indices[i] *= indices[i + 1]

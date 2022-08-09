@@ -1,7 +1,6 @@
 # pylint: disable=unsupported-assignment-operation,unsubscriptable-object
 # pandas seems to trigger these warnings in 1.4+
-"""Compare two outputs of Spykfunc (coalesced)
-"""
+"""Compare two outputs of Spykfunc (coalesced)."""
 import argparse
 import sys
 

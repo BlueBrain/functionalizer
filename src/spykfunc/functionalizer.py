@@ -1,6 +1,4 @@
-# *************************************************************************
-#  An implementation of Functionalizer in spark
-# *************************************************************************
+"""An implementation of Functionalizer in Apache Spark."""
 import math
 import os
 import pyarrow.parquet as pq
@@ -59,7 +57,7 @@ class _SpykfuncOptions:
 
 
 class Functionalizer:
-    """Functionalizer Session class"""
+    """Functionalizer session class."""
 
     circuit = None
     """:property: ciruit containing neuron and touch data"""
@@ -69,6 +67,7 @@ class Functionalizer:
 
     # ==========
     def __init__(self, **options):
+        """Create a new Functionalizer instance."""
         # Create config
         self._config = _SpykfuncOptions(options)
         checkpoint_resume.directory = self._config.checkpoint_dir
@@ -101,27 +100,23 @@ class Functionalizer:
         morphologies,
         edges=None,
     ):
-        """Initialize all data required
+        """Initialize all data required.
 
         Will load the necessary cell collections from `source` and `target`
         parameters, and construct the underlying brain :class:`.Circuit`.
         The `recipe_file` will only be fully processed once filters are
         instantiated.
 
-        Arguments
-        ---------
-        recipe_file
-            A scientific prescription to be used by the filters on the
-            circuit
-        source
-            The source population path and name
-        target
-            The target population path and name
-        morphologies
-            a iterable containing the storage for node morphologies, and, optionally, for
-            spine morphologies
-        edges
-            A list of files containing edges
+        Args:
+            recipe_file: A scientific prescription to be used by the filters on the
+                circuit
+            source: The source population path and name
+            source_nodeset: The source nodeset file and nodeset name
+            target: The target population path and name
+            target_nodeset: The target nodeset file and nodeset name
+            morphologies: a iterable containing the storage for node morphologies, and,
+                optionally, for spine morphologies
+            edges: A list of files containing edges
         """
         # In "program" mode this dir wont change later, so we can check here
         # for its existence/permission to create
@@ -189,7 +184,7 @@ class Functionalizer:
 
     @property
     def output_directory(self):
-        """:property: the directory to save results in"""
+        """:property: the directory to save results in."""
         return self._config.output_dir
 
     @property
@@ -201,7 +196,7 @@ class Functionalizer:
     # Main entry point of Filter Execution
     # -------------------------------------------------------------------------
     def process_filters(self, filters=None, overwrite=False):
-        """Filter the circuit
+        """Filter the circuit.
 
         Uses either the specified filters or a default set, based on the
         parameters passed to the :class:`.Functionalizer` constructor.
@@ -210,13 +205,10 @@ class Functionalizer:
         of data and filters leading up to said checkpoint did not change.
         Use the `overwrite` argument to change this behavior.
 
-        Arguments
-        ---------
-        filters
-            A list of filter names to be run.  Any `Filter` suffix should
-            be omitted.
-        overwrite
-            Allows to overwrite checkpoints
+        Args:
+            filters: A list of filter names to be run.  Any `Filter` suffix should be
+                omitted.
+            overwrite: Allows to overwrite checkpoints
         """
         self._ensure_data_loaded()
 
@@ -252,16 +244,12 @@ class Functionalizer:
         order: SortBy = SortBy.POST,
         filename: str = "circuit.parquet",
     ):
-        """Writes the touches of the circuit to disk
+        """Writes the touches of the circuit to disk.
 
-        Arguments
-        ---------
-        output_path
-            Allows to change the default output directory
-        order
-            The sorting of the touches
-        filename
-            Allows to change the default output name
+        Args:
+            output_path: Allows to change the default output directory
+            order: The sorting of the touches
+            filename: Allows to change the default output name
         """
 
         def get_fields(df):
@@ -355,7 +343,7 @@ class Functionalizer:
     # Helper functions
     # -------------------------------------------------------------------------
     def _ensure_data_loaded(self):
-        """Ensures required data is available"""
+        """Ensures required data is available."""
         if self.circuit is None:
             raise RuntimeError("No touches available. Please load data first.")
         if self._config.filters and self.recipe is None:

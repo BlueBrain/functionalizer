@@ -1,5 +1,4 @@
-""" A module of general purpose spark helper functions
-"""
+"""A module of general purpose spark helper functions."""
 from contextlib import contextmanager
 from pyspark.sql import functions as F
 import sparkmanager as sm
@@ -12,7 +11,7 @@ logger = get_logger(__name__)
 
 @contextmanager
 def number_shuffle_partitions(np):
-    """Temporarily change the number of shuffle partitions
+    """Temporarily change the number of shuffle partitions.
 
     Note that for this to have any effect, the lazy evaluation of Spark
     needs to be triggered within the context this function is used with,
@@ -28,7 +27,8 @@ def number_shuffle_partitions(np):
 
 
 def cache_broadcast_single_part(df, parallelism=1):
-    """Caches, coalesce(1) and broadcasts df
+    """Caches, coalesce(1) and broadcasts `df`.
+
     Requires immediate evaluation, otherwise spark-2.2.x doesnt optimize
 
     :param df: The dataframe to be evaluated and broadcasted

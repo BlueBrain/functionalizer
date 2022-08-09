@@ -56,7 +56,7 @@ class CMakeBuild(build_ext):
 
 setup(
     # name and other metadata are in setup.cfg
-    use_scm_version={"write_to": "src/spykfunc/version.py"},
+    use_scm_version=True,
     ext_modules=[CMakeExtension("spykfunc.filters.udfs._udfs", "src/spykfunc/filters/udfs")],
     cmdclass={"build_ext": CMakeBuild},
 )

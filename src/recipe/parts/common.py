@@ -1,5 +1,4 @@
-"""Shared properties between recipe components
-"""
+"""Shared properties between recipe components."""
 
 NODE_FIELDS = {
     "fromEType": "*",

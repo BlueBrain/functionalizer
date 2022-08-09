@@ -1,5 +1,4 @@
-"""
-"""
+"""Specification of moving synapses."""
 import fnmatch
 import itertools
 
@@ -9,6 +8,8 @@ from ..property import MTypeValidator, Property, PropertyGroup
 
 
 class Shift(Property):
+    """A synapse shift."""
+
     _name = "shift"
 
     _attributes = {"fromMType": "*", "toMType": "*", "type": "*"}
@@ -16,6 +17,7 @@ class Shift(Property):
     def __call__(
         self, src_mtypes: Iterable[str], dst_mtypes: Iterable[str]
     ) -> Iterator[Tuple[str, str, str, str]]:
+        """Expand rules for every allowed source/target mtype."""
         for src, dst in itertools.product(
             fnmatch.filter(src_mtypes, self.fromMType),
             fnmatch.filter(dst_mtypes, self.toMType),
@@ -24,6 +26,8 @@ class Shift(Property):
 
 
 class SynapseShifts(PropertyGroup, MTypeValidator):
+    """Group of `Shift`."""
+
     _name = "SynapsesReposition"
     _kind = Shift
 

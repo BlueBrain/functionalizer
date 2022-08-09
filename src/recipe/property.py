@@ -1,5 +1,4 @@
-"""Basic components to build XML recipes
-"""
+"""Basic components to build XML recipes."""
 import fnmatch
 import itertools
 import logging
@@ -26,7 +25,10 @@ def _sanitize(value):
 
 
 class NotFound(Exception):
+    """Exception for missing recipe component."""
+
     def __init__(self, cls):
+        """Creates exception for missing `cls`."""
         super().__init__(f"cannot find {cls.__name__}")
 
 
@@ -41,6 +43,11 @@ class Property:
     _implicit = False
 
     def __init__(self, strict: bool = True, **kwargs):
+        """Create a new property object.
+
+        When passing `strict`, will raise an `AttributeError` if an attribute is present
+        that is not defined in `_attributes` or `_attribute_alias`.
+        """
         defaults = kwargs.pop("defaults", {})
         self._i = kwargs.pop("index", None)
         self._imlicit = self._implicit
@@ -63,11 +70,13 @@ class Property:
                 raise TypeError(f"cannot alias non-existant {value} to {key} in {type(self)}")
 
     def __delattr__(self, attr):
+        """Deletes attribute `attr`, even if it is aliased."""
         resolved_name = self._attribute_alias.get(attr, attr)
         if resolved_name in self._values:
             del self._values[resolved_name]
 
     def __getattr__(self, attr):
+        """Gets attribute `attr`, taking aliases and inheritance into account."""
         resolved_name = self._attribute_alias.get(attr, attr)
         if attr.startswith("_"):
             return self.__dict__[attr]
@@ -79,6 +88,7 @@ class Property:
         raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{attr}'")
 
     def __setattr__(self, attr, value):
+        """Sets attribute `attr`, taking aliases and data types into account."""
         resolved_name = self._attribute_alias.get(attr, attr)
         if attr.startswith("_"):
             super().__setattr__(attr, value)
@@ -88,15 +98,20 @@ class Property:
             raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{attr}'")
 
     def __getstate__(self):
+        """State needed for pickling."""
         return (self._i, self._implicit, self._local_attributes, self._values)
 
     def __setstate__(self, state):
+        """Restoration after pickling."""
         self._i, self._implicit, self._local_attributes, self._values = state
 
     def __repr__(self):
+        """More legible representation."""
         return str(self)
 
     def __str__(self):
+        """An XML like representation of the rule."""
+
         def vals():
             yield ""
             for key, value in self._values.items():
@@ -121,6 +136,7 @@ class Property:
         return new_value
 
     def validate(self, _: Dict[str, List[str]] = None) -> bool:
+        """Validates attribute values."""
         return True
 
 
@@ -133,10 +149,13 @@ class PropertyGroup(list):
     _defaults: Dict[str, Any] = {}
 
     def __init__(self, *args, **kwargs):
+        """Creates a new property container."""
         self._defaults = kwargs.pop("defaults", {})
         super().__init__(*args, **kwargs)
 
     def __str__(self):
+        """An XML like representation of the group."""
+
         def vals():
             yield ""
             for key, value in self._defaults.items():
@@ -151,7 +170,7 @@ class PropertyGroup(list):
 
     @classmethod
     def load(cls, xml, strict: bool = True):
-        """Load a list of properties defined by the class"""
+        """Load a list of properties defined by the class."""
         if isinstance(xml, str):
             from io import StringIO
             from .recipe import Recipe  # pylint: disable=cyclic-import
@@ -187,7 +206,7 @@ class PropertyGroup(list):
 
 
 def singleton(fct: Union[Callable, None] = None, implicit: bool = False) -> Callable:
-    """Decorate a class to allow initializing with an XML element
+    """Decorate a class to allow initializing with an XML element.
 
     Will search for the classes name in the provided element, and load
 
@@ -230,10 +249,14 @@ _DIRECTIONAL_ATTR = re.compile(r"^(from|to)([A-Z]\w+)$")
 
 
 class PathwayProperty(Property):
+    """Property that uses pattern matching to define connectivity."""
+
     @classmethod
     def columns(cls):
-        """The attributes of the property that indicate a source / target
-        invocation via the prefixes ``from`` and ``to``.
+        """Column names for attributes used in the pathway.
+
+        The attributes of the property that indicate a source / target invocation via the
+        prefixes ``from`` and ``to``.
 
         >>> class rule(PathwayProperty):
         ...     _attributes = {'toMType': '*', 'fromEType': '*', 'something': str}
@@ -244,9 +267,11 @@ class PathwayProperty(Property):
         return sorted(k for k in cls._attributes if _DIRECTIONAL_ATTR.match(k))
 
     def __call__(self, values: Dict[str, List[str]]) -> Iterator[Tuple[Dict[str, str], Any]]:
-        """Expand the property given the possible matching attribute values
-        in `values`.  Returns an iterator over dictionaries with the
-        attribute values matched and the property itself.
+        """Expand the pathway for all possible attribute values.
+
+        Expand the property given the possible matching attribute values in `values`.
+        Returns an iterator over dictionaries with the attribute values matched and the
+        property itself.
 
         >>> class rule(PathwayProperty):
         ...     _attributes = {'toMType': '*', 'fromEType': '*', 'something': str}
@@ -264,9 +289,12 @@ class PathwayProperty(Property):
 
 
 class PathwayPropertyGroup(PropertyGroup):
+    """Property group for `PathwayProperty`."""
+
     def validate(self, values: Dict[str, List[str]]) -> bool:
-        """Checks that all rules of the group are correct and all values
-        passed are covered.
+        """Basic validation.
+
+        Checks that all rules of the group are correct and all values passed are covered.
 
         >>> from recipe.parts.touch_connections import ConnectionRules
         >>> rules = ConnectionRules.load('''
@@ -318,9 +346,11 @@ class PathwayPropertyGroup(PropertyGroup):
 
     @property
     def required(self) -> List[str]:
-        """Returns a list of attributes whose values are required for
-        properly selecting rules, i.e., all attributes used by the enclosed
-        properties, excluding any that are consistently set to ``"*"``.
+        """The required attributes for this property group.
+
+        Returns a list of attributes whose values are required for properly selecting
+        rules, i.e., all attributes used by the enclosed properties, excluding any that
+        are consistently set to ``"*"``.
 
         For example:
 
@@ -348,9 +378,10 @@ class PathwayPropertyGroup(PropertyGroup):
         key: Dict[str, str],
         values: Dict[str, List[str]],
     ) -> int:
-        """Generate an integer pathway identifier for the provided `key`,
-        and reference `values` for all attributes given by
-        :py:attr:`~required`.
+        """Create a pathway index from `key`.
+
+        Generate an integer pathway identifier for the provided `key`, and reference
+        `values` for all attributes given by :py:attr:`~required`.
 
         >>> from recipe.parts.touch_connections import ConnectionRules
         >>> rules = ConnectionRules.load('''
@@ -394,9 +425,11 @@ class PathwayPropertyGroup(PropertyGroup):
         key: int,
         values: Dict[str, List[str]],
     ) -> Dict[str, str]:
-        """Generate a dictionaly of attributes and values that need to be
-        set given an integer pathway `key` and reference `values` for all
-        attributes given by :py:attr:`~required`.
+        """Resolve the attribute values from pathway index `key`.
+
+        Generate a dictionaly of attributes and values that need to be set given an
+        integer pathway `key` and reference `values` for all attributes given by
+        :py:attr:`~required`.
 
         >>> from recipe.parts.touch_connections import ConnectionRules
         >>> rules = ConnectionRules.load('''
@@ -426,7 +459,7 @@ class PathwayPropertyGroup(PropertyGroup):
         return result
 
     def to_matrix(self, values: Dict[str, List[str]]) -> np.array:
-        """Construct a flattened connection rule matrix
+        """Construct a flattened connection rule matrix.
 
         Requires being passed a full set of allowed parameter values passed
         as argument `values`.  Will raise a :class:`KeyError` if any
@@ -509,6 +542,8 @@ class MTypeValidator:
     """
 
     def validate(self, values: Dict[str, List[str]]) -> bool:
+        """Checks that all MType values are covered, and rules match MTypes."""
+
         def _check(mtypes, covered, kind):
             uncovered = set(mtypes) - covered
             if len(uncovered):

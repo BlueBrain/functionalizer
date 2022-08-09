@@ -1,5 +1,4 @@
-"""Filters to add properties to synapses
-"""
+"""Filters to add properties to synapses."""
 import numpy as np
 import pandas as pd
 
@@ -18,7 +17,7 @@ logger = get_logger(__name__)
 
 
 class SynapseProperties(DatasetOperation):
-    """Assign synapse properties
+    """Assign synapse properties.
 
     This "filter" augments touches with properties of synapses by adding
     the fields
@@ -58,6 +57,12 @@ class SynapseProperties(DatasetOperation):
     ]
 
     def __init__(self, recipe, source, target, morphos):
+        """Initialize the filter.
+
+        Uses the synapse seed of the recipe to generate random numbers that are drawn when
+        generating the synapse properties. Also uses the classification and property
+        specification part of the recipe.
+        """
         super().__init__(recipe, source, target, morphos)
         self.seed = recipe.seeds.synapseSeed
         logger.info("Using seed %d for synapse properties", self.seed)
@@ -79,7 +84,7 @@ class SynapseProperties(DatasetOperation):
             self._columns.append((None, "uHillCoefficient"))
 
     def apply(self, circuit):
-        """Add properties to the circuit"""
+        """Add properties to the circuit."""
         with circuit.pathways(self.columns):
             connections = (
                 circuit.with_pathway()
@@ -135,7 +140,7 @@ class SynapseProperties(DatasetOperation):
 
     @staticmethod
     def convert_properties(properties, columns, source, target):
-        """Merges synapse class assignment and properties"""
+        """Merges synapse class assignment and properties."""
         flattened_pathways = properties.rules.to_matrix(
             {n: v for n, _, _, v in Circuit.expand(columns, source, target)}
         )
@@ -179,6 +184,7 @@ _spark_t_to_py = {
 
 
 def cast_in_eq_py_t(val, spark_t):
+    """Cast `val` to the Python equivalent of `spark_t`."""
     return _spark_t_to_py[spark_t.__class__](val)
 
 
@@ -200,7 +206,7 @@ def _load_from_recipe(recipe_group, group_schema, *, trim: bool = False) -> pd.D
 
 
 def _add_randomized_connection_properties(connections: DataFrame, seed: int) -> DataFrame:
-    """Add connection properties drawn from random distributions"""
+    """Add connection properties drawn from random distributions."""
 
     def __generate(data):
         import spykfunc.filters.udfs as fcts

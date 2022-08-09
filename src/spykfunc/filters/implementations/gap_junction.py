@@ -1,5 +1,4 @@
-"""A default filter plugin
-"""
+"""Collection of filters for gap junctions."""
 import numpy as np
 import pandas as pd
 
@@ -12,7 +11,7 @@ logger = get_logger(__name__)
 
 
 class GapJunctionFilter(DatasetOperation):
-    """Synchronize gap junctions
+    """Synchronize gap junctions.
 
     Ensures that:
 
@@ -33,6 +32,7 @@ class GapJunctionFilter(DatasetOperation):
     ]
 
     def __init__(self, recipe, source, target, morphos):
+        """Initialize the filter, using the morphology database."""
         super().__init__(recipe, source, target, morphos)
         self.__morphos = morphos
 
@@ -57,9 +57,10 @@ class GapJunctionFilter(DatasetOperation):
 
     @property
     def _soma_filter(self):
-        """A filter for dendrite to soma gap junctions, removing junctions
-        that are on parent branches of the dendrite and closer than 3 times
-        the soma radius.
+        """Removes junctions close to the soma.
+
+        Filters for dendrite to soma gap junctions, removing junctions that are on parent
+        branches of the dendrite and closer than 3 times the soma radius.
         """
 
         def _filter(df: pd.DataFrame) -> pd.DataFrame:
@@ -121,9 +122,10 @@ class GapJunctionFilter(DatasetOperation):
 
     @staticmethod
     def _dendrite_match(df: pd.DataFrame) -> pd.DataFrame:
-        """Filter dendrite to dendrite junctions, keeping only junctions
-        that have a match in both directions, with an optional segment
-        offset of one.
+        """Match up dendrite gap junctions.
+
+        Filters dendrite to dendrite junctions, keeping only junctions that have a match
+        in both directions, with an optional segment offset of one.
         """
         if len(df) == 0:
             return df
@@ -143,7 +145,7 @@ class GapJunctionFilter(DatasetOperation):
 
 
 class GapJunctionProperties(DatasetOperation):
-    """Assign gap-junction properties
+    """Assign gap-junction properties.
 
     This "filter" augments touches with properties of gap-junctions by adding
     the field
@@ -162,11 +164,11 @@ class GapJunctionProperties(DatasetOperation):
     ]
 
     def __init__(self, recipe, source, target, morphos):
+        """Initialize the filter, extracting the conductance setting from the recipe."""
         super().__init__(recipe, source, target, morphos)
         self.conductance = recipe.gap_junction_properties.gsyn
 
     def apply(self, circuit):
-        """Add properties to the circuit"""
-
+        """Add properties to the circuit."""
         touches = circuit.df.withColumn("gsyn", F.lit(self.conductance))
         return touches

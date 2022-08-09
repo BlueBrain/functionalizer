@@ -1,9 +1,7 @@
-"""Synapse filters relating to synapse ids
+"""Synapse filters relating to synapse ids.
 
 The synapse ids are used to generate random numbers for properties and
 cutting synapses to match biological distributions.
-
-The filters found here can be used
 """
 from pyspark.sql import functions as F
 from pyspark.sql import Window
@@ -12,7 +10,7 @@ from spykfunc.filters import DatasetOperation
 
 
 class AddIDFilter(DatasetOperation):
-    """Adds a column `synapse_id` to a circuit
+    """Adds a column `synapse_id` to a circuit.
 
     .. note:: The synapse id added by this filter will yield reproducible
               synapse properties, but should not be used for any processing
@@ -24,8 +22,7 @@ class AddIDFilter(DatasetOperation):
     _columns = [(None, "synapse_id")]
 
     def apply(self, circuit):
-        """Add a `synapse_id` field to `circuit`"""
-
+        """Add a `synapse_id` field to `circuit`."""
         touches = circuit.df.repartition(circuit.df.rdd.getNumPartitions(), "src", "dst").cache()
 
         gid_window = Window.orderBy("src").rangeBetween(Window.unboundedPreceding, 0)
@@ -68,7 +65,7 @@ class AddIDFilter(DatasetOperation):
 
 
 class DenseIDFilter(DatasetOperation):
-    """Makes the `synapse_id` column continuous
+    """Makes the `synapse_id` column continuous.
 
     This filter should be used if the range of the synapse id field exceeds
     numerical limitiations when generating output files.
@@ -81,7 +78,7 @@ class DenseIDFilter(DatasetOperation):
     _checkpoint = True
 
     def apply(self, circuit):
-        """Condense the synapse id field used to match gap-junctions"""
+        """Condense the synapse id field used to match gap-junctions."""
         assert "synapse_id" in circuit.df.columns, "DenseID must be called before GapJunction"
 
         touches = circuit.df.repartition(circuit.df.rdd.getNumPartitions(), "src", "dst").cache()

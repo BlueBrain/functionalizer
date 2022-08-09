@@ -1,3 +1,4 @@
+"""Schema definitions and mappings."""
 import re
 
 from pyspark.sql import types as T
@@ -129,7 +130,7 @@ SYNAPSE_PROPERTY_SCHEMA = T.StructType(
 
 
 def indexed_strings(names):
-    """Create a schema mapping int to str"""
+    """Create a schema mapping int to string."""
     assert len(names) == 2
     return T.StructType(
         [

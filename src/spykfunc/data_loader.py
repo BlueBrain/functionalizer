@@ -1,3 +1,4 @@
+"""Data loading for nodes, edges."""
 import glob
 import hashlib
 import math
@@ -53,7 +54,7 @@ BRANCH_SHIFT_MINIMUM_VERSION: LooseVersion = LooseVersion("0.6.1-2")
 
 
 def shift_branch_type(df: DataFrame, shift: int = BRANCH_OFFSET) -> DataFrame:
-    """Shift branch/section types from 1-based to 0-based"""
+    """Shift branch/section types from 1-based to 0-based."""
     for attr in BRANCH_COLUMNS:
         tmp_attr = f"__tmp__{attr}"
         if hasattr(df, attr):
@@ -86,8 +87,10 @@ def _accept_node_attribute(attr: str) -> bool:
 
 
 def _translate_attribute(attr: str) -> str:
-    """Translates certain attributes from the SONATA convention to the nomenclature used
-    in the recipe to account for any mismatch between the two.
+    """Map attribute names.
+
+    Translates certain attributes from the SONATA convention to the nomenclature used in
+    the recipe to account for any mismatch between the two.
     """
     if attr == "synapse_class":
         return "sclass"
@@ -110,7 +113,9 @@ def _get_pure_attributes(population):
 
 
 def _column_type(population, column, accessor):
-    """Determine the Spark datatype for `column` from `population` by getting data for an
+    """Helper to determine column types.
+
+    Determine the Spark datatype for `column` from `population` by getting data for an
     empty selection via the `accessor` method of `population`.
     """
     import libsonata
@@ -120,8 +125,10 @@ def _column_type(population, column, accessor):
 
 
 def _add_all_attributes(dataframe, population, selection):
-    """Adds all enumeration and pure attributes for a given `selection` of a `population`
-    to the `dataframe` passed in.
+    """Helper to add SONATA attributes to Spark dataframes.
+
+    Adds all enumeration and pure attributes for a given `selection` of a `population` to
+    the `dataframe` passed in.
     """
     for column in _get_pure_attributes(population):
         name = _translate_attribute(column)
@@ -133,8 +140,10 @@ def _add_all_attributes(dataframe, population, selection):
 
 
 def _types(population):
-    """Generates a sequence of schema strings for Spark corresponding to the attributes
-    and enumerations of `population`.
+    """Helper to create Spark type conventions.
+
+    Generates a sequence of schema strings for Spark corresponding to the attributes and
+    enumerations of `population`.
     """
     for column in _get_pure_attributes(population):
         kind = _column_type(population, column, "get_attribute")
@@ -147,7 +156,7 @@ def _types(population):
 
 
 def _create_neuron_loader(filename, population):
-    """Create a UDF to load neurons from Sonata
+    """Create a UDF to load neurons from SONATA.
 
     Args:
         filename: The name of the circuit file
@@ -172,7 +181,7 @@ def _create_neuron_loader(filename, population):
 
 
 def _create_touch_loader(filename: str, population: str):
-    """Create a UDF to load touches from SONATA
+    """Create a UDF to load touches from SONATA.
 
     Args:
         filename: The name of the touches file
@@ -201,7 +210,7 @@ def _create_touch_loader(filename: str, population: str):
 
 
 class NeuronData:
-    """Neuron data loading facilities
+    """Neuron data loading facilities.
 
     This class represent neuron populations, lazily loaded.  After the
     construction, general properties of the neurons, such as the unique
@@ -210,21 +219,19 @@ class NeuronData:
     :attr:`.NeuronData.etype_values`, or
     :attr:`.NeuronData.sclass_values`
     present can be accessed.
-
-    To load neuron-specific information, access the property
-    :attr:`.NeuronData.df`, data will be loaded lazily.
-
-    Arguments
-    ---------
-    population
-        a tuple with the path to the neuron storage container and population name
-    nodeset
-        a tuple with the path to the nodesets JSON file and nodeset name
-    cache
-        a directory name to use for caching generated Parquet
     """
 
     def __init__(self, population: Iterable[str], nodeset: Iterable[str], cache: str):
+        """Construct a new neuron loader.
+
+        To load neuron-specific information, access the property
+        :attr:`.NeuronData.df`, data will be loaded lazily.
+
+        Args:
+            population: a tuple with the path to the neuron storage and population name
+            nodeset: a tuple with the path to the nodesets JSON file and nodeset name
+            cache: a directory name to use for caching generated Parquet
+        """
         self._cache = cache
         self._df = None
         (self._filename, self._population) = population
@@ -244,17 +251,21 @@ class NeuronData:
             os.makedirs(self._cache)
 
     def __getattr__(self, attr):
+        """Attribute access is defaulted to SONATA enumerations."""
         return self._enumerations[attr]
 
     def __len__(self):
+        """The number of nodes in the cell dataframe."""
         return self._size
 
     @property
     def population(self):
+        """The population name."""
         return self._population
 
     @property
     def df(self):
+        """The PySpark dataframe with the neuron data."""
         if not self._df:
             self._df = F.broadcast(self._load_neurons())
         return self._df
@@ -322,9 +333,7 @@ class NeuronData:
 
 
 def _get_size(files):
-    """Returns the total size on the filesystem for input data given a list
-    of filenames or directories.
-    """
+    """Returns the total size of a list of filenames or directories."""
     size = 0
 
     def _add_size(fn):
@@ -355,9 +364,9 @@ def _grab_parquet(files):
 
 
 def _grab_sonata_population(filename):
-    """Retrieve the default population in a SONATA files.  Raise an
-    exception if no population present or more than one population is
-    found.
+    """Retrieve the default population in a SONATA files.
+
+    Raise an exception if no population present or more than one population is found.
     """
     import libsonata
 
@@ -384,16 +393,18 @@ def _grab_sonata(files):
 
 
 class EdgeData:
-    """Edge data loading facilities
+    """Edge data loading facilities.
 
     This class represent the connectivity between cell populations, lazily
-    loaded.  Access the property :attr:`.NeuronData.df`, to load the data.
-
-    Args:
-        A list of edge files.
+    loaded.  Access the property :attr:`.EdgeData.df`, to load the data.
     """
 
     def __init__(self, *paths):
+        """Initialize the loader.
+
+        Args:
+            A list of edge files.
+        """
         files = []
         for path in paths:
             files.extend(glob.glob(path) or [path])
@@ -432,6 +443,7 @@ class EdgeData:
 
     @property
     def df(self):
+        """The PySpark dataframe with the edge data."""
         df = self._loaders[0]()
         for loader in self._loaders[1:]:
             df = df.union(loader())
@@ -441,10 +453,12 @@ class EdgeData:
 
     @property
     def input_size(self):
+        """The initial size (in bytes) of the input data."""
         return self._size
 
     @property
     def metadata(self):
+        """The metadata associated with the input data."""
         return self._metadata
 
     @staticmethod

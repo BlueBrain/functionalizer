@@ -1,9 +1,10 @@
-"""Spine length specification
-"""
+"""Spine length specification."""
 from ..property import Property, PropertyGroup
 
 
 class Quantile(Property):
+    """Quantile definition for spine length distributions."""
+
     _name = "quantile"
 
     _attributes = {
@@ -13,4 +14,6 @@ class Quantile(Property):
 
 
 class SpineLengths(PropertyGroup):
+    """A group of spine length `Quantile`."""
+
     _kind = Quantile

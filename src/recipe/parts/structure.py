@@ -1,5 +1,4 @@
-"""Settings relating to the structure of the connectome
-"""
+"""Settings relating to the structure of the connectome."""
 import logging
 from typing import Dict, List
 
@@ -10,12 +9,14 @@ logger = logging.getLogger(__name__)
 
 @singleton
 class InterBoutonInterval(Property):
-    """Settings for the touch redistribution of TouchDetector"""
+    """Settings for the touch redistribution of TouchDetector."""
 
     _attributes = {"minDistance": float, "maxDistance": float, "regionGap": float}
 
 
 class StructuralSpineLength(Property):
+    """Spine length used for overlap detection radius in TouchDetector."""
+
     _name = "rule"
     _alias = "StructuralType"
 
@@ -28,7 +29,7 @@ class StructuralSpineLength(Property):
 
 
 class StructuralSpineLengths(PropertyGroup):
-    """Spine length specification
+    """Spine length specification.
 
     To be used as a *maximum* spine length when constructing the connectome via
     TouchDetector.

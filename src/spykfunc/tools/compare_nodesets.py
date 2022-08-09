@@ -1,5 +1,4 @@
-"""Compare two outputs of Spykfunc (coalesced), one filtered with NodeSets
-"""
+"""Compare two outputs of Spykfunc (coalesced), one filtered with NodeSets."""
 import argparse
 import sys
 

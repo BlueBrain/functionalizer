@@ -1,5 +1,4 @@
-"""A default filter plugin
-"""
+"""A default filter plugin."""
 from spykfunc.filters import DatasetOperation
 
 
@@ -11,14 +10,15 @@ class BoutonDistanceFilter(DatasetOperation):
     """
 
     def __init__(self, recipe, source, target, morphos):
+        """Initializes the filter, extracting the bouton distance data from the recipe."""
         super().__init__(recipe, source, target, morphos)
         self.distances = recipe.bouton_distances
 
     def apply(self, circuit):
-        """Apply filter"""
+        """Apply filter."""
 
         def pos(cls):
-            """Save index function returning -1 if not found"""
+            """Save index function returning -1 if not found."""
             try:
                 return circuit.target.sclass_values.index(cls)
             except ValueError:

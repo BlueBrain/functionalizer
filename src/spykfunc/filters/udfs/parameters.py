@@ -1,9 +1,12 @@
+"""Parameter calculations for reduce and cut."""
 from math import exp, sqrt
 import logging
 import pandas as pd
 
 
 class ReduceAndCutParameters:
+    """Helper to calculate reduce and cut parameters."""
+
     # Defaults
     activeFraction_default = 0.5
     boutonReductionFactor_default = 0.04
@@ -21,14 +24,22 @@ class ReduceAndCutParameters:
     ]
 
     def __init__(self, connection_rules, connection_index):
+        """Initializer helper.
+
+        Args:
+            connection_rules: connectivity rules from the recipe
+            connection_index: flattened connectivity matrix indices
+        """
         self.connection_rules = connection_rules
         self.connection_index = connection_index
 
     def __call__(self, iterator):
+        """Apply parameter generation for each Pandas dataframe in `iterator`."""
         for df in iterator:
             yield self.apply(df)
 
     def apply(self, df):
+        """Generate parameters for each row in `df`."""
         data = (
             self.process(*args)
             for args in zip(df["pathway_i"], df["total_touches"], df["structural_mean"])
@@ -36,11 +47,14 @@ class ReduceAndCutParameters:
         return pd.DataFrame.from_records(data, columns=[c for c, _ in self._schema])
 
     def process(self, pathway_i, total_touches, structuralMean):
-        """Calculates the parameters for R&C
+        """Calculates the parameters for reduce and cut.
 
-        Args
-            structuralMean: The average of touches/connection for the given mtype-mtype rule
-        Returns
+        Args:
+            pathway_i: the pathway index
+            total_touches: the overall count of touches for the given mtype-mtype rule
+            structuralMean: the average of touches/connection for the given mtype-mtype rule
+
+        Returns:
             A tuple of
             `pathway_i, structuralMean, pP_A, pMu_A, bouton_reduction_factor, activeFraction_legacy`
         """
@@ -170,14 +184,17 @@ class ReduceAndCutParameters:
 
     @classmethod
     def schema(cls):
+        """The PySpark schema for the parameter output."""
         return ", ".join(f"{c} {t}" for (c, t) in cls._schema)
 
 
 def pprime_approximation(r, cv, p):
-    """Find good approximations for parameters of the s2f algorithm
-    :param r:  bouton reduction
-    :param cv: coefficient of variance
-    :param p: inverse of mean number of structural touches per connection
+    """Find good approximations for parameters of the s2f algorithm.
+
+    Args:
+        r:  bouton reduction
+        cv: coefficient of variance
+        p: inverse of mean number of structural touches per connection
     """
     epsilon = 0.00001
     step = 1.0

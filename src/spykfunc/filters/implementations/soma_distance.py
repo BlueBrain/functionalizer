@@ -1,5 +1,4 @@
-"""A default filter plugin
-"""
+"""A default filter plugin."""
 import numpy as np
 import pandas as pd
 
@@ -10,12 +9,13 @@ from spykfunc.utils.spark import cache_broadcast_single_part
 
 
 class SomaDistanceFilter(DatasetOperation):
-    """Filter touches based on distance from soma
+    """Filter touches based on distance from soma.
 
     Removes all touches that are located within the soma.
     """
 
     def __init__(self, recipe, source, target, morphos):
+        """Initialize the filter, using the morphology database."""
         super().__init__(recipe, source, target, morphos)
         self.__morphos = morphos
 
@@ -37,7 +37,7 @@ class SomaDistanceFilter(DatasetOperation):
         )
 
     def _create_soma_radius_udf(self):
-        """Produce a UDF to calculate soma radii"""
+        """Produce a UDF to calculate soma radii."""
 
         @F.pandas_udf("float")
         def soma_radius(morphos):
