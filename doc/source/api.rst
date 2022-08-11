@@ -27,14 +27,14 @@ infrastructure, including memory settings and storage paths.
 Data Handling
 `````````````
 
-The :class:`.NeuronData` class is used to read both nodes and edges from
+The :class:`.NodeData` class is used to read both nodes and edges from
 binary storage or Parquet.  Nodes are customarily stored in SONATA_ format
-based on HDF5, and :class:`.NeuronData` will internally cache them in
+based on HDF5, and :class:`.NodeData` will internally cache them in
 Parquet format for faster future access.
 
 .. autoclass:: spykfunc.circuit.Circuit
 
-.. autoclass:: spykfunc.data_loader.NeuronData
+.. autoclass:: spykfunc.io.NodeData
    :members: load_neurons, load_touch_parquet, load_touch_sonata
 
 Filtering

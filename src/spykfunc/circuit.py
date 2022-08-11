@@ -7,8 +7,7 @@ from pyspark.sql import types as T
 
 import sparkmanager as sm
 
-from spykfunc.data_loader import NeuronData, EdgeData
-from spykfunc.dataio.morphologies import MorphologyDB
+from spykfunc.io import NodeData, EdgeData, MorphologyDB
 from spykfunc.utils import get_logger
 from spykfunc.utils.spark import cache_broadcast_single_part
 from spykfunc import schema
@@ -88,8 +87,8 @@ class Circuit:
 
     def __init__(
         self,
-        source: NeuronData,
-        target: NeuronData,
+        source: NodeData,
+        target: NodeData,
         touches: EdgeData,
         morphologies: Iterable[str],
     ):

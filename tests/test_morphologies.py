@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy
 import pytest
 
-from spykfunc.dataio.morphologies import MorphologyDB
+from spykfunc.io.morphologies import MorphologyDB
 
 
 BRANCHES = [

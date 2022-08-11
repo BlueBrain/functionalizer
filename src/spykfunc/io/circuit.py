@@ -4,9 +4,9 @@ import hashlib
 import math
 import os
 import re
-from distutils.version import LooseVersion
 from typing import Iterable, List
 
+from packaging.version import LegacyVersion
 import pandas as pd
 import pyarrow.parquet as pq
 from pyspark.sql import functions as F
@@ -14,9 +14,9 @@ from pyspark.sql import DataFrame
 
 import sparkmanager as sm
 
-from . import schema
-from .utils import get_logger
-from .utils.filesystem import adjust_for_spark
+from spykfunc import schema
+from spykfunc.utils import get_logger
+from spykfunc.utils.filesystem import adjust_for_spark
 
 
 BASIC_EDGE_SCHEMA = ["source_node_id long", "target_node_id long", "synapse_id long"]
@@ -50,7 +50,7 @@ PARTITION_SIZE = 500_000
 # 1-based. Thus this offset...
 BRANCH_OFFSET: int = 1
 BRANCH_COLUMNS: List[str] = ["afferent_section_type", "efferent_section_type"]
-BRANCH_SHIFT_MINIMUM_VERSION: LooseVersion = LooseVersion("0.6.1-2")
+BRANCH_SHIFT_MINIMUM_VERSION: LegacyVersion = LegacyVersion("0.6.1-2")
 
 
 def shift_branch_type(df: DataFrame, shift: int = BRANCH_OFFSET) -> DataFrame:
@@ -209,15 +209,15 @@ def _create_touch_loader(filename: str, population: str):
     return loader
 
 
-class NeuronData:
+class NodeData:
     """Neuron data loading facilities.
 
     This class represent neuron populations, lazily loaded.  After the
     construction, general properties of the neurons, such as the unique
     values of the
-    :attr:`.NeuronData.mtype_values`,
-    :attr:`.NeuronData.etype_values`, or
-    :attr:`.NeuronData.sclass_values`
+    :attr:`.NodeData.mtype_values`,
+    :attr:`.NodeData.etype_values`, or
+    :attr:`.NodeData.sclass_values`
     present can be accessed.
     """
 
@@ -225,7 +225,7 @@ class NeuronData:
         """Construct a new neuron loader.
 
         To load neuron-specific information, access the property
-        :attr:`.NeuronData.df`, data will be loaded lazily.
+        :attr:`.NodeData.df`, data will be loaded lazily.
 
         Args:
             population: a tuple with the path to the neuron storage and population name
@@ -515,7 +515,7 @@ class EdgeData:
             args = args[0]
         else:
             args = list(args)
-        meta = pq.ParquetDataset(args).schema.to_arrow_schema().metadata
+        meta = pq.ParquetDataset(args, use_legacy_dataset=False).schema.metadata
         return {
             k.decode(): v.decode()
             for (k, v) in (meta or {}).items()
@@ -526,7 +526,7 @@ class EdgeData:
     def _load_parquet(metadata, *args):
         raw_version = metadata.get("touch2parquet_version", "0.0.0")
         if m := VERSION_SCHEMA.search(raw_version):
-            t2p_version = m.group(0)
+            t2p_version = LegacyVersion(m.group(0))
         else:
             raise RuntimeError(f"Can't determine touch2parquet version from {raw_version}")
         shift = t2p_version >= BRANCH_SHIFT_MINIMUM_VERSION

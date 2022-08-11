@@ -55,7 +55,6 @@ def test_fixed_probabilities(tmp_path_factory):
 
 
 @pytest.mark.slow
-@pytest.mark.incremental
 class TestFilters(object):
     """Sequential tests of filters."""
 

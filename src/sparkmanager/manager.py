@@ -7,7 +7,7 @@ import json
 import os
 import time
 
-from pyspark.sql import SparkSession, SQLContext
+from pyspark.sql import SparkSession
 
 from .eventlog import EventLog
 
@@ -97,7 +97,6 @@ class SparkManager:
         """Creates a new manager instance."""
         self.__session = None
         self.__context = None
-        self.__sqlcontext = None
 
         self.__allowed = None
         self.__overlap = None
@@ -116,13 +115,6 @@ class SparkManager:
     def sc(self):
         """:property: the Spark context."""
         return self.__context
-
-    @property
-    def sqlContext(self):
-        """:property: the SQL context."""
-        if not self.__sqlcontext:
-            self.__sqlcontext = SQLContext.getOrCreate(self.sc)
-        return self.__sqlcontext
 
     def __getattr__(self, attr):
         """Provide convenient access to Spark functions."""
@@ -201,14 +193,6 @@ class SparkManager:
         """
         if self.__report:
             self.__report.add_info(data)
-
-    def register_java_functions(self, fcts):
-        """Register java functions with the SQL context of Spark.
-
-        :param fcts: a list of tuples containing function alias and java class
-        """
-        for alias, name in fcts:
-            self.sqlContext.registerJavaFunction(alias, name)
 
     def assign_to_jobgroup(self, f):
         """Assign a spark job group to the jobs started within the decorated function.

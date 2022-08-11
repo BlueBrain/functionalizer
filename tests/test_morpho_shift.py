@@ -41,7 +41,7 @@ def test_shift():
     Move synapses to AIS while keeping other touches untouched.
     """
     from spykfunc.filters.implementations.synapse_reposition import SynapseReposition
-    from spykfunc.dataio.morphologies import MorphologyDB
+    from spykfunc.io.morphologies import MorphologyDB
 
     conf = Configuration(".")
 

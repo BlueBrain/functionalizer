@@ -44,12 +44,12 @@ class GapJunctionFilter(DatasetOperation):
 
         touches = touches.groupby(
             F.least(F.col("src"), F.col("dst")),
-            F.shiftRight(F.greatest(F.col("src"), F.col("dst")), 15),
+            F.shiftright(F.greatest(F.col("src"), F.col("dst")), 15),
         ).applyInPandas(self._dendrite_match, touches.schema)
         dendrites = touches.where("afferent_section_id > 0 and efferent_section_id > 0")
         somas = (
             touches.where("afferent_section_id == 0 or efferent_section_id == 0")
-            .groupby(F.shiftRight(F.col("src"), 4))
+            .groupby(F.shiftright(F.col("src"), 4))
             .applyInPandas(self._soma_filter, touches.schema)
         )
 

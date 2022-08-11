@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from conftest import DATADIR, create_functionalizer
 
-from spykfunc.data_loader import NeuronData
+from spykfunc.io import NodeData
 
 
 @pytest.mark.slow
@@ -16,7 +16,7 @@ def test_full_node_file_loading(tmp_path_factory):
     node_file = str(Path(DATADIR).parent / "circuit_proj66_tiny" / "nodes.h5")
     node_population = "neocortex_neurons"
 
-    nodes = NeuronData((node_file, node_population), ("", ""), tmpdir)
+    nodes = NodeData((node_file, node_population), ("", ""), tmpdir)
     df = nodes.df.toPandas()
 
     assert "mtype_i" in df
@@ -36,7 +36,7 @@ def test_partial_node_file_loading(tmp_path_factory):
     node_file = str(Path(DATADIR).parent / "circuit_proj66_tiny" / "nodes_small.h5")
     node_population = "neocortex_neurons"
 
-    nodes = NeuronData((node_file, node_population), ("", ""), tmpdir)
+    nodes = NodeData((node_file, node_population), ("", ""), tmpdir)
     df = nodes.df.toPandas()
 
     assert set(df.columns) == set(["id", "etype_i", "mtype_i"])

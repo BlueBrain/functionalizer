@@ -8,7 +8,6 @@ import re
 import subprocess
 import sys
 
-from distutils.version import LooseVersion
 from pathlib import Path
 from setuptools import setup, Command, Extension
 from setuptools.command.build_ext import build_ext

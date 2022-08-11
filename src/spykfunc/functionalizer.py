@@ -10,7 +10,7 @@ from recipe import Recipe
 from . import utils
 from .filters import DatasetOperation
 from .circuit import Circuit
-from .data_loader import NeuronData, EdgeData, shift_branch_type
+from .io import NodeData, EdgeData, shift_branch_type
 from .definitions import CheckpointPhases, SortBy
 from .utils.checkpointing import checkpoint_resume
 from .utils.filesystem import adjust_for_spark, autosense_hdfs
@@ -125,11 +125,11 @@ class Functionalizer:
 
         logger.debug("Starting data loading...")
         if source and target:
-            n_from = NeuronData(source, source_nodeset, self._config.cache_dir)
+            n_from = NodeData(source, source_nodeset, self._config.cache_dir)
             if source == target and source_nodeset == target_nodeset:
                 n_to = n_from
             else:
-                n_to = NeuronData(target, target_nodeset, self._config.cache_dir)
+                n_to = NodeData(target, target_nodeset, self._config.cache_dir)
         else:
             n_from = None
             n_to = None
@@ -312,7 +312,7 @@ class Functionalizer:
         logger.info("Data export complete")
 
     def _add_metadata(self, path):
-        schema = pq.ParquetDataset(path).schema.to_arrow_schema()
+        schema = pq.ParquetDataset(path, use_legacy_dataset=False).schema
         metadata = {k.decode(): v.decode() for k, v in schema.metadata.items()}
         metadata.update(self.circuit.metadata)
         this_run = 1
