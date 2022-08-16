@@ -142,7 +142,7 @@ class ReduceAndCut(DatasetOperation):
         """
         pathway_stats = touches_per_pathway(full_touches)
         param_maker = ReduceAndCutParameters(self.connection_rules, self.connection_index)
-        return pathway_stats.mapInPandas(param_maker, param_maker.schema()).coalesce(1)
+        return pathway_stats.mapInPandas(param_maker, param_maker.schema())
 
     # ---
     @sm.assign_to_jobgroup
