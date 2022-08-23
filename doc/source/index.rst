@@ -29,7 +29,6 @@ Format conversion can be done via the software provided by ParquetConverters_.
    Filters <filters>
    Debugging <debugging>
 
-   Recipe API <recipe>
    Spykfunc API <api>
 
    Changelog <changes>

@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 
 import pyspark.sql.functions as F
 import pytest
-from recipe import Recipe
+from fz_td_recipe import Recipe
 
 import sparkmanager as sm
 

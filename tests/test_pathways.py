@@ -5,7 +5,7 @@ from itertools import product
 import pandas as pd
 import sparkmanager as sm
 
-from recipe import Recipe
+from fz_td_recipe import Recipe
 from spykfunc.circuit import Circuit
 
 

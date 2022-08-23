@@ -4,8 +4,8 @@ import os
 import pyarrow.parquet as pq
 from pyspark.sql import functions as F
 
+from fz_td_recipe import Recipe
 import sparkmanager as sm
-from recipe import Recipe
 
 from . import utils
 from .filters import DatasetOperation

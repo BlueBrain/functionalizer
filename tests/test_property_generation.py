@@ -5,7 +5,7 @@ import pytest
 import sparkmanager as sm
 from conftest import DATADIR
 from pathlib import Path
-from recipe import Recipe
+from fz_td_recipe import Recipe
 from spykfunc.filters import DatasetOperation
 
 
@@ -43,9 +43,7 @@ def test_property_positive_u(fz):
 @pytest.mark.slow
 def test_property_u_hill(fz):
     fz.circuit.df = sm.read.parquet(os.path.join(DATADIR, "syn_prop_in.parquet"))
-    fz.recipe = Recipe(
-        str(Path(__file__).parent / "recipe" / "data" / "synapse_properties_uhill_all.xml")
-    )
+    fz.recipe = Recipe(str(Path(__file__).parent / "recipe" / "synapse_properties_uhill_all.xml"))
     fltr = DatasetOperation.initialize(
         ["SynapseProperties"], fz.recipe, fz.circuit.source, fz.circuit.target, None
     )[0]

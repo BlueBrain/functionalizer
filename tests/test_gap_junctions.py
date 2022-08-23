@@ -8,7 +8,7 @@ import pytest
 from pathlib import Path
 
 from pyspark.sql import functions as F
-from recipe import Recipe
+from fz_td_recipe import Recipe
 from spykfunc.filters import DatasetOperation
 
 
@@ -150,7 +150,7 @@ def test_touch_reduction(gj):
     total = gj.circuit.df.count()
     fltrs = DatasetOperation.initialize(
         ["DenseID", "TouchReduction"],
-        Recipe(str(Path(__file__).parent / "recipe" / "data" / "gap_junctions.xml")),
+        Recipe(str(Path(__file__).parent / "recipe" / "gap_junctions.xml")),
         None,
         None,
         None,
@@ -165,7 +165,7 @@ def test_gap_junctions(gj):
     """Verify that all filters play nice together."""
     fltrs = DatasetOperation.initialize(
         ["SomaDistance", "GapJunction", "GapJunctionProperties"],
-        Recipe(str(Path(__file__).parent / "recipe" / "data" / "gap_junctions.xml")),
+        Recipe(str(Path(__file__).parent / "recipe" / "gap_junctions.xml")),
         None,
         None,
         gj.circuit.morphologies,
