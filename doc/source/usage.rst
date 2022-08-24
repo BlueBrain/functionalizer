@@ -96,7 +96,7 @@ For all but the smallest executions on the order of a thousand cells,
 Spykfunc should be run on a dedicated Apache Spark cluster.
 For SLURM-based clusters such as BlueBrain5, the ``sm_run`` script will
 start an Apache Spark cluster within a SLURM allocation and launch a
-specified program to run on said cluster.
+specified program to run on said cluster, when launched with ``srun``.
 By default, it will also provide a Hadoop Distributed File System (HDFS)
 cluster that will accelerate operations that have a strong impact on
 parallel file systems used to MPI loads.
@@ -104,7 +104,8 @@ To turn off the startup of HDFS, provide the ``-H`` flag to ``sm_run``.
 
 .. warning::
    When using SLURM to launch the cluster, please ensure that only one
-   process is launched per node (``--ntasks-per-node=1``).
+   process is launched per node (``--ntasks-per-node=1``), and that sufficient
+   cores will be available to the job (``--cpus-per-task=36`` or ``=72``).
    The script ``sm_run`` will start one Spark worker per task, and each
    worker will attempt to allocate all CPUs assigned to the allocation on
    the node.
@@ -131,7 +132,7 @@ both a Spark and a HDFS cluster:
    # Rather than using salloc, sm_run may also be called within a script
    # submitted to the queue via sbatch.
    salloc -Aproj16 --ntasks-per-node=1 -Cnvme -N2 --exclusive --mem=0 \
-       sm_run \
+       srun sm_run \
            spykfunc --s2f \
                     --output-dir=${PWD} \
                     --from ${NODES} ${NODE_POPULATION} \
@@ -182,7 +183,7 @@ Parquet by SONATA and runs only the synapse properties:
    export EDGE_POPULATION=default
 
    salloc -Aproj16 --ntasks-per-node=1 -Cnvme -N2 --exclusive --mem=0 \
-       sm_run \
+       srun sm_run \
            spykfunc \
                     --output-dir=${PWD} \
                     --from ${NODES} ${NODE_POPULATION} \
@@ -204,7 +205,7 @@ to e.g.:
    export TOUCHES=$BASE/touches/parquet/*.parquet
 
    salloc -Aproj16 --ntasks-per-node=1 -Cnvme -N2 --exclusive --mem=0 \
-       sm_run \
+       srun sm_run \
            spykfunc \
                     --output-dir=${PWD} \
                     --merge \

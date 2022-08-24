@@ -6,7 +6,7 @@ export RECIPE=$BASE/bioname/builderRecipeAllPathways.xml
 export TOUCHES=$BASE/touches/parquet/*.parquet
 
 for half in empty full; do
-    sm_run -H \
+    srun sm_run -H \
         spykfunc --s2f \
                  --output-dir="$PWD/half_${half}_out" \
                  --checkpoint-dir="$PWD/half_${half}_check" \
@@ -17,7 +17,7 @@ for half in empty full; do
                  -- $TOUCHES
 done
 
-sm_run -H \
+srun sm_run -H \
     spykfunc --merge \
              --output-dir="$PWD/merged_out" \
              --checkpoint-dir="$PWD/merged_check" \

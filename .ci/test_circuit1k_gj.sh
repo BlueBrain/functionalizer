@@ -5,15 +5,10 @@ export RECIPE=$BASE/bioname/builderRecipeAllPathways.xml
 export TOUCHES=$BASE/touches/parquet/*.parquet
 
 srun sm_run -H \
-    spykfunc --s2s \
-             --output-dir=$PWD \
-             --checkpoint-dir=$PWD \
+    spykfunc --gap-junctions \
+             --output-dir="$PWD" \
+             --checkpoint-dir="$PWD" \
              --from $CIRCUIT All --to $CIRCUIT All \
              --recipe $RECIPE \
              --morphologies $MORPHOS \
              -- $TOUCHES
-
-parquet-compare \
-    $CIRCUIT \
-    circuit.parquet \
-    $BASE/touches/structural/circuit.parquet

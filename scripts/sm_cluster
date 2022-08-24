@@ -103,27 +103,30 @@ _slurm_start_cluster() {
     fi
 
     # Ensure that the temporary folder is defined for Spark and Hadoop
-    export SM_TMPDIR=$(srun -n 1 bash -c 'echo $TMPDIR')
+    export SM_TMPDIR=${TMPDIR}
     export SM_TMPDIR=${SM_TMPDIR:-"/nvme/$(whoami)/${SLURM_JOB_ID}"}
 
     # Configure SPARK directories to the temporary folder (e.g., NVMe on BB5)
     export SPARK_LOCAL_DIRS=${SPARK_LOCAL_DIRS:-$SM_TMPDIR/spark-local}
-    echo ">> Creating SPARK_LOCAL_DIRS='$SPARK_LOCAL_DIRS'"
-    srun mkdir -p "$SPARK_LOCAL_DIRS" \
-        && echo ">> SPARK_LOCAL_DIRS folder created!" \
-        || echo ">> Warning: SPARK_LOCAL_DIRS folder could not be created."
-
     export SPARK_WORKER_DIR=${SPARK_WORKER_DIR:-$SM_TMPDIR/spark-worker}
-    echo ">> Creating SPARK_WORKER_DIR='$SPARK_WORKER_DIR'"
-    srun mkdir -p "$SPARK_WORKER_DIR" \
-        && echo ">> SPARK_WORKER_DIR folder created!" \
-        || echo ">> Warning: SPARK_WORKER_DIR folder could not be created."
+    if [[ $SLURM_PROCID = 1 ]]; then
+        echo ">> Creating SPARK_LOCAL_DIRS='$SPARK_LOCAL_DIRS'"
+        echo ">> Creating SPARK_WORKER_DIR='$SPARK_WORKER_DIR'"
+    fi
+    # Poor man's MPI_Barrier
+    sleep 1
+
+    mkdir -p "$SPARK_LOCAL_DIRS" || echo ">> Warning: SPARK_LOCAL_DIRS folder could not be created."
+    mkdir -p "$SPARK_WORKER_DIR" || echo ">> Warning: SPARK_WORKER_DIR folder could not be created."
 
     # List the available space on the NVMe drives, whenever possible
     if [[ -n $(echo $SPARK_LOCAL_DIRS | grep /nvme) ]]; then
-        srun sh -c 'echo "$(hostname): $(df -h /nvme)"'
+        sleep 1
+        echo "$(hostname): $(df -h /nvme)"
+        sleep 1
     fi
 
+    # See if a master is defined in the working directory, and if it is running
     master=none
     [[ -f $workdir/spark_master ]] && master=$(grep -oe '\(\w*\.\)\{1,\}\w*'<"$workdir/spark_master")
 
@@ -134,25 +137,20 @@ _slurm_start_cluster() {
 
     if [[ ! -d $workdir ]]; then
         echo ">> Creating working directory '$workdir'"
-        mkdir "$workdir"
-    fi
-
-    if [[ $master = none ]]; then
-        echo ">> Copying myself to working directory '$workdir'"
-        cp -f "$myself" "$workdir/$script"
-    else
-        echo "<< Connecting to master $master"
+        mkdir -p "$workdir"
     fi
 
     if [[ -n $SM_EXECUTE ]]; then
         rm -f "$workdir/done"
     fi
 
-    srun "$workdir/$script" _slurm_start_processes "$workdir" "$master" "$envscript"
+    _slurm_start_processes "$workdir" "$master" "$envscript"
     if [[ -n $SM_EXECUTE ]]; then
         while [[ ! -f $workdir/done ]]; do sleep 10s; done
         code=$(cat "$workdir/done")
-        echo ">> Exiting with $code"
+        if [[ $SLURM_PROCID = 0 ]]; then
+            echo ">> Exiting with $code"
+        fi
         exit $code
     fi
 }
@@ -384,10 +382,8 @@ _slurm_start_processes() {
         export SPARK_DAEMON_MEMORY=${SM_MASTER_MEMORY}m
         export SPARK_MASTER_IP=$(hostname)
 
-        output=$($SPARK_HOME/sbin/start-master.sh)
-        echo "$output"
+        "${SPARK_HOME}/sbin/start-master.sh" || exit 1
         echo "spark://$SPARK_MASTER_IP:${SPARK_MASTER_PORT:-7077}" > "$workdir/spark_master"
-        [[ $output == *failed* ]] && exit 1
     fi
 
     if [[ $master = "none" ]]; then
@@ -422,9 +418,7 @@ _slurm_start_processes() {
 
     echo "> Running worker(s) on $(hostname) with ${SPARK_WORKER_CORES} cores and ${SPARK_WORKER_MEMORY} memory, connecting to ${MASTER_NODE}"
 
-    output=$($SPARK_HOME/sbin/start-worker.sh $MASTER_NODE -m ${SPARK_WORKER_MEMORY} -c ${SPARK_WORKER_CORES})
-    echo "$output"
-    [[ $output == *failed* ]] && exit 1
+    "${SPARK_HOME}/sbin/start-worker.sh" $MASTER_NODE -m ${SPARK_WORKER_MEMORY} -c ${SPARK_WORKER_CORES} || exit 1
 
     export PYSPARK_MASTER=$(cat "$workdir/spark_master")
 
@@ -478,11 +472,17 @@ startup() {
 
     [[ ! -d $workdir ]] && mkdir -p "$workdir"
 
-    echo ">>> Running on ${batch}"
-    echo ">>> Working directory:  ${workdir}"
-    echo ">>> Environment script: ${envscript}"
-    echo ">>> Dedicated environment variables:"
-    env|egrep '^SM_'
+    if [[ $SLURM_PROCID = 0 ]]; then
+        echo ">>> Running on ${batch}"
+        echo ">>> Working directory:  ${workdir}"
+        echo ">>> Environment script: ${envscript}"
+        echo ">>> Dedicated environment variables:"
+        env|egrep '^SM_'
+    fi
+
+    # Poor man's MPI_Barrier
+    sleep 1
+
     _${batch}_start_cluster "$workdir" "$envscript"
     exit $?
 }
@@ -567,4 +567,4 @@ else
 fi
 
 [[ -z $(type $cmd 2> /dev/null|grep function) ]] && usage
-$cmd "$@"
+run "$@"

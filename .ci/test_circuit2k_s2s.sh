@@ -4,7 +4,7 @@ export MORPHOS=$BASE/morphologies/h5
 export RECIPE=$BASE/bioname/builderRecipeAllPathways.xml
 export TOUCHES=$BASE/touches/parquet/*.parquet
 
-sm_run -H \
+srun sm_run -H \
     spykfunc --s2s \
              --output-dir=$PWD \
              --checkpoint-dir=$PWD \

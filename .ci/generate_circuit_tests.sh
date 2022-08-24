@@ -13,7 +13,7 @@ export RECIPE=\$BASE/bioname/builderRecipeAllPathways.xml
 export TOUCHES=\$BASE/touches/parquet/*.parquet
 
 salloc -Aproj16 -p\$part -Cnvme -N1 --exclusive --mem=0 \\
-    sm_run -H \\
+    srun sm_run -H \\
         spykfunc --${modes[$m]} \\
                  --output-dir=\$PWD \\
                  --checkpoint-dir=\$PWD \\
