@@ -4,3 +4,4 @@ include src/spykfunc/filters/udfs/CMakeLists.txt
 include src/spykfunc/filters/udfs/_udfs.cpp
 include src/spykfunc/filters/udfs/deps/pybind11/CMakeLists.txt
 recursive-include deps/pybind11 *
+recursive-include deps/random123 *

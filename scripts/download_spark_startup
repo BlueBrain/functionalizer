@@ -1,0 +1,18 @@
+#!/bin/bash
+
+set -e
+set -o nounset
+
+if [[ -n ${1+x} ]]; then
+    PREFIX=${1}
+fi
+
+# Use a proper way to find the Spark home
+PREFIX=$("${PREFIX}/bin/find_spark_home.py")
+
+mkdir -p "${PREFIX}/sbin"
+cd "${PREFIX}/sbin"
+for what in master worker; do
+    curl -o "start-${what}.sh" "https://raw.githubusercontent.com/apache/spark/v3.3.0/sbin/start-${what}.sh"
+    chmod +x "start-${what}.sh"
+done

@@ -2,6 +2,15 @@
 Changelog
 =========
 
+Version 0.17.3
+==============
+
+Changes:
+  - Introduce a new ``functionalizer`` command, where ``srun functionalizer`` replaces
+    ``sm_run spykfunc``.  The new ``functionalizer`` command accepts all options from
+    Spykfunc, too.
+    See also FUNCZ-325_.
+
 Version 0.17.2
 ==============
 
@@ -389,6 +398,7 @@ First working version with 3 base filters:
 .. _FUNCZ-291: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-291
 .. _FUNCZ-301: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-301
 .. _FUNCZ-307: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-307
+.. _FUNCZ-325: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-325
 .. _HPCTM-1294: https://bbpteam.epfl.ch/project/issues/browse/HPCTM-1294
 .. _HPCTM-1425: https://bbpteam.epfl.ch/project/issues/browse/HPCTM-1425
 

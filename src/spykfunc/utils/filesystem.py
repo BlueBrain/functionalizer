@@ -6,7 +6,6 @@ of a Hadoop cluster.
 """
 from datetime import datetime
 import glob
-import logging
 import os
 
 import lxml.etree
@@ -19,8 +18,10 @@ except Exception:
 import hdfs
 import hdfs.util
 
+from ._misc import get_logger
 
-L = logging.getLogger(__name__)
+
+logger = get_logger(__file__)
 
 
 class AutoClient(hdfs.InsecureClient):
@@ -79,7 +80,7 @@ class AttemptedInstance:
         try:
             self.__obj = self.__cls()
         except Exception:
-            L.warning("No HDFS cluster found, deactivating support")
+            logger.warning("No HDFS cluster found, deactivating support")
             self.__obj = False
 
 
@@ -109,20 +110,19 @@ def adjust_for_spark(p, local=None):
     :param p: file path to adjust
     :param local: enforce usage of local filesystem when paths are ambiguous
     """
-    p = str(p)
-    if p.startswith("hdfs://"):
+    pth = str(p)
+    if pth.startswith("hdfs://"):
         if not __client:
-            msg = f"cannot use a fully qualified path '{p}' without a running Hadoop cluster!"
+            msg = f"cannot use a fully qualified path '{pth}' without a running Hadoop cluster!"
             raise ValueError(msg)
-        return p.replace("hdfs://", "")
-    if p.startswith("file://"):
+        pth = pth.replace("hdfs://", "")
+    elif pth.startswith("file://"):
         if not __client:
-            return p.replace("file://", "")
-        return p
-    if __client:
-        if local or len(glob.glob(p)) > 0:
-            return "file://" + os.path.abspath(p)
-    return p
+            pth = pth.replace("file://", "")
+    elif __client:
+        if local or len(glob.glob(pth)) > 0:
+            pth = "file://" + os.path.abspath(pth)
+    return pth
 
 
 def exists(p):

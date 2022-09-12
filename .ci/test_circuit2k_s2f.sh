@@ -4,14 +4,14 @@ export MORPHOS=$BASE/morphologies/h5
 export RECIPE=$BASE/bioname/builderRecipeAllPathways.xml
 export TOUCHES=$BASE/touches/parquet/*.parquet
 
-srun sm_run \
-    spykfunc --s2f \
-             --output-dir=$PWD \
-             --checkpoint-dir=$PWD \
-             --from $CIRCUIT All --to $CIRCUIT All \
-             --recipe $RECIPE \
-             --morphologies $MORPHOS \
-             -- $TOUCHES
+srun functionalizer \
+    --s2f \
+    --output-dir=$PWD \
+    --checkpoint-dir=$PWD \
+    --from $CIRCUIT All --to $CIRCUIT All \
+    --recipe $RECIPE \
+    --morphologies $MORPHOS \
+    -- $TOUCHES
 
 parquet-compare \
     $CIRCUIT \

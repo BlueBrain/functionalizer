@@ -14,13 +14,22 @@ variables:
 
 .tox-template:
   variables:
-    SYS_PACKAGES: cmake git hdf5-devel java-11-openjdk ninja-build
-    PRE_BUILD_COMMAND:
-      sh .ci/install_morphokit.sh
-      &&
-      export CMAKE_PREFIX_PATH="$(<morphokit_location.txt):${CMAKE_PREFIX_PATH:+:}${CMAKE_PREFIX_PATH}"
+    SYS_PACKAGES: cmake git java-11-openjdk ninja-build mpich-autoload mpich-devel
+    CC: /usr/lib64/mpich/bin/mpicc
+    CXX: /usr/lib64/mpich/bin/mpicxx
+    PRE_BUILD_COMMAND: "export CC=/usr/lib64/mpich/bin/mpicc CXX=/usr/lib64/mpich/bin/mpicxx"
 
 build-wheels:
   parallel:
     matrix:
       - PY_VERSION: [py39, py310]
+
+bbp-containerizer:
+  trigger:
+    include:
+      - project: nse/bbp-containerizer
+        file: /python/ci/pipelines/no-push.yml
+        ref: no-push
+    strategy: depend
+  variables:
+    KEEP_REPO: $KEEP_REPO

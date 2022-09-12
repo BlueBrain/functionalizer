@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# Downloads Hadoop and skips a bunch of space-consuming components we don't use
+
+set -e
+set -o nounset
+
+HADOOP_VERSION=3.3.4
+
+if [[ -n ${1+x} ]]; then
+    PREFIX=${1}
+fi
+
+mkdir -p "${PREFIX}"
+cd "${PREFIX}"
+
+curl https://dlcdn.apache.org/hadoop/common/hadoop-${HADOOP_VERSION}/hadoop-${HADOOP_VERSION}.tar.gz| \
+    tar \
+        xzvf - \
+        --strip-components=1 \
+        --exclude=hadoop-${HADOOP_VERSION}/share/doc

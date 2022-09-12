@@ -1,8 +1,12 @@
 """Command line interface for Spykfunc."""
+import json
 import os
 import sys
 import argparse
 from datetime import datetime
+from pathlib import Path
+from typing import Optional
+import libsonata
 from . import filters, utils
 from .filters import DatasetOperation
 from .definitions import RunningMode as RM, SortBy
@@ -11,133 +15,134 @@ from .definitions import RunningMode as RM, SortBy
 filters.load()
 
 
-def _parse_args(args=None) -> argparse.Namespace:
+class _ValidFile:
+    """Check that a path is a file."""
+
+    def __repr__(self):
+        return "file"
+
+    def __call__(self, filename):
+        if not os.path.isfile(filename):
+            raise ValueError(f"'{filename}' is not a valid file")
+        return filename
+
+
+class _ValidNodes:
+    """Check that the specified nodes are present."""
+
+    def __init__(self):
+        self.__storage = None
+        self.__population = None
+        self.__what = "node file"
+
+    def __repr__(self):
+        return self.__what
+
+    def __call__(self, arg):
+        if self.__storage is None:
+            try:
+                self.__storage = libsonata.NodeStorage(arg)
+            except Exception as e:
+                raise ValueError(f"'{arg}' is not a valid file") from e
+        elif self.__population is None:
+            try:
+                self.__population = self.__storage.open_population(arg)
+            except Exception as e:
+                self.__what = (
+                    "node population " f"(out of {', '.join(self.__storage.population_names)})"
+                )
+                raise ValueError(f"'{arg}' is not a valid node population") from e
+        else:
+            self.__what = "node argument"
+            raise ValueError(f"'{arg}' is extraneous")
+        return arg
+
+
+class _ValidNodeset:
+    """Check that the specified nodes are present."""
+
+    def __init__(self):
+        self.__json = None
+        self.__key = None
+        self.__what = "nodeset file"
+
+    def __repr__(self):
+        return self.__what
+
+    def __call__(self, arg):
+        if self.__json is None:
+            try:
+                with open(arg) as fd:
+                    self.__json = json.load(fd)
+            except Exception as e:
+                raise ValueError(f"'{arg}' is not a valid file") from e
+        elif self.__key is None:
+            try:
+                self.__key = self.__json[arg]
+            except Exception as e:
+                self.__what = f"nodeset identifier (out of {', '.join(self.__json)})"
+                raise ValueError(f"'{arg}' is not a valid nodeset identifier") from e
+        else:
+            self.__what = "nodeset argument"
+            raise ValueError(f"'{arg}' is extraneous")
+        return arg
+
+
+class _ValidPath:
+    """Check that a path is a file or a directory."""
+
+    def __repr__(self):
+        return "path"
+
+    def __call__(self, path):
+        if not os.path.isfile(path) and not os.path.isdir(path):
+            raise ValueError(f"'{path}' is not a valid file")
+        return path
+
+
+class _ConfDumpAction(argparse._HelpAction):
+    """Dummy class to list default configuration and exit, just like `--help`."""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        from spykfunc.utils import Configuration
+
+        kwargs = dict(overrides=namespace.overrides)
+        if namespace.configuration:
+            kwargs["configuration"] = namespace.configuration
+        Configuration(namespace.output_dir, **kwargs).dump()
+        parser.exit()
+
+
+class _SplitAction(argparse.Action):
+    """Dummy class to allow spiltting a comma separted list."""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        setattr(namespace, self.dest, list(filter(len, values.split(","))))
+
+
+class _Formatter(argparse.HelpFormatter):
+    """Dummy class to allow line-breaks in help.
+
+    An optional leading 'i|' will indent lines by four spaces.
+    """
+
+    def _split_lines(self, text, width):
+        sw = 4
+        res = []
+        for line in text.splitlines():
+            if line.startswith("i|"):
+                res.extend(" " * sw + r for r in super()._split_lines(line[2:], width - sw))
+            else:
+                res.extend(super()._split_lines(line, width))
+        return res
+
+
+def _construct_argument_parser() -> argparse.Namespace:
     """Handle arguments passed through the commandline.
 
     Takes a few corner cases into account w.r.t. backwards compatible arguments, and adds
     SONATA specific checks to arguments.
     """
-    import json
-    import libsonata
-
-    if args is None:
-        args = sys.argv[1:]
-
-    class _ValidFile:
-        """Check that a path is a file."""
-
-        def __repr__(self):
-            return "file"
-
-        def __call__(self, filename):
-            if not os.path.isfile(filename):
-                raise ValueError(f"'{filename}' is not a valid file")
-            return filename
-
-    class _ValidNodes:
-        """Check that the specified nodes are present."""
-
-        def __init__(self):
-            self.__storage = None
-            self.__population = None
-            self.__what = "node file"
-
-        def __repr__(self):
-            return self.__what
-
-        def __call__(self, arg):
-            if self.__storage is None:
-                try:
-                    self.__storage = libsonata.NodeStorage(arg)
-                except Exception as e:
-                    raise ValueError(f"'{arg}' is not a valid file") from e
-            elif self.__population is None:
-                try:
-                    self.__population = self.__storage.open_population(arg)
-                except Exception as e:
-                    self.__what = (
-                        "node population " f"(out of {', '.join(self.__storage.population_names)})"
-                    )
-                    raise ValueError(f"'{arg}' is not a valid node population") from e
-            else:
-                self.__what = "node argument"
-                raise ValueError(f"'{arg}' is extraneous")
-            return arg
-
-    class _ValidNodeset:
-        """Check that the specified nodes are present."""
-
-        def __init__(self):
-            self.__json = None
-            self.__key = None
-            self.__what = "nodeset file"
-
-        def __repr__(self):
-            return self.__what
-
-        def __call__(self, arg):
-            if self.__json is None:
-                try:
-                    with open(arg) as fd:
-                        self.__json = json.load(fd)
-                except Exception as e:
-                    raise ValueError(f"'{arg}' is not a valid file") from e
-            elif self.__key is None:
-                try:
-                    self.__key = self.__json[arg]
-                except Exception as e:
-                    self.__what = f"nodeset identifier (out of {', '.join(self.__json)})"
-                    raise ValueError(f"'{arg}' is not a valid nodeset identifier") from e
-            else:
-                self.__what = "nodeset argument"
-                raise ValueError(f"'{arg}' is extraneous")
-            return arg
-
-    class _ValidPath:
-        """Check that a path is a file or a directory."""
-
-        def __repr__(self):
-            return "path"
-
-        def __call__(self, path):
-            if not os.path.isfile(path) and not os.path.isdir(path):
-                raise ValueError(f"'{path}' is not a valid file")
-            return path
-
-    class _ConfDumpAction(argparse._HelpAction):
-        """Dummy class to list default configuration and exit, just like `--help`."""
-
-        def __call__(self, parser, namespace, values, option_string=None):
-            from spykfunc.utils import Configuration
-
-            kwargs = dict(overrides=namespace.overrides)
-            if namespace.configuration:
-                kwargs["configuration"] = namespace.configuration
-            Configuration(namespace.output_dir, **kwargs).dump()
-            parser.exit()
-
-    class _SplitAction(argparse.Action):
-        """Dummy class to allow spiltting a comma separted list."""
-
-        def __call__(self, parser, namespace, values, option_string=None):
-            setattr(namespace, self.dest, list(filter(len, values.split(","))))
-
-    class _Formatter(argparse.HelpFormatter):
-        """Dummy class to allow line-breaks in help.
-
-        An optional leading 'i|' will indent lines by four spaces.
-        """
-
-        def _split_lines(self, text, width):
-            sw = 4
-            res = []
-            for line in text.splitlines():
-                if line.startswith("i|"):
-                    res.extend(" " * sw + r for r in super()._split_lines(line[2:], width - sw))
-                else:
-                    res.extend(super()._split_lines(line, width))
-            return res
-
     parser = argparse.ArgumentParser(
         description="spykfunc is a pyspark implementation of functionalizer.",
         formatter_class=_Formatter,
@@ -314,44 +319,51 @@ def _parse_args(args=None) -> argparse.Namespace:
         help="the edge files (SONATA or parquet: also directories for parquet)",
     )
 
-    args = parser.parse_args(args)
-
-    if len(args.filters) > 0:
-        missing = []
-        if not args.recipe:
-            missing.append("recipe")
-        if not args.morphologies:
-            missing.append("morphologies")
-        if not args.source:
-            missing.append("source nodes")
-        if not args.target:
-            missing.append("target nodes")
-        if missing:
-            parser.error(f"to use filters, please also specify: {','.join(missing)}.")
-        if len(args.morphologies) > 2:
-            parser.error("can only pass regular and spine morphologies")
-
-    return args
+    return parser
 
 
-# *****************************************************
-# Application scripts
-# *****************************************************
+def functionalize_parallel() -> int:
+    """Wrapper around `functionalize` that will launch Spark/HDFS clusters."""
+    from spykfunc.cluster import Cluster
+
+    parser = _construct_argument_parser()
+    grp = parser.add_argument_group("cluster options")
+    grp.add_argument(
+        "--work-dir",
+        default=Path.cwd(),
+        type=Path,
+        help="working directory to store cluster data in (default: current directory)",
+    )
+    grp.add_argument(
+        "-H",
+        "--no-hadoop",
+        action="store_false",
+        default=True,
+        dest="hadoop",
+        help="do not create a HDFS cluster",
+    )
+    options = parser.parse_args()
+    cluster = Cluster(options.work_dir)
+    if options.hadoop:
+        cluster.launch_hadoop()
+    cluster.launch_spark()
+    return cluster.execute(functionalize, options)
 
 
-def spykfunc() -> int:
-    """The main entry-point Spykfunc script.
+def functionalize(options: Optional[argparse.ArgumentParser] = None) -> int:
+    """The main entry-point functionalizer script.
 
-    It will launch Spykfunc with a spark instance (created if not provided), run the
+    It will launch functionalizer with a spark instance (created if not provided), run the
     default filters and export.
     """
     from spykfunc.functionalizer import Functionalizer
 
-    start = datetime.now()
-
-    # Will exit with code 2 if problems in args
-    options = _parse_args()
+    if not options:
+        parser = _construct_argument_parser()
+        options = parser.parse_args()
     logger = utils.get_logger(__name__)
+
+    start = datetime.now()
 
     try:
         args = vars(options)
@@ -379,4 +391,4 @@ def spykfunc() -> int:
 
 # Defaults to execute run_functionalizer command
 if __name__ == "__main__":
-    sys.exit(spykfunc())
+    sys.exit(functionalize())

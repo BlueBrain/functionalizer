@@ -132,8 +132,8 @@ both a Spark and a HDFS cluster:
    # Rather than using salloc, sm_run may also be called within a script
    # submitted to the queue via sbatch.
    salloc -Aproj16 --ntasks-per-node=1 -Cnvme -N2 --exclusive --mem=0 \
-       srun sm_run \
-           spykfunc --s2f \
+       srun functionalizer \
+                    --s2f \
                     --output-dir=${PWD} \
                     --from ${NODES} ${NODE_POPULATION} \
                     --to ${NODES} ${NODE_POPULATION} \
@@ -183,8 +183,7 @@ Parquet by SONATA and runs only the synapse properties:
    export EDGE_POPULATION=default
 
    salloc -Aproj16 --ntasks-per-node=1 -Cnvme -N2 --exclusive --mem=0 \
-       srun sm_run \
-           spykfunc \
+       srun functionalizer \
                     --output-dir=${PWD} \
                     --from ${NODES} ${NODE_POPULATION} \
                     --to ${NODES} ${NODE_POPULATION} \
@@ -205,8 +204,7 @@ to e.g.:
    export TOUCHES=$BASE/touches/parquet/*.parquet
 
    salloc -Aproj16 --ntasks-per-node=1 -Cnvme -N2 --exclusive --mem=0 \
-       srun sm_run \
-           spykfunc \
+       srun functionalizer \
                     --output-dir=${PWD} \
                     --merge \
                     first/circuit.parquet second/circuit.parquet

@@ -1,3 +1,6 @@
 [submodule "deps/pybind11"]
 	path = deps/pybind11
 	url = https://github.com/pybind/pybind11.git
+[submodule "deps/random123"]
+	path = deps/random123
+	url = https://github.com/DEShawResearch/random123.git

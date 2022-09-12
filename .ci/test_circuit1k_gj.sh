@@ -4,11 +4,12 @@ export MORPHOS=$BASE/morphologies/h5
 export RECIPE=$BASE/bioname/builderRecipeAllPathways.xml
 export TOUCHES=$BASE/touches/parquet/*.parquet
 
-srun sm_run -H \
-    spykfunc --gap-junctions \
-             --output-dir="$PWD" \
-             --checkpoint-dir="$PWD" \
-             --from $CIRCUIT All --to $CIRCUIT All \
-             --recipe $RECIPE \
-             --morphologies $MORPHOS \
-             -- $TOUCHES
+srun functionalizer \
+    -H \
+    --gap-junctions \
+    --output-dir="$PWD" \
+    --checkpoint-dir="$PWD" \
+    --from $CIRCUIT All --to $CIRCUIT All \
+    --recipe $RECIPE \
+    --morphologies $MORPHOS \
+    -- $TOUCHES

@@ -13,14 +13,15 @@ export RECIPE=\$BASE/bioname/builderRecipeAllPathways.xml
 export TOUCHES=\$BASE/touches/parquet/*.parquet
 
 salloc -Aproj16 -p\$part -Cnvme -N1 --exclusive --mem=0 \\
-    srun sm_run -H \\
-        spykfunc --${modes[$m]} \\
-                 --output-dir=\$PWD \\
-                 --checkpoint-dir=\$PWD \\
-                 -p spark.master=spark://\\\$\\(hostname\\):7077 \\
-                 --from \$CIRCUIT All --to \$CIRCUIT All \\
-                 \$RECIPE \$MORPHOS \\
-                 --touches \$TOUCHES
+    srun functionlizer \\
+        -H \\
+        --${modes[$m]} \\
+        --output-dir=\$PWD \\
+        --checkpoint-dir=\$PWD \\
+        -p spark.master=spark://\\\$\\(hostname\\):7077 \\
+        --from \$CIRCUIT All --to \$CIRCUIT All \\
+        \$RECIPE \$MORPHOS \\
+        --touches \$TOUCHES
 
 parquet-coalesce circuit.parquet single.parquet
 parquet-compare \\

@@ -29,6 +29,7 @@ class CMakeBuild(build_ext):
         source = Path(self.build_temp).resolve() / self.get_ext_filename(ext.name)
         extdir = str(source.parent)
         cmake_args = [
+            "-GNinja",
             "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=" + extdir,
             "-DPYTHON_EXECUTABLE=" + sys.executable,
         ]
@@ -55,7 +56,7 @@ class CMakeBuild(build_ext):
 
 setup(
     # name and other metadata are in setup.cfg
-    use_scm_version=True,
+    use_scm_version={"local_scheme": "no-local-version"},
     ext_modules=[CMakeExtension("spykfunc.filters.udfs._udfs", "src/spykfunc/filters/udfs")],
     cmdclass={"build_ext": CMakeBuild},
 )

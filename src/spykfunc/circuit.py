@@ -111,7 +111,7 @@ class Circuit:
 
         self.__touches = touches.df
         self.__length = self.__touches.count()
-        logger.info(f"Touch count after reading: %d{self.__length:,d}")  # pylint: disable=W1203
+        logger.info(f"Touch count after reading: {self.__length:,d}")  # pylint: disable=W1203
         self.__metadata = touches.metadata
 
     def with_pathway(self, df=None):

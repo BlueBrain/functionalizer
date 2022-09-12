@@ -8,9 +8,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-find_package(MorphoKit REQUIRED)
-
-find_path(RANDOM123_INCLUDE_PATH NAMES Random123/threefry.h)
+set(RANDOM123_INCLUDE_PATH ${CMAKE_SOURCE_DIR}/../../../../deps/random123/include)
 add_library(Random123 INTERFACE IMPORTED)
 set_target_properties(Random123 PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES ${RANDOM123_INCLUDE_PATH}
