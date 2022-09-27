@@ -3,6 +3,8 @@
 set -e
 set -o nounset
 
+export BASEDIR=$PWD
+
 if [[ -n ${1+x} ]]; then
     PREFIX=${1}
 fi
@@ -15,4 +17,8 @@ cd "${PREFIX}/sbin"
 for what in master worker; do
     curl -o "start-${what}.sh" "https://raw.githubusercontent.com/apache/spark/v3.3.0/sbin/start-${what}.sh"
     chmod +x "start-${what}.sh"
+done
+cd "${PREFIX}"
+for filename in "${BASEDIR}"/deps/*.patch; do
+    patch -p 1 < "${filename}"
 done
