@@ -5,6 +5,9 @@ Changelog
 Version 0.17.3
 ==============
 
+.. warning:: This release deprecates the ``sm_*`` commands, please switch to the new
+             ``functionalizer`` command.
+
 Changes:
   - Introduce a new ``functionalizer`` command, where ``srun functionalizer`` replaces
     ``sm_run spykfunc``.  The new ``functionalizer`` command accepts all options from

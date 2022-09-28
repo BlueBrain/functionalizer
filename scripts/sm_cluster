@@ -511,6 +511,16 @@ shutdown() {
 }
 
 run() {
+    cat <<EOF
+=========================================================================================
+######################################  WARNING  ########################################
+=========================================================================================
+
+This script is deprecated and will be removed in the next Spykfunc release.  A replacement
+is provided by the new `functinalizer` command.  Please see the documentation under
+https://bbpteam.epfl.ch/documentation/projects/spykfunc/latest/index.html
+for the new recommended usage patterns.
+EOF
     workdir=
     envscript=
     while getopts "c:e:Hh:p:s:m:w:" opt; do
