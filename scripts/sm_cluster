@@ -517,7 +517,7 @@ run() {
 =========================================================================================
 
 This script is deprecated and will be removed in the next Spykfunc release.  A replacement
-is provided by the new `functinalizer` command.  Please see the documentation under
+is provided by the new "functionalizer" command.  Please see the documentation under
 https://bbpteam.epfl.ch/documentation/projects/spykfunc/latest/index.html
 for the new recommended usage patterns.
 EOF

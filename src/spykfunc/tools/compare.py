@@ -36,7 +36,7 @@ def run():
     base = pq.ParquetDataset(args.baseline).read().to_pandas().rename(columns=LEGACY_MAPPING)
     comp = pq.ParquetDataset(args.comparison).read().to_pandas().rename(columns=LEGACY_MAPPING)
 
-    pop = libsonata.NodeStorage(args.circuit.encode()).open_population("All")
+    pop = libsonata.NodeStorage(args.circuit).open_population("All")
     sel = libsonata.Selection([(0, len(pop))])
     mtypes = pd.DataFrame(
         {"id": sel.flatten(), "mtype": pop.get_attribute("mtype", sel)}
