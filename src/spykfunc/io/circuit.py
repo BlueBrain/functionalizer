@@ -515,7 +515,9 @@ class EdgeData:
             args = args[0]
         else:
             args = list(args)
-        meta = pq.ParquetDataset(args, use_legacy_dataset=False).schema.metadata
+        # This breaks the added metadata, convert to arrow to preserve data
+        # meta = pq.ParquetDataset(args, use_legacy_dataset=False).schema.metadata
+        meta = pq.ParquetDataset(args).schema.to_arrow_schema().metadata
         return {
             k.decode(): v.decode()
             for (k, v) in (meta or {}).items()

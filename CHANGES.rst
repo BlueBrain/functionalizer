@@ -2,6 +2,13 @@
 Changelog
 =========
 
+Version 0.17.4
+==============
+
+Fixes:
+  - Load metadata correctly for Parquet input.
+  - Do not encode filenames when passing to ``libsonata``.
+
 Version 0.17.3
 ==============
 

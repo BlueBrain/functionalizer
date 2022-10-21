@@ -2,6 +2,7 @@
 # pandas seems to trigger these warnings in 1.4+
 """Compare two outputs of Spykfunc (coalesced)."""
 import argparse
+import os
 import sys
 
 import libsonata
@@ -9,6 +10,24 @@ import pandas as pd
 import pyarrow.parquet as pq
 
 from spykfunc.schema import LEGACY_MAPPING
+
+
+def load_parquet(path: str) -> pd.DataFrame:
+    """Load Parquet into pandas.
+
+    Ensures that certain properties are met w.r.t. metadata. Also renames columns from
+    legacy formats to the latest standard.
+    """
+    schema = pq.ParquetDataset(os.path.join(path, "_metadata")).schema
+    meta = {k.decode(): v.decode() for k, v in schema.to_arrow_schema().metadata.items()}
+
+    assert "source_population_name" in meta
+    assert "source_population_size" in meta
+    assert "target_population_name" in meta
+    assert "target_population_size" in meta
+
+    dataset = pq.ParquetDataset(path)
+    return dataset.read().to_pandas().rename(columns=LEGACY_MAPPING)
 
 
 def run():
@@ -33,8 +52,8 @@ def run():
     )
     args = parser.parse_args()
 
-    base = pq.ParquetDataset(args.baseline).read().to_pandas().rename(columns=LEGACY_MAPPING)
-    comp = pq.ParquetDataset(args.comparison).read().to_pandas().rename(columns=LEGACY_MAPPING)
+    base = load_parquet(args.baseline)
+    comp = load_parquet(args.comparison)
 
     pop = libsonata.NodeStorage(args.circuit).open_population("All")
     sel = libsonata.Selection([(0, len(pop))])
