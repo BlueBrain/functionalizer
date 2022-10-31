@@ -109,9 +109,9 @@ class Circuit:
 
         self.__input_size = touches.input_size
 
-        self.__touches = touches.df
-        self.__length = self.__touches.count()
-        logger.info(f"Touch count after reading: {self.__length:,d}")  # pylint: disable=W1203
+        self.__original_touches = touches.df
+        self.__length = None  # set by _update_touches from __original_touches
+        self.__touches = None  # set by _update_touches from __original_touches
         self.__metadata = touches.metadata
 
     def with_pathway(self, df=None):
@@ -251,10 +251,16 @@ class Circuit:
         self.__circuit = self.touches.alias("t").join(self.__src, "src").join(self.__dst, "dst")
         return self.__circuit
 
-    @dataframe.setter
-    def dataframe(self, dataframe):
+    def _update_touches(self, dataframe, print_stats=False):
+        """Set internal touch and length references."""
         self.__length = dataframe.count()
         self.__touches = self.only_touch_columns(dataframe)
+        if print_stats:
+            logger.info(f"Touch count after reading: {self.__length:,d}")  # pylint: disable=W1203
+
+    @dataframe.setter
+    def dataframe(self, dataframe):
+        self._update_touches(dataframe)
         if any(n.startswith("src_") or n.startswith("dst_") for n in dataframe.schema.names):
             self.__circuit = dataframe
             self.__reduced = None
@@ -280,10 +286,14 @@ class Circuit:
     @property
     def touches(self):
         """:property: touch data as a Spark dataframe."""
+        if not self.__touches:
+            self._update_touches(self.__original_touches, True)
         return self.__touches
 
     def __len__(self):
         """The number of touches."""
+        if not self.__length:
+            self._update_touches(self.__original_touches, True)
         return self.__length
 
     @staticmethod

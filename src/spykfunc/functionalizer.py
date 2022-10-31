@@ -23,6 +23,15 @@ logger = utils.get_logger(__name__)
 _MB = 1024**2
 
 
+class RecipeNotPresent(Exception):
+    """Indicates that no Recipe has been set up."""
+
+
+class _MockRecipe:
+    def __getattr__(self, attr):
+        raise RecipeNotPresent("Need to provide a recipe")
+
+
 class _SpykfuncOptions:
     output_dir = "spykfunc_output"
     properties = None
@@ -62,7 +71,7 @@ class Functionalizer:
     circuit = None
     """:property: ciruit containing neuron and touch data"""
 
-    recipe = None
+    recipe = _MockRecipe()
     """:property: The parsed recipe"""
 
     # ==========
@@ -86,9 +95,6 @@ class Functionalizer:
         sm.setCheckpointDir(adjust_for_spark(os.path.join(self._config.checkpoint_dir, "tmp")))
         sm._jsc.hadoopConfiguration().setInt("parquet.block.size", 64 * _MB)
 
-    # -------------------------------------------------------------------------
-    # Data loading and Init
-    # -------------------------------------------------------------------------
     @sm.assign_to_jobgroup
     def init_data(
         self,
@@ -105,7 +111,8 @@ class Functionalizer:
         Will load the necessary cell collections from `source` and `target`
         parameters, and construct the underlying brain :class:`.Circuit`.
         The `recipe_file` will only be fully processed once filters are
-        instantiated.
+        instantiated. Similarly, edge and node data will only be fully read once filters
+        are applied.
 
         Args:
             recipe_file: A scientific prescription to be used by the filters on the
@@ -118,12 +125,13 @@ class Functionalizer:
                 optionally, for spine morphologies
             edges: A list of files containing edges
         """
+        logger.debug("Starting data initialization...")
+
         # In "program" mode this dir wont change later, so we can check here
         # for its existence/permission to create
         if not os.path.isdir(self._config.output_dir):
             os.makedirs(self._config.output_dir)
 
-        logger.debug("Starting data loading...")
         if source and target:
             n_from = NodeData(source, source_nodeset, self._config.cache_dir)
             if source == target and source_nodeset == target_nodeset:
@@ -210,17 +218,23 @@ class Functionalizer:
                 omitted.
             overwrite: Allows to overwrite checkpoints
         """
-        self._ensure_data_loaded()
+        if self.circuit is None:
+            raise RuntimeError("No touches available, please load data first")
 
+        logger.debug("Starting filter initialization...")
         checkpoint_resume.overwrite = overwrite
 
-        filters = DatasetOperation.initialize(
-            filters or self._config.filters,
-            self.recipe,
-            self.circuit.source,
-            self.circuit.target,
-            self.circuit.morphologies,
-        )
+        try:
+            filters = DatasetOperation.initialize(
+                filters or self._config.filters,
+                self.recipe,
+                self.circuit.source,
+                self.circuit.target,
+                self.circuit.morphologies,
+            )
+        except RecipeNotPresent:
+            logger.fatal("No recipe provided, but specified filter(s) require one")
+            raise
 
         if self._config.strict or self._config.dry_run:
             utils.Enforcer().check()
@@ -229,7 +243,7 @@ class Functionalizer:
 
         self._configure_shuffle_partitions()
 
-        logger.info("Starting Filtering...")
+        logger.info("Starting filter application...")
         for f in filters:
             self.circuit = f(self.circuit)
         return self.circuit
@@ -338,13 +352,3 @@ class Functionalizer:
             )
         new_schema = schema.with_metadata(metadata)
         pq.write_metadata(new_schema, os.path.join(path, "_metadata"))
-
-    # -------------------------------------------------------------------------
-    # Helper functions
-    # -------------------------------------------------------------------------
-    def _ensure_data_loaded(self):
-        """Ensures required data is available."""
-        if self.circuit is None:
-            raise RuntimeError("No touches available. Please load data first.")
-        if self._config.filters and self.recipe is None:
-            raise RuntimeError("No recipe available.")

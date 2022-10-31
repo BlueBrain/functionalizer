@@ -111,7 +111,7 @@ class __DatasetOperationType(type):
                 filters.append(fcls(*args))
             except Exception as e:
                 if fcls._required:
-                    logger.exception("Could not instantiate %s", fcls.__name__)
+                    logger.fatal("Could not instantiate %s", fcls.__name__)
                     raise
                 logger.warning("Disabling optional %s: %s", fcls.__name__, e)
         for i in range(len(filters) - 1, -1, -1):
