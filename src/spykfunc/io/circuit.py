@@ -6,7 +6,7 @@ import os
 import re
 from typing import Iterable, List
 
-from packaging.version import LegacyVersion
+from packaging.version import Version
 import pandas as pd
 import pyarrow.parquet as pq
 from pyspark.sql import functions as F
@@ -21,7 +21,7 @@ from spykfunc.utils.filesystem import adjust_for_spark
 
 BASIC_EDGE_SCHEMA = ["source_node_id long", "target_node_id long", "synapse_id long"]
 BASIC_NODE_SCHEMA = ["id long"]
-VERSION_SCHEMA = re.compile(r"\d+(\.\d+)+(-\d+(-g[0-9a-f]+)?)?")
+VERSION_SCHEMA = re.compile(r"\d+(\.\d+)+(-\d+)?")
 
 # Globals
 logger = get_logger(__name__)
@@ -50,7 +50,7 @@ PARTITION_SIZE = 500_000
 # 1-based. Thus this offset...
 BRANCH_OFFSET: int = 1
 BRANCH_COLUMNS: List[str] = ["afferent_section_type", "efferent_section_type"]
-BRANCH_SHIFT_MINIMUM_VERSION: LegacyVersion = LegacyVersion("0.6.1-2")
+BRANCH_SHIFT_MINIMUM_VERSION: Version = Version("0.6.1-2")
 
 
 def shift_branch_type(df: DataFrame, shift: int = BRANCH_OFFSET) -> DataFrame:
@@ -528,7 +528,7 @@ class EdgeData:
     def _load_parquet(metadata, *args):
         raw_version = metadata.get("touch2parquet_version", "0.0.0")
         if m := VERSION_SCHEMA.search(raw_version):
-            t2p_version = LegacyVersion(m.group(0))
+            t2p_version = Version(m.group(0))
         else:
             raise RuntimeError(f"Can't determine touch2parquet version from {raw_version}")
         shift = t2p_version >= BRANCH_SHIFT_MINIMUM_VERSION
