@@ -84,21 +84,21 @@ class __DatasetOperationType(type):
             cls.__filters[name.replace("Filter", "")] = cls
 
     @classmethod
-    def initialize(cls, names, *args):
+    def initialize(mcs, names, *args):
         """Create filters from a list of names.
 
         :param names: A list of filter class names to invoke
         :param args: Arguments to pass through to the filters
         :return: A list of filter instances
         """
-        for fcls in cls.__filters.values():
+        for fcls in mcs.__filters.values():
             if hasattr(fcls, "_checkpoint_name"):
                 delattr(fcls, "_checkpoint_name")
         key = hashlib.sha256()
         key.update(b"foobar3000")
         filters = []
         for name in names:
-            fcls = cls.__filters.get(name, cls.__filters.get(name + "Filter"))
+            fcls = mcs.__filters.get(name, mcs.__filters.get(name + "Filter"))
             if fcls is None:
                 raise ValueError(f"Cannot find filter '{name}'")
             key.update(fcls.__name__.encode())
@@ -131,9 +131,9 @@ class __DatasetOperationType(type):
         return filters[i:]
 
     @classmethod
-    def modules(cls):
+    def modules(mcs):
         """List registered subclasses."""
-        return sorted(cls.__filters.keys())
+        return sorted(mcs.__filters.keys())
 
 
 class DatasetOperation(metaclass=__DatasetOperationType):

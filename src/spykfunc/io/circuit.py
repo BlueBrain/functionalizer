@@ -6,7 +6,7 @@ import os
 import re
 from typing import Iterable, List
 
-from packaging.version import Version
+from packaging.version import Version, VERSION_PATTERN
 import pandas as pd
 import pyarrow.parquet as pq
 from pyspark.sql import functions as F
@@ -21,7 +21,6 @@ from spykfunc.utils.filesystem import adjust_for_spark
 
 BASIC_EDGE_SCHEMA = ["source_node_id long", "target_node_id long", "synapse_id long"]
 BASIC_NODE_SCHEMA = ["id long"]
-VERSION_SCHEMA = re.compile(r"\d+(\.\d+)+(-\d+)?")
 
 # Globals
 logger = get_logger(__name__)
@@ -49,8 +48,9 @@ PARTITION_SIZE = 500_000
 # follow the SONATA conversion, inherited from MorphIO, where values are
 # 1-based. Thus this offset...
 BRANCH_OFFSET: int = 1
+BRANCH_MAX_VALUE_SONATA: int = 4
 BRANCH_COLUMNS: List[str] = ["afferent_section_type", "efferent_section_type"]
-BRANCH_SHIFT_MINIMUM_VERSION: Version = Version("0.6.1-2")
+BRANCH_SHIFT_MINIMUM_CONVERTER_VERSION: Version = Version("0.6.1")
 
 
 def shift_branch_type(df: DataFrame, shift: int = BRANCH_OFFSET) -> DataFrame:
@@ -64,6 +64,42 @@ def shift_branch_type(df: DataFrame, shift: int = BRANCH_OFFSET) -> DataFrame:
                 .drop(tmp_attr)
             )
     return df
+
+
+def branch_type_shifted(df: DataFrame) -> bool:
+    """Determine if branch/section types should be shifted.
+
+    Returns `True` is the branch/section types should be shifted
+    by `-BRANCH_OFFSET`. Which is the case when the branch/section
+    types are 1-based.
+
+    If the section type columns are not present, returns `False`.  Will raise a
+    `RuntimeError` if the data in the columns is inconclusive.
+    """
+    shifts = set()
+    all_values = set()
+    seen = set()
+    for attr in BRANCH_COLUMNS:
+        if hasattr(df, attr):
+            seen.add(attr)
+            vals = df.select(F.min(attr).alias("attr_min"), F.max(attr).alias("attr_max")).take(1)[
+                0
+            ]
+            all_values.add(vals["attr_min"])
+            all_values.add(vals["attr_max"])
+            if vals["attr_min"] == 0 and vals["attr_max"] < BRANCH_MAX_VALUE_SONATA:
+                shifts.add(False)
+            elif vals["attr_min"] > 0 and vals["attr_max"] == BRANCH_MAX_VALUE_SONATA:
+                shifts.add(True)
+            elif vals["attr_min"] == 0 and vals["attr_max"] == BRANCH_MAX_VALUE_SONATA:
+                raise RuntimeError("Cannot determine branch type offset, range too broad")
+            elif vals["attr_min"] < 0 or vals["attr_max"] > BRANCH_MAX_VALUE_SONATA:
+                raise RuntimeError("Invalid minimum and maximum branch type.")
+    if not seen:
+        return False
+    if len(shifts) != 1:
+        raise RuntimeError(f"Cannot determine branch type offset with {all_values}")
+    return next(iter(shifts))
 
 
 def _accept_node_enumeration(attr: str) -> bool:
@@ -174,7 +210,7 @@ def _create_neuron_loader(filename, population):
 
         (_, ids) = data.iloc[0]
         selection = libsonata.Selection(ids)
-        data = _add_all_attributes(dict(id=ids), pop, selection)
+        data = _add_all_attributes({"id": ids}, pop, selection)
         return pd.DataFrame(data)
 
     return loader
@@ -198,11 +234,11 @@ def _create_touch_loader(filename: str, population: str):
 
         pop = libsonata.EdgeStorage(filename).open_population(population)
         selection = libsonata.Selection([(start, end)])
-        data = dict(
-            source_node_id=pop.source_nodes(selection),
-            target_node_id=pop.target_nodes(selection),
-            synapse_id=selection.flatten(),
-        )
+        data = {
+            "source_node_id": pop.source_nodes(selection),
+            "target_node_id": pop.target_nodes(selection),
+            "synapse_id": selection.flatten(),
+        }
         data = _add_all_attributes(data, pop, selection)
         return pd.DataFrame(data)
 
@@ -497,15 +533,7 @@ class EdgeData:
                 .applyInPandas(_create_touch_loader(filename, population), columns)
                 .cache()
             )
-            values = set()
-            for col in BRANCH_COLUMNS:
-                for v in edges.select(col).distinct().collect():
-                    values.add(v)
-            if 0 in values and 5 in values:
-                raise RuntimeError("Cannot determine section type convention")
-            if 5 in values:
-                return shift_branch_type(edges, -BRANCH_OFFSET)
-            return edges
+            return shift_branch_type(edges, -BRANCH_OFFSET)
 
         return _loader
 
@@ -526,19 +554,23 @@ class EdgeData:
 
     @staticmethod
     def _load_parquet(metadata, *args):
-        raw_version = metadata.get("touch2parquet_version", "0.0.0")
-        if m := VERSION_SCHEMA.search(raw_version):
-            t2p_version = Version(m.group(0))
-        else:
-            raise RuntimeError(f"Can't determine touch2parquet version from {raw_version}")
-        shift = t2p_version >= BRANCH_SHIFT_MINIMUM_VERSION
-
         def _loader():
             files = [adjust_for_spark(f) for f in args]
             edges = sm.read.parquet(*files)
+
             for old, new in schema.LEGACY_MAPPING.items():
                 if old in edges.columns:
                     edges = edges.withColumnRenamed(old, new)
+
+            if raw_version := metadata.get("touch2parquet_version"):
+                if m := re.compile(VERSION_PATTERN, re.VERBOSE | re.IGNORECASE).search(raw_version):
+                    t2p_version = Version(m.group(0))
+                else:
+                    raise RuntimeError(f"Can't determine touch2parquet version from {raw_version}")
+                shift = t2p_version >= BRANCH_SHIFT_MINIMUM_CONVERTER_VERSION
+            else:
+                shift = branch_type_shifted(edges)
+
             if shift:
                 return shift_branch_type(edges, -BRANCH_OFFSET)
             return edges

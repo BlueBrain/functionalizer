@@ -106,7 +106,7 @@ class _ConfDumpAction(argparse._HelpAction):
     def __call__(self, parser, namespace, values, option_string=None):
         from spykfunc.utils import Configuration
 
-        kwargs = dict(overrides=namespace.overrides)
+        kwargs = {"overrides": namespace.overrides}
         if namespace.configuration:
             kwargs["configuration"] = namespace.configuration
         Configuration(namespace.output_dir, **kwargs).dump()
