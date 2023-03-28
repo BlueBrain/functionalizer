@@ -13,7 +13,7 @@ export RECIPE=\$BASE/bioname/builderRecipeAllPathways.xml
 export TOUCHES=\$BASE/touches/parquet/*.parquet
 
 salloc -Aproj16 -p\$part -Cnvme -N1 --exclusive --mem=0 \\
-    srun functionlizer \\
+    srun dplace functionlizer \\
         -H \\
         --${modes[$m]} \\
         --output-dir=\$PWD \\

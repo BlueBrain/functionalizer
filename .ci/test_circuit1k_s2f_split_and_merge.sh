@@ -6,7 +6,7 @@ export RECIPE=$BASE/bioname/builderRecipeAllPathways.xml
 export TOUCHES=$BASE/touches/parquet/*.parquet
 
 for half in empty full; do
-    srun functionalizer \
+    srun dplace functionalizer \
         -H \
         --s2f \
         --output-dir="$PWD/half_${half}_out" \
@@ -18,7 +18,7 @@ for half in empty full; do
         -- $TOUCHES
 done
 
-srun functionalizer \
+srun dplace functionalizer \
     -H \
     --merge \
     --output-dir="$PWD/merged_out" \

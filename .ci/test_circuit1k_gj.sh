@@ -4,7 +4,7 @@ export MORPHOS=$BASE/morphologies/h5
 export RECIPE=$BASE/bioname/builderRecipeAllPathways.xml
 export TOUCHES=$BASE/touches/parquet/*.parquet
 
-srun functionalizer \
+srun dplace functionalizer \
     -H \
     --gap-junctions \
     --output-dir="$PWD" \
