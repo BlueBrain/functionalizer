@@ -1,6 +1,7 @@
 """Schema definitions and mappings."""
 import re
 
+from pyspark.pandas import typedef
 from pyspark.sql import types as T
 
 
@@ -138,3 +139,14 @@ def indexed_strings(names):
             T.StructField(names[1], T.StringType(), False),
         ]
     )
+
+
+def schema_for_dataframe(df):
+    """Create a Spark schema from the Pandas DataFrame."""
+
+    def _type(col):
+        if df.dtypes[col] == object:
+            return T.StringType()
+        return typedef.as_spark_type(df.dtypes[col])
+
+    return T.StructType([T.StructField(col, _type(col), False) for col in df.columns])

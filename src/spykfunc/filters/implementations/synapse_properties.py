@@ -144,14 +144,12 @@ class SynapseProperties(DatasetOperation):
         flattened_pathways = properties.rules.to_matrix(
             {n: v for n, _, _, v in Circuit.expand(columns, source, target)}
         )
-        pathways = sm.createDataFrame(
-            pd.DataFrame(
-                {
-                    "pathway_i": np.arange(flattened_pathways.size),
-                    "_class_i": flattened_pathways,
-                }
-            )
-        )
+        pathways = pd.DataFrame(
+            {
+                "pathway_i": np.arange(flattened_pathways.size),
+                "_class_i": flattened_pathways,
+            }
+        ).set_index("_class_i")
 
         classification = _load_from_recipe(
             properties.rules, schema.SYNAPSE_CLASSIFICATION_SCHEMA
@@ -161,15 +159,13 @@ class SynapseProperties(DatasetOperation):
             .rename(columns={"_i": "_prop_i"})
             .set_index("id")
         )
+        merged_properties = classification.join(properties, on="type")
+        merged = pathways.join(merged_properties, on="_class_i").drop(columns=["_class_i"])
+        merged_schema = schema.schema_for_dataframe(merged)
 
-        merged_properties = sm.createDataFrame(classification.join(properties, on="type"))
-        logger.info("Found %d synapse property entries", merged_properties.count())
+        logger.info("Found %d synapse property entries", len(merged_properties))
 
-        return pathways.join(
-            merged_properties, pathways._class_i == merged_properties._class_i
-        ).drop("_class_i")
-        # "_prop_i" could also be dropped, but is required for debug output
-        # later
+        return sm.createDataFrame(merged, schema=merged_schema)
 
 
 _spark_t_to_py = {
