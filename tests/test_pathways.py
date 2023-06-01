@@ -44,13 +44,19 @@ class _MockEdges:
     input_size = -1
 
 
-def test_pathway_generation(fz):
+def test_pathway_generation(fz, monkeypatch):
     r = Recipe(StringIO(SOME_PROPERTIES))
 
     cr = r.connection_rules
     matrix = cr.to_matrix({"toMType": MTYPES, "toRegion": REGIONS})
 
-    c = Circuit(_MockNodes(), _MockNodes(), _MockEdges(), "/")
+    with monkeypatch.context() as m:
+
+        def mock_build(_self, _touches):
+            return None
+
+        m.setattr(Circuit, "build_circuit", mock_build)
+        c = Circuit(_MockNodes(), _MockNodes(), _MockEdges(), "/")
 
     df = pd.DataFrame.from_records(
         data=[

@@ -5,12 +5,10 @@ from typing import Iterable
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
 
-import sparkmanager as sm
+import pandas as pd
 
 from spykfunc.io import NodeData, EdgeData, MorphologyDB
 from spykfunc.utils import get_logger
-from spykfunc.utils.spark import cache_broadcast_single_part
-from spykfunc import schema
 
 logger = get_logger(__name__)
 
@@ -59,21 +57,15 @@ class Circuit:
     and :attr:`.Circuit.target`.  Likewise, the current edges can be
     obtained via :attr:`.Circuit.touches`.
 
-    The preferred access to the circuit is through
-    :attr:`.Circuit.dataframe`, or, shorter, :attr:`.Circuit.df`.  These
-    two object properties provide the synapses of the circuit joined with
+    The preferred access to the circuit is through :attr:`.Circuit.df`.
+    This object property provides the synapses of the circuit joined with
     both neuron populations for a full set of properties.  The source and
     target neuron populations attributes are prefixed with `src_` and
     `dst_`, respectively.  The identification of the neurons will be plain
     `src` and `dst`.
 
-    The shorter :attr:`.Circuit.df` should also be used to update the
+    The :attr:`.Circuit.df` property should also be used to update the
     connectivity.
-
-    For convenience, the attribute :attr:`.Circuit.reduced` will provide
-    the circuits connectivity reduced to only one connection per (`src`,
-    `dst`) identifier pair.  Each connection will provide the miniumum of
-    the `synapse_id` to be able to generate reproducible random numbers.
 
     Args:
         source: the source neuron population
@@ -104,15 +96,10 @@ class Circuit:
             self.morphologies = MorphologyDB(*morphologies)
 
         # The circuit will be constructed (and grouped by src, dst
-        self.__circuit = None
-        self.__reduced = None
+        self.__touches = touches
+        self.__circuit = self.build_circuit(touches.df)
 
         self.__input_size = touches.input_size
-
-        self.__original_touches = touches.df
-        self.__length = None  # set by _update_touches from __original_touches
-        self.__touches = None  # set by _update_touches from __original_touches
-        self.__metadata = touches.metadata
 
     def with_pathway(self, df=None):
         """Stub to add a pathway column to a PySpark dataframe."""
@@ -159,43 +146,46 @@ class Circuit:
         if Circuit.__pathways_defined:
             raise RuntimeError("cannot define pathway columns multiple times")
 
-        sizes = []
         names = []
         numerics = []
-        tables = []
+        values = []
         for _, name, numeric, vals in self.expand(columns, self.source, self.target):
             names.append(name)
             numerics.append(numeric)
-            sizes.append(len(vals))
-            tables.append(
-                cache_broadcast_single_part(
-                    sm.createDataFrame(enumerate(vals), schema.indexed_strings([numeric, name]))
-                )
-            )
+            values.append(vals)
 
         def _w_pathway(self, df=None):
             if df is None:
                 df = self.df
             factor = 1
             result = F.lit(0)
-            for numeric, size in zip(numerics, sizes):
+            for numeric, vals in zip(numerics, values):
                 result += F.lit(factor) * F.col(numeric)
-                factor *= size
+                factor *= len(vals)
             return df.withColumn("pathway_i", result)
 
         def _w_pathway_str(df):
             col = F.col("pathway_i")
-            strcol = None
+            mapping = {}
             to_drop = []
-            for name, numeric, table, size in zip(names, numerics, tables, sizes):
-                df = df.withColumn(numeric, col % size).join(table, numeric).drop(numeric)
-                col = (col / size).cast("long")
-                if strcol is not None:
-                    strcol = F.concat(strcol, F.lit(f" {name}="), name)
-                else:
-                    strcol = F.concat(F.lit(f"{name}="), name)
-                to_drop.append(name)
-            return df.withColumn("pathway_str", strcol).drop(*to_drop)
+            for numeric, vals in zip(numerics, values):
+                df = df.withColumn(numeric, col % len(vals))
+                to_drop.append(numeric)
+                col = (col / len(vals)).cast("long")
+                mapping[numeric] = pd.Series(vals)
+
+            def _mapper(dfs):
+                for df in dfs:
+                    cols = [
+                        df[numeric].map(vals).map(f"{numeric}={{}}".format)
+                        for numeric, vals in mapping.items()
+                    ]
+
+                    df["pathway_str"] = cols[0].str.cat(others=cols[1:], sep=" ")
+                    yield df
+
+            df = df.withColumn("pathway_str", F.lit(""))
+            return df.mapInPandas(_mapper, df.schema).drop(*list(mapping.keys()))
 
         old_w_pathway = Circuit.with_pathway
         old_w_pathway_str = Circuit.pathway_to_str
@@ -229,72 +219,36 @@ class Circuit:
         return self.__input_size
 
     @property
-    def df(self):
-        """:property: shortcut for :attr:`dataframe`."""
-        return self.dataframe
-
-    @df.setter
-    def df(self, df):
-        self.dataframe = df
-
-    @property
     def metadata(self):
         """:property: metadata associated with the connections."""
-        return self.__metadata
+        return self.__touches.metadata
+
+    def build_circuit(self, touches):
+        """Joins `touches` with the node tables."""
+        if self.source and self.target:
+            return touches.alias("t").join(self.__src, "src").join(self.__dst, "dst").cache()
+        return touches.alias("t")
 
     @property
-    def dataframe(self):
+    def df(self):
         """:property: return a dataframe representing the circuit."""
-        if self.__circuit:
-            return self.__circuit
-
-        self.__circuit = self.touches.alias("t").join(self.__src, "src").join(self.__dst, "dst")
         return self.__circuit
 
-    def _update_touches(self, dataframe, print_stats=False):
-        """Set internal touch and length references."""
-        self.__length = dataframe.count()
-        self.__touches = self.only_touch_columns(dataframe)
-        if print_stats:
-            logger.info(f"Touch count after reading: {self.__length:,d}")  # pylint: disable=W1203
-
-    @dataframe.setter
-    def dataframe(self, dataframe):
-        self._update_touches(dataframe)
+    @df.setter
+    def df(self, dataframe):
         if any(n.startswith("src_") or n.startswith("dst_") for n in dataframe.schema.names):
             self.__circuit = dataframe
-            self.__reduced = None
         else:
-            self.__circuit = None
-            self.__reduced = None
-
-    @property
-    def reduced(self):
-        """:property: a reduced circuit with only one connection per src, dst."""
-        if self.__reduced:
-            return self.__reduced
-
-        self.__reduced = (
-            self.touches.alias("t")
-            .groupBy("src", "dst")
-            .agg(F.min("synapse_id").alias("synapse_id"))
-            .join(self.__src, "src")
-            .join(self.__dst, "dst")
-        )
-        return self.__reduced
+            self.__circuit = self.build_circuit(dataframe)
 
     @property
     def touches(self):
-        """:property: touch data as a Spark dataframe."""
-        if not self.__touches:
-            self._update_touches(self.__original_touches, True)
+        """:property: The touches originally used to construct the circuit."""
         return self.__touches
 
     def __len__(self):
-        """The number of touches."""
-        if not self.__length:
-            self._update_touches(self.__original_touches, True)
-        return self.__length
+        """The number of touches currently present in the circuit."""
+        return self.__circuit.count()
 
     @staticmethod
     def only_touch_columns(df):

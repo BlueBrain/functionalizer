@@ -14,7 +14,7 @@ import sparkmanager as sm
 
 from spykfunc.circuit import Circuit
 from spykfunc.utils import get_logger
-from spykfunc.utils.checkpointing import checkpoint_resume, CheckpointHandler
+from spykfunc.utils.checkpointing import checkpoint_resume
 
 logger = get_logger(__name__)
 
@@ -231,9 +231,6 @@ class DatasetOperation(metaclass=__DatasetOperationType):
 
                 @checkpoint_resume(
                     self._checkpoint_name,
-                    handlers=[
-                        CheckpointHandler.before_save(Circuit.only_touch_columns),
-                    ],
                     bucket_cols=self._checkpoint_buckets,
                 )
                 def fun():

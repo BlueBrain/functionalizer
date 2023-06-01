@@ -303,7 +303,7 @@ class NodeData:
     def df(self):
         """The PySpark dataframe with the neuron data."""
         if not self._df:
-            self._df = F.broadcast(self._load_neurons())
+            self._df = self._load_neurons()
         return self._df
 
     def _load_neurons(self):
@@ -319,14 +319,13 @@ class NodeData:
         digest = sha.hexdigest()[:8]
 
         logger.info("Total neurons: %d", len(self))
-        mvd_parquet = os.path.join(
+        df_parquet = os.path.join(
             self._cache, f"neurons_{len(self) / 1000.0:.1f}k_{digest}.parquet"
         )
 
-        if os.path.exists(mvd_parquet):
+        if os.path.exists(df_parquet):
             logger.info("Loading circuit from parquet")
-            mvd = sm.read.parquet(adjust_for_spark(mvd_parquet, local=True))
-            df = F.broadcast(mvd.coalesce(1)).cache()
+            df = sm.read.parquet(adjust_for_spark(df_parquet, local=True))
             df.count()  # force materialize
         else:
             logger.info("Building nodes from SONATA")
@@ -355,16 +354,13 @@ class NodeData:
 
             # Create DF
             logger.info("Creating neuron data frame...")
-            raw_mvd = parts.groupby("row").applyInPandas(
+            raw_df = parts.groupby("row").applyInPandas(
                 _create_neuron_loader(self._filename, self._population), self._columns
             )
 
             # Evaluate (build partial NameMaps) and store
-            mvd = raw_mvd.write.mode("overwrite").parquet(adjust_for_spark(mvd_parquet, local=True))
-            raw_mvd.unpersist()
-
-            # Mark as "broadcastable" and cache
-            df = F.broadcast(sm.read.parquet(adjust_for_spark(mvd_parquet))).cache()
+            df = raw_df.write.mode("overwrite").parquet(adjust_for_spark(df_parquet, local=True))
+            df = sm.read.parquet(adjust_for_spark(df_parquet)).cache()
         return df
 
 

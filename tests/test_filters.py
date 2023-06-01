@@ -79,27 +79,17 @@ class TestFilters(object):
         tmpdir = tmp_path_factory.mktemp("filters")
         fz2 = create_functionalizer(tmpdir).init_data(*ARGS)
         fz2.process_filters()
-        original = fz.circuit.touches.count()
-        count = fz2.circuit.touches.count()
+        original = fz.circuit.df.count()
+        count = fz2.circuit.df.count()
         assert count == original
-
-    def test_checkpoint_schema(self, fz, tmp_path_factory):
-        """To conserve space, only touch columns should be written to disk"""
-        basedir = tmp_path_factory.getbasetemp() / "filters0" / "check"
-        files = [
-            f for f in os.listdir(str(basedir)) if f.endswith(".ptable") or f.endswith(".parquet")
-        ]
-        for fn in files:
-            df = sm.read.load(str(basedir / fn))
-            assert all("src_" not in s and "dst_" not in s for s in df.schema.names)
 
     def test_overwrite(self, fz, tmp_path_factory):
         """Test that overwriting checkpointed data works"""
         tmpdir = tmp_path_factory.mktemp("filters")
         fz2 = create_functionalizer(tmpdir).init_data(*ARGS)
         fz2.process_filters(overwrite=True)
-        original = fz.circuit.touches.count()
-        count = fz2.circuit.touches.count()
+        original = fz.circuit.df.count()
+        count = fz2.circuit.df.count()
         assert count == original
 
     def test_writeout(self, fz):

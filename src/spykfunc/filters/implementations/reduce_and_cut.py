@@ -8,8 +8,7 @@ from spykfunc.definitions import CheckpointPhases
 from spykfunc.filters import DatasetOperation, helpers
 from spykfunc.filters.udfs import ReduceAndCutParameters
 from spykfunc.utils import get_logger
-from spykfunc.utils.checkpointing import checkpoint_resume, CheckpointHandler
-from spykfunc.utils.spark import cache_broadcast_single_part
+from spykfunc.utils.checkpointing import checkpoint_resume
 
 from . import add_random_column
 
@@ -85,7 +84,7 @@ class ReduceAndCut(DatasetOperation):
     def apply(self, circuit):
         """Filter the circuit according to the logic described in the class."""
         with circuit.pathways(self.columns):
-            full_touches = Circuit.only_touch_columns(circuit.with_pathway())
+            full_touches = circuit.with_pathway()
 
             # Get and broadcast Pathway stats
             #
@@ -102,7 +101,7 @@ class ReduceAndCut(DatasetOperation):
             # also, too many partitions will lead to a slow-down when
             # aggregating!
             logger.debug("Computing Pathway stats...")
-            params_df = F.broadcast(self.compute_reduce_cut_params(full_touches))
+            params_df = self.compute_reduce_cut_params(full_touches).cache()
             _params_out_csv(params_df, "pathway_params")  # Params ouput for validation
 
             # Reduce
@@ -126,7 +125,7 @@ class ReduceAndCut(DatasetOperation):
                 _touch_counts_out_csv(cut2AF_touches, "cut2af_counts.csv")
 
             # Only the touch fields
-            return Circuit.only_touch_columns(cut2AF_touches).drop("pathway_i")
+            return cut2AF_touches.drop("pathway_i")
 
     # ---
     @sm.assign_to_jobgroup
@@ -150,7 +149,6 @@ class ReduceAndCut(DatasetOperation):
         CheckpointPhases.FILTER_REDUCED_TOUCHES.name,
         bucket_cols=("src", "dst"),
         # Even if we change to not break exec plan we always keep only touch cols
-        handlers=[CheckpointHandler.before_save(Circuit.only_touch_columns)],
         child=True,
     )
     def apply_reduce(self, all_touches, params_df):
@@ -158,12 +156,12 @@ class ReduceAndCut(DatasetOperation):
         # Reducing touches on a single neuron is equivalent as reducing on
         # the global set of touches within a pathway (morpho-morpho association)
         logger.debug(" -> Building reduce fractions")
-        fractions = F.broadcast(params_df.select("pathway_i", "pP_A"))
+        fractions = params_df.select("pathway_i", "pP_A")
 
         logger.debug(" -> Cutting touches")
         return (
             add_random_column(
-                all_touches.join(fractions, "pathway_i"),
+                all_touches.join(F.broadcast(fractions), "pathway_i"),
                 "reduce_rand",
                 self.seed,
                 _KEY_REDUCE,
@@ -201,7 +199,7 @@ class ReduceAndCut(DatasetOperation):
 
         connection_survival_rate = (
             reduced_touch_counts_connection.join(
-                params_df_sigma, "pathway_i"
+                F.broadcast(params_df_sigma), "pathway_i"
             )  # Fetch the pathway params
             .withColumn(
                 "survival_rate",  # Calc survivalRate
@@ -255,7 +253,7 @@ class ReduceAndCut(DatasetOperation):
         )
 
         active_fractions = (
-            cut_touch_counts_pathway.join(params_df, "pathway_i")
+            cut_touch_counts_pathway.join(F.broadcast(params_df), "pathway_i")
             .withColumn(
                 "actual_reduction_factor",
                 F.col("cut_touch_counts_pathway") / F.col("total_touches"),
@@ -273,13 +271,9 @@ class ReduceAndCut(DatasetOperation):
                 ),
             )
             .select("pathway_i", "active_fraction")
-        )
+        ).cache()
 
         logger.debug("Computing Active Fractions")
-        # On both ends data is small (500x less) so we can reduce parallelism
-        _n_parts = max(cut_touch_counts_connection.rdd.getNumPartitions() // 50, 50)
-        # Result is a minimal DS so we cache and broadcast in single partition
-        active_fractions = cache_broadcast_single_part(active_fractions, parallelism=_n_parts)
 
         helpers._write_csv(Circuit.pathway_to_str(active_fractions), "active_fractions.csv")
 

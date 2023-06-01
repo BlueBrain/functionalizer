@@ -167,7 +167,7 @@ class Functionalizer:
         # NOTE: According to some tests we need to cap the amount of reducers to 4000 per node
         # NOTE: Some problems during shuffle happen with many partitions if shuffle
         #       compression is enabled!
-        touch_partitions = self.circuit.touches.rdd.getNumPartitions()
+        touch_partitions = self.circuit.touches.df.rdd.getNumPartitions()
         if touch_partitions == 0:
             raise ValueError("No partitions found in touch data")
 
@@ -280,8 +280,10 @@ class Functionalizer:
                     logger.info("Writing field %s", col)
                     yield col
 
-        df = self.circuit.touches.withColumnRenamed("src", "source_node_id").withColumnRenamed(
-            "dst", "target_node_id"
+        df = (
+            Circuit.only_touch_columns(self.circuit.df)
+            .withColumnRenamed("src", "source_node_id")
+            .withColumnRenamed("dst", "target_node_id")
         )
 
         # Required for SONATA support
