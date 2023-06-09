@@ -23,11 +23,13 @@ class MorphologyDB:
             db_path: path to the neuron morphology storage
             spine_db_path: path to the spine morphology storage
         """
-        self.db_path = Path(db_path)
         if spine_db_path:
             self.spine_db_path = Path(spine_db_path)
         else:
             self.spine_db_path = None
+
+        self._db_path = Path(db_path)
+        self._storage = morphokit.storage(str(self._db_path))
         self._db = {}
 
     @property
@@ -39,8 +41,7 @@ class MorphologyDB:
         """Read the morphology `morpho` or retrieve a cached value."""
         item = self._db.get(morpho)
         if not item:
-            path = str(self.db_path / (morpho + ".h5"))
-            item = self._db[morpho] = morphokit.Morphology(path)
+            item = self._db[morpho] = self._storage.get(morpho)
         return item
 
     def __getstate__(self):
@@ -48,12 +49,14 @@ class MorphologyDB:
         state = self.__dict__.copy()
         # Remove the unpicklable entries.
         del state["_db"]
+        del state["_storage"]
         return state
 
     def __setstate__(self, state):
         """Sets the state after pickling, and creates an empty morphology cache."""
         self.__dict__.update(state)
         self._db = {}
+        self._storage = morphokit.storage(str(self._db_path))
 
     @functools.lru_cache(_MAXIMUM_LRU_SIZE)
     def first_axon_section(self, morpho: str):
