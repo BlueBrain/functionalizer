@@ -23,13 +23,3 @@ build-wheels:
   parallel:
     matrix:
       - PY_VERSION: [py39, py310]
-
-bbp-containerizer:
-  trigger:
-    include:
-      - project: nse/bbp-containerizer
-        file: /python/ci/pipelines/no-push.yml
-        ref: no-push
-    strategy: depend
-  variables:
-    KEEP_REPO: $KEEP_REPO
