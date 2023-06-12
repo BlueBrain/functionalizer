@@ -2,6 +2,15 @@
 Changelog
 =========
 
+Version 0.18.0
+==============
+
+Changes:
+  - Better detection if section types are 0-based or 1-based.
+    See also FUNCZ-333_.
+  - Join node dataframe to edges only once.
+    See also FUNCZ-309_.
+
 Version 0.17.5
 ==============
 
@@ -415,8 +424,10 @@ First working version with 3 base filters:
 .. _FUNCZ-291: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-291
 .. _FUNCZ-301: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-301
 .. _FUNCZ-307: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-307
+.. _FUNCZ-309: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-309
 .. _FUNCZ-318: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-318
 .. _FUNCZ-325: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-325
+.. _FUNCZ-333: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-333
 .. _HPCTM-1294: https://bbpteam.epfl.ch/project/issues/browse/HPCTM-1294
 .. _HPCTM-1425: https://bbpteam.epfl.ch/project/issues/browse/HPCTM-1425
 
