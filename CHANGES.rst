@@ -2,6 +2,13 @@
 Changelog
 =========
 
+Version 0.18.1
+==============
+
+Changes:
+  - Set parallelism very early to improve SONATA data partitioning.
+    See also FUNCZ-340_.
+
 Version 0.18.0
 ==============
 
@@ -428,6 +435,7 @@ First working version with 3 base filters:
 .. _FUNCZ-318: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-318
 .. _FUNCZ-325: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-325
 .. _FUNCZ-333: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-333
+.. _FUNCZ-340: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-340
 .. _HPCTM-1294: https://bbpteam.epfl.ch/project/issues/browse/HPCTM-1294
 .. _HPCTM-1425: https://bbpteam.epfl.ch/project/issues/browse/HPCTM-1425
 

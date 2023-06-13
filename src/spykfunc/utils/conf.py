@@ -51,6 +51,13 @@ class Configuration(dict):
             logger.info("Connecting to PYSPARK_MASTER: %s", master)
             self.setdefault("spark.master", master)
 
+        if parallelism := os.environ.get("PYSPARK_PARALLELISM"):
+            logger.info(
+                "Defaulting parallelism and shuffles to PYSPARK_PARALLELISM: %s", parallelism
+            )
+            self.setdefault("spark.default.parallelism", parallelism)
+            self.setdefault("spark.sql.shuffle.partitions", parallelism)
+
     def __call__(self, prefix):
         """Yield all key, value pairs that match the prefix."""
         prefix = prefix.split(".")

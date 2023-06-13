@@ -524,12 +524,10 @@ class EdgeData:
             columns = ", ".join(BASIC_EDGE_SCHEMA + list(_types(p)))
 
             logger.info("Creating edge data frame...")
-            edges = (
-                parts.groupby("start", "end")
-                .applyInPandas(_create_touch_loader(filename, population), columns)
-                .cache()
+            edges = parts.groupby("start", "end").applyInPandas(
+                _create_touch_loader(filename, population), columns
             )
-            return shift_branch_type(edges, -BRANCH_OFFSET)
+            return shift_branch_type(edges, -BRANCH_OFFSET).cache()
 
         return _loader
 

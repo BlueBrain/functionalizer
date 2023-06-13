@@ -233,8 +233,10 @@ class Cluster:
 
         if _rank == 0:
             subprocess.check_call([spark_master], env=self.env)
-            # Will be picked up by spykfunc.utils.conf to connect Spark to the right host.
+            # Will be picked up by spykfunc.utils.conf to connect Spark to the right host
+            # and default parallelism
             self.env["PYSPARK_MASTER"] = f"spark://{self.rank0}:7077"
+            self.env["PYSPARK_PARALLELISM"] = str(int(worker_cores or 2) * _size * 2)
             logger.info("Web UI for Spark: http://%s:8080", self.rank0)
 
         _comm.Barrier()
