@@ -1,4 +1,5 @@
 """An implementation of Functionalizer in Apache Spark."""
+import hashlib
 import math
 import os
 import pyarrow.parquet as pq
@@ -79,6 +80,7 @@ class Functionalizer:
         """Create a new Functionalizer instance."""
         # Create config
         self._config = _SpykfuncOptions(options)
+        self._recipe_file = None
         checkpoint_resume.directory = self._config.checkpoint_dir
 
         if self._config.debug:
@@ -144,8 +146,9 @@ class Functionalizer:
 
         self.circuit = Circuit(n_from, n_to, EdgeData(*edges), morphologies)
 
-        if recipe_file:
-            self.recipe = Recipe(recipe_file, self._config.strict)
+        self._recipe_file = recipe_file
+        if self._recipe_file:
+            self.recipe = Recipe(self._recipe_file, self._config.strict)
             if self._config.strict and not self.recipe.validate(
                 {
                     "fromMType": n_from.mtype_values,
@@ -340,9 +343,21 @@ class Functionalizer:
             {
                 METADATA_PATTERN.format(this_run, "version"): spykfunc_version,
                 METADATA_PATTERN.format(this_run, "filters"): ",".join(self._config.filters),
-                METADATA_PATTERN.format(this_run, "recipe"): str(self.recipe or ""),
             }
         )
+        if self._recipe_file:
+            checksum = hashlib.sha256()
+            with open(self._recipe_file, "rb") as fd:
+                for line in fd:
+                    checksum.update(line)
+            metadata.update(
+                {
+                    METADATA_PATTERN.format(this_run, "recipe_path"): os.path.realpath(
+                        self._recipe_file
+                    ),
+                    METADATA_PATTERN.format(this_run, "recipe_sha256"): checksum.hexdigest(),
+                }
+            )
         if self.circuit.source and self.circuit.target:
             metadata.update(
                 {
