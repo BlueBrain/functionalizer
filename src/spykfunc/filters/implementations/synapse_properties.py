@@ -41,7 +41,7 @@ class SynapseProperties(DatasetOperation):
     Cython/Highfive for the random number generation.
     """
 
-    _checkpoint = False
+    _checkpoint = True
     _reductive = False
 
     _columns = [

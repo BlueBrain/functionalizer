@@ -52,7 +52,7 @@ def test_pathway_generation(fz, monkeypatch):
 
     with monkeypatch.context() as m:
 
-        def mock_build(_self, _touches):
+        def mock_build(_self, _touches, checkpoint=False):
             return None
 
         m.setattr(Circuit, "build_circuit", mock_build)

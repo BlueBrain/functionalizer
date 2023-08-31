@@ -8,6 +8,8 @@ Version 0.18.2
 Changes:
   - Don't use the full recipe for provenance, only provide path and checksums.
     See also FUNCZ-341_.
+  - Tune configuration for large connectome processing.
+    See also BBPP134-564_.
 
 Version 0.18.1
 ==============
@@ -446,5 +448,6 @@ First working version with 3 base filters:
 .. _FUNCZ-341: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-341
 .. _HPCTM-1294: https://bbpteam.epfl.ch/project/issues/browse/HPCTM-1294
 .. _HPCTM-1425: https://bbpteam.epfl.ch/project/issues/browse/HPCTM-1425
+.. _BBPP134-564: https://bbpteam.epfl.ch/project/issues/browse/BBPP134-564
 
 .. _MorphIO convention: https://github.com/BlueBrain/MorphIO/blob/dea3ce8/include/morphio/enums.h#L61-L95

@@ -182,7 +182,7 @@ class Functionalizer:
         )
 
         # Aim for data parallelism
-        guessed_partitions_from_cluster = sm.sc.defaultParallelism * 10
+        guessed_partitions_from_cluster = sm.sc.defaultParallelism
 
         shuffle_partitions = max([guessed_partitions_from_cluster, guessed_partitions_from_data, 1])
 

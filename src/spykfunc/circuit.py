@@ -1,5 +1,6 @@
 """Module for circuit related classes, functions."""
 import contextlib
+import time
 from typing import Iterable
 
 from pyspark.sql import functions as F
@@ -9,6 +10,7 @@ import pandas as pd
 
 from spykfunc.io import NodeData, EdgeData, MorphologyDB
 from spykfunc.utils import get_logger
+from spykfunc.utils.checkpointing import checkpoint_resume
 
 logger = get_logger(__name__)
 
@@ -97,7 +99,7 @@ class Circuit:
 
         # The circuit will be constructed (and grouped by src, dst
         self.__touches = touches
-        self.__circuit = self.build_circuit(touches.df)
+        self.__circuit = self.build_circuit(touches.df, checkpoint=True)
 
         self.__input_size = touches.input_size
 
@@ -223,9 +225,17 @@ class Circuit:
         """:property: metadata associated with the connections."""
         return self.__touches.metadata
 
-    def build_circuit(self, touches):
+    def build_circuit(self, touches, checkpoint=False):
         """Joins `touches` with the node tables."""
         if self.source and self.target:
+            if checkpoint:
+                ts = time.strftime("%s")
+
+                @checkpoint_resume(f"original_circuit_{ts}")
+                def f(ts, src, dst):
+                    return ts.alias("t").join(src, "src").join(dst, "dst")
+
+                return f(touches, self.__src, self.__dst).cache()
             return touches.alias("t").join(self.__src, "src").join(self.__dst, "dst").cache()
         return touches.alias("t")
 
