@@ -3,6 +3,8 @@ import functools
 from pathlib import Path
 from typing import Optional
 
+# needed for some enum definitions
+import morphio
 import morphokit
 
 
@@ -72,7 +74,7 @@ class MorphologyDB:
         * the distance from the soma of this point
         """
         types = self[morpho].section_types
-        section_index = types.index(int(morphokit.SectionType.axon))
+        section_index = types.index(int(morphio.SectionType.axon))
         section = self[morpho].section(section_index)
         section_length = section.pathlength(len(section.points) - 1)
         section_distance = min(0.5, section.pathlength(1))

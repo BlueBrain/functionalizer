@@ -188,7 +188,10 @@ def _load_from_recipe(recipe_group, group_schema, *, trim: bool = False) -> pd.D
     if trim:
         fields = []
         for field in reversed(list(group_schema.fields)):
-            haves = [hasattr(entry, field.name) for entry in recipe_group]
+            haves = [
+                hasattr(entry, field.name) and getattr(entry, field.name) is not None
+                for entry in recipe_group
+            ]
             if all(haves):
                 fields.append(field)
             else:

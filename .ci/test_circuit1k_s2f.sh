@@ -1,7 +1,7 @@
 export BASE=$DATADIR/cellular/circuit-1k/
 export CIRCUIT=$BASE/nodes.h5
 export MORPHOS=$BASE/morphologies/h5
-export RECIPE=$BASE/bioname/builderRecipeAllPathways.xml
+export RECIPE=$BASE/bioname/builderRecipeAllPathways.reposition.xml
 export TOUCHES=$BASE/touches/parquet/*.parquet
 
 srun dplace functionalizer \

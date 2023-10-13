@@ -2,6 +2,13 @@
 Changelog
 =========
 
+Version 0.18.3
+==============
+
+Changes:
+  - More tuning of parameters for SBO.
+  - Smaller fixes for newer recipe versions.
+
 Version 0.18.2
 ==============
 
