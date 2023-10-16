@@ -2,6 +2,12 @@
 Changelog
 =========
 
+Version 0.18.4
+==============
+
+Changes:
+  - Hotfix for metadata loading.
+
 Version 0.18.3
 ==============
 

@@ -532,12 +532,10 @@ class EdgeData:
         return _loader
 
     @staticmethod
-    def _load_parquet_metadata(*args):
-        if len(args) == 1:
-            args = args[0]
+    def _load_parquet_metadata(path, *_):
         # This breaks the added metadata, convert to arrow to preserve data
         # meta = pq.ParquetDataset(args, use_legacy_dataset=False).schema.metadata
-        meta = pq.ParquetDataset(args).schema.to_arrow_schema().metadata
+        meta = pq.ParquetDataset(path).schema.to_arrow_schema().metadata
         return {
             k.decode(): v.decode()
             for (k, v) in (meta or {}).items()
