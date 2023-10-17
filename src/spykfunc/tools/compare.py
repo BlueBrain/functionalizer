@@ -55,6 +55,9 @@ def run():
     base = load_parquet(args.baseline)
     comp = load_parquet(args.comparison)
 
+    difference = set(base.columns) ^ set(comp.columns)
+    assert len(difference) == 0, f"Changed columns: {','.join(difference)}"
+
     pop = libsonata.NodeStorage(args.circuit).open_population("All")
     sel = libsonata.Selection([(0, len(pop))])
     mtypes = pd.DataFrame(

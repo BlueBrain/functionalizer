@@ -1,12 +1,7 @@
 """Filters to add properties to synapses."""
-import numpy as np
-import pandas as pd
-
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
-from pyspark.sql import DataFrame
 
-from spykfunc import schema
 from spykfunc.circuit import Circuit
 from spykfunc.filters import DatasetOperation
 from spykfunc.utils import get_logger
@@ -41,7 +36,7 @@ class SynapseProperties(DatasetOperation):
     Cython/Highfive for the random number generation.
     """
 
-    _checkpoint = True
+    _checkpoint = False
     _reductive = False
 
     _columns = [
@@ -56,6 +51,8 @@ class SynapseProperties(DatasetOperation):
         (None, "syn_property_rule"),
     ]
 
+    _optimal_group_by = {"src_hemisphere", "src_region", "src_mtype", "src_etype", "src_sclass"}
+
     def __init__(self, recipe, source, target, morphos):
         """Initialize the filter.
 
@@ -67,25 +64,59 @@ class SynapseProperties(DatasetOperation):
         self.seed = recipe.seeds.synapseSeed
         logger.info("Using seed %d for synapse properties", self.seed)
 
-        self.columns = recipe.synapse_properties.rules.required
-        logger.info(
-            "Using the following columns for synapse properties: %s",
-            ", ".join(self.columns),
-        )
+        self.columns_recipe = recipe.synapse_properties.rules.required
 
-        # A Pandas dataframe mapping from pathway_i to properties
-        self.properties = self.convert_properties(
-            recipe.synapse_properties, self.columns, source, target
-        )
+        mapping = {}
+        renaming = {}
+        self.columns = []
+        for name, mapped, _, values in Circuit.expand(self.columns_recipe, source, target):
+            mapping[name] = values
+            renaming[f"{name}_i"] = f"{mapped}_i"
+            self.columns.append(f"{mapped}_i")
 
-        if "gsynSRSF" in self.properties.columns:
-            self._columns.append((None, "gsynSRSF"))
-        if "uHillCoefficient" in self.properties.columns:
-            self._columns.append((None, "uHillCoefficient"))
+        raw_rules = recipe.synapse_properties.rules.to_pandas(mapping).rename(columns=renaming)
+        raw_rules["rule_i"] = raw_rules.index
+
+        self.rules = sm.broadcast(raw_rules[self.columns])
+
+        columns = [
+            c
+            for c in raw_rules.columns
+            if not (
+                c.startswith("src_")
+                or c.startswith("dst_")
+                or c.startswith("to")
+                or c.startswith("from")
+            )
+        ]
+
+        self.classification = sm.createDataFrame(raw_rules[columns])
+
+        classes = recipe.synapse_properties.classes.to_pandas().rename(columns={"id": "type"})
+        classes["class_i"] = classes.index
+        for optional in ("gsynSRSF", "uHillCoefficient"):
+            if any(classes[optional].isna()):
+                if not all(classes[optional].isna()):
+                    raise ValueError(f"inconsistent values for {optional}")
+                del classes[optional]
+            else:
+                self._columns.append((None, optional))
+
+        self.classes = sm.createDataFrame(classes)
 
     def apply(self, circuit):
         """Add properties to the circuit."""
-        with circuit.pathways(self.columns):
+        with circuit.pathways(self.columns_recipe):
+            pathways = (
+                circuit.with_pathway()
+                .select(self.columns + ["pathway_i"])
+                .groupBy(["pathway_i"] + self.columns)
+                .count()
+                .mapInPandas(_assign_rules(self.rules), "pathway_i long, rule_i long")
+                .join(F.broadcast(self.classification), "rule_i")
+                .join(F.broadcast(self.classes), "type")
+            )
+
             connections = (
                 circuit.with_pathway()
                 .groupBy("src", "dst")
@@ -93,7 +124,7 @@ class SynapseProperties(DatasetOperation):
                     F.min("pathway_i").alias("pathway_i"),
                     F.min("synapse_id").alias("synapse_id"),
                 )
-                .join(F.broadcast(self.properties), "pathway_i")
+                .join(F.broadcast(pathways), "pathway_i")
                 .drop("pathway_i")
             )
             connections = _add_randomized_connection_properties(connections, self.seed)
@@ -133,78 +164,32 @@ class SynapseProperties(DatasetOperation):
                         T.ShortType()
                     ),
                 )
-                .withColumn("syn_property_rule", F.col("_prop_i").cast(T.ShortType()))
-                .drop("type", "_prop_i")
+                .withColumn("syn_property_rule", F.col("class_i").cast(T.ShortType()))
+                .drop("type", "class_i", "rule_i")
             )
             return t
 
-    @staticmethod
-    def convert_properties(properties, columns, source, target):
-        """Merges synapse class assignment and properties."""
-        flattened_pathways = properties.rules.to_matrix(
-            {n: v for n, _, _, v in Circuit.expand(columns, source, target)}
-        )
-        pathways = pd.DataFrame(
-            {
-                "pathway_i": np.arange(flattened_pathways.size),
-                "_class_i": flattened_pathways,
-            }
-        ).set_index("_class_i")
 
-        classification = _load_from_recipe(
-            properties.rules, schema.SYNAPSE_CLASSIFICATION_SCHEMA
-        ).rename(columns={"_i": "_class_i"})
-        properties = (
-            _load_from_recipe(properties.classes, schema.SYNAPSE_PROPERTY_SCHEMA, trim=True)
-            .rename(columns={"_i": "_prop_i"})
-            .set_index("id")
-        )
-        merged_properties = classification.join(properties, on="type")
-        merged = pathways.join(merged_properties, on="_class_i").drop(columns=["_class_i"])
-        merged_schema = schema.schema_for_dataframe(merged)
+def _assign_rules(spark_rules):
+    """Assign rule indices to a series of dataframes."""
 
-        logger.info("Found %d synapse property entries", len(merged_properties))
+    def f(dfs):
+        def _assign_rule(row):
+            """Return the last matching rule index for row."""
+            rules = spark_rules.value
+            for col in rules.columns:
+                sel = (rules[col] == row[col]) | (rules[col] == -1)
+                rules = rules[sel]
+            return rules.index[-1]
 
-        return sm.createDataFrame(merged, schema=merged_schema)
+        for df in dfs:
+            df["rule_i"] = df.apply(_assign_rule, axis=1)
+            yield df[["pathway_i", "rule_i"]]
+
+    return f
 
 
-_spark_t_to_py = {
-    T.ShortType: int,
-    T.IntegerType: int,
-    T.LongType: int,
-    T.FloatType: float,
-    T.DoubleType: float,
-    T.StringType: str,
-    T.BooleanType: bool,
-}
-
-
-def cast_in_eq_py_t(val, spark_t):
-    """Cast `val` to the Python equivalent of `spark_t`."""
-    return _spark_t_to_py[spark_t.__class__](val)
-
-
-def _load_from_recipe(recipe_group, group_schema, *, trim: bool = False) -> pd.DataFrame:
-    if trim:
-        fields = []
-        for field in reversed(list(group_schema.fields)):
-            haves = [
-                hasattr(entry, field.name) and getattr(entry, field.name) is not None
-                for entry in recipe_group
-            ]
-            if all(haves):
-                fields.append(field)
-            else:
-                logger.warning("Field %s not present in all rules, skipping conversion", field.name)
-        group_schema = T.StructType(fields)
-    data = [
-        tuple(cast_in_eq_py_t(getattr(entry, field.name), field.dataType) for field in group_schema)
-        for entry in recipe_group
-    ]
-    return pd.DataFrame.from_records(data, columns=[f.name for f in group_schema])
-
-
-def _add_randomized_connection_properties(connections: DataFrame, seed: int) -> DataFrame:
+def _add_randomized_connection_properties(connections, seed: int):
     """Add connection properties drawn from random distributions."""
 
     def __generate(data):

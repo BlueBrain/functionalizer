@@ -43,7 +43,7 @@ _numpy_to_spark = {
     "object": "string",
 }
 
-PARTITION_SIZE = 500_000
+PARTITION_SIZE = 2_500_000
 # Internal calculations rely on branch types being 0-based. Input should
 # follow the SONATA conversion, inherited from MorphIO, where values are
 # 1-based. Thus this offset...
@@ -288,7 +288,10 @@ class NodeData:
 
     def __getattr__(self, attr):
         """Attribute access is defaulted to SONATA enumerations."""
-        return self._enumerations[attr]
+        try:
+            return self._enumerations[attr]
+        except KeyError as e:
+            raise AttributeError(*e.args) from e
 
     def __len__(self):
         """The number of nodes in the cell dataframe."""

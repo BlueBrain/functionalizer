@@ -6,14 +6,14 @@ Version 0.18.4
 ==============
 
 Changes:
-  - Hotfix for metadata loading.
+  - Improved pathway handling for SBO.
+    See also FUNCZ-337_.
 
 Version 0.18.3
 ==============
 
 Changes:
-  - More tuning of parameters for SBO.
-  - Smaller fixes for newer recipe versions.
+  - Hotfix for metadata loading.
 
 Version 0.18.2
 ==============
@@ -457,6 +457,7 @@ First working version with 3 base filters:
 .. _FUNCZ-318: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-318
 .. _FUNCZ-325: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-325
 .. _FUNCZ-333: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-333
+.. _FUNCZ-337: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-337
 .. _FUNCZ-340: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-340
 .. _FUNCZ-341: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-341
 .. _HPCTM-1294: https://bbpteam.epfl.ch/project/issues/browse/HPCTM-1294

@@ -113,6 +113,21 @@ class Circuit:
         raise RuntimeError("with_patway can only be used in a pathway context")
 
     @staticmethod
+    def internal_names(col, source, target):
+        """Transform a name from recipe notation to Spykfunc's internal one."""
+        if col.startswith("to"):
+            stem = col.lower()[2:]
+            name = f"dst_{stem}"
+            if hasattr(target, f"{stem}_values"):
+                return stem, name
+        elif col.startswith("from"):
+            stem = col.lower()[4:]
+            name = f"src_{stem}"
+            if hasattr(source, f"{stem}_values"):
+                return stem, name
+        return None, None
+
+    @staticmethod
     def expand(columns, source, target):
         """Expand recipe-convention `columns` to names and data from dataframes.
 
@@ -125,12 +140,9 @@ class Circuit:
         * the library values to be used with the indexed column
         """
         for col in columns:
-            if col.startswith("to"):
-                stem = col.lower()[2:]
-                yield col, f"dst_{stem}", f"dst_{stem}_i", getattr(target, f"{stem}_values")
-            elif col.startswith("from"):
-                stem = col.lower()[4:]
-                yield col, f"src_{stem}", f"src_{stem}_i", getattr(source, f"{stem}_values")
+            stem, name = Circuit.internal_names(col, source, target)
+            if stem and name:
+                yield col, name, f"{name}_i", getattr(source, f"{stem}_values")
             else:
                 raise RuntimeError(f"cannot determine node column from '{col}'")
 

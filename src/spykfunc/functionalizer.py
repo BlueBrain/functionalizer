@@ -1,6 +1,5 @@
 """An implementation of Functionalizer in Apache Spark."""
 import hashlib
-import math
 import os
 import pyarrow.parquet as pq
 from pyspark.sql import functions as F
@@ -176,9 +175,7 @@ class Functionalizer:
 
         # Aim for about half the maximum partition size
         guessed_partitions_from_data = int(
-            math.ceil(
-                2 * self.circuit.input_size / int(sm.conf.get("spark.sql.files.maxPartitionBytes"))
-            )
+            self.circuit.input_size / int(sm.conf.get("spark.sql.files.maxPartitionBytes")) + 1
         )
 
         # Aim for data parallelism
@@ -322,8 +319,9 @@ class Functionalizer:
             )
 
         output_path = os.path.realpath(os.path.join(self.output_directory, filename))
-        logger.info("Exporting touches...")
-        df_output = df.select(*get_fields(df)).sort(*(order.value))
+        partitions = sm.sc.defaultParallelism
+        logger.info("Exporting touches with %d partitions...", partitions)
+        df_output = df.select(*get_fields(df)).sort(*(order.value)).coalesce(partitions)
         df_output.write.parquet(adjust_for_spark(output_path, local=True), mode="overwrite")
         logger.info("Data written to disk")
         self._add_metadata(output_path)
