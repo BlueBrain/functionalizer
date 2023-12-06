@@ -23,7 +23,6 @@ autodoc_default_options = {
 }
 autodoc_member_order = "groupwise"
 autodoc_mock_imports = [
-    "funcsigs",
     "h5py",
     "hdfs",
     "jprops",

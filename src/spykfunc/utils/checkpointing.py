@@ -1,7 +1,7 @@
 """Checkpoint handling to save intermediate calculations."""
 from collections import namedtuple
 from functools import wraps
-from funcsigs import signature
+from inspect import signature
 import pyspark.sql
 from pyspark.sql.column import _to_seq
 import sparkmanager as sm
