@@ -100,7 +100,9 @@ def test_branch_lengths(morphos):
     This assumes the C functionalizer as reference point.
     """
     for name, branches in BRANCHES:
-        assert numpy.allclose([s.pathlength(-1) for s in morphos[name].sections], branches[1:])
+        assert numpy.allclose(
+            [morphos.pathlengths(name, s.id + 1)[-1] for s in morphos[name].sections], branches[1:]
+        )
 
 
 def test_path_length(morphos):

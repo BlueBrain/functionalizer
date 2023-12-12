@@ -3,9 +3,8 @@ import functools
 from pathlib import Path
 from typing import Optional
 
-# needed for some enum definitions
 import morphio
-import morphokit
+import numpy as np
 
 
 _MAXIMUM_LRU_SIZE = 10_000
@@ -31,7 +30,7 @@ class MorphologyDB:
             self.spine_db_path = None
 
         self._db_path = Path(db_path)
-        self._storage = morphokit.storage(str(self._db_path))
+        self._storage = morphio.Collection(str(self._db_path))
         self._db = {}
 
     @property
@@ -43,7 +42,7 @@ class MorphologyDB:
         """Read the morphology `morpho` or retrieve a cached value."""
         item = self._db.get(morpho)
         if not item:
-            item = self._db[morpho] = self._storage.get(morpho)
+            item = self._db[morpho] = self._storage.load(morpho)
         return item
 
     def __getstate__(self):
@@ -58,7 +57,7 @@ class MorphologyDB:
         """Sets the state after pickling, and creates an empty morphology cache."""
         self.__dict__.update(state)
         self._db = {}
-        self._storage = morphokit.storage(str(self._db_path))
+        self._storage = morphio.Collection(str(self._db_path))
 
     @functools.lru_cache(_MAXIMUM_LRU_SIZE)
     def first_axon_section(self, morpho: str):
@@ -74,15 +73,16 @@ class MorphologyDB:
         * the distance from the soma of this point
         """
         types = self[morpho].section_types
-        section_index = types.index(int(morphio.SectionType.axon))
+        section_index = list(types).index(int(morphio.SectionType.axon))
         section = self[morpho].section(section_index)
-        section_length = section.pathlength(len(section.points) - 1)
-        section_distance = min(0.5, section.pathlength(1))
+        section_id = section.id + 1  # Our convention includes the soma as 0
+        section_length = self.pathlengths(morpho, section_id)[-1]
+        section_distance = min(0.5, self.pathlengths(morpho, section_id)[1])
         return (
             section_index + 1,  # MorphoK does not include the soma!
             section_distance,
             section_distance / section_length,
-            section.distance_to_soma() + section_distance,
+            self.distance_to_soma(morpho, section_id) + section_distance,
         )
 
     @functools.lru_cache(_MAXIMUM_LRU_SIZE)
@@ -92,13 +92,28 @@ class MorphologyDB:
         return soma.max_distance
 
     @functools.lru_cache(_MAXIMUM_LRU_SIZE)
-    def distance_to_soma(self, morpho: str, section: int, segment: int):
-        """Cached distance to the soma `morpho`."""
-        sec = self[morpho].section(section - 1)
-        return sec.distance_to_soma(segment)
+    def pathlengths(self, morpho: str, section: int):
+        """The cumulative distance along the section to its start."""
+        s = self[morpho].section(section - 1)
+
+        def _diff(idx):
+            cs = s.points[:, idx]
+            cs = cs - np.roll(cs, 1)
+            cs[0] = 0.0
+            return cs
+
+        return np.cumsum(np.sqrt(_diff(0) ** 2 + _diff(1) ** 2 + _diff(2) ** 2))
+
+    def distance_to_soma(self, morpho: str, section: int, segment: int = 0):
+        """The cumulative distance along the morphology to the soma."""
+        distance = self.pathlengths(morpho, section)[segment]
+        if not self[morpho].section(section - 1).is_root:
+            parent = self[morpho].section(section - 1).parent.id + 1
+            distance += self.distance_to_soma(morpho, parent, -1)
+        return distance
 
     @functools.lru_cache(_MAXIMUM_LRU_SIZE)
     def ancestors(self, morpho: str, section: int):
         """Cached parents for `section` of `morpho`."""
         sec = self[morpho].section(section - 1)
-        return list(s.id + 1 for s in sec.iter(morphokit.upstream))
+        return list(s.id + 1 for s in sec.iter(morphio.IterType.upstream))

@@ -27,7 +27,6 @@ autodoc_mock_imports = [
     "hdfs",
     "jprops",
     "lxml",
-    "morphokit",
     "libsonata",
     "numpy",
     "pandas",
