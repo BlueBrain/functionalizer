@@ -2,6 +2,13 @@
 Changelog
 =========
 
+Version 0.18.5
+==============
+
+Changes:
+  - Upgrade Pybind11 dependency, remove MorphoKit as a dependency.  Most functionality is
+    present in MorphIO.
+
 Version 0.18.4
 ==============
 
