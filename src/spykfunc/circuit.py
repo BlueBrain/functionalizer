@@ -113,18 +113,22 @@ class Circuit:
         raise RuntimeError("with_patway can only be used in a pathway context")
 
     @staticmethod
-    def internal_names(col, source, target):
-        """Transform a name from recipe notation to Spykfunc's internal one."""
+    def _internal_mapping(col, source, target):
+        """Transform a name from recipe notation to Spykfunc's internal one.
+
+        Returns the property in lower case, the internal naming, as well as the
+        corresponding node population.
+        """
         if col.startswith("to"):
             stem = col.lower()[2:]
             name = f"dst_{stem}"
             if hasattr(target, f"{stem}_values"):
-                return stem, name
+                return stem, name, target
         elif col.startswith("from"):
             stem = col.lower()[4:]
             name = f"src_{stem}"
             if hasattr(source, f"{stem}_values"):
-                return stem, name
+                return stem, name, source
         return None, None
 
     @staticmethod
@@ -140,9 +144,9 @@ class Circuit:
         * the library values to be used with the indexed column
         """
         for col in columns:
-            stem, name = Circuit.internal_names(col, source, target)
+            stem, name, nodes = Circuit._internal_mapping(col, source, target)
             if stem and name:
-                yield col, name, f"{name}_i", getattr(source, f"{stem}_values")
+                yield col, name, f"{name}_i", getattr(nodes, f"{stem}_values")
             else:
                 raise RuntimeError(f"cannot determine node column from '{col}'")
 

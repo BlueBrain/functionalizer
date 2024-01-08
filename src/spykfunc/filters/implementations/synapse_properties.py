@@ -180,6 +180,9 @@ def _assign_rules(spark_rules):
             for col in rules.columns:
                 sel = (rules[col] == row[col]) | (rules[col] == -1)
                 rules = rules[sel]
+            if len(rules) == 0:
+                msg = " ".join(f"{col}: {row[col]}" for col in rules.columns)
+                raise KeyError(msg)
             return rules.index[-1]
 
         for df in dfs:
