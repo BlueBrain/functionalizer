@@ -31,12 +31,13 @@ class SynapseReposition(DatasetOperation):
         axon_shift = _create_axon_section_udf(circuit.morphologies)
 
         with circuit.pathways(["fromMType", "toMType"]):
-            patched = (
-                circuit.with_pathway()
-                .join(self.reposition, "pathway_i", "left_outer")
-                .mapInPandas(axon_shift, circuit.df.schema)
-                .drop("pathway_i", "reposition")
+            circuit_w_reposition = circuit.with_pathway().join(
+                self.reposition, "pathway_i", "left_outer"
             )
+
+            patched = circuit_w_reposition.mapInPandas(
+                axon_shift, circuit_w_reposition.schema
+            ).drop("pathway_i", "reposition")
 
             return patched
 
