@@ -2,6 +2,13 @@
 Changelog
 =========
 
+Version 0.18.6
+==============
+
+Bugfix:
+  - Properly utilize source and target node populations.
+    See also FUNCZ-345_.
+
 Version 0.18.5
 ==============
 
@@ -467,6 +474,7 @@ First working version with 3 base filters:
 .. _FUNCZ-337: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-337
 .. _FUNCZ-340: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-340
 .. _FUNCZ-341: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-341
+.. _FUNCZ-345: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-345
 .. _HPCTM-1294: https://bbpteam.epfl.ch/project/issues/browse/HPCTM-1294
 .. _HPCTM-1425: https://bbpteam.epfl.ch/project/issues/browse/HPCTM-1425
 .. _BBPP134-564: https://bbpteam.epfl.ch/project/issues/browse/BBPP134-564
