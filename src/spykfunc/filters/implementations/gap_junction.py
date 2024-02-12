@@ -1,4 +1,5 @@
 """Collection of filters for gap junctions."""
+
 import numpy as np
 import pandas as pd
 

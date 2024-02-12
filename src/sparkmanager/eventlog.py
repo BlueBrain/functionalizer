@@ -1,4 +1,5 @@
 """Extract eventlog data."""
+
 import json
 import logging
 

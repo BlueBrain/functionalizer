@@ -1,4 +1,5 @@
 """Data loading for nodes, edges."""
+
 import glob
 import hashlib
 import math

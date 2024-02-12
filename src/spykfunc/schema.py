@@ -1,4 +1,5 @@
 """Schema definitions and mappings."""
+
 import re
 
 from pyspark.pandas import typedef

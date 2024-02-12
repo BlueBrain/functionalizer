@@ -1,5 +1,6 @@
 """Test pathway calculation and if it matches with expectations
 """
+
 from io import StringIO
 from itertools import product
 import pandas as pd

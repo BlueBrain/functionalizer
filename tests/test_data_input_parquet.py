@@ -1,5 +1,6 @@
 """Tests relating to SONATA used for edge input
 """
+
 import os
 import numpy
 import pandas as pd

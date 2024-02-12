@@ -1,4 +1,5 @@
 """Filters reducing touches."""
+
 from pyspark.sql import functions as F
 
 import sparkmanager as sm

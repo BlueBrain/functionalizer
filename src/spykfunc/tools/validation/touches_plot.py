@@ -1,4 +1,5 @@
 """Helper script to analyze performance."""
+
 import argparse
 import glob
 import os.path

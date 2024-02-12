@@ -1,5 +1,6 @@
 """Test benchmark functionality
 """
+
 import sparkmanager as sm
 
 

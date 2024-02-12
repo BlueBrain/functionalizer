@@ -4,6 +4,7 @@ This module ensures compatibility when running with/without a Hadoop
 cluster, since the underlying Spark API behaves differently in the presence
 of a Hadoop cluster.
 """
+
 from datetime import datetime
 import glob
 import os

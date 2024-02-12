@@ -1,5 +1,6 @@
 """Test the shifting of synapses of ChC cells et al.
 """
+
 from collections import defaultdict
 from io import StringIO
 from pathlib import Path

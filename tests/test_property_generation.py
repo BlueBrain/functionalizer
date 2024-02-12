@@ -1,5 +1,6 @@
 """Test the various filters
 """
+
 import os
 import pytest
 import sparkmanager as sm

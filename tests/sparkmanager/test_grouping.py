@@ -1,5 +1,6 @@
 """Test job group setting interface only
 """
+
 import sparkmanager as sm
 
 

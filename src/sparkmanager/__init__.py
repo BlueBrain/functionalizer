@@ -1,4 +1,5 @@
 """Convenience methods for a homogeneous Spark setup."""
+
 import sys
 
 from .manager import SparkManager

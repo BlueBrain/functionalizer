@@ -1,4 +1,5 @@
 """A default filter plugin."""
+
 from spykfunc.filters import DatasetOperation
 
 

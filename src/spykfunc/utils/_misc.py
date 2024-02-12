@@ -1,4 +1,5 @@
 """Miscelleneous utility functions."""
+
 import sys
 import logging as _logging
 from .. import config

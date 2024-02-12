@@ -1,4 +1,5 @@
 """Checkpoint handling to save intermediate calculations."""
+
 from collections import namedtuple
 from functools import wraps
 from inspect import signature

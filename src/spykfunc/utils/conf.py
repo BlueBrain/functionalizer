@@ -1,4 +1,5 @@
 """Small configuration shim module."""
+
 import io
 import os
 import sys

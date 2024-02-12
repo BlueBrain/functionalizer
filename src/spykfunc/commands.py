@@ -1,4 +1,5 @@
 """Command line interface for Spykfunc."""
+
 import json
 import os
 import sys

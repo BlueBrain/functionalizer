@@ -1,4 +1,5 @@
 """A plugin to filter by spine length."""
+
 from operator import attrgetter
 
 import pandas as pd

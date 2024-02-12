@@ -1,4 +1,5 @@
 """An implementation of Functionalizer in Apache Spark."""
+
 import hashlib
 import os
 import pyarrow.parquet as pq
@@ -173,10 +174,12 @@ class Functionalizer:
         if touch_partitions == 0:
             raise ValueError("No partitions found in touch data")
 
+        cfg_value = sm.conf.get("spark.sql.files.maxPartitionBytes")
+        if cfg_value.endswith("b"):
+            cfg_value = cfg_value[:-1]
+
         # Aim for about half the maximum partition size
-        guessed_partitions_from_data = int(
-            self.circuit.input_size / int(sm.conf.get("spark.sql.files.maxPartitionBytes")) + 1
-        )
+        guessed_partitions_from_data = int(self.circuit.input_size / int(cfg_value) + 1)
 
         # Aim for data parallelism
         guessed_partitions_from_cluster = sm.sc.defaultParallelism

@@ -1,5 +1,6 @@
 """Tests relating to SONATA used for edge input
 """
+
 import h5py
 import os
 import numpy

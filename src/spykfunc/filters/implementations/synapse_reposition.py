@@ -1,4 +1,5 @@
 """Shift synapses."""
+
 import fnmatch
 import itertools
 import numpy as np

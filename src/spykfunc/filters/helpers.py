@@ -1,4 +1,5 @@
 """Debugging helpers to dump additional data while filtering."""
+
 import pathlib
 
 from spykfunc.utils import get_logger

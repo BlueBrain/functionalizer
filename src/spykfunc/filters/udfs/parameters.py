@@ -1,4 +1,5 @@
 """Parameter calculations for reduce and cut."""
+
 from math import exp, sqrt
 import logging
 import pandas as pd

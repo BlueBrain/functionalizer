@@ -1,5 +1,6 @@
 """Test timing report
 """
+
 import json
 import sparkmanager as sm
 

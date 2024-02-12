@@ -1,4 +1,5 @@
 """Filter that matches distributions of synapses."""
+
 from pyspark.sql import functions as F
 
 import sparkmanager as sm

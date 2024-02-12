@@ -1,4 +1,5 @@
 """Module to launch Spark and HDFS clusters on a SLURM allocation."""
+
 import os
 import shutil
 import socket

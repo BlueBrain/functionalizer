@@ -3,6 +3,7 @@
 The synapse ids are used to generate random numbers for properties and
 cutting synapses to match biological distributions.
 """
+
 from pyspark.sql import functions as F
 from pyspark.sql import Window
 

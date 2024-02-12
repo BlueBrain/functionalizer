@@ -1,4 +1,5 @@
 """Basic definitions used when running Spykfunc."""
+
 from enum import Enum
 
 

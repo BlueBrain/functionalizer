@@ -1,4 +1,5 @@
 """Module doing the actual Spark management."""
+
 from contextlib import contextmanager
 from functools import update_wrapper
 
