@@ -61,7 +61,7 @@ def test_sonata_properties(tmp_path_factory):
     )
     fz.process_filters()
 
-    assert "delay" in fz.circuit.df.columns
+    assert "axonal_delay" in fz.circuit.df.columns
     assert "gsyn" in fz.circuit.df.columns
     assert "u" in fz.circuit.df.columns
     assert "d" in fz.circuit.df.columns

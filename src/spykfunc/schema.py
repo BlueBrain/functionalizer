@@ -78,7 +78,7 @@ LEGACY_MAPPING = {
 }
 
 
-# Maps from the internal naming scheme to SONATA one. The third component
+# Maps from the internal naming scheme to SONATA one. The second component
 # of the tuple specifies the datatype to convert to. If None, no conversion
 # is performed.
 OUTPUT_MAPPING = {

@@ -17,6 +17,7 @@ import sparkmanager as sm
 from spykfunc import schema
 from spykfunc.utils import get_logger
 from spykfunc.utils.filesystem import adjust_for_spark
+from spykfunc.schema import OUTPUT_MAPPING
 
 
 BASIC_EDGE_SCHEMA = ["source_node_id long", "target_node_id long", "synapse_id long"]
@@ -541,7 +542,13 @@ class EdgeData:
             edges = parts.repartition(total_parts).mapInPandas(
                 _create_touch_loader(filename, population), columns
             )
-            return shift_branch_type(edges, -BRANCH_OFFSET).cache()
+            edges = shift_branch_type(edges, -BRANCH_OFFSET)
+
+            for new, (old, _) in OUTPUT_MAPPING.items():
+                if old in edges.columns:
+                    edges = edges.withColumnRenamed(old, new)
+
+            return edges.cache()
 
         return _loader
 
