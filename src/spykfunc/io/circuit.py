@@ -2,7 +2,6 @@
 
 import glob
 import hashlib
-import math
 import os
 import re
 from typing import Iterable, List
@@ -44,7 +43,11 @@ _numpy_to_spark = {
     "object": "string",
 }
 
-PARTITION_SIZE = 2_500_000
+# Basic unit to load at one time from edge or node files.  Since Spark has its own ideas
+# about partitions, several chunks may be used per partition.  Thus set a small-ish size
+# here.
+_CHUNK_SIZE = 250_000
+
 # Internal calculations rely on branch types being 0-based. Input should
 # follow the SONATA conversion, inherited from MorphIO, where values are
 # 1-based. Thus this offset...
@@ -202,17 +205,18 @@ def _create_neuron_loader(filename, population):
         A Pandas UDF to be used over a group by
     """
 
-    def loader(data: pd.DataFrame) -> pd.DataFrame:
-        assert len(data) == 1
+    def loader(dfs):
         import libsonata
 
-        nodes = libsonata.NodeStorage(filename)
-        pop = nodes.open_population(population)
+        pop = libsonata.NodeStorage(filename).open_population(population)
 
-        (_, ids) = data.iloc[0]
-        selection = libsonata.Selection(ids)
-        data = _add_all_attributes({"id": ids}, pop, selection)
-        return pd.DataFrame(data)
+        for df in dfs:
+            ids = []
+            for row in df.itertuples():
+                ids.extend(row.ids)
+            selection = libsonata.Selection(ids)
+            data = _add_all_attributes({"id": ids}, pop, selection)
+            yield pd.DataFrame(data)
 
     return loader
 
@@ -224,24 +228,26 @@ def _create_touch_loader(filename: str, population: str):
         filename: The name of the touches file
         population: The population to load
     Returns:
-        A Pandas UDF to be used over a group by
+        A Pandas UDF to be used in a mapInPandas
     """
 
-    def loader(data: pd.DataFrame) -> pd.DataFrame:
-        assert len(data) == 1
-        start, end = data.iloc[0]
-
+    def loader(dfs):
         import libsonata
 
         pop = libsonata.EdgeStorage(filename).open_population(population)
-        selection = libsonata.Selection([(start, end)])
-        data = {
-            "source_node_id": pop.source_nodes(selection),
-            "target_node_id": pop.target_nodes(selection),
-            "synapse_id": selection.flatten(),
-        }
-        data = _add_all_attributes(data, pop, selection)
-        return pd.DataFrame(data)
+
+        for df in dfs:
+            intervals = []
+            for row in df.itertuples():
+                intervals.append((row.start, row.end))
+            selection = libsonata.Selection(intervals)
+            df = {
+                "source_node_id": pop.source_nodes(selection),
+                "target_node_id": pop.target_nodes(selection),
+                "synapse_id": selection.flatten(),
+            }
+            df = _add_all_attributes(df, pop, selection)
+            yield pd.DataFrame(df)
 
     return loader
 
@@ -345,20 +351,22 @@ class NodeData:
                 selection = nodesets.materialize(self._ns_nodeset, population)
                 ids = selection.flatten().tolist()
 
-            total_parts = math.ceil(len(ids) / PARTITION_SIZE)
+            total_parts = len(ids) // _CHUNK_SIZE
+            if len(ids) % _CHUNK_SIZE > 0:
+                total_parts += 1
             logger.debug("Partitions: %d", total_parts)
 
             def generate_ids():
                 for n in range(total_parts):
-                    start = PARTITION_SIZE * n
-                    end = min(PARTITION_SIZE * (n + 1), len(ids))
+                    start = _CHUNK_SIZE * n
+                    end = min(_CHUNK_SIZE * (n + 1), len(ids))
                     yield n, ids[start:end]
 
             parts = sm.createDataFrame(generate_ids(), ["row", "ids"])
 
             # Create DF
             logger.info("Creating neuron data frame...")
-            raw_df = parts.groupby("row").applyInPandas(
+            raw_df = parts.repartition(total_parts).mapInPandas(
                 _create_neuron_loader(self._filename, self._population), self._columns
             )
 
@@ -515,20 +523,22 @@ class EdgeData:
 
             p = libsonata.EdgeStorage(filename).open_population(population)
 
-            total_parts = p.size // PARTITION_SIZE + 1
+            total_parts = p.size // _CHUNK_SIZE
+            if p.size % _CHUNK_SIZE > 0:
+                total_parts += 1
             logger.debug("Partitions: %d", total_parts)
 
             parts = sm.createDataFrame(
                 (
-                    (PARTITION_SIZE * n, min(PARTITION_SIZE * (n + 1), p.size))
+                    (n, _CHUNK_SIZE * n, min(_CHUNK_SIZE * (n + 1), p.size))
                     for n in range(total_parts)
                 ),
-                "start: long, end: long",
+                "row: long, start: long, end: long",
             )
             columns = ", ".join(BASIC_EDGE_SCHEMA + list(_types(p)))
 
             logger.info("Creating edge data frame...")
-            edges = parts.groupby("start", "end").applyInPandas(
+            edges = parts.repartition(total_parts).mapInPandas(
                 _create_touch_loader(filename, population), columns
             )
             return shift_branch_type(edges, -BRANCH_OFFSET).cache()
