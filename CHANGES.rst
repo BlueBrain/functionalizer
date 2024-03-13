@@ -2,6 +2,19 @@
 Changelog
 =========
 
+Version 0.18.7
+==============
+
+Changes:
+  - Use ``pyproject.toml`` to build the project.
+    See also FUNCZ-351_.
+
+Bugfix:
+  - Rename input synapse properties from SONATA to match internal naming.
+    See also FUNCZ-352_.
+  - Use more tasks / better parallelism when reading SONATA edge files.
+    See also FUNCZ-353_.
+
 Version 0.18.6
 ==============
 
@@ -475,6 +488,9 @@ First working version with 3 base filters:
 .. _FUNCZ-340: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-340
 .. _FUNCZ-341: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-341
 .. _FUNCZ-345: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-345
+.. _FUNCZ-351: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-351
+.. _FUNCZ-352: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-352
+.. _FUNCZ-353: https://bbpteam.epfl.ch/project/issues/browse/FUNCZ-353
 .. _HPCTM-1294: https://bbpteam.epfl.ch/project/issues/browse/HPCTM-1294
 .. _HPCTM-1425: https://bbpteam.epfl.ch/project/issues/browse/HPCTM-1425
 .. _BBPP134-564: https://bbpteam.epfl.ch/project/issues/browse/BBPP134-564
