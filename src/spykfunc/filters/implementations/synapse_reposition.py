@@ -1,12 +1,8 @@
 """Shift synapses."""
 
-import fnmatch
-import itertools
 import numpy as np
+import pandas as pd
 
-from pyspark.sql import functions as F
-
-from spykfunc import schema
 from spykfunc.filters import DatasetOperation
 
 import sparkmanager as sm
@@ -22,51 +18,31 @@ class SynapseReposition(DatasetOperation):
     _reductive = False
     _required = False
 
-    def __init__(self, recipe, source, target, morphos):
+    def __init__(self, recipe, source, target):
         """Initialize the filter, extracting the reposition part of the recipe."""
-        super().__init__(recipe, source, target, morphos)
-        self.reposition = self.convert_reposition(source, target, recipe.synapse_reposition)
+        super().__init__(recipe, source, target)
+        self.columns, self.reposition = recipe.as_matrix("synapse_reposition")
+        self.unset_value = len(recipe.get("synapse_reposition"))
 
     def apply(self, circuit):
         """Actually reposition the synapses."""
-        axon_shift = _create_axon_section_udf(circuit.morphologies)
+        axon_shift = _create_axon_section_udf(circuit.target.morphologies)
 
-        with circuit.pathways(["fromMType", "toMType"]):
-            circuit_w_reposition = circuit.with_pathway().join(
-                self.reposition, "pathway_i", "left_outer"
-            )
-
-            patched = circuit_w_reposition.mapInPandas(
-                axon_shift, circuit_w_reposition.schema
-            ).drop("pathway_i", "reposition")
-
-            return patched
-
-    @staticmethod
-    def convert_reposition(source, target, reposition):
-        """Loader for pathways that need synapses to be repositioned."""
-        src_mtype = source.mtype_values
-        src_mtype_rev = {name: i for i, name in enumerate(src_mtype)}
-        dst_mtype = target.mtype_values
-        dst_mtype_rev = {name: i for i, name in enumerate(dst_mtype)}
-
-        factor = len(src_mtype)
-
-        paths = []
-        for shift in reposition:
-            src = src_mtype_rev.values()
-            dst = dst_mtype_rev.values()
-            if shift.type != "AIS":
-                continue
-            if shift.fromMType:
-                src = [src_mtype_rev[m] for m in fnmatch.filter(src_mtype, shift.fromMType)]
-            if shift.toMType:
-                dst = [dst_mtype_rev[m] for m in fnmatch.filter(dst_mtype, shift.toMType)]
-            paths.extend(itertools.product(src, dst))
-        pathways = sm.createDataFrame(
-            [(s + factor * d, True) for s, d in paths], schema.SYNAPSE_REPOSITION_SCHEMA
+        reposition_np = self.reposition.flatten() != self.unset_value
+        reposition_pd = pd.DataFrame(
+            {"pathway_i": np.arange(len(reposition_np)), "reposition": reposition_np}
         )
-        return F.broadcast(pathways)
+
+        add_pathway = self.pathway_functions(self.columns, self.reposition.shape)
+        circuit_w_reposition = add_pathway(circuit.df).join(
+            sm.createDataFrame(reposition_pd), "pathway_i", "left_outer"
+        )
+
+        patched = circuit_w_reposition.mapInPandas(axon_shift, circuit_w_reposition.schema).drop(
+            "pathway_i", "pathway_str", "reposition"
+        )
+
+        return patched
 
 
 def _create_axon_section_udf(morphology_db):

@@ -56,7 +56,7 @@ class SparkReport:
             """Save the final runtime upon object deletion."""
             now = time.time()
             self.__report["runtime"].append((now - self.__start, self.__start, now))
-            if os.path.exists(self.__eventlog):
+            if self.__eventlog and os.path.exists(self.__eventlog):
                 try:
                     log = EventLog(self.__eventlog)
                     self.__report["spark"]["shuffle"] = log.shuffle_size

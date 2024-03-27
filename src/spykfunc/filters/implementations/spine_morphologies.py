@@ -51,11 +51,11 @@ class SpineMorphologies(DatasetOperation):
         (None, "spine_sharing_id"),
     ]
 
-    def __init__(self, recipe, source, target, morphos):
+    def __init__(self, recipe, source, target):
         """Initializes the filter using the morphology database."""
-        super().__init__(recipe, source, target, morphos)
+        super().__init__(recipe, source, target)
         self._morphologies, self._filter = _create_spine_morphology_udf(
-            morphos.spine_morphology_path
+            recipe.spine_morphologies.path
         )
 
     def apply(self, circuit):

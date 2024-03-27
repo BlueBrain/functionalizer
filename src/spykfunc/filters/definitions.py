@@ -73,11 +73,10 @@ class __DatasetOperationType(type):
             spec.varargs is None
             and spec.varkw is None
             and spec.defaults is None
-            and spec.args == ["self", "recipe", "source", "target", "morphos"]
+            and spec.args == ["self", "recipe", "source", "target"]
         ):
             raise AttributeError(
-                f"class {cls} does not implement "
-                '"__init__(recipe, source, target, morphos)" properly'
+                f"class {cls} does not implement " '"__init__(recipe, source, target)" properly'
             )
         type.__init__(cls, name, bases, attrs)
         if attrs.get("_visible", True):
@@ -195,14 +194,13 @@ class DatasetOperation(metaclass=__DatasetOperationType):
                              # added.
     """
 
-    def __init__(self, recipe, source, target, morphos):
+    def __init__(self, recipe, source, target):
         """Empty constructor supposed to be overriden.
 
         Args:
             recipe: Wrapper around an XML document with parametrization information
             source: The source node population
             target: The target node population
-            morphos: A morphology storage object
         """
 
     def __call__(self, circuit):
@@ -274,3 +272,32 @@ class DatasetOperation(metaclass=__DatasetOperationType):
         Takes a `Circuit`, applies some operations to it, and returns Spark dataframe
         representing the updated circuit.
         """
+
+    @staticmethod
+    def pathway_functions(columns, counts):
+        """Construct pathway adding functions given columns and a value counts."""
+
+        def _rename_maybe_numeric(col):
+            if (col.startswith("src_") or col.startswith("dst_")) and not col.endswith("_i"):
+                return f"{col}_i"
+            return col
+
+        def add_pathway(df):
+            from pyspark.sql import functions as F
+
+            pathway_column = F.lit(0)
+            pathway_column_format = []
+            pathway_column_values = []
+            for col, factor in zip(columns, counts):
+                name = _rename_maybe_numeric(col)
+                pathway_column *= factor
+                pathway_column += F.col(name)
+                pathway_column_format.append(f"{name}(%d)")
+                pathway_column_values.append(name)
+
+            return df.withColumn("pathway_i", pathway_column).withColumn(
+                "pathway_str",
+                F.format_string(", ".join(pathway_column_format), *pathway_column_values),
+            )
+
+        return add_pathway

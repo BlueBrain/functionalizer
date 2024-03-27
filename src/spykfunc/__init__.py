@@ -17,10 +17,11 @@
 ################################################################################
 
 """Spykfunc - An implementation of Functionalizer in PySpark."""
-import logging as _log
-import pkg_resources as _pkg
 
-__version__ = _pkg.get_distribution(__name__).version
+import logging as _log
+import importlib.metadata as _meta
+
+__version__ = _meta.version(__name__)
 
 
 # General logging

@@ -1,7 +1,5 @@
-"""Test the various filters
-"""
+"""Test the various filters"""
 
-import os
 import numpy as np
 import pandas as pd
 import pytest
@@ -40,7 +38,7 @@ def test_fixed_probabilities(tmp_path_factory):
 
     tmpdir = tmp_path_factory.mktemp("fixed_probabilities")
     fz = create_functionalizer(tmpdir, ["ReduceAndCut"]).init_data(
-        os.path.join(DATADIR, "builderRecipeAllPathways_fixed.xml"), *ARGS[1:]
+        DATADIR / "recipe_fixed.json", *ARGS[1:]
     )
 
     before = layer_counts(fz.circuit)
@@ -106,7 +104,7 @@ class TestFilters(object):
             "n_rrp_vesicles",
         ]
 
-        df = sm.read.load(os.path.join(fz.output_directory, "circuit.parquet"))
+        df = sm.read.load(str(fz.output_directory / "circuit.parquet"))
         props = df.groupBy("source_node_id", "target_node_id", *cols).count().cache()
         conns = props.groupBy("source_node_id", "target_node_id").count()
 

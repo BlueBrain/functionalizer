@@ -1,5 +1,4 @@
-"""Test the auto-detection of HDFS presence.
-"""
+"""Test the auto-detection of HDFS presence."""
 
 import mock
 import os

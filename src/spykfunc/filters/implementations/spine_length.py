@@ -24,13 +24,13 @@ class SpineLengthFilter(DatasetOperation):
 
     _required = False
 
-    def __init__(self, recipe, source, target, morphos):
+    def __init__(self, recipe, source, target):
         """Set up the filter.
 
         Uses the synapse seed to generate random numbers, and the spine length part of the
         recipe to obtain the desired distribution of spine lengths to match.
         """
-        super().__init__(recipe, source, target, morphos)
+        super().__init__(recipe, source, target)
         self.seed = recipe.seeds.synapseSeed
         logger.info("Using seed %d for spine length adjustment", self.seed)
 

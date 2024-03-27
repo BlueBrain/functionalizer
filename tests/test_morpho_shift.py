@@ -1,5 +1,4 @@
-"""Test the shifting of synapses of ChC cells et al.
-"""
+"""Test the shifting of synapses of ChC cells et al."""
 
 from collections import defaultdict
 from io import StringIO
@@ -36,7 +35,7 @@ def mock_mtypes(neurons):
 
 
 @pytest.mark.slow
-def test_shift():
+def test_shift(circuit_config, tmpdir):
     """Make sure that ChC cells are treated right.
 
     Move synapses to AIS while keeping other touches untouched.
@@ -55,20 +54,38 @@ def test_shift():
         if name in touches.columns:
             touches = touches.withColumnRenamed(name, alias)
 
-    recipe = Recipe(StringIO(RECIPE))
+    recipe_yaml = tmpdir / "recipe.yaml"
+    with recipe_yaml.open("w") as fd:
+        fd.write(RECIPE)
+
+    recipe = Recipe(
+        Path(recipe_yaml),
+        circuit_config,
+        (None, None),
+    )
+
+    def _get_values(*args):
+        return {
+            "dst_mtype": mock_mtypes(neurons),
+            "src_mtype": mock_mtypes(neurons),
+        }
+
+    recipe._pandifier.get_values = _get_values
 
     population = MagicMock()
     population.df = neurons
     population.mtype_values = mock_mtypes(neurons)
+    population.morphologies = MorphologyDB(
+        Path(__file__).parent / "circuit_O1_partial" / "morphologies" / "h5"
+    )
 
     c = Circuit(
         population,
         population,
         MockLoader(touches),
-        [Path(__file__).parent / "circuit_O1_partial" / "morphologies" / "h5"],
     )
 
-    fltr = SynapseReposition(recipe, c.source, c.target, c.morphologies)
+    fltr = SynapseReposition(recipe, c.source, c.target)
     result = fltr.apply(c).select(touches.columns)
 
     shifted = result.where(result.src == 39167).toPandas()
@@ -89,11 +106,11 @@ def test_shift():
 
 
 RECIPE = """
-<blueColumn>
-  <SynapsesReposition>
-    <shift fromMType="*CHC" toMType="*" type="AIS"/>
-  </SynapsesReposition>
-</blueColumn>
+version: 1
+synapse_reposition:
+  - dst_mtype: "*"
+    src_mtype: "*CHC"
+    class: "AIS"
 """
 
 NEURONS = [

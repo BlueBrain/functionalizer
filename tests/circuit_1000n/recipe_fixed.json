@@ -1,0 +1,166 @@
+{
+  "bouton_distances": {},
+  "connection_rules": [
+    {
+      "src_mtype": "L1_*",
+      "dst_mtype": "*",
+      "p_A": 1.0,
+      "pMu_A": 0.0,
+      "bouton_reduction_factor": 1.0
+    },
+    {
+      "src_mtype": "L23_*",
+      "dst_mtype": "*",
+      "p_A": 1.0,
+      "pMu_A": 1.0,
+      "bouton_reduction_factor": 1.0
+    },
+    {
+      "src_mtype": "L4_*",
+      "dst_mtype": "*",
+      "p_A": 1.0,
+      "pMu_A": 10000000000.0,
+      "bouton_reduction_factor": 1.0
+    },
+    {
+      "src_mtype": "L5_*",
+      "dst_mtype": "*",
+      "p_A": 0.0,
+      "pMu_A": 0.0,
+      "bouton_reduction_factor": 1.0
+    },
+    {
+      "src_mtype": "L6_*",
+      "dst_mtype": "*",
+      "p_A": 1.0,
+      "pMu_A": -10000000000.0,
+      "bouton_reduction_factor": 1.0
+    }
+  ],
+  "gap_junction_properties": {},
+  "touch_rules": [
+    {
+      "src_mtype": "L*_MC",
+      "dst_mtype": "*",
+      "afferent_section_type": "dendrite"
+    },
+    {
+      "src_mtype": "L1_*",
+      "dst_mtype": "*",
+      "afferent_section_type": "dendrite"
+    },
+    {
+      "src_mtype": "*PC",
+      "dst_mtype": "*",
+      "afferent_section_type": "soma"
+    },
+    {
+      "src_mtype": "*PC",
+      "dst_mtype": "*",
+      "afferent_section_type": "dendrite"
+    },
+    {
+      "src_mtype": "L5_TTPC*",
+      "dst_mtype": "*",
+      "afferent_section_type": "soma"
+    },
+    {
+      "src_mtype": "L5_TTPC*",
+      "dst_mtype": "*",
+      "afferent_section_type": "dendrite"
+    },
+    {
+      "src_mtype": "L6_TPC_L*",
+      "dst_mtype": "*",
+      "afferent_section_type": "soma"
+    },
+    {
+      "src_mtype": "L6_TPC_L*",
+      "dst_mtype": "*",
+      "afferent_section_type": "dendrite"
+    },
+    {
+      "src_mtype": "L*_MC",
+      "dst_mtype": "L1_*",
+      "afferent_section_type": "soma"
+    },
+    {
+      "src_mtype": "L*_MC",
+      "dst_mtype": "L*_MC",
+      "afferent_section_type": "soma"
+    }
+  ],
+  "seed": 4236279,
+  "synapse_properties": {
+    "rules": [
+      {
+        "src_synapse_class": "EXC",
+        "dst_synapse_class": "EXC",
+        "class": "E2",
+        "axonal_conduction_velocity": 0.00333
+      },
+      {
+        "src_synapse_class": "INH",
+        "dst_synapse_class": "INH",
+        "class": "I2",
+        "neural_transmitter_release_delay": 0.4,
+        "axonal_conduction_velocity": 0.00333
+      },
+      {
+        "src_synapse_class": "EXC",
+        "dst_synapse_class": "INH",
+        "class": "E2",
+        "axonal_conduction_velocity": 0.00333
+      },
+      {
+        "src_synapse_class": "INH",
+        "dst_synapse_class": "EXC",
+        "class": "I2",
+        "axonal_conduction_velocity": 0.00333
+      }
+    ],
+    "classes": [
+      {
+        "class": "I2",
+        "conductance_mu": 0.33,
+        "conductance_sd": 0.28,
+        "decay_time_mu": 8.3,
+        "decay_time_sd": 2.2,
+        "u_syn_mu": 0.25,
+        "u_syn_sd": 0.13,
+        "depression_time_mu": 706.0,
+        "depression_time_sd": 405.0,
+        "facilitation_time_mu": 21.0,
+        "facilitation_time_sd": 9.0,
+        "n_rrp_vesicles_mu": 0.0
+      },
+      {
+        "class": "E2",
+        "conductance_mu": 0.3,
+        "conductance_sd": 0.2,
+        "decay_time_mu": 1.74,
+        "decay_time_sd": 0.18,
+        "u_syn_mu": 0.0,
+        "u_syn_sd": 0.5,
+        "depression_time_mu": 671.0,
+        "depression_time_sd": 17.0,
+        "facilitation_time_mu": 17.0,
+        "facilitation_time_sd": 5.0,
+        "n_rrp_vesicles_mu": 1.0
+      }
+    ]
+  },
+  "synapse_reposition": [
+    {
+      "src_mtype": "L*_CHC",
+      "dst_mtype": "*",
+      "class": "AIS"
+    },
+    {
+      "src_mtype": "SP_AA",
+      "dst_mtype": "*",
+      "class": "AIS"
+    }
+  ],
+  "version": 1
+}

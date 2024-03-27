@@ -4,7 +4,8 @@ import glob
 import hashlib
 import os
 import re
-from typing import Iterable, List
+from pathlib import Path
+from typing import List
 
 from packaging.version import Version, VERSION_PATTERN
 import pandas as pd
@@ -19,11 +20,12 @@ from spykfunc.utils import get_logger
 from spykfunc.utils.filesystem import adjust_for_spark
 from spykfunc.schema import OUTPUT_MAPPING
 
+from .morphologies import MorphologyDB
+
 
 BASIC_EDGE_SCHEMA = ["source_node_id long", "target_node_id long", "synapse_id long"]
 BASIC_NODE_SCHEMA = ["id long"]
 
-# Globals
 logger = get_logger(__name__)
 
 # Widen unsigned data types to prevent potential dataloss during
@@ -127,17 +129,6 @@ def _accept_node_attribute(attr: str) -> bool:
     return True
 
 
-def _translate_attribute(attr: str) -> str:
-    """Map attribute names.
-
-    Translates certain attributes from the SONATA convention to the nomenclature used in
-    the recipe to account for any mismatch between the two.
-    """
-    if attr == "synapse_class":
-        return "sclass"
-    return attr
-
-
 def _get_enumerations(population):
     """Returns the enumerations for a population."""
     return sorted(filter(_accept_node_enumeration, population.enumeration_names))
@@ -172,10 +163,10 @@ def _add_all_attributes(dataframe, population, selection):
     the `dataframe` passed in.
     """
     for column in _get_pure_attributes(population):
-        name = _translate_attribute(column)
+        name = column
         dataframe[name] = population.get_attribute(column, selection)
     for column in _get_enumerations(population):
-        name = _translate_attribute(column)
+        name = column
         dataframe[f"{name}_i"] = population.get_enumeration(column, selection)
     return dataframe
 
@@ -188,11 +179,11 @@ def _types(population):
     """
     for column in _get_pure_attributes(population):
         kind = _column_type(population, column, "get_attribute")
-        name = _translate_attribute(column)
+        name = column
         yield f"{name} {kind}"
     for column in _get_enumerations(population):
         kind = _column_type(population, column, "get_enumeration")
-        name = _translate_attribute(column)
+        name = column
         yield f"{name}_i {kind}"
 
 
@@ -265,41 +256,48 @@ class NodeData:
     present can be accessed.
     """
 
-    def __init__(self, population: Iterable[str], nodeset: Iterable[str], cache: str):
+    def __init__(self, circuit_config: str, population: str, nodeset: str, cache: str):
         """Construct a new neuron loader.
 
         To load neuron-specific information, access the property
         :attr:`.NodeData.df`, data will be loaded lazily.
 
         Args:
-            population: a tuple with the path to the neuron storage and population name
-            nodeset: a tuple with the path to the nodesets JSON file and nodeset name
+            circuit_config: the circuit configuration with node storage details
+            population: the population name
+            nodeset: the nodeset name to use
             cache: a directory name to use for caching generated Parquet
         """
         self._cache = cache
         self._df = None
-        (self._filename, self._population) = population
-        (self._ns_filename, self._ns_nodeset) = nodeset
 
         import libsonata
 
-        pop = libsonata.NodeStorage(self._filename).open_population(self._population)
+        cfg = libsonata.CircuitConfig.from_file(circuit_config)
+        self._ns_filename = cfg.node_sets_path
+        self._ns_nodeset = nodeset
+
+        if population:
+            self._population = population
+        elif len(cfg.node_populations) != 1:
+            raise ValueError("cannot determine node population")
+        else:
+            self._population = next(iter(cfg.node_populations))
+
+        pop = cfg.node_population(self._population)
         self._size = len(pop)
         self._columns = ", ".join(BASIC_NODE_SCHEMA + list(_types(pop)))
-        self._enumerations = {
-            f"{_translate_attribute(attr)}_values": pop.enumeration_values(attr)
-            for attr in _get_enumerations(pop)
-        }
+        for attr in _get_enumerations(pop):
+            setattr(self, f"{attr}_values", pop.enumeration_values(attr))
+
+        pop_prop = cfg.node_population_properties(self._population)
+        self._filename = pop_prop.elements_path
+        self.morphologies = MorphologyDB(
+            pop_prop.alternate_morphology_formats.get("h5v1", pop_prop.morphologies_dir)
+        )
 
         if not os.path.isdir(self._cache):
             os.makedirs(self._cache)
-
-    def __getattr__(self, attr):
-        """Attribute access is defaulted to SONATA enumerations."""
-        try:
-            return self._enumerations[attr]
-        except KeyError as e:
-            raise AttributeError(*e.args) from e
 
     def __len__(self):
         """The number of nodes in the cell dataframe."""
@@ -342,7 +340,7 @@ class NodeData:
             logger.info("Building nodes from SONATA")
 
             # Create a default selection, or load it from the NodeSets
-            if not self._ns_filename:
+            if not self._ns_nodeset:
                 ids = list(range(0, len(self)))
             else:
                 import libsonata
@@ -554,9 +552,10 @@ class EdgeData:
 
     @staticmethod
     def _load_parquet_metadata(path, *_):
-        # This breaks the added metadata, convert to arrow to preserve data
-        # meta = pq.ParquetDataset(args, use_legacy_dataset=False).schema.metadata
-        meta = pq.ParquetDataset(path).schema.to_arrow_schema().metadata
+        path = Path(path)
+        if path.is_dir():
+            path /= "_metadata"
+        meta = pq.ParquetDataset(path, use_legacy_dataset=False).schema.metadata
         return {
             k.decode(): v.decode()
             for (k, v) in (meta or {}).items()

@@ -2,6 +2,7 @@
 
 import hashlib
 import os
+from pathlib import Path
 import pyarrow.parquet as pq
 from pyspark.sql import functions as F
 
@@ -101,11 +102,11 @@ class Functionalizer:
     def init_data(
         self,
         recipe_file,
+        circuit_config,
         source,
         source_nodeset,
         target,
         target_nodeset,
-        morphologies,
         edges=None,
     ):
         """Initialize all data required.
@@ -119,12 +120,11 @@ class Functionalizer:
         Args:
             recipe_file: A scientific prescription to be used by the filters on the
                 circuit
-            source: The source population path and name
-            source_nodeset: The source nodeset file and nodeset name
-            target: The target population path and name
-            target_nodeset: The target nodeset file and nodeset name
-            morphologies: a iterable containing the storage for node morphologies, and,
-                optionally, for spine morphologies
+            circuit_config: The basic configuration of the circuit
+            source: The source population name
+            source_nodeset: The source nodeset name
+            target: The target population name
+            target_nodeset: The target nodeset name
             edges: A list of files containing edges
         """
         logger.debug("Starting data initialization...")
@@ -134,32 +134,21 @@ class Functionalizer:
         if not os.path.isdir(self._config.output_dir):
             os.makedirs(self._config.output_dir)
 
-        if source and target:
-            n_from = NodeData(source, source_nodeset, self._config.cache_dir)
+        if circuit_config:
+            n_from = NodeData(circuit_config, source, source_nodeset, self._config.cache_dir)
             if source == target and source_nodeset == target_nodeset:
                 n_to = n_from
             else:
-                n_to = NodeData(target, target_nodeset, self._config.cache_dir)
+                n_to = NodeData(circuit_config, target, target_nodeset, self._config.cache_dir)
         else:
             n_from = None
             n_to = None
 
-        self.circuit = Circuit(n_from, n_to, EdgeData(*edges), morphologies)
+        self.circuit = Circuit(n_from, n_to, EdgeData(*edges))
 
         self._recipe_file = recipe_file
         if self._recipe_file:
-            self.recipe = Recipe(self._recipe_file, self._config.strict)
-            if self._config.strict and not self.recipe.validate(
-                {
-                    "fromMType": n_from.mtype_values,
-                    "fromEType": n_from.etype_values,
-                    "fromSClass": n_from.sclass_values,
-                    "toMType": n_to.mtype_values,
-                    "toEType": n_to.etype_values,
-                    "toSClass": n_to.sclass_values,
-                }
-            ):
-                raise RuntimeError("Recipe validation failed")
+            self.recipe = Recipe(Path(self._recipe_file), circuit_config, (source, target))
 
         return self
 
@@ -196,7 +185,7 @@ class Functionalizer:
     @property
     def output_directory(self):
         """:property: the directory to save results in."""
-        return self._config.output_dir
+        return Path(self._config.output_dir)
 
     @property
     def touches(self):
@@ -233,7 +222,6 @@ class Functionalizer:
                 self.recipe,
                 self.circuit.source,
                 self.circuit.target,
-                self.circuit.morphologies,
             )
         except RecipeNotPresent:
             logger.fatal("No recipe provided, but specified filter(s) require one")

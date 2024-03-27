@@ -1,5 +1,4 @@
-"""
-"""
+"""Test basic node loading"""
 
 from pathlib import Path
 import pytest
@@ -14,18 +13,18 @@ def test_full_node_file_loading(tmp_path_factory):
     # create a functionalizer instance to set up spark
     fz = create_functionalizer(tmpdir, [])
 
-    node_file = str(Path(DATADIR).parent / "circuit_proj66_tiny" / "nodes.h5")
-    node_population = "neocortex_neurons"
+    cfg = str(Path(DATADIR).parent / "circuit_proj66_tiny" / "circuit_config.json")
 
-    nodes = NodeData((node_file, node_population), ("", ""), tmpdir)
+    nodes = NodeData(cfg, None, None, tmpdir)
     df = nodes.df.toPandas()
 
+    assert len(df) == 293
     assert "mtype_i" in df
     assert "morph_class" in df
     assert "morphology" in df
-    assert "sclass_i" in df
+    assert "synapse_class_i" in df
     assert set(df["morph_class"].unique()) == set(["INT", "PYR"])
-    assert nodes.sclass_values == ["EXC", "INH"]
+    assert nodes.synapse_class_values == ["EXC", "INH"]
 
 
 @pytest.mark.slow
@@ -34,10 +33,9 @@ def test_partial_node_file_loading(tmp_path_factory):
     # create a functionalizer instance to set up spark
     fz = create_functionalizer(tmpdir, [])
 
-    node_file = str(Path(DATADIR).parent / "circuit_proj66_tiny" / "nodes_small.h5")
-    node_population = "neocortex_neurons"
+    cfg = str(Path(DATADIR).parent / "circuit_proj66_tiny" / "circuit_config_smol.json")
 
-    nodes = NodeData((node_file, node_population), ("", ""), tmpdir)
+    nodes = NodeData(cfg, None, None, tmpdir)
     df = nodes.df.toPandas()
 
     assert set(df.columns) == set(["id", "etype_i", "mtype_i"])

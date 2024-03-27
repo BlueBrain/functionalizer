@@ -1,5 +1,4 @@
-"""Test gap-junction mode
-"""
+"""Test gap-junction mode"""
 
 import copy
 import numpy as np
@@ -9,7 +8,6 @@ import pytest
 from pathlib import Path
 
 from pyspark.sql import functions as F
-from fz_td_recipe import Recipe
 from spykfunc.filters import DatasetOperation
 
 
@@ -43,9 +41,9 @@ def test_soma_distance(gj):
     """
     circuit = copy.copy(gj.circuit)
     circuit.df = circuit.df.where("src == 873 and dst == 999")
-    fltr = DatasetOperation.initialize(["SomaDistance"], None, None, None, gj.circuit.morphologies)[
-        0
-    ]
+    fltr = DatasetOperation.initialize(
+        ["SomaDistance"], gj.recipe, gj.circuit.source, gj.circuit.target
+    )[0]
     res = fltr.apply(circuit)
     assert "valid_touch" not in res.schema
     assert res.count() == 36
@@ -58,9 +56,9 @@ def test_soma_filter(gj):
     Matches the selection of dendro-soma touches.
     """
     query = "src == {} and dst == {} and afferent_section_id == 0"
-    fltr = DatasetOperation.initialize(["GapJunction"], None, None, None, gj.circuit.morphologies)[
-        0
-    ]
+    fltr = DatasetOperation.initialize(
+        ["GapJunction"], gj.recipe, gj.circuit.source, gj.circuit.target
+    )[0]
     circuit = gj.circuit.df.withColumnRenamed("synapse_id", "efferent_junction_id").withColumn(
         "afferent_junction_id", F.col("efferent_junction_id")
     )
@@ -81,9 +79,9 @@ def test_soma_filter_bidirectional(gj):
         "src in ({0}, {1}) and dst in ({0}, {1}) and "
         "(afferent_section_id == 0 or efferent_section_id == 0)"
     )
-    fltr = DatasetOperation.initialize(["GapJunction"], None, None, None, gj.circuit.morphologies)[
-        0
-    ]
+    fltr = DatasetOperation.initialize(
+        ["GapJunction"], gj.recipe, gj.circuit.source, gj.circuit.target
+    )[0]
     circuit = gj.circuit.df.withColumnRenamed("synapse_id", "efferent_junction_id").withColumn(
         "afferent_junction_id", F.col("efferent_junction_id")
     )
@@ -103,9 +101,9 @@ def test_soma_filter_bidirectional(gj):
 def test_dendrite_sync(gj):
     """Verify that gap junctions are synchronized right"""
     query = "(src in {0} and dst in {0}) and afferent_section_id > 0"
-    fltr = DatasetOperation.initialize(["GapJunction"], None, None, None, gj.circuit.morphologies)[
-        0
-    ]
+    fltr = DatasetOperation.initialize(
+        ["GapJunction"], gj.recipe, gj.circuit.source, gj.circuit.target
+    )[0]
     circuit = gj.circuit.df.withColumnRenamed("synapse_id", "efferent_junction_id").withColumn(
         "afferent_junction_id", F.col("efferent_junction_id")
     )
@@ -130,10 +128,9 @@ def test_dense_ids(gj):
         [
             "DenseID",
         ],
-        None,
-        None,
-        None,
-        gj.circuit.morphologies,
+        gj.recipe,
+        gj.circuit.source,
+        gj.circuit.target,
     )
     for f in fltrs:
         gj.circuit = f(gj.circuit)
@@ -151,10 +148,9 @@ def test_touch_reduction(gj):
     total = gj.circuit.df.count()
     fltrs = DatasetOperation.initialize(
         ["DenseID", "TouchReduction"],
-        Recipe(str(Path(__file__).parent / "recipe" / "gap_junctions.xml")),
-        None,
-        None,
-        None,
+        gj.recipe,
+        gj.circuit.source,
+        gj.circuit.target,
     )
     for f in fltrs:
         gj.circuit = f(gj.circuit)
@@ -166,13 +162,12 @@ def test_gap_junctions(gj):
     """Verify that all filters play nice together."""
     fltrs = DatasetOperation.initialize(
         ["SomaDistance", "GapJunction", "GapJunctionProperties"],
-        Recipe(str(Path(__file__).parent / "recipe" / "gap_junctions.xml")),
-        None,
-        None,
-        gj.circuit.morphologies,
+        gj.recipe,
+        gj.circuit.source,
+        gj.circuit.target,
     )
     for f in fltrs:
         gj.circuit = f(gj.circuit)
     assert gj.circuit.df.count() > 0
-    assert "gsyn" in gj.circuit.df.columns
-    assert gj.circuit.df.first()["gsyn"] == 0.75
+    assert "conductance" in gj.circuit.df.columns
+    assert gj.circuit.df.first()["conductance"] == 0.75

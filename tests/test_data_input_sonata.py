@@ -1,5 +1,4 @@
-"""Tests relating to SONATA used for edge input
-"""
+"""Tests relating to SONATA used for edge input"""
 
 import h5py
 import os
@@ -61,10 +60,10 @@ def test_sonata_properties(tmp_path_factory):
     )
     fz.process_filters()
 
-    assert "axonal_delay" in fz.circuit.df.columns
-    assert "gsyn" in fz.circuit.df.columns
-    assert "u" in fz.circuit.df.columns
-    assert "d" in fz.circuit.df.columns
-    assert "f" in fz.circuit.df.columns
-    assert "dtc" in fz.circuit.df.columns
-    assert "nrrp" in fz.circuit.df.columns
+    assert "delay" in fz.circuit.df.columns
+    assert "conductance" in fz.circuit.df.columns
+    assert "u_syn" in fz.circuit.df.columns
+    assert "depression_time" in fz.circuit.df.columns
+    assert "facilitation_time" in fz.circuit.df.columns
+    assert "decay_time" in fz.circuit.df.columns
+    assert "n_rrp_vesicles" in fz.circuit.df.columns

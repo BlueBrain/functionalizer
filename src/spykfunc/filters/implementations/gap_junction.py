@@ -32,10 +32,10 @@ class GapJunctionFilter(DatasetOperation):
         (None, "afferent_junction_id"),
     ]
 
-    def __init__(self, recipe, source, target, morphos):
+    def __init__(self, recipe, source, target):
         """Initialize the filter, using the morphology database."""
-        super().__init__(recipe, source, target, morphos)
-        self.__morphos = morphos
+        super().__init__(recipe, source, target)
+        self.__morphos = source.morphologies
 
     def apply(self, circuit):
         """Apply both the dendrite-soma and dendrite-dendrite filters."""
@@ -151,25 +151,25 @@ class GapJunctionProperties(DatasetOperation):
     This "filter" augments touches with properties of gap-junctions by adding
     the field
 
-    - `gsyn` representing the conductance of the gap-junction with a
+    - `conductance` representing the conductance of the gap-junction with a
       default value of 0.2
 
-    as specified by the `GapJunctionProperties` part of the recipe.
+    as specified by the `gap_junction_properties` part of the recipe.
 
     """
 
     _reductive = False
 
     _columns = [
-        (None, "gsyn"),
+        (None, "conductance"),
     ]
 
-    def __init__(self, recipe, source, target, morphos):
+    def __init__(self, recipe, source, target):
         """Initialize the filter, extracting the conductance setting from the recipe."""
-        super().__init__(recipe, source, target, morphos)
-        self.conductance = recipe.gap_junction_properties.gsyn
+        super().__init__(recipe, source, target)
+        self.conductance = recipe.get("gap_junction_properties.conductance")
 
     def apply(self, circuit):
         """Add properties to the circuit."""
-        touches = circuit.df.withColumn("gsyn", F.lit(self.conductance))
+        touches = circuit.df.withColumn("conductance", F.lit(self.conductance))
         return touches

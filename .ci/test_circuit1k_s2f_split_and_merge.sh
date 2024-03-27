@@ -1,8 +1,8 @@
 export BASE=$DATADIR/cellular/circuit-1k/
 export NODES=$BASE/nodes.h5
+export CIRCUIT=$BASE/circuit_config.json
 export NODESETS=$BASE/nodesets.json
-export MORPHOS=$BASE/morphologies/h5
-export RECIPE=$BASE/bioname/builderRecipeAllPathways.xml
+export RECIPE=$BASE/bioname/recipe.json
 export TOUCHES=$BASE/touches/parquet/*.parquet
 
 for half in empty full; do
@@ -11,10 +11,9 @@ for half in empty full; do
         --s2f \
         --output-dir="$PWD/half_${half}_out" \
         --checkpoint-dir="$PWD/half_${half}_check" \
-        --from-nodeset $NODESETS half_$half \
-        --from $NODES All --to $NODES All \
-        --recipe $RECIPE \
-        --morphologies $MORPHOS \
+        --from-nodeset half_$half \
+        --circuit-config=$CIRCUIT \
+        --recipe=$RECIPE \
         -- $TOUCHES
 done
 

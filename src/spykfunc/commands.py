@@ -1,13 +1,11 @@
 """Command line interface for Spykfunc."""
 
-import json
 import os
 import sys
 import argparse
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
-import libsonata
 from . import filters, utils
 from .filters import DatasetOperation
 from .definitions import RunningMode as RM, SortBy
@@ -26,67 +24,6 @@ class _ValidFile:
         if not os.path.isfile(filename):
             raise ValueError(f"'{filename}' is not a valid file")
         return filename
-
-
-class _ValidNodes:
-    """Check that the specified nodes are present."""
-
-    def __init__(self):
-        self.__storage = None
-        self.__population = None
-        self.__what = "node file"
-
-    def __repr__(self):
-        return self.__what
-
-    def __call__(self, arg):
-        if self.__storage is None:
-            try:
-                self.__storage = libsonata.NodeStorage(arg)
-            except Exception as e:
-                raise ValueError(f"'{arg}' is not a valid file") from e
-        elif self.__population is None:
-            try:
-                self.__population = self.__storage.open_population(arg)
-            except Exception as e:
-                self.__what = (
-                    "node population " f"(out of {', '.join(self.__storage.population_names)})"
-                )
-                raise ValueError(f"'{arg}' is not a valid node population") from e
-        else:
-            self.__what = "node argument"
-            raise ValueError(f"'{arg}' is extraneous")
-        return arg
-
-
-class _ValidNodeset:
-    """Check that the specified nodes are present."""
-
-    def __init__(self):
-        self.__json = None
-        self.__key = None
-        self.__what = "nodeset file"
-
-    def __repr__(self):
-        return self.__what
-
-    def __call__(self, arg):
-        if self.__json is None:
-            try:
-                with open(arg) as fd:
-                    self.__json = json.load(fd)
-            except Exception as e:
-                raise ValueError(f"'{arg}' is not a valid file") from e
-        elif self.__key is None:
-            try:
-                self.__key = self.__json[arg]
-            except Exception as e:
-                self.__what = f"nodeset identifier (out of {', '.join(self.__json)})"
-                raise ValueError(f"'{arg}' is not a valid nodeset identifier") from e
-        else:
-            self.__what = "nodeset argument"
-            raise ValueError(f"'{arg}' is extraneous")
-        return arg
 
 
 class _ValidPath:
@@ -189,46 +126,36 @@ def _construct_argument_parser() -> argparse.Namespace:
     )
     ginput = parser.add_argument_group("input options")
     ginput.add_argument(
+        "--circuit-config",
+        metavar="FILENAME",
+        type=_ValidFile(),
+        help="path to a circuit configuration",
+    )
+    ginput.add_argument(
         "--from",
         dest="source",
-        nargs=2,
-        type=_ValidNodes(),
-        metavar=("FILENAME", "POPULATION"),
-        help="path and name for the source population",
+        metavar="POPULATION",
+        help="name of the source population",
     )
     ginput.add_argument(
         "--from-nodeset",
         dest="source_nodeset",
-        nargs=2,
-        type=_ValidNodeset(),
-        metavar=("FILENAME", "NODESET"),
-        default=[None] * 2,
-        help="path and name for the source population",
+        metavar="NODESET",
+        help="name of the source population nodest",
     )
     ginput.add_argument(
         "--to",
         dest="target",
-        nargs=2,
-        type=_ValidNodes(),
-        metavar=("FILENAME", "POPULATION"),
-        help="path and name for the target population",
+        metavar="POPULATION",
+        help="name of the target population",
     )
     ginput.add_argument(
         "--to-nodeset",
         dest="target_nodeset",
-        nargs=2,
-        type=_ValidNodeset(),
-        metavar=("FILENAME", "NODESET"),
-        default=[None] * 2,
-        help="path and name for the target population",
+        metavar="NODESET",
+        help="name of the target population nodeset",
     )
-    ginput.add_argument("--recipe", type=_ValidFile(), help="the XML recipe file")
-    ginput.add_argument(
-        "--morphologies",
-        type=_ValidPath(),
-        nargs="+",
-        help="the morphology database path, and optionally the spine " "morphology directory",
-    )
+    ginput.add_argument("--recipe", type=_ValidFile(), help="the JSON recipe file")
     goutput = parser.add_argument_group("output options")
     goutput.add_argument(
         "--cache-dir",
@@ -371,11 +298,11 @@ def functionalize(options: Optional[argparse.ArgumentParser] = None) -> int:
         fz = Functionalizer(**args)
         fz.init_data(
             options.recipe,
+            options.circuit_config,
             options.source,
             options.source_nodeset,
             options.target,
             options.target_nodeset,
-            options.morphologies,
             options.edges,
         )
         fz.process_filters(overwrite="F" in options.overwrite.upper())

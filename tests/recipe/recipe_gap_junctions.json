@@ -1,0 +1,11 @@
+{
+  "bouton_distances": {},
+  "gap_junction_properties": {
+    "conductance": 0.75
+  },
+  "touch_reduction": {
+    "survival_rate": 0.5
+  },
+  "seed": 0,
+  "version": 1
+}

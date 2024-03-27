@@ -1,5 +1,4 @@
-"""Tests relating to SONATA used for edge input
-"""
+"""Tests relating to SONATA used for edge input"""
 
 import os
 import numpy

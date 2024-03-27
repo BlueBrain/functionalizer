@@ -15,6 +15,7 @@ class ReduceAndCutParameters:
 
     _schema = [
         ("pathway_i", "long"),
+        ("pathway_str", "string"),
         ("total_touches", "long"),
         ("structural_mean", "float"),
         ("pP_A", "float"),
@@ -43,15 +44,18 @@ class ReduceAndCutParameters:
         """Generate parameters for each row in `df`."""
         data = (
             self.process(*args)
-            for args in zip(df["pathway_i"], df["total_touches"], df["structural_mean"])
+            for args in zip(
+                df["pathway_i"], df["pathway_str"], df["total_touches"], df["structural_mean"]
+            )
         )
         return pd.DataFrame.from_records(data, columns=[c for c, _ in self._schema])
 
-    def process(self, pathway_i, total_touches, structuralMean):
+    def process(self, pathway_i, pathway_str, total_touches, structuralMean):
         """Calculates the parameters for reduce and cut.
 
         Args:
             pathway_i: the pathway index
+            pathway_str: string representation of the pathway index
             total_touches: the overall count of touches for the given mtype-mtype rule
             structuralMean: the average of touches/connection for the given mtype-mtype rule
 
@@ -63,6 +67,7 @@ class ReduceAndCutParameters:
         def empty_result(reason):
             return (
                 pathway_i,
+                pathway_str,
                 total_touches,
                 structuralMean,
                 1.0,
@@ -86,30 +91,35 @@ class ReduceAndCutParameters:
         rule = self.connection_rules[idx]
 
         # Directly from recipe
-        boutonReductionFactor = rule.bouton_reduction_factor
+        boutonReductionFactor = rule["bouton_reduction_factor"]
+        cv_syns_connection = rule.get("cv_syns_connection")
+        mean_syns_connection = rule.get("mean_syns_connection")
+        stdev_syns_connection = rule.get("stdev_syns_connection")
+        active_fraction = rule.get("active_fraction")
+        probability = rule.get("probability")
+        p_A = rule.get("p_A")
+        pMu_A = rule.get("pMu_A")
 
-        if boutonReductionFactor and rule.cv_syns_connection:
-            cv_syns_connection = rule.cv_syns_connection
-
-            if rule.active_fraction:
+        if boutonReductionFactor and cv_syns_connection:
+            if active_fraction:
                 # 4.3 of s2f 2.0
-                rt_star = boutonReductionFactor / rule.active_fraction
+                rt_star = boutonReductionFactor / active_fraction
                 p = 1.0 / structuralMean
                 syn_pprime, p_A, mu_A, _ = pprime_approximation(rt_star, cv_syns_connection, p)
-                pActiveFraction = rule.active_fraction
+                pActiveFraction = active_fraction
                 debug = (
                     f"s2f 4.3: (r={rt_star:.3f}, cv={cv_syns_connection:.3f}, p={p:.3f}) "
                     f"-> pprime={syn_pprime:.3f}, pA={p_A:.3f}, mu_A={mu_A:.3f}"
                 )
 
-            elif rule.mean_syns_connection:
+            elif mean_syns_connection:
                 # 4.2 of s2f 2.0
                 p = 1.0 / structuralMean
                 sdt = min(
-                    1.0 * rule.mean_syns_connection * cv_syns_connection,
+                    1.0 * mean_syns_connection * cv_syns_connection,
                     structuralMean - 0.5,
                 )
-                mu_A = 0.5 + rule.mean_syns_connection - sdt
+                mu_A = 0.5 + mean_syns_connection - sdt
                 syn_pprime = 1.0 / (sqrt(sdt * sdt + 0.25) + 0.5)
                 p_A = (
                     (p / (1.0 - p) * (1.0 - syn_pprime) / syn_pprime) if (p != 1.0) else 1.0
@@ -119,7 +129,7 @@ class ReduceAndCutParameters:
                     f"s2f 4.2: p={p:.3f}, pprime={syn_pprime:.3f}, pA={p_A:.3f}, mu_A={mu_A:.3f}"
                 )
 
-            elif rule.probability:
+            elif probability:
                 # unassigned in s2f 2.0
                 # pActiveFraction =
                 #   exp(...) * boutonReductionFactor*(structuralMean-1)/
@@ -127,7 +137,7 @@ class ReduceAndCutParameters:
                 # double modifier =
                 #   exp(...) * boutonReductionFactor*(structuralMean-1)/
                 #   (structuralMean*pActiveFraction)
-                modifier = boutonReductionFactor * self.structuralProbability / rule.probability
+                modifier = boutonReductionFactor * self.structuralProbability / probability
                 pActiveFraction = (
                     exp((1.0 - cv_syns_connection) / cv_syns_connection)
                     * boutonReductionFactor
@@ -146,20 +156,19 @@ class ReduceAndCutParameters:
                 logging.warning("Rule not supported")
                 return empty_result("unsupported rule w/ button reduction factor")
 
-        elif boutonReductionFactor is not None and rule.p_A is not None and rule.pMu_A is not None:
+        elif boutonReductionFactor is not None and p_A is not None and pMu_A is not None:
             pActiveFraction = self.activeFraction_default
-            mu_A = 0.5 + rule.pMu_A
-            p_A = rule.p_A
+            mu_A = 0.5 + pMu_A
             debug = f"s2f defaulted: pA={p_A:.3f}, mu_A={mu_A:.3f}"
 
-        elif rule.mean_syns_connection and rule.stdev_syns_connection:
+        elif mean_syns_connection and stdev_syns_connection:
             # 4.1 of s2f 2.0
             logging.warning("Warning: method 4.1?")
-            mu_A = 0.5 + rule.mean_syns_connection - rule.stdev_syns_connection
-            pprime = 1.0 / (rule.stdev_syns_connection + 0.5)
+            mu_A = 0.5 + mean_syns_connection - stdev_syns_connection
+            pprime = 1.0 / (stdev_syns_connection + 0.5)
             p = 1.0 / structuralMean
             p_A = (p / (1.0 - p) * (1.0 - pprime) / pprime) if (p != 1.0) else 1.0
-            pActiveFraction = rule.active_fraction
+            pActiveFraction = active_fraction
             boutonReductionFactor = self.boutonReductionFactor_default
             debug = f"s2f 4.1: p={p:.3f}, pprime={pprime:.3f}, pA={p_A:.3f}, mu_A={mu_A:.3f}"
 
@@ -174,6 +183,7 @@ class ReduceAndCutParameters:
         # ActiveFraction calculated here is legacy and only used if boutonReductionFactor is null
         return (
             pathway_i,
+            pathway_str,
             total_touches,
             structuralMean,
             p_A,

@@ -1,0 +1,69 @@
+{
+  "bouton_distances": {},
+  "gap_junction_properties": {},
+  "seed": 123,
+  "synapse_properties": {
+    "rules": [
+      {
+        "src_synapse_class": "EXC",
+        "dst_synapse_class": "EXC",
+        "class": "E2",
+        "axonal_conduction_velocity": 0.00333
+      },
+      {
+        "src_synapse_class": "INH",
+        "dst_synapse_class": "INH",
+        "class": "I2",
+        "neural_transmitter_release_delay": 0.4,
+        "axonal_conduction_velocity": 0.00333
+      },
+      {
+        "src_synapse_class": "EXC",
+        "dst_synapse_class": "INH",
+        "class": "E2",
+        "axonal_conduction_velocity": 0.00333
+      },
+      {
+        "src_synapse_class": "INH",
+        "dst_synapse_class": "EXC",
+        "class": "I2",
+        "axonal_conduction_velocity": 0.00333
+      }
+    ],
+    "classes": [
+      {
+        "class": "I2",
+        "conductance_mu": 0.33,
+        "conductance_sd": 0.28,
+        "decay_time_mu": 8.3,
+        "decay_time_sd": 2.2,
+        "u_syn_mu": 0.25,
+        "u_syn_sd": 0.13,
+        "depression_time_mu": 706.0,
+        "depression_time_sd": 405.0,
+        "facilitation_time_mu": 21.0,
+        "facilitation_time_sd": 9.0,
+        "n_rrp_vesicles_mu": 0.0,
+        "conductance_scale_factor": 0.0,
+        "u_hill_coefficient": 1.46
+      },
+      {
+        "class": "E2",
+        "conductance_mu": 0.3,
+        "conductance_sd": 0.2,
+        "decay_time_mu": 1.74,
+        "decay_time_sd": 0.18,
+        "u_syn_mu": 0.0,
+        "u_syn_sd": 0.5,
+        "depression_time_mu": 671.0,
+        "depression_time_sd": 17.0,
+        "facilitation_time_mu": 17.0,
+        "facilitation_time_sd": 5.0,
+        "n_rrp_vesicles_mu": 1.0,
+        "conductance_scale_factor": 0.4,
+        "u_hill_coefficient": 2.79
+      }
+    ]
+  },
+  "version": 1
+}

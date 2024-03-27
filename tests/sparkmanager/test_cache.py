@@ -1,5 +1,4 @@
-"""Small test to make sure that RDDs are deleted right.
-"""
+"""Small test to make sure that RDDs are deleted right."""
 
 import sparkmanager as sm
 

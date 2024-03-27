@@ -1,0 +1,30 @@
+{
+   "manifest": {
+      "$BASE_DIR": "./",
+      "$COMPONENT_DIR": "$BASE_DIR",
+      "$NETWORK_DIR": "$BASE_DIR"
+   },
+   "components": {
+      "biophysical_neuron_models_dir": "no comprendo",
+      "provenance": {
+         "bioname_dir": "$COMPONENT_DIR/bioname"
+      }
+   },
+   "networks": {
+      "nodes": [
+         {
+            "nodes_file": "$NETWORK_DIR/nodes.h5",
+            "nodes_types_file": null,
+            "populations": {
+               "neocortex_neurons": {
+                  "morphologies_dir": null,
+                  "alternate_morphologies": {
+                     "h5v1": "$BASE_DIR/../circuit_1000n/morphologies/h5"
+                  }
+               }
+            }
+         }
+      ],
+      "edges": []
+   }
+}

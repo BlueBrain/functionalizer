@@ -54,7 +54,8 @@ class Configuration(dict):
 
         if parallelism := os.environ.get("PYSPARK_PARALLELISM"):
             logger.info(
-                "Defaulting parallelism and shuffles to PYSPARK_PARALLELISM: 2 * %s", parallelism
+                "Defaulting parallelism and shuffles to PYSPARK_PARALLELISM: 2 * %s",
+                parallelism,
             )
             # Aim for 2 partitions per core. Otherwise, cores may be underutilized
             parallelism = 2 * int(parallelism)

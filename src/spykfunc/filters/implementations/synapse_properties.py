@@ -3,7 +3,6 @@
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
 
-from spykfunc.circuit import Circuit
 from spykfunc.filters import DatasetOperation
 from spykfunc.utils import get_logger
 
@@ -18,19 +17,19 @@ class SynapseProperties(DatasetOperation):
     This "filter" augments touches with properties of synapses by adding
     the fields
 
-    - `gsyn` following a Gamma-distribution
-    - `d` following a Gamma-distribution
-    - `f` following a Gamma-distribution
-    - `u` following a truncated Normal-distribution
-    - `dtc` following a truncated Normal-distribution
-    - `nrrp` following a Poisson-distribution
+    - `conductance` following a Gamma-distribution
+    - `depression_time` following a Gamma-distribution
+    - `facilitation_time` following a Gamma-distribution
+    - `u_syn` following a truncated Normal-distribution
+    - `decay_time` following a truncated Normal-distribution
+    - `n_rrp_vesicles` following a Poisson-distribution
 
-    - `gsynSRSF`, taken verbatim from the recipe
-    - `uHillCoefficient`, also taken verbatim  from the recipe
+    - `conductance_scale_factor`, taken verbatim from the recipe
+    - `u_hill_coefficient`, also taken verbatim  from the recipe
 
-    as specified by the `SynapsesClassification` part of the recipe.
+    as specified by the `synapse_properties.classes` part of the recipe.
 
-    To draw from the distributions, a seed derived from the `synapseSeed`
+    To draw from the distributions, a seed derived from the `seed`
     in the recipe is used.
 
     The internal implementation uses Pandas UDFs calling into
@@ -41,134 +40,113 @@ class SynapseProperties(DatasetOperation):
     _reductive = False
 
     _columns = [
-        (None, "gsyn"),
-        (None, "u"),
-        (None, "d"),
-        (None, "f"),
-        (None, "dtc"),
-        (None, "nrrp"),
+        (None, "conductance"),
+        (None, "u_syn"),
+        (None, "depression_time"),
+        (None, "facilitation_time"),
+        (None, "decay_time"),
+        (None, "n_rrp_vesicles"),
         ("distance_soma", "delay"),
         (None, "syn_type_id"),
         (None, "syn_property_rule"),
     ]
 
-    _optimal_group_by = {"src_hemisphere", "src_region", "src_mtype", "src_etype", "src_sclass"}
-
-    def __init__(self, recipe, source, target, morphos):
+    def __init__(self, recipe, source, target):
         """Initialize the filter.
 
         Uses the synapse seed of the recipe to generate random numbers that are drawn when
         generating the synapse properties. Also uses the classification and property
         specification part of the recipe.
         """
-        super().__init__(recipe, source, target, morphos)
-        self.seed = recipe.seeds.synapseSeed
+        super().__init__(recipe, source, target)
+        self.seed = recipe.get("seed")
         logger.info("Using seed %d for synapse properties", self.seed)
 
-        self.columns_recipe = recipe.synapse_properties.rules.required
+        classes = recipe.as_pandas("synapse_properties.classes")
+        rules = recipe.as_pandas("synapse_properties.rules")
+        # Save all numerical columns (these are directional ones used for filtering)
+        self.columns = sorted(c for c in rules.columns if c.endswith("_i"))
+        values = recipe.get_values(self.columns)
+        self.factors = [len(values[c]) for c in self.columns]
 
-        mapping = {}
-        renaming = {}
-        self.columns = []
-        for name, mapped, _, values in Circuit.expand(self.columns_recipe, source, target):
-            mapping[name] = values
-            renaming[f"{name}_i"] = f"{mapped}_i"
-            self.columns.append(f"{mapped}_i")
-
-        raw_rules = recipe.synapse_properties.rules.to_pandas(mapping).rename(columns=renaming)
-        raw_rules["rule_i"] = raw_rules.index
-
-        self.rules = sm.broadcast(raw_rules[self.columns])
-
-        columns = [
-            c
-            for c in raw_rules.columns
-            if not (
-                c.startswith("src_")
-                or c.startswith("dst_")
-                or c.startswith("to")
-                or c.startswith("from")
-            )
-        ]
-
-        self.classification = sm.createDataFrame(raw_rules[columns])
-
-        classes = recipe.synapse_properties.classes.to_pandas().rename(columns={"id": "type"})
         classes["class_i"] = classes.index
-        for optional in ("gsynSRSF", "uHillCoefficient"):
-            if any(classes[optional].isna()):
-                if not all(classes[optional].isna()):
-                    raise ValueError(f"inconsistent values for {optional}")
-                del classes[optional]
-            else:
-                self._columns.append((None, optional))
+        rules["rule_i"] = rules.index
 
+        self.rules = sm.broadcast(rules[self.columns])
+        self.classification = sm.createDataFrame(
+            rules[[c for c in rules.columns if c not in self.columns]]
+        )
         self.classes = sm.createDataFrame(classes)
+
+        for optional in ("conductance_scale_factor", "u_hill_coefficient"):
+            if optional in classes.columns:
+                self._columns.append((None, optional))
 
     def apply(self, circuit):
         """Add properties to the circuit."""
-        with circuit.pathways(self.columns_recipe):
-            pathways = (
-                circuit.with_pathway()
-                .select(self.columns + ["pathway_i"])
-                .groupBy(["pathway_i"] + self.columns)
-                .count()
-                .mapInPandas(_assign_rules(self.rules), "pathway_i long, rule_i long")
-                .join(F.broadcast(self.classification), "rule_i")
-                .join(F.broadcast(self.classes), "type")
+        add_pathway = self.pathway_functions(self.columns, self.factors)
+        circuit_with_pathway = add_pathway(circuit.df)
+
+        pathways = (
+            circuit_with_pathway.select(self.columns + ["pathway_i"])
+            .groupBy(["pathway_i"] + self.columns)
+            .count()
+            .mapInPandas(_assign_rules(self.rules), "pathway_i long, rule_i long")
+            .join(F.broadcast(self.classification), "rule_i")
+            .join(F.broadcast(self.classes), "class")
+        )
+
+        connections = (
+            circuit_with_pathway.groupBy("src", "dst")
+            .agg(
+                F.min("pathway_i").alias("pathway_i"),
+                F.min("synapse_id").alias("synapse_id"),
+            )
+            .join(F.broadcast(pathways), "pathway_i")
+            .drop("pathway_i")
+        )
+        connections = _add_randomized_connection_properties(connections, self.seed)
+
+        touches = (
+            circuit.df.alias("c")
+            .join(
+                connections.withColumnRenamed("src", "_src").withColumnRenamed("dst", "_dst"),
+                [F.col("c.src") == F.col("_src"), F.col("c.dst") == F.col("_dst")],
+            )
+            .drop("_src", "_dst")
+        )
+
+        # Compute delaySomaDistance
+        if "distance_soma" in touches.columns:
+            touches = touches.withColumn(
+                "delay",
+                F.expr(
+                    "neural_transmitter_release_delay + distance_soma / axonal_conduction_velocity"
+                ).cast(T.FloatType()),
+            ).drop(
+                "distance_soma",
+                "axonal_conduction_velocity",
+                "neural_transmitter_release_delay",
+            )
+        else:
+            logger.warning("Generating the 'delay' property requires the 'distance_soma' field")
+            touches = touches.drop(
+                "axonal_conduction_velocity",
+                "neural_transmitter_release_delay",
             )
 
-            connections = (
-                circuit.with_pathway()
-                .groupBy("src", "dst")
-                .agg(
-                    F.min("pathway_i").alias("pathway_i"),
-                    F.min("synapse_id").alias("synapse_id"),
-                )
-                .join(F.broadcast(pathways), "pathway_i")
-                .drop("pathway_i")
+        # Compute #13: synapseType:  Inhibitory < 100 or  Excitatory >= 100
+        t = (
+            touches.withColumn(
+                "syn_type_id",
+                (F.when(F.col("class").substr(0, 1) == F.lit("E"), 100).otherwise(0)).cast(
+                    T.ShortType()
+                ),
             )
-            connections = _add_randomized_connection_properties(connections, self.seed)
-
-            touches = (
-                circuit.df.alias("c")
-                .join(
-                    connections.withColumnRenamed("src", "_src").withColumnRenamed("dst", "_dst"),
-                    [F.col("c.src") == F.col("_src"), F.col("c.dst") == F.col("_dst")],
-                )
-                .drop("_src", "_dst")
-            )
-
-            # Compute delaySomaDistance
-            if "distance_soma" in touches.columns:
-                touches = touches.withColumn(
-                    "delay",
-                    F.expr(
-                        "neuralTransmitterReleaseDelay + distance_soma / axonalConductionVelocity"
-                    ).cast(T.FloatType()),
-                ).drop(
-                    "distance_soma",
-                    "axonalConductionVelocity",
-                    "neuralTransmitterReleaseDelay",
-                )
-            else:
-                logger.warning(
-                    "Generating the 'axonal_delay' property requires the 'distance_soma' field"
-                )
-                touches = touches.drop("axonalConductionVelocity", "neuralTransmitterReleaseDelay")
-
-            # Compute #13: synapseType:  Inhibitory < 100 or  Excitatory >= 100
-            t = (
-                touches.withColumn(
-                    "syn_type_id",
-                    (F.when(F.col("type").substr(0, 1) == F.lit("E"), 100).otherwise(0)).cast(
-                        T.ShortType()
-                    ),
-                )
-                .withColumn("syn_property_rule", F.col("class_i").cast(T.ShortType()))
-                .drop("type", "class_i", "rule_i")
-            )
-            return t
+            .withColumn("syn_property_rule", F.col("class_i").cast(T.ShortType()))
+            .drop("class", "class_i", "rule_i")
+        )
+        return t
 
 
 def _assign_rules(spark_rules):
@@ -200,19 +178,54 @@ def _add_randomized_connection_properties(connections, seed: int):
         import spykfunc.filters.udfs as fcts
 
         for df in data:
-            df["gsyn"] = fcts.gamma(seed, 0x1001, df["synapse_id"], df["gsyn"], df["gsynSD"])
-            df["d"] = fcts.gamma(seed, 0x1002, df["synapse_id"], df["d"], df["dSD"])
-            df["f"] = fcts.gamma(seed, 0x1003, df["synapse_id"], df["f"], df["fSD"])
-            df["u"] = fcts.truncated_normal(seed, 0x1004, df["synapse_id"], df["u"], df["uSD"])
-            df["dtc"] = fcts.truncated_normal(
-                seed, 0x1005, df["synapse_id"], df["dtc"], df["dtcSD"]
+            df["conductance"] = fcts.gamma(
+                seed,
+                0x1001,
+                df["synapse_id"],
+                df["conductance_mu"],
+                df["conductance_sd"],
             )
-            df["nrrp"] = fcts.poisson(seed, 0x1006, df["synapse_id"], df["nrrp"])
+            df["depression_time"] = fcts.gamma(
+                seed,
+                0x1002,
+                df["synapse_id"],
+                df["depression_time_mu"],
+                df["depression_time_sd"],
+            )
+            df["facilitation_time"] = fcts.gamma(
+                seed,
+                0x1003,
+                df["synapse_id"],
+                df["facilitation_time_mu"],
+                df["facilitation_time_sd"],
+            )
+            df["u_syn"] = fcts.truncated_normal(
+                seed, 0x1004, df["synapse_id"], df["u_syn_mu"], df["u_syn_sd"]
+            )
+            df["decay_time"] = fcts.truncated_normal(
+                seed, 0x1005, df["synapse_id"], df["decay_time_mu"], df["decay_time_sd"]
+            )
+            df["n_rrp_vesicles"] = fcts.poisson(
+                seed, 0x1006, df["synapse_id"], df["n_rrp_vesicles_mu"]
+            ).astype("int16")
             yield df
             del df
 
+    fields = []
+    to_drop = []
+    for field in connections.schema:
+        if field.name.endswith("_mu"):
+            to_drop.append(field.name)
+            if field.name == "n_rrp_vesicles_mu":
+                fields.append(T.StructField(field.name[:-3], T.ShortType(), False))
+            else:
+                fields.append(T.StructField(field.name[:-3], T.DoubleType(), False))
+        elif field.name.endswith("_sd"):
+            to_drop.append(field.name)
+        fields.append(field)
+
     return (
         connections.sortWithinPartitions("src")
-        .mapInPandas(__generate, connections.schema)
-        .drop("gsynSD", "dSD", "fSD", "uSD", "dtcSD", "synapse_id")
+        .mapInPandas(__generate, T.StructType(fields))
+        .drop("synapse_id", *to_drop)
     )

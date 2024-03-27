@@ -82,53 +82,8 @@ LEGACY_MAPPING = {
 # of the tuple specifies the datatype to convert to. If None, no conversion
 # is performed.
 OUTPUT_MAPPING = {
-    "axonal_delay": ("delay", None),
-    "gsyn": ("conductance", None),
-    "u": ("u_syn", None),
-    "d": ("depression_time", None),
-    "f": ("facilitation_time", None),
-    "dtc": ("decay_time", None),
-    "gsynSRSF": ("conductance_scale_factor", None),
-    "uHillCoefficient": ("u_hill_coefficient", None),
     "morphology": ("morpho_type_id_pre", None),
-    "nrrp": ("n_rrp_vesicles", T.ShortType()),
 }
-
-SYNAPSE_CLASSIFICATION_SCHEMA = T.StructType(
-    [
-        T.StructField("_i", T.ShortType(), False),
-        T.StructField("type", T.StringType(), False),
-        T.StructField("neuralTransmitterReleaseDelay", T.FloatType(), False),
-        T.StructField("axonalConductionVelocity", T.FloatType(), False),
-    ]
-)
-
-SYNAPSE_REPOSITION_SCHEMA = T.StructType(
-    [
-        T.StructField("pathway_i", T.IntegerType(), False),
-        T.StructField("reposition", T.BooleanType(), False),
-    ]
-)
-
-SYNAPSE_PROPERTY_SCHEMA = T.StructType(
-    [
-        T.StructField("_i", T.ShortType(), False),
-        T.StructField("id", T.StringType(), False),
-        T.StructField("gsyn", T.FloatType(), False),
-        T.StructField("gsynSD", T.FloatType(), False),
-        T.StructField("dtc", T.FloatType(), False),
-        T.StructField("dtcSD", T.FloatType(), False),
-        T.StructField("u", T.FloatType(), False),
-        T.StructField("uSD", T.FloatType(), False),
-        T.StructField("d", T.FloatType(), False),
-        T.StructField("dSD", T.FloatType(), False),
-        T.StructField("f", T.FloatType(), False),
-        T.StructField("fSD", T.FloatType(), False),
-        T.StructField("nrrp", T.FloatType(), False),
-        T.StructField("gsynSRSF", T.FloatType(), False),
-        T.StructField("uHillCoefficient", T.FloatType(), False),
-    ]
-)
 
 
 def indexed_strings(names):

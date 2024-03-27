@@ -1,29 +1,30 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-    conftest.py for spykfunc.
-    More about conftest.py under: https://pytest.org/latest/plugins.html
+conftest.py for spykfunc.
+More about conftest.py under: https://pytest.org/latest/plugins.html
 """
-import os
+
+from pathlib import Path
 import pytest
 
 from spykfunc import filters
 from spykfunc.definitions import RunningMode as RM
 from spykfunc.functionalizer import Functionalizer
 
-DATADIR = os.path.join(os.path.dirname(__file__), "circuit_1000n")
-CONFIGURATION = os.path.join(
-    os.path.dirname(__file__), "..", "src", "spykfunc", "data", "desktop.properties"
-)
+DATADIR = Path(__file__).parent / "circuit_1000n"
+CONFIGURATION = Path(__file__).parent.parent / "src" / "spykfunc" / "data" / "desktop.properties"
+
+CIRCUIT_CONFIG = DATADIR / "circuit_config.json"
 
 ARGS = (
-    os.path.join(DATADIR, "builderRecipeAllPathways.xml"),
-    (os.path.join(DATADIR, "nodes.h5"), "All"),
-    (None, None),
-    (os.path.join(DATADIR, "nodes.h5"), "All"),
-    (None, None),
-    [os.path.join(DATADIR, "morphologies/h5")],
-    [os.path.join(DATADIR, "touches/*.parquet")],
+    DATADIR / "recipe.json",
+    CIRCUIT_CONFIG,
+    None,
+    None,
+    None,
+    None,
+    [str(DATADIR / "touches" / "*.parquet")],
 )
 
 filters.load()
@@ -41,6 +42,11 @@ def create_functionalizer(tmpdir, filters=None):
     )
 
 
+@pytest.fixture
+def circuit_config():
+    return CIRCUIT_CONFIG
+
+
 @pytest.fixture(scope="session", name="fz")
 def fz_fixture(tmp_path_factory):
     tmpdir = tmp_path_factory.mktemp("filters")
@@ -50,7 +56,9 @@ def fz_fixture(tmp_path_factory):
 @pytest.fixture(scope="session", name="gj")
 def gj_fixture(tmp_path_factory):
     tmpdir = tmp_path_factory.mktemp("gap_junctions")
-    args = list(ARGS[:-1]) + [[os.path.join(DATADIR, "gap_junctions/touches*.parquet")]]
+    args = [DATADIR / ".." / "recipe" / "recipe_gap_junctions.json"]
+    args.extend(ARGS[1:-1])
+    args.append([str(DATADIR / "gap_junctions/touches*.parquet")])
     return create_functionalizer(
         tmpdir,
         RM.GAP_JUNCTIONS.value,

@@ -213,7 +213,8 @@ class Cluster:
                 [hdfs, "namenode", "-format", "-force", "-nonInteractive"], env=self.env
             )
             subprocess.check_call(
-                [hdfs, "--config", conf_dir, "--daemon", "start", "namenode"], env=self.env
+                [hdfs, "--config", conf_dir, "--daemon", "start", "namenode"],
+                env=self.env,
             )
             logger.info("Web UI for Hadoop: http://%s:50070", self.rank0)
 

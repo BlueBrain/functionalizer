@@ -4,7 +4,7 @@ from pyspark.sql import functions as F
 
 import sparkmanager as sm
 
-from spykfunc.circuit import Circuit, touches_per_pathway
+from spykfunc.circuit import touches_per_pathway
 from spykfunc.definitions import CheckpointPhases
 from spykfunc.filters import DatasetOperation, helpers
 from spykfunc.filters.udfs import ReduceAndCutParameters
@@ -63,70 +63,69 @@ class ReduceAndCut(DatasetOperation):
     _checkpoint = True
     _checkpoint_buckets = ("src", "dst")
 
-    def __init__(self, recipe, source, target, morphos):
+    def __init__(self, recipe, source, target):
         """Initializes the filter.
 
         Uses the synapse seed from the recipe to initialize random number generators, and
         extracts the connection rules from the recipe.
         """
-        super().__init__(recipe, source, target, morphos)
-        self.seed = recipe.seeds.synapseSeed
+        super().__init__(recipe, source, target)
+        self.seed = recipe.get("seed")
         logger.info("Using seed %d for reduce and cut", self.seed)
-        self.columns = recipe.connection_rules.required
+
+        self.columns, self.connection_index = recipe.as_matrix("connection_rules")
+        self.connection_rules = recipe.get("connection_rules")
+
         logger.info(
             "Using the following columns for reduce and cut: %s",
             ", ".join(self.columns),
         )
-        self.connection_rules = recipe.connection_rules
-        self.connection_index = recipe.connection_rules.to_matrix(
-            {n: v for n, _, _, v in Circuit.expand(self.columns, source, target)}
-        )
 
     def apply(self, circuit):
         """Filter the circuit according to the logic described in the class."""
-        with circuit.pathways(self.columns):
-            full_touches = circuit.with_pathway()
+        add_pathway = self.pathway_functions(self.columns, self.connection_index.shape)
+        full_touches = add_pathway(circuit.df)
 
-            # Get and broadcast Pathway stats
-            #
-            # NOTE we should cache and count to be evaluated with N tasks,
-            # while sorting in a single task
-            #
-            # Spark optimizes better for >2000 shuffle partitions, and
-            # should do the exchanges with >1 partitions. If not,
-            # computation will slow down and one may have to force the hand
-            # of Spark by using
-            #
-            #     with number_shuffle_partitions(_n_parts):
-            #
-            # also, too many partitions will lead to a slow-down when
-            # aggregating!
-            logger.debug("Computing Pathway stats...")
-            params_df = self.compute_reduce_cut_params(full_touches).cache()
-            _params_out_csv(params_df, "pathway_params")  # Params ouput for validation
+        # Get and broadcast Pathway stats
+        #
+        # NOTE we should cache and count to be evaluated with N tasks,
+        # while sorting in a single task
+        #
+        # Spark optimizes better for >2000 shuffle partitions, and
+        # should do the exchanges with >1 partitions. If not,
+        # computation will slow down and one may have to force the hand
+        # of Spark by using
+        #
+        #     with number_shuffle_partitions(_n_parts):
+        #
+        # also, too many partitions will lead to a slow-down when
+        # aggregating!
+        logger.debug("Computing Pathway stats...")
+        params_df = self.compute_reduce_cut_params(full_touches).cache()
+        _params_out_csv(params_df, "pathway_params")  # Params ouput for validation
 
-            # Reduce
-            logger.info("Applying Reduce step...")
-            reduced_touches = self.apply_reduce(full_touches, params_df)
+        # Reduce
+        logger.info("Applying Reduce step...")
+        reduced_touches = self.apply_reduce(full_touches, params_df)
 
-            # Cut
-            logger.info("Calculating CUT part 1: survival rate")
-            cut1_shall_keep_connections = self.calc_cut_survival_rate(reduced_touches, params_df)
+        # Cut
+        logger.info("Calculating CUT part 1: survival rate")
+        cut1_shall_keep_connections = self.calc_cut_survival_rate(reduced_touches, params_df)
 
-            _connection_counts_out_csv(cut1_shall_keep_connections, "cut_counts.csv")
+        _connection_counts_out_csv(cut1_shall_keep_connections, "cut_counts.csv")
 
-            logger.info("Calculating CUT part 2: Active Fractions")
-            cut_shall_keep_connections = self.calc_cut_active_fraction(
-                cut1_shall_keep_connections, params_df
-            ).select("src", "dst")
+        logger.info("Calculating CUT part 2: Active Fractions")
+        cut_shall_keep_connections = self.calc_cut_active_fraction(
+            cut1_shall_keep_connections, params_df
+        ).select("src", "dst")
 
-            with sm.jobgroup("Filtering touches CUT step", ""):
-                cut2AF_touches = reduced_touches.join(cut_shall_keep_connections, ["src", "dst"])
+        with sm.jobgroup("Filtering touches CUT step", ""):
+            cut2AF_touches = reduced_touches.join(cut_shall_keep_connections, ["src", "dst"])
 
-                _touch_counts_out_csv(cut2AF_touches, "cut2af_counts.csv")
+            _touch_counts_out_csv(cut2AF_touches, "cut2af_counts.csv")
 
-            # Only the touch fields
-            return cut2AF_touches.drop("pathway_i")
+        # Only the touch fields
+        return cut2AF_touches.drop("pathway_i", "pathway_str")
 
     # ---
     @sm.assign_to_jobgroup
@@ -141,7 +140,7 @@ class ReduceAndCut(DatasetOperation):
         :return: a dataframe containing reduce and cut parameters
         """
         pathway_stats = touches_per_pathway(full_touches)
-        param_maker = ReduceAndCutParameters(self.connection_rules, self.connection_index)
+        param_maker = ReduceAndCutParameters(self.connection_rules, self.connection_index.flatten())
         return pathway_stats.mapInPandas(param_maker, param_maker.schema())
 
     # ---
@@ -183,6 +182,7 @@ class ReduceAndCut(DatasetOperation):
         logger.info("Computing reduced touch counts")
         reduced_touch_counts_connection = reduced_touches.groupBy("src", "dst").agg(
             F.first("pathway_i").alias("pathway_i"),
+            F.first("pathway_str").alias("pathway_str"),
             F.min("synapse_id").alias("synapse_id"),
             F.count("src").alias("reduced_touch_counts_connection"),
         )
@@ -191,7 +191,7 @@ class ReduceAndCut(DatasetOperation):
 
         params_df_sigma = (
             params_df.where(F.col("pMu_A").isNotNull())
-            .select("pathway_i", "pMu_A")
+            .select("pathway_i", "pathway_str", "pMu_A")
             .withColumn("sigma", params_df.pMu_A / 4)
         )
 
@@ -200,7 +200,7 @@ class ReduceAndCut(DatasetOperation):
 
         connection_survival_rate = (
             reduced_touch_counts_connection.join(
-                F.broadcast(params_df_sigma), "pathway_i"
+                F.broadcast(params_df_sigma.drop("pathway_str")), "pathway_i"
             )  # Fetch the pathway params
             .withColumn(
                 "survival_rate",  # Calc survivalRate
@@ -216,7 +216,7 @@ class ReduceAndCut(DatasetOperation):
         # Deactivated due to large output size.
         # _dbg_df = connection_survival_rate.select(
         #     "pathway_i", "reduced_touch_counts_connection", "survival_rate")
-        # helpers._write_csv(Circuit.pathway_to_str(_dbg_df.groupBy("pathway_i").count()),
+        # helpers._write_csv(_dbg_df.groupBy("pathway_i").count(),
         #            "connection_survival_rate.csv")
 
         logger.debug(" -> Computing connections to cut according to survival_rate")
@@ -229,6 +229,7 @@ class ReduceAndCut(DatasetOperation):
                 "dst",
                 "synapse_id",
                 "pathway_i",
+                "pathway_str",
                 "reduced_touch_counts_connection",
             )
         )
@@ -275,8 +276,7 @@ class ReduceAndCut(DatasetOperation):
         ).cache()
 
         logger.debug("Computing Active Fractions")
-
-        helpers._write_csv(Circuit.pathway_to_str(active_fractions), "active_fractions.csv")
+        helpers._write_csv(active_fractions, "active_fractions.csv")
 
         shall_keep_connections = (
             add_random_column(
@@ -294,7 +294,7 @@ class ReduceAndCut(DatasetOperation):
 
 def _params_out_csv(df, filename):
     of_interest = (
-        "pathway_i",
+        "pathway_str",
         "total_touches",
         "structural_mean",
         "survival_rate",
@@ -308,17 +308,15 @@ def _params_out_csv(df, filename):
         if hasattr(df, col):
             cols.append(col)
     debug_info = df.select(*cols)
-    helpers._write_csv(Circuit.pathway_to_str(debug_info), filename)
+    helpers._write_csv(debug_info, filename)
 
 
 def _touch_counts_out_csv(df, filename):
-    helpers._write_csv(Circuit.pathway_to_str(df.groupBy("pathway_i").count()), filename)
+    helpers._write_csv(df.groupBy("pathway_str").count(), filename)
 
 
 def _connection_counts_out_csv(df, filename):
     helpers._write_csv(
-        Circuit.pathway_to_str(
-            df.groupBy("pathway_i").sum("reduced_touch_counts_connection"),
-        ),
+        df.groupBy("pathway_str").sum("reduced_touch_counts_connection"),
         filename,
     )

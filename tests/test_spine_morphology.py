@@ -50,6 +50,7 @@ def test_spine_morphology_attributes(spine_path):
             3.9895439,
             4.0587602,
         ],
+        decimal=6,
     )
 
     spine_name_id = [(names[a], b) for a, b in zip(df["spine_morphology"], df["spine_psd_id"])]
