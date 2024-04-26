@@ -1,12 +1,11 @@
 """Module doing the actual Spark management."""
 
-from contextlib import contextmanager
-from functools import update_wrapper
-
 import atexit
 import json
 import os
 import time
+from contextlib import contextmanager
+from functools import update_wrapper
 
 from pyspark.sql import SparkSession
 

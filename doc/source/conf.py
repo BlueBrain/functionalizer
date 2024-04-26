@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import sys, os
 from importlib.metadata import version as get_version
 
 # -- General configuration -----------------------------------------------------

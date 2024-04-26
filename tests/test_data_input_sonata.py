@@ -1,12 +1,13 @@
 """Tests relating to SONATA used for edge input"""
 
-import h5py
 import os
+
+import h5py
 import numpy
 import pytest
 import sparkmanager as sm
 from conftest import ARGS, DATADIR, create_functionalizer
-from spykfunc.io.circuit import BRANCH_COLUMNS, BRANCH_MAX_VALUE_SONATA, EdgeData
+from spykfunc.io.circuit import BRANCH_COLUMNS, EdgeData
 from spykfunc.utils.conf import Configuration
 
 
@@ -53,8 +54,6 @@ def test_branch_shift(edges_w_branch_type):
 @pytest.mark.slow
 def test_sonata_properties(tmp_path_factory):
     tmpdir = tmp_path_factory.mktemp("sonata_properties")
-    cdir = tmpdir / "check"
-    odir = tmpdir / "out"
     fz = create_functionalizer(tmpdir, ["SynapseProperties"]).init_data(
         *ARGS[:-1], edges=(os.path.join(DATADIR, "edges.h5"), "default")
     )

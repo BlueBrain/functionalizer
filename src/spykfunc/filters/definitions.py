@@ -1,14 +1,14 @@
 """Query interface for Neuron dataframe / graph."""
 
-from abc import abstractmethod
-from datetime import datetime
-from glob import glob
 import hashlib
 import importlib
 import inspect
 import os
-from pathlib import Path
 import sys
+from abc import abstractmethod
+from datetime import datetime
+from glob import glob
+from pathlib import Path
 
 import sparkmanager as sm
 

@@ -4,7 +4,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-
 from pyspark.sql import functions as F
 
 from spykfunc.filters import DatasetOperation

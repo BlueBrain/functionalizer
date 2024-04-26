@@ -1,5 +1,7 @@
-from spykfunc import functionalizer as fz, commands
 from os import path
+
+from spykfunc import commands
+from spykfunc import functionalizer as fz
 
 CIRCUIT_v5_30k = path.expanduser("~/scratch/O0.v5")
 

@@ -3,8 +3,8 @@
 import io
 import os
 import sys
-
 from pathlib import Path
+
 import jprops
 
 from ._misc import get_logger

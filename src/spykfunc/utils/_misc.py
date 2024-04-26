@@ -1,7 +1,8 @@
 """Miscelleneous utility functions."""
 
-import sys
 import logging as _logging
+import sys
+
 from .. import config
 
 
@@ -31,7 +32,7 @@ class ConsoleColors:
     @classmethod
     def format_text(cls, text, color, style=None):
         """Formats `text` with `color` and optionally `style`."""
-        if color > 7:
+        if color > 7:  # noqa: PLR2004
             style = color >> 4
             color = color & 0xF
         format_seq = "" if style is None else cls._CHANGE_SEQ.format(style)

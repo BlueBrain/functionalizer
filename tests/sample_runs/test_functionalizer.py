@@ -1,5 +1,7 @@
-from spykfunc import functionalizer as fz, commands
 from os import path
+
+from spykfunc import commands
+from spykfunc import functionalizer as fz
 
 BASE_DIR = path.join(path.dirname(__file__), "..", "circuit_1000n")
 args = (

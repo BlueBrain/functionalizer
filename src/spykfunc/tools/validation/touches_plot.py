@@ -3,8 +3,9 @@
 import argparse
 import glob
 import os.path
-import pandas
+
 import matplotlib.pyplot as plt
+import pandas
 
 
 def plot(stub):

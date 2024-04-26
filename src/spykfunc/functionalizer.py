@@ -3,21 +3,21 @@
 import hashlib
 import os
 from pathlib import Path
+
 import pyarrow.parquet as pq
+import sparkmanager as sm
+from fz_td_recipe import Recipe
 from pyspark.sql import functions as F
 
-from fz_td_recipe import Recipe
-import sparkmanager as sm
-
 from . import utils
-from .filters import DatasetOperation
 from .circuit import Circuit
-from .io import NodeData, EdgeData, shift_branch_type
 from .definitions import CheckpointPhases, SortBy
+from .filters import DatasetOperation
+from .io import EdgeData, NodeData, shift_branch_type
+from .schema import METADATA_PATTERN, METADATA_PATTERN_RE, OUTPUT_MAPPING
 from .utils.checkpointing import checkpoint_resume
 from .utils.filesystem import adjust_for_spark, autosense_hdfs
 from .version import version as spykfunc_version
-from .schema import METADATA_PATTERN, METADATA_PATTERN_RE, OUTPUT_MAPPING
 
 __all__ = ["Functionalizer", "CheckpointPhases"]
 

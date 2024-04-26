@@ -1,12 +1,10 @@
 """Reference implementations of filters."""
 
 from typing import List
-import numpy as np
-import pandas as pd
 
-from pyspark.sql import functions as F
-from pyspark.sql import types as T
+import numpy as np
 from pyspark.sql import DataFrame
+from pyspark.sql import functions as F
 
 
 def add_random_column(df: DataFrame, name: str, seed: int, key: int) -> DataFrame:

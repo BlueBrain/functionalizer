@@ -2,15 +2,13 @@
 
 import numpy as np
 import pandas as pd
-from pyspark.sql import functions as F
-
 import sparkmanager as sm
+from pyspark.sql import functions as F
 
 from spykfunc.filters import DatasetOperation
 from spykfunc.utils import get_logger
 
 from . import add_random_column
-
 
 logger = get_logger(__name__)
 

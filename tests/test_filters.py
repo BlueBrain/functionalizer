@@ -1,15 +1,11 @@
 """Test the various filters"""
 
-import numpy as np
 import pandas as pd
-import pytest
 import pyspark.sql.functions as F
-from conftest import ARGS, DATADIR, create_functionalizer
+import pytest
 import sparkmanager as sm
-
-from spykfunc.definitions import RunningMode as RM
+from conftest import ARGS, DATADIR, create_functionalizer
 from spykfunc.utils.spark import cache_broadcast_single_part
-from spykfunc import schema
 
 NUM_AFTER_DISTANCE = 226301
 NUM_AFTER_TOUCH = 221686
@@ -22,7 +18,7 @@ def test_fixed_probabilities(tmp_path_factory):
         mdf = cache_broadcast_single_part(
             sm.createDataFrame(
                 enumerate(circuit.source.mtype_values),
-                schema.indexed_strings(["mtype_i", "mtype_name"]),
+                "mtype_i: int, mtype_name: string",
             )
         )
         res = (

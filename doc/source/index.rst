@@ -34,7 +34,6 @@ Format conversion can be done via the software provided by ParquetConverters_.
    Changelog <changes>
 
    License <license>
-   Authors <authors>
 
 
 Indices and tables

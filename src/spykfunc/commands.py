@@ -1,15 +1,16 @@
 """Command line interface for Spykfunc."""
 
+import argparse
 import os
 import sys
-import argparse
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
-from . import filters, utils
-from .filters import DatasetOperation
-from .definitions import RunningMode as RM, SortBy
 
+from . import filters, utils
+from .definitions import RunningMode as RM
+from .definitions import SortBy
+from .filters import DatasetOperation
 
 filters.load()
 

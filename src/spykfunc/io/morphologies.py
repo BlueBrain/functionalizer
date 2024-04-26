@@ -7,7 +7,6 @@ from typing import Optional
 import morphio
 import numpy as np
 
-
 _MAXIMUM_LRU_SIZE = 10_000
 
 

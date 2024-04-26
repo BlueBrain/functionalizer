@@ -1,9 +1,10 @@
 """Test the various filters"""
 
+from pathlib import Path
+
 import pytest
 import sparkmanager as sm
 from conftest import CIRCUIT_CONFIG, DATADIR
-from pathlib import Path
 from fz_td_recipe import Recipe
 from spykfunc.filters import DatasetOperation
 

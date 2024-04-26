@@ -1,7 +1,8 @@
 """Parameter calculations for reduce and cut."""
 
-from math import exp, sqrt
 import logging
+from math import exp, sqrt
+
 import pandas as pd
 
 
@@ -50,7 +51,7 @@ class ReduceAndCutParameters:
         )
         return pd.DataFrame.from_records(data, columns=[c for c, _ in self._schema])
 
-    def process(self, pathway_i, pathway_str, total_touches, structuralMean):
+    def process(self, pathway_i, pathway_str, total_touches, structuralMean):  # noqa: PLR0915
         """Calculates the parameters for reduce and cut.
 
         Args:

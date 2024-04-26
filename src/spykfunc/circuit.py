@@ -3,7 +3,7 @@
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
 
-from spykfunc.io import NodeData, EdgeData
+from spykfunc.io import EdgeData, NodeData
 from spykfunc.utils import get_logger
 
 logger = get_logger(__name__)

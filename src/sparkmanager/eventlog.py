@@ -3,7 +3,6 @@
 import json
 import logging
 
-
 L = logging.getLogger(__name__)
 
 

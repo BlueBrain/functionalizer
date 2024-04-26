@@ -1,11 +1,11 @@
 """A module of general purpose spark helper functions."""
 
 from contextlib import contextmanager
-from pyspark.sql import functions as F
+
 import sparkmanager as sm
+from pyspark.sql import functions as F
 
 from . import get_logger
-
 
 logger = get_logger(__name__)
 

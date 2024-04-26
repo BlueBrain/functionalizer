@@ -1,5 +1,6 @@
-from spykfunc import session
 from os import path
+
+from spykfunc import session
 
 CIRCUIT_DIR = path.expanduser("~/dev/TestData/O1.v5")
 

@@ -1,16 +1,11 @@
 """Test the shifting of synapses of ChC cells et al."""
 
-from collections import defaultdict
-from io import StringIO
 from pathlib import Path
 from unittest.mock import MagicMock
 
-import pyspark.sql.functions as F
 import pytest
-from fz_td_recipe import Recipe
-
 import sparkmanager as sm
-
+from fz_td_recipe import Recipe
 from spykfunc.circuit import Circuit
 from spykfunc.schema import LEGACY_MAPPING
 from spykfunc.utils.conf import Configuration

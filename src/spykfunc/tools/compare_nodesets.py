@@ -4,8 +4,8 @@ import argparse
 import sys
 
 import libsonata
-import pyarrow.parquet as pq
 import numpy as np
+import pyarrow.parquet as pq
 
 from spykfunc.schema import LEGACY_MAPPING
 

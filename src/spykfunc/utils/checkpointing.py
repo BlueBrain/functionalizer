@@ -3,9 +3,11 @@
 from collections import namedtuple
 from functools import wraps
 from inspect import signature
+
 import pyspark.sql
-from pyspark.sql.column import _to_seq
 import sparkmanager as sm
+from pyspark.sql.column import _to_seq
+
 from . import get_logger
 from .filesystem import exists, isdir, size
 
@@ -94,7 +96,6 @@ class CheckpointResume:
         n_buckets = True
         handlers = ()
         logger = get_logger("spykfunc.checkpoint")
-        filename_suffix = ""
         status = None
         # Runtime
         table_name = None
@@ -120,7 +121,7 @@ class CheckpointResume:
         self.overwrite = overwrite
         self.last_status = None
 
-    def __call__(
+    def __call__(  # noqa: PLR0913
         self,
         name,
         dest=None,
@@ -129,7 +130,6 @@ class CheckpointResume:
         bucket_cols=False,
         n_buckets=True,  # True -> Same nr partitions
         handlers=None,
-        filename_suffix="",
         logger=None,
         status=None,
         child=None,
@@ -151,7 +151,7 @@ class CheckpointResume:
                 `df` number of partitions NOTE: The number of buckets will multiply the
                 number of output files if the df is not properly partitioned. Use this
                 option (and `bucket_cols`) with caution, consider ``repartition()`` before
-                handlers: A list of `CheckpointHandler` functions to run on respective
+            handlers: A list of `CheckpointHandler` functions to run on respective
                 checkpointing phases
             logger: A logger object. Defaults to the spykfunc default logger
             status: A `CheckPointStatus` object can be passed if checkpointing process
@@ -223,8 +223,6 @@ class CheckpointResume:
         """
         params.table_name = name.lower()
         basename = "/".join([params.dest, params.table_name])
-        if params.filename_suffix:
-            basename += "_" + str(params.filename_suffix)
         params.table_path = basename + ".ptable"
         params.parquet_file_path = basename + ".parquet"
 

@@ -1,12 +1,10 @@
 """Test morphology functions for equivalency with the C++ functionalizer"""
 
-from collections import defaultdict
 from pathlib import Path
+
 import numpy
 import pytest
-
 from spykfunc.io.morphologies import MorphologyDB
-
 
 BRANCHES = [
     (

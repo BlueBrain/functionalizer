@@ -38,6 +38,6 @@ def _write_csv(*_):
 
 def enable_debug(basepath: str):
     """Enable debugging and write data to `basepath`."""
-    global _write_csv  # pylint: disable=global-statement
+    global _write_csv  # noqa: PLW0603
     logger.info("Activating debug output...")
     _write_csv = CSVWriter(pathlib.Path(basepath))

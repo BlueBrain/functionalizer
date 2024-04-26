@@ -7,21 +7,19 @@ import re
 from pathlib import Path
 from typing import List
 
-from packaging.version import Version, VERSION_PATTERN
 import pandas as pd
 import pyarrow.parquet as pq
-from pyspark.sql import functions as F
-from pyspark.sql import DataFrame
-
 import sparkmanager as sm
+from packaging.version import VERSION_PATTERN, Version
+from pyspark.sql import DataFrame
+from pyspark.sql import functions as F
 
 from spykfunc import schema
+from spykfunc.schema import OUTPUT_MAPPING
 from spykfunc.utils import get_logger
 from spykfunc.utils.filesystem import adjust_for_spark
-from spykfunc.schema import OUTPUT_MAPPING
 
 from .morphologies import MorphologyDB
-
 
 BASIC_EDGE_SCHEMA = ["source_node_id long", "target_node_id long", "synapse_id long"]
 BASIC_NODE_SCHEMA = ["id long"]
@@ -233,13 +231,13 @@ def _create_touch_loader(filename: str, population: str):
             for row in df.itertuples():
                 intervals.append((row.start, row.end))
             selection = libsonata.Selection(intervals)
-            df = {
+            data = {
                 "source_node_id": pop.source_nodes(selection),
                 "target_node_id": pop.target_nodes(selection),
                 "synapse_id": selection.flatten(),
             }
-            df = _add_all_attributes(df, pop, selection)
-            yield pd.DataFrame(df)
+            data = _add_all_attributes(data, pop, selection)
+            yield pd.DataFrame(data)
 
     return loader
 
@@ -442,11 +440,11 @@ class EdgeData:
     loaded.  Access the property :attr:`.EdgeData.df`, to load the data.
     """
 
-    def __init__(self, *paths):
+    def __init__(self, *paths):  # noqa: PLR0912
         """Initialize the loader.
 
         Args:
-            A list of edge files.
+            paths: A list of edge files.
         """
         files = []
         for path in paths:

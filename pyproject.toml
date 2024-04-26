@@ -58,6 +58,18 @@ metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
 
 [tool.ruff]
 line-length = 100
+exclude = ["deps", "venv"]
+
+[tool.ruff.lint]
+select = ["D", "E", "F", "I", "PL"]
+pydocstyle.convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"doc/source/*" = ["D"]
+"tests/*" = ["D", "PLR2004"]
+
+[tool.ruff.lint.pylint]
+max-args = 8
 
 [tool.black]
 extend-exclude = 'deps\/.*$'

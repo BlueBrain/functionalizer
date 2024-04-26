@@ -6,8 +6,8 @@ More about conftest.py under: https://pytest.org/latest/plugins.html
 """
 
 from pathlib import Path
-import pytest
 
+import pytest
 from spykfunc import filters
 from spykfunc.definitions import RunningMode as RM
 from spykfunc.functionalizer import Functionalizer

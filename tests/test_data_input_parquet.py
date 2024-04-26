@@ -1,12 +1,10 @@
 """Tests relating to SONATA used for edge input"""
 
-import os
 import numpy
 import pandas as pd
 import pytest
 import sparkmanager as sm
-from conftest import ARGS, DATADIR, create_functionalizer
-from spykfunc.io.circuit import BRANCH_COLUMNS, BRANCH_MAX_VALUE_SONATA, EdgeData
+from spykfunc.io.circuit import BRANCH_COLUMNS, EdgeData
 from spykfunc.utils.conf import Configuration
 
 

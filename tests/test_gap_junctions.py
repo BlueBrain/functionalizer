@@ -1,15 +1,11 @@
 """Test gap-junction mode"""
 
 import copy
+
 import numpy as np
-import pandas
 import pytest
-
-from pathlib import Path
-
 from pyspark.sql import functions as F
 from spykfunc.filters import DatasetOperation
-
 
 # (src, dst), num_connections
 DENDRO_DATA = [

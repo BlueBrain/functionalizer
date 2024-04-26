@@ -22,4 +22,4 @@ variables:
 build-wheels:
   parallel:
     matrix:
-      - PY_VERSION: [py39, py310]
+      - PY_VERSION: [py311]

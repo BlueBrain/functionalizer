@@ -18,8 +18,8 @@
 
 """Spykfunc - An implementation of Functionalizer in PySpark."""
 
-import logging as _log
 import importlib.metadata as _meta
+import logging as _log
 
 __version__ = _meta.version(__name__)
 

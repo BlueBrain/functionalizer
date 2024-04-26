@@ -1,5 +1,7 @@
-from spykfunc import functionalizer as fz, commands
 from os import path
+
+from spykfunc import commands
+from spykfunc import functionalizer as fz
 
 BASE_DIR = path.expanduser("~/dev/TestData/circuitBuilding_1000neurons")
 DATA_31K = path.expanduser("~/scratch/circuit_31k")

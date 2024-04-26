@@ -5,7 +5,6 @@ import re
 from pyspark.pandas import typedef
 from pyspark.sql import types as T
 
-
 METADATA_FIXED_KEYS = (
     "source_population_name",
     "source_population_size",
@@ -84,17 +83,6 @@ LEGACY_MAPPING = {
 OUTPUT_MAPPING = {
     "morphology": ("morpho_type_id_pre", None),
 }
-
-
-def indexed_strings(names):
-    """Create a schema mapping int to string."""
-    assert len(names) == 2
-    return T.StructType(
-        [
-            T.StructField(names[0], T.IntegerType(), False),
-            T.StructField(names[1], T.StringType(), False),
-        ]
-    )
 
 
 def schema_for_dataframe(df):

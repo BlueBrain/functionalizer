@@ -1,3 +1,0 @@
-BUILD_PACKAGES="build-essential cmake curl git ninja-build libmpich-dev"
-EXTRA_PACKAGES="openjdk-11-jdk procps mpich"
-POST_INSTALL_COMMAND="/opt/venv/bin/download_spark_startup /opt/venv && /opt/venv/bin/download_hadoop /opt/venv"

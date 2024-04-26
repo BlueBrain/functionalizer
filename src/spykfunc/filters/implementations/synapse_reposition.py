@@ -2,10 +2,9 @@
 
 import numpy as np
 import pandas as pd
+import sparkmanager as sm
 
 from spykfunc.filters import DatasetOperation
-
-import sparkmanager as sm
 
 
 class SynapseReposition(DatasetOperation):

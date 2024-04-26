@@ -1,12 +1,11 @@
 """Filters to add properties to synapses."""
 
+import sparkmanager as sm
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
 
 from spykfunc.filters import DatasetOperation
 from spykfunc.utils import get_logger
-
-import sparkmanager as sm
 
 logger = get_logger(__name__)
 

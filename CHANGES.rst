@@ -2,6 +2,12 @@
 Changelog
 =========
 
+Version 0.19.0
+==============
+
+Changes:
+  - Use a JSON or YAML based recipe definition.
+
 Version 0.18.7
 ==============
 

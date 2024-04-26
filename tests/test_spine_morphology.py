@@ -1,12 +1,12 @@
 from pathlib import Path
+
 import numpy as np
 import numpy.testing as npt
 import pandas as pd
 import pytest
-
 from spykfunc.filters.implementations.spine_morphologies import (
-    _read_spine_morphology_attributes,
     _create_spine_morphology_udf,
+    _read_spine_morphology_attributes,
 )
 
 

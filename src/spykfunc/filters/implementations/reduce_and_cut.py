@@ -1,8 +1,7 @@
 """Filter that matches distributions of synapses."""
 
-from pyspark.sql import functions as F
-
 import sparkmanager as sm
+from pyspark.sql import functions as F
 
 from spykfunc.circuit import touches_per_pathway
 from spykfunc.definitions import CheckpointPhases

@@ -5,12 +5,11 @@ import shutil
 import socket
 import subprocess
 import urllib
-
 from pathlib import Path
+
 from mpi4py import MPI
 
 from . import utils
-
 
 CLUSTER_DATA = Path(__file__).parent / "data" / "cluster"
 

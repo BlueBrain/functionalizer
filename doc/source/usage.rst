@@ -92,21 +92,21 @@ The name ``EDGE_POPULATION`` will be used in the output file.
 Executing Spykfunc on the cluster
 ---------------------------------
 
-For all but the smallest executions on the order of a thousand cells,
-Spykfunc should be run on a dedicated Apache Spark cluster.
-For SLURM-based clusters such as BlueBrain5, the ``sm_run`` script will
-start an Apache Spark cluster within a SLURM allocation and launch a
-specified program to run on said cluster, when launched with ``srun``.
+For all but the smallest executions on the order of a thousand cells, Spykfunc should be
+run on a dedicated Apache Spark cluster.
+For SLURM-based clusters such as BlueBrain5, the ``functionalizer`` command will start an
+Apache Spark cluster within a SLURM allocation and launch a specified program to run on
+said cluster, when launched with ``srun``.
 By default, it will also provide a Hadoop Distributed File System (HDFS)
 cluster that will accelerate operations that have a strong impact on
 parallel file systems used to MPI loads.
-To turn off the startup of HDFS, provide the ``-H`` flag to ``sm_run``.
+To turn off the startup of HDFS, provide the ``-H`` flag to ``functionalizer``.
 
 .. warning::
    When using SLURM to launch the cluster, please ensure that only one
    process is launched per node (``--ntasks-per-node=1``), and that sufficient
    cores will be available to the job (``--cpus-per-task=36`` or ``=72``).
-   The script ``sm_run`` will start one Spark worker per task, and each
+   The script ``functionalizer`` will start one Spark worker per task, and each
    worker will attempt to allocate all CPUs assigned to the allocation on
    the node.
    More than one worker per node will result in oversubscription and
@@ -118,7 +118,7 @@ both a Spark and a HDFS cluster:
 
 .. code-block:: bash
 
-   module load archive/2021-XY spykfunc
+   module load archive/2024-XY spykfunc
    export BASE=/gpfs/bbp.cscs.ch/project/proj12/jenkins/cellular/circuit-1k/
 
    export NODES=$BASE/nodes.h5
@@ -129,10 +129,10 @@ both a Spark and a HDFS cluster:
 
    cd $MY_OUTPUT_DIRECTORY  # For the user to set!
 
-   # Rather than using salloc, sm_run may also be called within a script
+   # Rather than using salloc, functionalizer may also be called within a script
    # submitted to the queue via sbatch.
-   salloc -Aproj16 --ntasks-per-node=1 -Cnvme -N2 --exclusive --mem=0 \
-       srun functionalizer \
+   srun -Aproj16 --ntasks-per-node=1 -Cnvme -N2 --exclusive --mem=0 \
+       dplace functionalizer \
                     --s2f \
                     --output-dir=${PWD} \
                     --from ${NODES} ${NODE_POPULATION} \
@@ -142,27 +142,13 @@ both a Spark and a HDFS cluster:
                     ${TOUCHES}
 
 .. note::
-   The ``sm_run`` script will create auxilliary directories in the current
+   The ``functionalizer`` command will create auxilliary directories in the current
    working directory, which needs to be on a shared file system to work on
    allocations with more than one node.
    These directories include one named ``_cluster``, where logs and temporary
    configurations are stored.
    The user is also responsible for removing this directory after a possible
    analysis of the execution.
-
-Its behavior is determined mostly by environment variables or command line
-flags.  E.g., the ``-c`` flag above is used to set the number of cores that
-Spark will use.
-By default, 18 cores are assigned to an executor, and the ``-c`` flag to
-``sm_run`` should be a multiple of 18.
-To decrease the amount of cores, make sure that ``-c`` is a multiple of
-the number `n` passed to ``--spark-property spark.executor.cores=n``
-simultaneously.
-
-Similarly, ``-m`` can be used to restrict the memory that
-Spark, and thus the Spark functionalizer, will use.
-The corresponding setting for Spykfunc is ``--spark-property
-spark.executor.memory=…``.
 
 Re-generating Synapse Properties of SONATA Files
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -240,9 +226,8 @@ Further Information
 -------------------
 
 The following two commands should print up-to-date information about the
-usage of ``spykfunc`` and ``sm_run``:
+usage of ``functionalizer``:
 
 .. code-block:: console
 
-   $ spykfunc --help
-   $ sm_run --help
+   $ functionalizer --help

@@ -1,7 +1,8 @@
 """Test the auto-detection of HDFS presence."""
 
-import mock
 import os
+
+import mock
 
 try:
     from pathlib2 import Path
@@ -9,7 +10,6 @@ except Exception:
     from pathlib import Path
 
 from spykfunc.utils.filesystem import AutoClient
-
 
 CONFIG = """<?xml version="1.0" encoding="UTF-8"?>
 <configuration>

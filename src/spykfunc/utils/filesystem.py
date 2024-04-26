@@ -5,9 +5,9 @@ cluster, since the underlying Spark API behaves differently in the presence
 of a Hadoop cluster.
 """
 
-from datetime import datetime
 import glob
 import os
+from datetime import datetime
 
 import lxml.etree
 
@@ -20,7 +20,6 @@ import hdfs
 import hdfs.util
 
 from ._misc import get_logger
-
 
 logger = get_logger(__file__)
 
