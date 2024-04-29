@@ -1,25 +1,25 @@
-Running Spykfunc
-================
+Running `functionalizer`
+========================
 
-In the most simple case you just want to run Spykfunc in one of three modi:
+In the most simple case you just want to run `functionalizer` in one of three modi:
 
 * **Structural** (command line argument ``--s2s``) runs basic filtering only via
-  :class:`~spykfunc.filters.BoutonDistanceFilter` and
-  :class:`~spykfunc.filters.SynapseProperties`.
+  :class:`~functionalizer.filters.BoutonDistanceFilter` and
+  :class:`~functionalizer.filters.SynapseProperties`.
 
 * **Functional** (command line argument ``--s2f``) produces a circuit ready for simulation by the means of
-  :class:`~spykfunc.filters.BoutonDistanceFilter`,
-  :class:`~spykfunc.filters.TouchRulesFilter`,
-  :class:`~spykfunc.filters.ReduceAndCut`, and
-  :class:`~spykfunc.filters.SynapseProperties`.
+  :class:`~functionalizer.filters.BoutonDistanceFilter`,
+  :class:`~functionalizer.filters.TouchRulesFilter`,
+  :class:`~functionalizer.filters.ReduceAndCut`, and
+  :class:`~functionalizer.filters.SynapseProperties`.
 
 * **Gap-Junctions** (command line argument ``--gap-junctions``) uses
-  :class:`~spykfunc.filters.SomaDistance` and
-  :class:`~spykfunc.filters.GapJunction` to produce a circuit based on gap
+  :class:`~functionalizer.filters.SomaDistance` and
+  :class:`~functionalizer.filters.GapJunction` to produce a circuit based on gap
   junctions.
 
 * **Merging** (command line argument ``--merge``) with no active filters to
-  merge multiple previous executions of Spykfunc.
+  merge multiple previous executions of `functionalizer`.
 
 Custom lists of filters can be run with the ``--filters`` command line
 option, separated only by commas (``,``).  Note that any trailing `Filter`
@@ -32,7 +32,7 @@ Input Data
 ~~~~~~~~~~
 
 The touch files need to be in parquet. The module includes binaries to
-convert the TouchDetector output:
+convert the `touchdetector` output:
 
 .. code-block:: console
 
@@ -74,7 +74,7 @@ Output Data
 ~~~~~~~~~~~
 
 Within an allocation, the following command will convert all parquet files
-present in the Spykfunc output directory, and convert them to a
+present in the `functionalizer` output directory, and convert them to a
 `edges.sonata` file:
 
 .. code-block:: console
@@ -89,10 +89,16 @@ present in the Spykfunc output directory, and convert them to a
 
 The name ``EDGE_POPULATION`` will be used in the output file.
 
-Executing Spykfunc on the cluster
----------------------------------
+Small executions on a single node or machine
+--------------------------------------------
 
-For all but the smallest executions on the order of a thousand cells, Spykfunc should be
+The shorthand ``fz`` command is available to run `functionalizer` on a single machine
+without starting a full Spark and/or Hadoop cluster.
+
+Executing `functionalizer` on the cluster
+-----------------------------------------
+
+For all but the smallest executions on the order of a thousand cells, `functionalizer` should be
 run on a dedicated Apache Spark cluster.
 For SLURM-based clusters such as BlueBrain5, the ``functionalizer`` command will start an
 Apache Spark cluster within a SLURM allocation and launch a specified program to run on
@@ -118,13 +124,11 @@ both a Spark and a HDFS cluster:
 
 .. code-block:: bash
 
-   module load archive/2024-XY spykfunc
+   module load archive/2024-XY functionalizer
    export BASE=/gpfs/bbp.cscs.ch/project/proj12/jenkins/cellular/circuit-1k/
 
-   export NODES=$BASE/nodes.h5
-   export NODE_POPULATION=default
-   export MORPHOS=$BASE/morphologies/h5
-   export RECIPE=$BASE/bioname/builderRecipeAllPathways.xml
+   export CONFIG=$BASE/circuit-config.json
+   export RECIPE=$BASE/bioname/recipe.json
    export TOUCHES=$BASE/touches/parquet/*.parquet
 
    cd $MY_OUTPUT_DIRECTORY  # For the user to set!
@@ -134,11 +138,9 @@ both a Spark and a HDFS cluster:
    srun -Aproj16 --ntasks-per-node=1 -Cnvme -N2 --exclusive --mem=0 \
        dplace functionalizer \
                     --s2f \
-                    --output-dir=${PWD} \
-                    --from ${NODES} ${NODE_POPULATION} \
-                    --to ${NODES} ${NODE_POPULATION} \
+                    --output-dir ${PWD} \
+                    --circuit-config ${CONFIG} \
                     --recipe ${RECIPE} \
-                    --morphologies ${MORPHOS} \
                     ${TOUCHES}
 
 .. note::
@@ -153,7 +155,7 @@ both a Spark and a HDFS cluster:
 Re-generating Synapse Properties of SONATA Files
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Spykfunc can also be used to re-generate synapse properties for SONATA
+`functionalizer` can also be used to re-generate synapse properties for SONATA
 files, e.g., from the projectionalizer.
 When using SONATA input, the edge population needs to be specified, too.
 The following demonstrates an execution as above, but replaces the input
@@ -161,27 +163,23 @@ Parquet by SONATA and runs only the synapse properties:
 
 .. code-block:: bash
 
-   export NODES=$BASE/nodes.h5
-   export NODE_POPULATION=default
-   export MORPHOS=$BASE/morphologies/h5
-   export RECIPE=$BASE/bioname/builderRecipeAllPathways.xml
+   export CONFIG=$BASE/circuit-config.json
+   export RECIPE=$BASE/bioname/recipe.json
    export EDGES=$BASE/edges.h5
    export EDGE_POPULATION=default
 
    salloc -Aproj16 --ntasks-per-node=1 -Cnvme -N2 --exclusive --mem=0 \
        srun functionalizer \
-                    --output-dir=${PWD} \
-                    --from ${NODES} ${NODE_POPULATION} \
-                    --to ${NODES} ${NODE_POPULATION} \
+                    --output-dir ${PWD} \
+                    --circuit-config ${CONFIG} \
                     --filters SynapseProperties \
                     --recipe ${RECIPE} \
-                    --morphologies ${MORPHOS} \
                     ${EDGES} ${EDGE_POPULATION}
 
-Merging Spykfunc Executions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Merging `functionalizer` Executions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When merging previous executions of Spykfunc, node files, a recipe, and the
+When merging previous executions of `functionalizer`, node files, a recipe, and the
 morphology storage do not have to be provided.  This shortens the execution
 to e.g.:
 
@@ -197,7 +195,7 @@ to e.g.:
 
 .. warning::
    Note that the files used as inputs should be from **non-overlapping runs
-   of TouchDetector or Spykfunc**.
+   of TouchDetector or `functionalizer`**.
 
 SLURM Allocation Size
 ~~~~~~~~~~~~~~~~~~~~~
@@ -214,7 +212,7 @@ Since the nodes in UC4 each have 2TB of local SSD space available, and
 compression is enabled by default, the shuffle data alone will require
 about 10 nodes when functionalizing 11 million neurons (S2S, compressed).
 It is recommended to allow for additional space due to the checkpoints that
-Spykfunc will save during the execution, maybe 3-5 times the size of the
+`functionalizer` will save during the execution, maybe 3-5 times the size of the
 input data (drawn dash-dotted), here 32 nodes should suffice to
 successfully functionalize 11 million neurons.
 
@@ -225,8 +223,8 @@ resources as needed.
 Further Information
 -------------------
 
-The following two commands should print up-to-date information about the
-usage of ``functionalizer``:
+The following command should print up-to-date information about the usage of
+``functionalizer``:
 
 .. code-block:: console
 

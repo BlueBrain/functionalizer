@@ -4,8 +4,8 @@ import numpy
 import pandas as pd
 import pytest
 import sparkmanager as sm
-from spykfunc.io.circuit import BRANCH_COLUMNS, EdgeData
-from spykfunc.utils.conf import Configuration
+from functionalizer.io.circuit import BRANCH_COLUMNS, EdgeData
+from functionalizer.utils.conf import Configuration
 
 
 @pytest.fixture(name="edges_w_branch_type")

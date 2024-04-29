@@ -7,8 +7,8 @@ import numpy
 import pytest
 import sparkmanager as sm
 from conftest import ARGS, DATADIR, create_functionalizer
-from spykfunc.io.circuit import BRANCH_COLUMNS, EdgeData
-from spykfunc.utils.conf import Configuration
+from functionalizer.io.circuit import BRANCH_COLUMNS, EdgeData
+from functionalizer.utils.conf import Configuration
 
 
 @pytest.fixture(name="edges_w_branch_type")

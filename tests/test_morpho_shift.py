@@ -5,10 +5,10 @@ from unittest.mock import MagicMock
 
 import pytest
 import sparkmanager as sm
+from functionalizer.circuit import Circuit
+from functionalizer.schema import LEGACY_MAPPING
+from functionalizer.utils.conf import Configuration
 from fz_td_recipe import Recipe
-from spykfunc.circuit import Circuit
-from spykfunc.schema import LEGACY_MAPPING
-from spykfunc.utils.conf import Configuration
 
 
 class MockLoader:
@@ -35,8 +35,8 @@ def test_shift(circuit_config, tmpdir):
 
     Move synapses to AIS while keeping other touches untouched.
     """
-    from spykfunc.filters.implementations.synapse_reposition import SynapseReposition
-    from spykfunc.io.morphologies import MorphologyDB
+    from functionalizer.filters.implementations.synapse_reposition import SynapseReposition
+    from functionalizer.io.morphologies import MorphologyDB
 
     conf = Configuration(".")
 

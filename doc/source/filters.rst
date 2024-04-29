@@ -3,7 +3,7 @@
 Synapse Filters
 ===============
 
-The following filters are accepted by `Spykfunc`'s ``--filters`` command
+The following filters are accepted by ``functionalizer``'s ``--filters`` command
 line option.
 To use any of the filters, remove the `Filter` suffix if present, e.g.,
 :class:`~BoutonDistanceFilter` becomes ``BoutonDistance``.
@@ -11,32 +11,32 @@ To use any of the filters, remove the `Filter` suffix if present, e.g.,
 Parametrized Synapse Reduction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: spykfunc.filters.implementations.bouton_distance.BoutonDistanceFilter
-.. autoclass:: spykfunc.filters.implementations.soma_distance.SomaDistanceFilter
-.. autoclass:: spykfunc.filters.implementations.touch.TouchReductionFilter
-.. autoclass:: spykfunc.filters.implementations.touch.TouchRulesFilter
+.. autoclass:: functionalizer.filters.implementations.bouton_distance.BoutonDistanceFilter
+.. autoclass:: functionalizer.filters.implementations.soma_distance.SomaDistanceFilter
+.. autoclass:: functionalizer.filters.implementations.touch.TouchReductionFilter
+.. autoclass:: functionalizer.filters.implementations.touch.TouchRulesFilter
 
 Synapse Identification
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: spykfunc.filters.implementations.synapse_id.AddIDFilter
-.. autoclass:: spykfunc.filters.implementations.synapse_id.DenseIDFilter
+.. autoclass:: functionalizer.filters.implementations.synapse_id.AddIDFilter
+.. autoclass:: functionalizer.filters.implementations.synapse_id.DenseIDFilter
 
 Generating Properties for Gap-Junctions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: spykfunc.filters.implementations.gap_junction.GapJunctionFilter
-.. autoclass:: spykfunc.filters.implementations.gap_junction.GapJunctionProperties
+.. autoclass:: functionalizer.filters.implementations.gap_junction.GapJunctionFilter
+.. autoclass:: functionalizer.filters.implementations.gap_junction.GapJunctionProperties
 
 Sampled Reduction
 ~~~~~~~~~~~~~~~~~
 
-.. autoclass:: spykfunc.filters.implementations.spine_length.SpineLengthFilter
+.. autoclass:: functionalizer.filters.implementations.spine_length.SpineLengthFilter
 
-.. autoclass:: spykfunc.filters.implementations.reduce_and_cut.ReduceAndCut
+.. autoclass:: functionalizer.filters.implementations.reduce_and_cut.ReduceAndCut
 
 Generating Properties of Chemical Synapses
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: spykfunc.filters.implementations.synapse_reposition.SynapseReposition
-.. autoclass:: spykfunc.filters.implementations.synapse_properties.SynapseProperties
+.. autoclass:: functionalizer.filters.implementations.synapse_reposition.SynapseReposition
+.. autoclass:: functionalizer.filters.implementations.synapse_properties.SynapseProperties

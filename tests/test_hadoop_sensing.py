@@ -9,7 +9,7 @@ try:
 except Exception:
     from pathlib import Path
 
-from spykfunc.utils.filesystem import AutoClient
+from functionalizer.utils.filesystem import AutoClient
 
 CONFIG = """<?xml version="1.0" encoding="UTF-8"?>
 <configuration>

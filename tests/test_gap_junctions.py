@@ -4,8 +4,8 @@ import copy
 
 import numpy as np
 import pytest
+from functionalizer.filters import DatasetOperation
 from pyspark.sql import functions as F
-from spykfunc.filters import DatasetOperation
 
 # (src, dst), num_connections
 DENDRO_DATA = [

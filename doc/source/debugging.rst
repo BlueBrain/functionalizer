@@ -7,19 +7,19 @@ Debug flags
 -----------
 
 For additional output containing information about the parameters for
-reduce and cut steps, run `Spykfunc` with the ``--debug`` flag.
+reduce and cut steps, run `Functionalizer` with the ``--debug`` flag.
 
 .. warning::
 
-   As activating this flag will lead to `Spykfunc` consuming a lot of
+   As activating this flag will lead to `Functionalizer` consuming a lot of
    memory to gather the required information for the debug output, it is
    not advised to activate this flag for large executions or by default.
 
 Following a live execution
 --------------------------
 
-While a `Spykfunc` process is running, progress can be followed using the
-web-interface of the first node executing `Spykfunc`, given that
+While a `Functionalizer` process is running, progress can be followed using the
+web-interface of the first node executing `Functionalizer`, given that
 ``${SLURM_JOBID}`` points to a valid SLURM job:
 
 .. code-block:: console
@@ -57,7 +57,7 @@ Post execution analysis
 Logs of past executions can be analyzed if the logs in a directory called
 `eventlog` have been conserved.
 To find this directory, use the following in the output directory of
-`Spykfunc`:
+`Functionalizer`:
 
 .. code-block:: console
 
@@ -68,7 +68,7 @@ Then an Apache Spark history server can be started as follows:
 
 .. code-block:: console
 
-   $ module load spykfunc
+   $ module load functionalizer
    $ ${SPARK_HOME}/bin/spark-class \
        -Dspark.history.fs.logDirectory=${LOGDIR} \
        -Dspark.daemon.memory=30g \
@@ -77,7 +77,7 @@ Then an Apache Spark history server can be started as follows:
 
 The history server then will be active on port 18080 of the machine it was
 started on, i.e., if ``bbpv1`` is used, navigate to ``http://bbpv1:18080``.
-There will be a list of past executions of `Spykfunc`, and the history
+There will be a list of past executions of `Functionalizer`, and the history
 server will take a small while to process one when opened.
 
 The page of the execution will display job and stage status (a stage 

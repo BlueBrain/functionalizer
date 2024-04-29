@@ -32,16 +32,15 @@ autodoc_mock_imports = [
     "pyarrow",
     "pyspark",
     "pyspark.sql",
-    "spykfunc.utils.checkpointing",  # avoid type confusion with pyspark
 ]
 
 # source_suffix = ".rst"
 
 # master_doc = "index"
 
-project = "Spykfunc"
+project = "functionalizer"
 
-version = get_version("spykfunc")
+version = get_version(project)
 release = version
 
 exclude_patterns = []
@@ -54,6 +53,6 @@ add_module_names = False
 # modindex_common_prefix = []
 
 html_theme = "sphinx-bluebrain-theme"
-html_theme_options = {"metadata_distribution": "spykfunc"}
-html_title = "Spykfunc"
+html_theme_options = {"metadata_distribution": "functionalizer"}
+html_title = "functionalizer"
 html_show_sourcelink = False

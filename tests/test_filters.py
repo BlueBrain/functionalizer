@@ -5,7 +5,7 @@ import pyspark.sql.functions as F
 import pytest
 import sparkmanager as sm
 from conftest import ARGS, DATADIR, create_functionalizer
-from spykfunc.utils.spark import cache_broadcast_single_part
+from functionalizer.utils.spark import cache_broadcast_single_part
 
 NUM_AFTER_DISTANCE = 226301
 NUM_AFTER_TOUCH = 221686

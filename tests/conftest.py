@@ -1,19 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-conftest.py for spykfunc.
+conftest.py for functionalizer.
 More about conftest.py under: https://pytest.org/latest/plugins.html
 """
 
 from pathlib import Path
 
 import pytest
-from spykfunc import filters
-from spykfunc.definitions import RunningMode as RM
-from spykfunc.functionalizer import Functionalizer
+from functionalizer import filters
+from functionalizer.core import Functionalizer
+from functionalizer.definitions import RunningMode as RM
 
 DATADIR = Path(__file__).parent / "circuit_1000n"
-CONFIGURATION = Path(__file__).parent.parent / "src" / "spykfunc" / "data" / "desktop.properties"
+CONFIGURATION = (
+    Path(__file__).parent.parent / "src" / "functionalizer" / "data" / "desktop.properties"
+)
 
 CIRCUIT_CONFIG = DATADIR / "circuit_config.json"
 

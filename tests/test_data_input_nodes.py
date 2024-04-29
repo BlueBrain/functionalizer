@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 from conftest import DATADIR, create_functionalizer
-from spykfunc.io import NodeData
+from functionalizer.io import NodeData
 
 
 @pytest.mark.slow
