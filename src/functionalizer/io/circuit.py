@@ -293,6 +293,10 @@ class NodeData:
         self.morphologies = MorphologyDB(
             pop_prop.alternate_morphology_formats.get("h5v1", pop_prop.morphologies_dir)
         )
+        if pop_prop.spine_morphologies_dir:
+            self.spine_morphology_path = Path(pop_prop.spine_morphologies_dir)
+        else:
+            self.spine_morphology_path = None
 
         if not os.path.isdir(self._cache):
             os.makedirs(self._cache)

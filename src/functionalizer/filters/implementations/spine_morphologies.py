@@ -54,7 +54,7 @@ class SpineMorphologies(DatasetOperation):
         """Initializes the filter using the morphology database."""
         super().__init__(recipe, source, target)
         self._morphologies, self._filter = _create_spine_morphology_udf(
-            recipe.spine_morphologies.path
+            target.spine_morphology_path
         )
 
     def apply(self, circuit):

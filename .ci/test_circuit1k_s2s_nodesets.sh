@@ -18,4 +18,4 @@ parquet-compare-ns \
     ${CIRCUIT%circuit_config.json}nodes.h5 \
     $BASE/touches/structural/circuit.parquet \
     circuit.parquet \
-    4
+    0
