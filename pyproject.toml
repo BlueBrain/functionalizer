@@ -1,5 +1,5 @@
 [build-system]
-requires = ["scikit-build-core[pyproject]", "setuptools_scm"]
+requires = ["scikit-build-core[pyproject]", "setuptools_scm", "cmake", "ninja"]
 build-backend = "scikit_build_core.build"
 
 [project]
