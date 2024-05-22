@@ -38,6 +38,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        submodules: true
+        fetch-depth: 50
 
     # Used to host cibuildwheel
     - uses: actions/setup-python@v5
