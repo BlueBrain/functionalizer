@@ -1,4 +1,4 @@
-name: Publish sdist tarball to PyPi
+name: Publish wheels and sdist tarball to PyPi
 
 on:
   push:
@@ -51,7 +51,7 @@ jobs:
     - name: Build wheels
       run: python -m cibuildwheel --output-dir wheelhouse
       env:
-        CIBW_TEST_COMMAND: "pytest ${{ github.event_name == 'push' && --run-slow || '' }} {project}/tests"
+        CIBW_TEST_COMMAND: "pytest ${{ github.event_name == 'push' && '--run-slow' || '' }} {project}/tests"
 
     - uses: actions/upload-artifact@v4
       with:
