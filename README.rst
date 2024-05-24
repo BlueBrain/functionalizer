@@ -1,3 +1,6 @@
+.. image:: doc/source/_static/banner.jpg
+   :alt: A nice banner for functionalizer
+
 Functionalizer
 ==============
 
@@ -10,16 +13,17 @@ To process the large quantities of data optimally, this software uses PySpark.
 Installation
 ------------
 
-The easiest way to install `functionalizer` is via ``pip install functionalizer``.
+The easiest way to install `functionalizer` is via:
+.. code-block:: console
 
-.. note::
+   pip install functionalizer
 
-   Due to a dependency on ``mpi4py``, a MPI implementation needs to be installed on the
-   system used.  On Ubuntu, this can be achieved with:
+Due to a dependency on ``mpi4py``, a MPI implementation needs to be installed on the
+system used.  On Ubuntu, this can be achieved with:
 
-   .. code-block:: console
+.. code-block:: console
 
-      apt-get install -y libopenmpi-dev
+   apt-get install -y libopenmpi-dev
 
 For manual installation from sources via ``pip``, a compiler handling C++17 will be
 necessary.  Furthermore, all ``git`` submodules should be checked out:
