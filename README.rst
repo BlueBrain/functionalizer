@@ -14,6 +14,7 @@ Installation
 ------------
 
 The easiest way to install `functionalizer` is via:
+
 .. code-block:: console
 
    pip install functionalizer
