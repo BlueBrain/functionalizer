@@ -13,9 +13,12 @@ Installation
 The easiest way to install `functionalizer` is via ``pip install functionalizer``.
 
 .. note::
+
    Due to a dependency on ``mpi4py``, a MPI implementation needs to be installed on the
    system used.  On Ubuntu, this can be achieved with:
+
    .. code-block:: console
+
       apt-get install -y libopenmpi-dev
 
 For manual installation from sources via ``pip``, a compiler handling C++17 will be
