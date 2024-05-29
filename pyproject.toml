@@ -6,7 +6,7 @@ build-backend = "scikit_build_core.build"
 name = "functionalizer"
 dynamic = ["version"]
 description = "A PySpark implementation of the Blue Brain Project Functionalizer"
-license = {"text" = "Blue Brain Project License"}
+license = {"file" = "LICENSE.txt"}
 authors = [{"name" = "BlueBrain HPC", "email" = "bbp-ou-hpc@epfl.ch"}]
 maintainers = [
     {"name" = "Matthias Wolf", "email" = "matthias.wolf@epfl.ch"},
