@@ -1,12 +1,12 @@
 [build-system]
-requires = ["scikit-build-core[pyproject]", "setuptools_scm"]
+requires = ["scikit-build-core[pyproject]", "setuptools_scm", "cmake", "ninja"]
 build-backend = "scikit_build_core.build"
 
 [project]
 name = "functionalizer"
 dynamic = ["version"]
 description = "A PySpark implementation of the Blue Brain Project Functionalizer"
-license = {"text" = "Blue Brain Project License"}
+license = {"file" = "LICENSE.txt"}
 authors = [{"name" = "BlueBrain HPC", "email" = "bbp-ou-hpc@epfl.ch"}]
 maintainers = [
     {"name" = "Matthias Wolf", "email" = "matthias.wolf@epfl.ch"},
@@ -74,3 +74,12 @@ max-args = 8
 [tool.black]
 extend-exclude = 'deps\/.*$'
 line_length = 100
+
+[tool.cibuildwheel]
+skip = ["cp3{6,7,8}-*", "pp*", "*-win32", "*-manylinux_i686", "*-musllinux_i686", "*-musllinux_x86_64", "*-musllinux_aarch64"]
+# MPI needed for testing with mpi4py
+before-all = "yum install -y openmpi3-devel java-11-openjdk"
+environment = { MPICC="/usr/lib64/openmpi3/bin/mpicc" }
+# Remove setuptools with Spark v4 - v3 has implicit dependency on distutils
+test-requires = ["pytest", "mock", "setuptools"]
+test-command = "pytest --run-slow {project}/tests"
