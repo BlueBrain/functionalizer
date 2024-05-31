@@ -56,4 +56,4 @@ html_theme = "sphinx-bluebrain-theme"
 html_theme_options = {"metadata_distribution": "functionalizer"}
 html_title = "functionalizer"
 html_show_sourcelink = False
-html_static_path = ['_static']
+html_static_path = ["_static"]
