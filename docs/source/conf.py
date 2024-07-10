@@ -1,3 +1,5 @@
+"""Long-standing documentation configuration."""
+
 # -*- coding: utf-8 -*-
 from importlib.metadata import version as get_version
 

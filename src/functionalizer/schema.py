@@ -89,7 +89,7 @@ def schema_for_dataframe(df):
     """Create a Spark schema from the Pandas DataFrame."""
 
     def _type(col):
-        if df.dtypes[col] == object:
+        if df.dtypes[col] is object:
             return T.StringType()
         return typedef.as_spark_type(df.dtypes[col])
 

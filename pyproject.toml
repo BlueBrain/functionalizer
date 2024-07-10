@@ -29,7 +29,7 @@ dependencies = [
     "morphio",
     "mpi4py",
     "libsonata",
-    "numpy",
+    "numpy<2",
     "packaging",
     "pandas",
     "pyarrow<15",

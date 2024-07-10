@@ -1,0 +1,20 @@
+version: 2
+
+build:
+  os: ubuntu-22.04
+  apt_packages:
+    - libopenmpi-dev
+  tools:
+    python: "3.12"
+  jobs:
+    post_checkout:
+      - git submodule update --init
+
+sphinx:
+  configuration: docs/source/conf.py
+
+python:
+   install:
+   - requirements: docs/source/requirements.txt
+   - method: pip
+     path: .
