@@ -1,5 +1,7 @@
-.. image:: doc/source/_static/banner.jpg
+.. image:: docs/source/_static/banner.jpg
    :alt: A nice banner for functionalizer
+
+|license| |docs|
 
 Functionalizer
 ==============
@@ -57,3 +59,10 @@ from the Swiss government's ETH Board of the Swiss Federal Institutes of Technol
 Copyright (c) 2017-2024 Blue Brain Project/EPFL
 
 .. _SONATA extension: https://sonata-extension.readthedocs.io
+
+.. |license| image:: https://img.shields.io/pypi/f/functionalizer
+                :target: https://github.com/BlueBrain/functionalizer/blob/master/LICENSE.txt
+
+.. |docs| image:: https://readthedocs.org/projects/functionalizer/badge/?version=latest
+             :target: https://functionalizer.readthedocs.io/
+             :alt: documentation status
