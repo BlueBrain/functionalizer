@@ -60,7 +60,7 @@ Copyright (c) 2017-2024 Blue Brain Project/EPFL
 
 .. _SONATA extension: https://sonata-extension.readthedocs.io
 
-.. |license| image:: https://img.shields.io/pypi/f/functionalizer
+.. |license| image:: https://img.shields.io/pypi/l/functionalizer
                 :target: https://github.com/BlueBrain/functionalizer/blob/master/LICENSE.txt
 
 .. |docs| image:: https://readthedocs.org/projects/functionalizer/badge/?version=latest
