@@ -39,7 +39,7 @@ def load(*dirnames: str) -> None:
 
 
 class FilterInitializationError(RuntimeError):
-    pass
+    """Error to be raised when filters should be skipped."""
 
 
 # ---------------------------------------------------

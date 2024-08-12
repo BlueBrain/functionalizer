@@ -4,7 +4,7 @@ import pandas as pd
 import pyspark.sql.functions as F
 import pytest
 import sparkmanager as sm
-from conftest import DEFAULT_ARGS, DATADIR, create_functionalizer
+from conftest import DATADIR, DEFAULT_ARGS, create_functionalizer
 from functionalizer.utils.spark import cache_broadcast_single_part
 
 NUM_AFTER_DISTANCE = 226301
@@ -57,16 +57,12 @@ class TestFilterInitialization:
 class TestBogusFilterInitialization:
     """Test initialization of optional filters"""
 
-    @pytest.mark.parametrize("fz", [{"circuit_config": DATADIR / "circuit_config_invalid.json"}], indirect=True)
+    @pytest.mark.parametrize(
+        "fz", [{"circuit_config": DATADIR / "circuit_config_invalid.json"}], indirect=True
+    )
     def test_spine_morphos(self, fz):
         with pytest.raises(AssertionError):
             fz.process_filters(filters=["SpineMorphologies"])
-
-class TestFilterInitialization:
-    """Test initialization of optional filters"""
-
-    def test_spine_morphos(self, fz):
-        fz.process_filters(filters=["SpineMorphologies"])
 
 
 @pytest.mark.slow

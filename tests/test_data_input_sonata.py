@@ -6,7 +6,7 @@ import h5py
 import numpy
 import pytest
 import sparkmanager as sm
-from conftest import DEFAULT_ARGS, DATADIR, create_functionalizer
+from conftest import DATADIR, DEFAULT_ARGS, create_functionalizer
 from functionalizer.io.circuit import BRANCH_COLUMNS, EdgeData
 from functionalizer.utils.conf import Configuration
 
