@@ -67,7 +67,6 @@ class TestFilterInitialization:
 
     def test_spine_morphos(self, fz):
         fz.process_filters(filters=["SpineMorphologies"])
-        fz.process_filters(filters=["SpineMorphologies"])
 
 
 @pytest.mark.slow
