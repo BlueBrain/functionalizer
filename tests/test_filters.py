@@ -4,7 +4,7 @@ import pandas as pd
 import pyspark.sql.functions as F
 import pytest
 import sparkmanager as sm
-from conftest import ARGS, DATADIR, create_functionalizer
+from conftest import DEFAULT_ARGS, DATADIR, create_functionalizer
 from functionalizer.utils.spark import cache_broadcast_single_part
 
 NUM_AFTER_DISTANCE = 226301
@@ -33,9 +33,8 @@ def test_fixed_probabilities(tmp_path_factory):
         return dict(zip(res["mtype"], res["count"]))
 
     tmpdir = tmp_path_factory.mktemp("fixed_probabilities")
-    fz = create_functionalizer(tmpdir, ["ReduceAndCut"]).init_data(
-        DATADIR / "recipe_fixed.json", *ARGS[1:]
-    )
+    kwargs = DEFAULT_ARGS | {"recipe_file": DATADIR / "recipe_fixed.json"}
+    fz = create_functionalizer(tmpdir, ["ReduceAndCut"]).init_data(**kwargs)
 
     before = layer_counts(fz.circuit)
     fz.process_filters()
@@ -46,6 +45,29 @@ def test_fixed_probabilities(tmp_path_factory):
     assert "L4" not in after
     assert "L5" not in after
     assert "L6" not in after
+
+
+class TestFilterInitialization:
+    """Test initialization of optional filters"""
+
+    def test_spine_morphos(self, fz):
+        fz.process_filters(filters=["SpineMorphologies"])
+
+
+class TestBogusFilterInitialization:
+    """Test initialization of optional filters"""
+
+    @pytest.mark.parametrize("fz", [{"circuit_config": DATADIR / "circuit_config_invalid.json"}], indirect=True)
+    def test_spine_morphos(self, fz):
+        with pytest.raises(AssertionError):
+            fz.process_filters(filters=["SpineMorphologies"])
+
+class TestFilterInitialization:
+    """Test initialization of optional filters"""
+
+    def test_spine_morphos(self, fz):
+        fz.process_filters(filters=["SpineMorphologies"])
+        fz.process_filters(filters=["SpineMorphologies"])
 
 
 @pytest.mark.slow
@@ -71,7 +93,7 @@ class TestFilters(object):
     def test_resume(self, fz, tmp_path_factory):
         """Make sure that resuming "works" """
         tmpdir = tmp_path_factory.mktemp("filters")
-        fz2 = create_functionalizer(tmpdir).init_data(*ARGS)
+        fz2 = create_functionalizer(tmpdir).init_data(**DEFAULT_ARGS)
         fz2.process_filters()
         original = fz.circuit.df.count()
         count = fz2.circuit.df.count()
@@ -80,7 +102,7 @@ class TestFilters(object):
     def test_overwrite(self, fz, tmp_path_factory):
         """Test that overwriting checkpointed data works"""
         tmpdir = tmp_path_factory.mktemp("filters")
-        fz2 = create_functionalizer(tmpdir).init_data(*ARGS)
+        fz2 = create_functionalizer(tmpdir).init_data(**DEFAULT_ARGS)
         fz2.process_filters(overwrite=True)
         original = fz.circuit.df.count()
         count = fz2.circuit.df.count()

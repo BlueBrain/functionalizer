@@ -6,7 +6,7 @@ import h5py
 import numpy
 import pytest
 import sparkmanager as sm
-from conftest import ARGS, DATADIR, create_functionalizer
+from conftest import DEFAULT_ARGS, DATADIR, create_functionalizer
 from functionalizer.io.circuit import BRANCH_COLUMNS, EdgeData
 from functionalizer.utils.conf import Configuration
 
@@ -54,9 +54,8 @@ def test_branch_shift(edges_w_branch_type):
 @pytest.mark.slow
 def test_sonata_properties(tmp_path_factory):
     tmpdir = tmp_path_factory.mktemp("sonata_properties")
-    fz = create_functionalizer(tmpdir, ["SynapseProperties"]).init_data(
-        *ARGS[:-1], edges=(os.path.join(DATADIR, "edges.h5"), "default")
-    )
+    kwargs = DEFAULT_ARGS | {"edges": (os.path.join(DATADIR, "edges.h5"), "default")}
+    fz = create_functionalizer(tmpdir, ["SynapseProperties"]).init_data(**kwargs)
     fz.process_filters()
 
     assert "delay" in fz.circuit.df.columns

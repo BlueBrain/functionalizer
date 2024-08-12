@@ -29,6 +29,16 @@ ARGS = (
     [str(DATADIR / "touches" / "*.parquet")],
 )
 
+DEFAULT_ARGS = {
+    "recipe_file": DATADIR / "recipe.json",
+    "circuit_config": CIRCUIT_CONFIG,
+    "source": None,
+    "source_nodeset": None,
+    "target": None,
+    "target_nodeset": None,
+    "edges": [str(DATADIR / "touches" / "*.parquet")],
+}
+
 filters.load()
 
 
@@ -49,10 +59,11 @@ def circuit_config():
     return CIRCUIT_CONFIG
 
 
-@pytest.fixture(scope="session", name="fz")
-def fz_fixture(tmp_path_factory):
+@pytest.fixture(scope="class", name="fz", params=[{}])
+def fz_fixture(request, tmp_path_factory):
     tmpdir = tmp_path_factory.mktemp("filters")
-    return create_functionalizer(tmpdir, RM.FUNCTIONAL.value).init_data(*ARGS)
+    kwargs = DEFAULT_ARGS | request.param
+    return create_functionalizer(tmpdir, RM.FUNCTIONAL.value).init_data(**kwargs)
 
 
 @pytest.fixture(scope="session", name="gj")

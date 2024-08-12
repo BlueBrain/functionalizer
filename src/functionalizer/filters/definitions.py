@@ -38,6 +38,10 @@ def load(*dirnames: str) -> None:
             importlib.import_module(modulename)
 
 
+class FilterInitializationError(RuntimeError):
+    pass
+
+
 # ---------------------------------------------------
 # Dataset operations
 # ---------------------------------------------------
@@ -108,7 +112,7 @@ class __DatasetOperationType(type):
             )
             try:
                 filters.append(fcls(*args))
-            except Exception as e:
+            except FilterInitializationError as e:
                 if fcls._required:
                     logger.fatal("Could not instantiate %s", fcls.__name__)
                     raise
