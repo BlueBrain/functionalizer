@@ -32,7 +32,7 @@ dependencies = [
     "numpy<2",
     "packaging",
     "pandas",
-    "pyarrow",
+    "pyarrow<15",
     "pyspark>=3",
 ]
 
