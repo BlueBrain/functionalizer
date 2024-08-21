@@ -4,11 +4,12 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
+from fz_td_recipe import Recipe
+
 import sparkmanager as sm
 from functionalizer.circuit import Circuit
 from functionalizer.schema import LEGACY_MAPPING
 from functionalizer.utils.conf import Configuration
-from fz_td_recipe import Recipe
 
 
 class MockLoader:

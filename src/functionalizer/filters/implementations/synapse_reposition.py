@@ -2,8 +2,8 @@
 
 import numpy as np
 import pandas as pd
-import sparkmanager as sm
 
+import sparkmanager as sm
 from functionalizer.filters import DatasetOperation, FilterInitializationError
 
 

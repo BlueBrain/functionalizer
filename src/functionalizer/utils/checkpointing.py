@@ -4,8 +4,9 @@ from collections import namedtuple
 from functools import wraps
 from inspect import signature
 
-import sparkmanager as sm
 from pyspark.sql.column import _to_seq
+
+import sparkmanager as sm
 
 from . import get_logger
 from .filesystem import exists, isdir, size

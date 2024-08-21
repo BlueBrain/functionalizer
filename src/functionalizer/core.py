@@ -5,9 +5,10 @@ import os
 from pathlib import Path
 
 import pyarrow.parquet as pq
-import sparkmanager as sm
 from fz_td_recipe import Recipe
 from pyspark.sql import functions as F
+
+import sparkmanager as sm
 
 from . import utils
 from .circuit import Circuit

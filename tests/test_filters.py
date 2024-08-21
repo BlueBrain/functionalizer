@@ -3,8 +3,9 @@
 import pandas as pd
 import pyspark.sql.functions as F
 import pytest
-import sparkmanager as sm
 from conftest import DATADIR, DEFAULT_ARGS, create_functionalizer
+
+import sparkmanager as sm
 from functionalizer.utils.spark import cache_broadcast_single_part
 
 NUM_AFTER_DISTANCE = 226301

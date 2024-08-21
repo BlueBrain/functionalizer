@@ -11,7 +11,6 @@ from glob import glob
 from pathlib import Path
 
 import sparkmanager as sm
-
 from functionalizer.circuit import Circuit
 from functionalizer.utils import get_logger
 from functionalizer.utils.checkpointing import checkpoint_resume

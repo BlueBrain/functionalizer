@@ -8,6 +8,7 @@ More about conftest.py under: https://pytest.org/latest/plugins.html
 from pathlib import Path
 
 import pytest
+
 from functionalizer import filters
 from functionalizer.core import Functionalizer
 from functionalizer.definitions import RunningMode as RM

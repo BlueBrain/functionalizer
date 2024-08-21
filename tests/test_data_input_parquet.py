@@ -3,6 +3,7 @@
 import numpy
 import pandas as pd
 import pytest
+
 import sparkmanager as sm
 from functionalizer.io.circuit import BRANCH_COLUMNS, EdgeData
 from functionalizer.utils.conf import Configuration

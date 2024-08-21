@@ -9,11 +9,11 @@ from typing import List
 
 import pandas as pd
 import pyarrow.parquet as pq
-import sparkmanager as sm
 from packaging.version import VERSION_PATTERN, Version
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
 
+import sparkmanager as sm
 from functionalizer import schema
 from functionalizer.schema import OUTPUT_MAPPING
 from functionalizer.utils import get_logger

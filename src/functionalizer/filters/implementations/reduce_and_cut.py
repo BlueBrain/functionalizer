@@ -1,8 +1,8 @@
 """Filter that matches distributions of synapses."""
 
-import sparkmanager as sm
 from pyspark.sql import functions as F
 
+import sparkmanager as sm
 from functionalizer.circuit import touches_per_pathway
 from functionalizer.definitions import CheckpointPhases
 from functionalizer.filters import DatasetOperation, helpers
