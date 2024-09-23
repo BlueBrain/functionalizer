@@ -3,10 +3,10 @@
 from operator import attrgetter
 
 import pandas as pd
-import sparkmanager as sm
 from pyspark.sql import functions as F
 
-from functionalizer.filters import DatasetOperation
+import sparkmanager as sm
+from functionalizer.filters import DatasetOperation, FilterInitializationError
 from functionalizer.utils import get_logger
 
 from . import add_bin_column, add_random_column
@@ -29,8 +29,11 @@ class SpineLengthFilter(DatasetOperation):
         recipe to obtain the desired distribution of spine lengths to match.
         """
         super().__init__(recipe, source, target)
-        self.seed = recipe.seeds.synapseSeed
+        self.seed = recipe.get("seed")
         logger.info("Using seed %d for spine length adjustment", self.seed)
+
+        if not recipe.get("spine_lengths"):
+            raise FilterInitializationError("'synapse_reposition' not in recipe")
 
         self.binnings = sorted(recipe.spine_lengths, key=attrgetter("length"))
 

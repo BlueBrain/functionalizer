@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 from conftest import DATADIR, create_functionalizer
+
 from functionalizer.io import NodeData
 
 

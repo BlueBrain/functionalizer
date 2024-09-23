@@ -4,6 +4,7 @@ from pathlib import Path
 
 import numpy
 import pytest
+
 from functionalizer.io.morphologies import MorphologyDB
 
 BRANCHES = [

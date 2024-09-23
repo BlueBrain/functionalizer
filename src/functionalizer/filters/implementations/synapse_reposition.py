@@ -2,9 +2,9 @@
 
 import numpy as np
 import pandas as pd
-import sparkmanager as sm
 
-from functionalizer.filters import DatasetOperation
+import sparkmanager as sm
+from functionalizer.filters import DatasetOperation, FilterInitializationError
 
 
 class SynapseReposition(DatasetOperation):
@@ -20,6 +20,8 @@ class SynapseReposition(DatasetOperation):
     def __init__(self, recipe, source, target):
         """Initialize the filter, extracting the reposition part of the recipe."""
         super().__init__(recipe, source, target)
+        if not recipe.get("synapse_reposition"):
+            raise FilterInitializationError("'synapse_reposition' not in recipe")
         self.columns, self.reposition = recipe.as_matrix("synapse_reposition")
         self.unset_value = len(recipe.get("synapse_reposition"))
 

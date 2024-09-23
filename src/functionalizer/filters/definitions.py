@@ -11,7 +11,6 @@ from glob import glob
 from pathlib import Path
 
 import sparkmanager as sm
-
 from functionalizer.circuit import Circuit
 from functionalizer.utils import get_logger
 from functionalizer.utils.checkpointing import checkpoint_resume
@@ -36,6 +35,10 @@ def load(*dirnames: str) -> None:
             relative = min((os.path.relpath(modulename, p) for p in sys.path), key=len)
             modulename = relative.replace(os.sep, ".")
             importlib.import_module(modulename)
+
+
+class FilterInitializationError(RuntimeError):
+    """Error to be raised when filters should be skipped."""
 
 
 # ---------------------------------------------------
@@ -108,7 +111,7 @@ class __DatasetOperationType(type):
             )
             try:
                 filters.append(fcls(*args))
-            except Exception as e:
+            except FilterInitializationError as e:
                 if fcls._required:
                     logger.fatal("Could not instantiate %s", fcls.__name__)
                     raise

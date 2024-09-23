@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from pyspark.sql import functions as F
 
-from functionalizer.filters import DatasetOperation
+from functionalizer.filters import DatasetOperation, FilterInitializationError
 
 
 class SpineMorphologies(DatasetOperation):
@@ -53,6 +53,10 @@ class SpineMorphologies(DatasetOperation):
     def __init__(self, recipe, source, target):
         """Initializes the filter using the morphology database."""
         super().__init__(recipe, source, target)
+
+        if not target.spine_morphology_path:
+            raise FilterInitializationError("target nodes do not define 'spine_morphologies_dir'")
+
         self._morphologies, self._filter = _create_spine_morphology_udf(
             target.spine_morphology_path
         )
@@ -105,6 +109,7 @@ def _read_spine_morphology_attributes(spine_morpho_path: Path):
     Returns a dataframe with spine morphology properties.
     """
     files = sorted(spine_morpho_path.glob("*.h5"))
+    assert len(files) > 0, "no spine morphologies present"
     ids = np.ndarray((0,), dtype=int)
     lengths = np.ndarray((0,), dtype=float)
     morphologies = np.ndarray((0,), dtype=int)

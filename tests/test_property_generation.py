@@ -3,10 +3,11 @@
 from pathlib import Path
 
 import pytest
-import sparkmanager as sm
 from conftest import CIRCUIT_CONFIG, DATADIR
-from functionalizer.filters import DatasetOperation
 from fz_td_recipe import Recipe
+
+import sparkmanager as sm
+from functionalizer.filters import DatasetOperation
 
 
 @pytest.mark.slow

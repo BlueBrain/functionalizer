@@ -2,9 +2,9 @@
 
 import numpy as np
 import pandas as pd
-import sparkmanager as sm
 from pyspark.sql import functions as F
 
+import sparkmanager as sm
 from functionalizer.filters import DatasetOperation
 from functionalizer.utils import get_logger
 

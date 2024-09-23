@@ -1,9 +1,9 @@
 """Filters to add properties to synapses."""
 
-import sparkmanager as sm
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
 
+import sparkmanager as sm
 from functionalizer.filters import DatasetOperation
 from functionalizer.utils import get_logger
 
