@@ -39,8 +39,37 @@ necessary.  Furthermore, all ``git`` submodules should be checked out:
 
 Spark and Hadoop should be installed and set up as runtime dependencies.
 
-Usage
------
+Usage Overview
+--------------
+
+Functionalizer is an integral part of building a brain circuit.  It will take the
+connectome as established by
+
+- `appositionizer`_, in the form of detailed morphologies being in close proximity, or
+- `connectome-manipulator`_, which will approximate connectivity following probabilistic
+  rules,
+
+and transform then in any of the following filtering steps:
+
+- trim appositions according to simple touch rules
+- trim appositions to follow biological distributions, parametrized in connection rules
+- add synaptic properties to convert any apposition into a proper synapse
+
+If the input format is binary from `appositionizer`_, one may use ``touch2parquet`` from
+`parquet-converters`_ to convert into Parquet that may be read by Functionalizer.
+All circuit inputs need to be defined in a ``circuit_config.json`` according to the
+`SONATA extension`_, containing pointers to nodes in `nodes.h5` and morphologies.
+A ``recipe.json``, defined in the same SONATA extension, is used to supply the parameters
+needed for filters.
+
+The output of Functionalizer should be converted to SONATA-conform HDF5 via ``parquet2hdf5``
+from `parquet-converters`_.
+
+.. image:: docs/source/_static/circuit_building.png
+   :alt: A diagram showing the relations of circuit building software
+
+CLI Usage
+---------
 
 Basic usage follows the pattern::
 
@@ -59,6 +88,9 @@ from the Swiss government's ETH Board of the Swiss Federal Institutes of Technol
 Copyright (c) 2017-2024 Blue Brain Project/EPFL
 
 .. _SONATA extension: https://sonata-extension.readthedocs.io
+.. _appositionizer: https://github.com/BlueBrain/appositionizer
+.. _connectome-manipulator: https://github.com/BlueBrain/connectome-manipulator
+.. _parquet-converters: https://github.com/BlueBrain/parquet-converters
 
 .. |license| image:: https://img.shields.io/pypi/l/functionalizer
                 :target: https://github.com/BlueBrain/functionalizer/blob/master/LICENSE.txt
