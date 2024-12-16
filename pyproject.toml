@@ -28,7 +28,7 @@ dependencies = [
     "jprops",
     "morphio",
     "mpi4py",
-    "libsonata",
+    "libsonata<=0.1.28",
     "numpy<2",
     "packaging",
     "pandas",
