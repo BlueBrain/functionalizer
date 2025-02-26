@@ -1,3 +1,7 @@
+.. warning::
+   The Blue Brain Project concluded in December 2024, so development has ceased under the BlueBrain GitHub organization.
+   Future development will take place at: https://github.com/openbraininstitute/functionalizer
+
 .. image:: docs/source/_static/banner.jpg
    :alt: A nice banner for functionalizer
 
