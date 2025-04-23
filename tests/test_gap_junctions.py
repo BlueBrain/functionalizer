@@ -109,6 +109,12 @@ def test_dendrite_sync(gj):
         df = circuit.where(query.format(pair)).toPandas()
         df = fltr._dendrite_match(df)
         assert len(df) == expected
+        # GJ ids should match, but not be the same - these can be used to pair up
+        # junctions, as they are supposed to be bidirectional.
+        assert not any(df["afferent_junction_id"] == df["efferent_junction_id"])
+        assert len(set(df["afferent_junction_id"])) == len(df)
+        assert len(set(df["efferent_junction_id"])) == len(df)
+        assert set(df["afferent_junction_id"]) == set(df["efferent_junction_id"])
 
     df = fltr._dendrite_match(circuit.toPandas())
     for col in ("afferent_junction_id", "efferent_junction_id"):
